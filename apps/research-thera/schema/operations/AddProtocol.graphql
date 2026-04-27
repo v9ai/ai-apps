@@ -1,0 +1,11 @@
+mutation AddProtocol($input: AddProtocolInput!) {
+  addProtocol(input: $input) {
+    id
+    name
+    slug
+    status
+    targetAreas
+    supplementCount
+    createdAt
+  }
+}

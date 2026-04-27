@@ -282,6 +282,13 @@ type Query {
 
   # Healthcare — Allergies & Intolerances
   allergies: [Allergy!]!
+
+  # Healthcare — Protocols
+  protocols: [Protocol!]!
+  protocol(slug: String!): ProtocolDetail
+
+  # Healthcare — Dashboard summary
+  healthcareSummary: HealthcareSummary!
 }
 
 type Mutation {
@@ -492,6 +499,15 @@ type Mutation {
   # Healthcare — Allergies & Intolerances
   addAllergy(input: AddAllergyInput!): Allergy!
   deleteAllergy(id: ID!): DeleteAllergyResult!
+
+  # Healthcare — Protocols
+  addProtocol(input: AddProtocolInput!): Protocol!
+  deleteProtocol(id: ID!): DeleteProtocolResult!
+  updateProtocolStatus(id: ID!, status: String!): Protocol!
+  addSupplement(protocolId: ID!, input: AddSupplementInput!): ProtocolSupplement!
+  deleteSupplement(id: ID!): DeleteSupplementResult!
+  recordCognitiveBaseline(protocolId: ID!, input: CognitiveScoresInput!): CognitiveBaseline!
+  recordCognitiveCheckIn(protocolId: ID!, input: CognitiveCheckInInput!): CognitiveCheckIn!
 }
 
 type Subscription {
@@ -2327,14 +2343,17 @@ enum AllergyKind {
 type Allergy {
   id: ID!
   userId: String!
+  familyMemberId: Int
   kind: AllergyKind!
   name: String!
   severity: String
   notes: String
   createdAt: String!
+  familyMember: FamilyMember
 }
 
 input AddAllergyInput {
+  familyMemberId: Int
   kind: AllergyKind!
   name: String!
   severity: String
@@ -2343,4 +2362,125 @@ input AddAllergyInput {
 
 type DeleteAllergyResult {
   success: Boolean!
+}
+
+# ============================================
+# Healthcare — Protocols (brain health)
+# ============================================
+
+type Protocol {
+  id: ID!
+  userId: String!
+  name: String!
+  slug: String!
+  targetAreas: [String!]!
+  status: String!
+  notes: String
+  startDate: String
+  endDate: String
+  supplementCount: Int!
+  createdAt: String!
+  updatedAt: String!
+}
+
+type ProtocolDetail {
+  protocol: Protocol!
+  supplements: [ProtocolSupplement!]!
+  baseline: CognitiveBaseline
+  checkIns: [CognitiveCheckIn!]!
+}
+
+type ProtocolSupplement {
+  id: ID!
+  protocolId: ID!
+  name: String!
+  dosage: String!
+  frequency: String!
+  mechanism: String
+  targetAreas: [String!]!
+  notes: String
+  url: String
+  createdAt: String!
+}
+
+type CognitiveBaseline {
+  id: ID!
+  protocolId: ID!
+  memoryScore: Float
+  focusScore: Float
+  processingSpeedScore: Float
+  moodScore: Float
+  sleepScore: Float
+  recordedAt: String!
+}
+
+type CognitiveCheckIn {
+  id: ID!
+  protocolId: ID!
+  memoryScore: Float
+  focusScore: Float
+  processingSpeedScore: Float
+  moodScore: Float
+  sleepScore: Float
+  sideEffects: String
+  notes: String
+  recordedAt: String!
+}
+
+input AddProtocolInput {
+  name: String!
+  notes: String
+  targetAreas: [String!]
+  startDate: String
+}
+
+input AddSupplementInput {
+  name: String!
+  dosage: String!
+  frequency: String!
+  mechanism: String
+  targetAreas: [String!]
+  notes: String
+  url: String
+}
+
+input CognitiveScoresInput {
+  memoryScore: Float
+  focusScore: Float
+  processingSpeedScore: Float
+  moodScore: Float
+  sleepScore: Float
+}
+
+input CognitiveCheckInInput {
+  memoryScore: Float
+  focusScore: Float
+  processingSpeedScore: Float
+  moodScore: Float
+  sleepScore: Float
+  sideEffects: String
+  notes: String
+}
+
+type DeleteProtocolResult {
+  success: Boolean!
+}
+
+type DeleteSupplementResult {
+  success: Boolean!
+}
+
+# ============================================
+# Healthcare — Dashboard summary
+# ============================================
+
+type HealthcareSummary {
+  bloodTestsCount: Int!
+  conditionsCount: Int!
+  medicationsCount: Int!
+  symptomsCount: Int!
+  appointmentsCount: Int!
+  doctorsCount: Int!
+  memoryEntriesCount: Int!
+  protocolsCount: Int!
 }

@@ -1,0 +1,5 @@
+mutation DeleteSupplement($id: ID!) {
+  deleteSupplement(id: $id) {
+    success
+  }
+}

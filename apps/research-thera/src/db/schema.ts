@@ -1103,13 +1103,19 @@ export const allergies = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     userId: text("user_id").notNull(),
+    familyMemberId: integer("family_member_id").references(() => familyMembers.id, {
+      onDelete: "cascade",
+    }),
     kind: text("kind").notNull().default("allergy"),
     name: text("name").notNull(),
     severity: text("severity"),
     notes: text("notes"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [index("allergies_user_idx").on(table.userId)],
+  (table) => [
+    index("allergies_user_idx").on(table.userId),
+    index("allergies_family_idx").on(table.familyMemberId),
+  ],
 );
 
 export const allergyEmbeddings = pgTable(

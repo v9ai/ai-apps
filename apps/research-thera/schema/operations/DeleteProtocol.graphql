@@ -1,0 +1,5 @@
+mutation DeleteProtocol($id: ID!) {
+  deleteProtocol(id: $id) {
+    success
+  }
+}

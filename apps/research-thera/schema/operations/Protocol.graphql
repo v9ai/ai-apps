@@ -1,0 +1,48 @@
+query Protocol($slug: String!) {
+  protocol(slug: $slug) {
+    protocol {
+      id
+      name
+      slug
+      targetAreas
+      status
+      notes
+      startDate
+      endDate
+      supplementCount
+      createdAt
+      updatedAt
+    }
+    supplements {
+      id
+      name
+      dosage
+      frequency
+      mechanism
+      targetAreas
+      notes
+      url
+      createdAt
+    }
+    baseline {
+      id
+      memoryScore
+      focusScore
+      processingSpeedScore
+      moodScore
+      sleepScore
+      recordedAt
+    }
+    checkIns {
+      id
+      memoryScore
+      focusScore
+      processingSpeedScore
+      moodScore
+      sleepScore
+      sideEffects
+      notes
+      recordedAt
+    }
+  }
+}

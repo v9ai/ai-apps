@@ -1,0 +1,11 @@
+mutation RecordCognitiveBaseline($protocolId: ID!, $input: CognitiveScoresInput!) {
+  recordCognitiveBaseline(protocolId: $protocolId, input: $input) {
+    id
+    memoryScore
+    focusScore
+    processingSpeedScore
+    moodScore
+    sleepScore
+    recordedAt
+  }
+}

@@ -1,0 +1,12 @@
+query HealthcareSummary {
+  healthcareSummary {
+    bloodTestsCount
+    conditionsCount
+    medicationsCount
+    symptomsCount
+    appointmentsCount
+    doctorsCount
+    memoryEntriesCount
+    protocolsCount
+  }
+}

@@ -31,6 +31,20 @@ import {
   createAllergy as _createAllergy,
   deleteAllergy as _deleteAllergy,
   embedAllergy as _embedAllergy,
+  listProtocols as _listProtocols,
+  getProtocolBySlug as _getProtocolBySlug,
+  listSupplements as _listSupplements,
+  getCognitiveBaseline as _getCognitiveBaseline,
+  listCheckIns as _listCheckIns,
+  createProtocol as _createProtocol,
+  deleteProtocol as _deleteProtocol,
+  updateProtocolStatus as _updateProtocolStatus,
+  assertOwnsProtocol as _assertOwnsProtocol,
+  createSupplement as _createSupplement,
+  deleteSupplement as _deleteSupplement,
+  upsertCognitiveBaseline as _upsertCognitiveBaseline,
+  createCheckIn as _createCheckIn,
+  getHealthcareSummary as _getHealthcareSummary,
 } from "./healthcare";
 
 // Re-export healthcare functions so they're reachable as top-level exports
@@ -64,6 +78,20 @@ export {
   _createAllergy as createAllergy,
   _deleteAllergy as deleteAllergy,
   _embedAllergy as embedAllergy,
+  _listProtocols as listProtocols,
+  _getProtocolBySlug as getProtocolBySlug,
+  _listSupplements as listSupplements,
+  _getCognitiveBaseline as getCognitiveBaseline,
+  _listCheckIns as listCheckIns,
+  _createProtocol as createProtocol,
+  _deleteProtocol as deleteProtocol,
+  _updateProtocolStatus as updateProtocolStatus,
+  _assertOwnsProtocol as assertOwnsProtocol,
+  _createSupplement as createSupplement,
+  _deleteSupplement as deleteSupplement,
+  _upsertCognitiveBaseline as upsertCognitiveBaseline,
+  _createCheckIn as createCheckIn,
+  _getHealthcareSummary as getHealthcareSummary,
 };
 export type {
   Condition,
@@ -75,6 +103,11 @@ export type {
   MemoryBaseline,
   Allergy,
   AllergyKind,
+  Protocol,
+  ProtocolSupplement,
+  CognitiveBaseline,
+  CognitiveCheckIn,
+  HealthcareSummary,
 } from "./healthcare";
 
 /**
@@ -4269,5 +4302,21 @@ export const db = {
   createAllergy: _createAllergy,
   deleteAllergy: _deleteAllergy,
   embedAllergy: _embedAllergy,
+  // Healthcare — Protocols
+  listProtocols: _listProtocols,
+  getProtocolBySlug: _getProtocolBySlug,
+  listSupplements: _listSupplements,
+  getCognitiveBaseline: _getCognitiveBaseline,
+  listCheckIns: _listCheckIns,
+  createProtocol: _createProtocol,
+  deleteProtocol: _deleteProtocol,
+  updateProtocolStatus: _updateProtocolStatus,
+  assertOwnsProtocol: _assertOwnsProtocol,
+  createSupplement: _createSupplement,
+  deleteSupplement: _deleteSupplement,
+  upsertCognitiveBaseline: _upsertCognitiveBaseline,
+  createCheckIn: _createCheckIn,
+  // Healthcare — Dashboard summary
+  getHealthcareSummary: _getHealthcareSummary,
 };
 

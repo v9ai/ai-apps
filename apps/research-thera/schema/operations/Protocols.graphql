@@ -1,0 +1,14 @@
+query Protocols {
+  protocols {
+    id
+    name
+    slug
+    targetAreas
+    status
+    notes
+    startDate
+    endDate
+    supplementCount
+    createdAt
+  }
+}

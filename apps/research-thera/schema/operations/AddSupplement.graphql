@@ -1,0 +1,12 @@
+mutation AddSupplement($protocolId: ID!, $input: AddSupplementInput!) {
+  addSupplement(protocolId: $protocolId, input: $input) {
+    id
+    name
+    dosage
+    frequency
+    mechanism
+    notes
+    url
+    createdAt
+  }
+}

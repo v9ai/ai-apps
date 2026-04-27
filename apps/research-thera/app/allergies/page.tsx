@@ -103,6 +103,9 @@ function AllergiesContent() {
                   severity={a.severity ?? null}
                   notes={a.notes ?? null}
                   createdAt={a.createdAt}
+                  personLabel={
+                    a.familyMember?.firstName ?? a.familyMember?.name ?? null
+                  }
                 />
               ))}
             </Flex>
@@ -120,6 +123,7 @@ function AllergyCard({
   severity,
   notes,
   createdAt,
+  personLabel,
 }: {
   id: string;
   kind: AllergyKind;
@@ -127,6 +131,7 @@ function AllergyCard({
   severity: string | null;
   notes: string | null;
   createdAt: string;
+  personLabel: string | null;
 }) {
   const [deleteAllergy, { loading: deleting }] = useDeleteAllergyMutation({
     refetchQueries: [{ query: AllergiesDocument }],
@@ -139,6 +144,11 @@ function AllergyCard({
       <Flex justify="between" align="start" gap="2">
         <Flex direction="column" gap="2" style={{ flexGrow: 1, minWidth: 0 }}>
           <Flex align="center" gap="2" wrap="wrap">
+            {personLabel && (
+              <Badge color="cyan" variant="soft" size="1">
+                {personLabel}
+              </Badge>
+            )}
             <Text size="2" weight="medium">
               {name}
             </Text>

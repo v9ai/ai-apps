@@ -12,10 +12,18 @@ export const addAllergy: NonNullable<MutationResolvers['addAllergy']> = async (
   const name = args.input.name.trim();
   if (!name) throw new Error("Allergy name is required");
   const kind = args.input.kind;
+  const familyMemberId = args.input.familyMemberId ?? null;
   const severity = args.input.severity?.trim() || null;
   const notes = args.input.notes?.trim() || null;
 
-  const allergy = await db.createAllergy({ userId: userEmail, kind, name, severity, notes });
+  const allergy = await db.createAllergy({
+    userId: userEmail,
+    familyMemberId,
+    kind,
+    name,
+    severity,
+    notes,
+  });
 
   // Embedding is non-blocking — log and continue if it fails
   try {

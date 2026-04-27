@@ -1,0 +1,13 @@
+mutation RecordCognitiveCheckIn($protocolId: ID!, $input: CognitiveCheckInInput!) {
+  recordCognitiveCheckIn(protocolId: $protocolId, input: $input) {
+    id
+    memoryScore
+    focusScore
+    processingSpeedScore
+    moodScore
+    sleepScore
+    sideEffects
+    notes
+    recordedAt
+  }
+}

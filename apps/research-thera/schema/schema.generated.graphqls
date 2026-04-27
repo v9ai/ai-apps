@@ -7,6 +7,7 @@ type ActionableRecommendation {
 }
 
 input AddAllergyInput {
+  familyMemberId: Int
   kind: AllergyKind!
   name: String!
   notes: String
@@ -57,6 +58,23 @@ input AddMemoryEntryInput {
   workingMemoryScore: Float
 }
 
+input AddProtocolInput {
+  name: String!
+  notes: String
+  startDate: String
+  targetAreas: [String!]
+}
+
+input AddSupplementInput {
+  dosage: String!
+  frequency: String!
+  mechanism: String
+  name: String!
+  notes: String
+  targetAreas: [String!]
+  url: String
+}
+
 input AddSymptomInput {
   description: String!
   loggedAt: String
@@ -84,6 +102,8 @@ enum AffirmationCategory {
 
 type Allergy {
   createdAt: String!
+  familyMember: FamilyMember
+  familyMemberId: Int
   id: ID!
   kind: AllergyKind!
   name: String!
@@ -277,6 +297,48 @@ enum ClaimVerdict {
   MIXED
   SUPPORTED
   UNVERIFIED
+}
+
+type CognitiveBaseline {
+  focusScore: Float
+  id: ID!
+  memoryScore: Float
+  moodScore: Float
+  processingSpeedScore: Float
+  protocolId: ID!
+  recordedAt: String!
+  sleepScore: Float
+}
+
+type CognitiveCheckIn {
+  focusScore: Float
+  id: ID!
+  memoryScore: Float
+  moodScore: Float
+  notes: String
+  processingSpeedScore: Float
+  protocolId: ID!
+  recordedAt: String!
+  sideEffects: String
+  sleepScore: Float
+}
+
+input CognitiveCheckInInput {
+  focusScore: Float
+  memoryScore: Float
+  moodScore: Float
+  notes: String
+  processingSpeedScore: Float
+  sideEffects: String
+  sleepScore: Float
+}
+
+input CognitiveScoresInput {
+  focusScore: Float
+  memoryScore: Float
+  moodScore: Float
+  processingSpeedScore: Float
+  sleepScore: Float
 }
 
 type Condition {
@@ -666,6 +728,10 @@ type DeleteNoteResult {
   success: Boolean!
 }
 
+type DeleteProtocolResult {
+  success: Boolean!
+}
+
 type DeleteQuestionsResult {
   deletedCount: Int!
   message: String
@@ -696,6 +762,10 @@ type DeleteRoutineAnalysisResult {
 
 type DeleteStoryResult {
   message: String
+  success: Boolean!
+}
+
+type DeleteSupplementResult {
   success: Boolean!
 }
 
@@ -1115,6 +1185,17 @@ enum HabitStatus {
   PAUSED
 }
 
+type HealthcareSummary {
+  appointmentsCount: Int!
+  bloodTestsCount: Int!
+  conditionsCount: Int!
+  doctorsCount: Int!
+  medicationsCount: Int!
+  memoryEntriesCount: Int!
+  protocolsCount: Int!
+  symptomsCount: Int!
+}
+
 type Issue {
   category: String!
   contacts: [Contact!]!
@@ -1303,6 +1384,8 @@ type Mutation {
   addDoctor(input: AddDoctorInput!): Doctor!
   addMedication(input: AddMedicationInput!): Medication!
   addMemoryEntry(input: AddMemoryEntryInput!): MemoryEntry!
+  addProtocol(input: AddProtocolInput!): Protocol!
+  addSupplement(input: AddSupplementInput!, protocolId: ID!): ProtocolSupplement!
   addSymptom(input: AddSymptomInput!): Symptom!
   buildClaimCards(input: BuildClaimCardsInput!): BuildClaimCardsResult!
   checkNoteClaims(input: CheckNoteClaimsInput!): CheckNoteClaimsResult!
@@ -1349,11 +1432,13 @@ type Mutation {
   deleteMedication(id: ID!): DeleteMedicationResult!
   deleteMemoryEntry(id: ID!): DeleteMemoryEntryResult!
   deleteNote(id: Int!): DeleteNoteResult!
+  deleteProtocol(id: ID!): DeleteProtocolResult!
   deleteRecommendedBooks(goalId: Int, journalEntryId: Int): DeleteRecommendedBooksResult!
   deleteRelationship(id: Int!): DeleteRelationshipResult!
   deleteResearch(goalId: Int!): DeleteResearchResult!
   deleteRoutineAnalysis(id: Int!): DeleteRoutineAnalysisResult!
   deleteStory(id: Int!): DeleteStoryResult!
+  deleteSupplement(id: ID!): DeleteSupplementResult!
   deleteSymptom(id: ID!): DeleteSymptomResult!
   deleteTeacherFeedback(id: Int!): DeleteTeacherFeedbackResult!
   deleteTherapeuticQuestions(goalId: Int, issueId: Int, journalEntryId: Int): DeleteQuestionsResult!
@@ -1381,6 +1466,8 @@ type Mutation {
   logGameCompletion(input: LogGameCompletionInput!): GameCompletion!
   logHabit(count: Int, habitId: Int!, loggedDate: String!, notes: String): HabitLog!
   markTeacherFeedbackExtracted(id: Int!): TeacherFeedback!
+  recordCognitiveBaseline(input: CognitiveScoresInput!, protocolId: ID!): CognitiveBaseline!
+  recordCognitiveCheckIn(input: CognitiveCheckInInput!, protocolId: ID!): CognitiveCheckIn!
   refreshClaimCard(id: ID!): ClaimCard!
   sendConversationMessage(conversationId: Int!, message: String!): Conversation!
   setMemoryBaseline(input: SetMemoryBaselineInput!): MemoryBaseline!
@@ -1405,6 +1492,7 @@ type Mutation {
   updateIssue(id: Int!, input: UpdateIssueInput!): Issue!
   updateJournalEntry(id: Int!, input: UpdateJournalEntryInput!): JournalEntry!
   updateNote(id: Int!, input: UpdateNoteInput!): Note!
+  updateProtocolStatus(id: ID!, status: String!): Protocol!
   updateRelationship(id: Int!, input: UpdateRelationshipInput!): Relationship!
   updateStory(id: Int!, input: UpdateStoryInput!): Story!
   updateTeacherFeedback(id: Int!, input: UpdateTeacherFeedbackInput!): TeacherFeedback!
@@ -1554,6 +1642,41 @@ type PriorityRecommendation {
   urgency: String!
 }
 
+type Protocol {
+  createdAt: String!
+  endDate: String
+  id: ID!
+  name: String!
+  notes: String
+  slug: String!
+  startDate: String
+  status: String!
+  supplementCount: Int!
+  targetAreas: [String!]!
+  updatedAt: String!
+  userId: String!
+}
+
+type ProtocolDetail {
+  baseline: CognitiveBaseline
+  checkIns: [CognitiveCheckIn!]!
+  protocol: Protocol!
+  supplements: [ProtocolSupplement!]!
+}
+
+type ProtocolSupplement {
+  createdAt: String!
+  dosage: String!
+  frequency: String!
+  id: ID!
+  mechanism: String
+  name: String!
+  notes: String
+  protocolId: ID!
+  targetAreas: [String!]!
+  url: String
+}
+
 type PublicDiscussionGuideResult {
   entryTitle: String
   familyMemberName: String
@@ -1600,6 +1723,7 @@ type Query {
   goals(familyMemberId: Int, status: String, tag: String): [Goal!]!
   habit(id: Int!): Habit
   habits(familyMemberId: Int, status: String): [Habit!]!
+  healthcareSummary: HealthcareSummary!
   issue(id: Int!): Issue
   issues(familyMemberId: Int!, feedbackId: Int): [Issue!]!
   journalEntries(familyMemberId: Int, fromDate: String, goalId: Int, mood: String, tag: String, toDate: String): [JournalEntry!]!
@@ -1612,6 +1736,8 @@ type Query {
   mySharedNotes: [Note!]!
   note(id: Int, slug: String): Note
   notes(entityId: Int!, entityType: String!): [Note!]!
+  protocol(slug: String!): ProtocolDetail
+  protocols: [Protocol!]!
   publicDiscussionGuide(journalEntryId: Int!): PublicDiscussionGuideResult
   recommendedBooks(goalId: Int, journalEntryId: Int): [RecommendedBook!]!
   relationship(id: Int!): Relationship

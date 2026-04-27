@@ -61,6 +61,17 @@ def _name_key(first: str, last: str) -> tuple[str, str]:
     return (first.strip().lower(), last.strip().lower())
 
 
+def _sanitize_local(s: str) -> str:
+    """Reduce a name fragment to a safe email local-part: lowercase, strip
+    every char outside [a-z0-9._-], collapse repeated dots, trim leading/
+    trailing dots and dashes. Without this, multi-token names like
+    "Luis Morton" and "G. C." produce invalid addresses with embedded
+    spaces or double dots (see Durlston Partners incident, 2026-04-27)."""
+    s = re.sub(r"[^a-z0-9._-]+", "", s.lower())
+    s = re.sub(r"\.+", ".", s)
+    return s.strip(".-")
+
+
 def _has_unique_anchor(company_name: str) -> bool:
     """True if the name has at least one token of length >= 4 not in the
     stopword set. Without one, a paper search degrades into substring matches
@@ -70,7 +81,8 @@ def _has_unique_anchor(company_name: str) -> bool:
 
 
 def _email_guesses(first: str, last: str, domain: str) -> list[str]:
-    f, l = first.lower().strip(), last.lower().strip()
+    f = _sanitize_local(first)
+    l = _sanitize_local(last)
     if not f or not l or not domain:
         return []
     return [f"{f}.{l}@{domain}", f"{f}@{domain}", f"{f[0]}{l}@{domain}"]

@@ -1,10 +1,16 @@
 query Allergies {
   allergies {
     id
+    familyMemberId
     kind
     name
     severity
     notes
     createdAt
+    familyMember {
+      id
+      firstName
+      name
+    }
   }
 }

@@ -39,6 +39,7 @@ import    { goal as Query_goal } from './resolvers/Query/goal';
 import    { goals as Query_goals } from './resolvers/Query/goals';
 import    { habit as Query_habit } from './resolvers/Query/habit';
 import    { habits as Query_habits } from './resolvers/Query/habits';
+import    { healthcareSummary as Query_healthcareSummary } from './resolvers/Query/healthcareSummary';
 import    { issue as Query_issue } from './resolvers/Query/issue';
 import    { issues as Query_issues } from './resolvers/Query/issues';
 import    { journalEntries as Query_journalEntries } from './resolvers/Query/journalEntries';
@@ -51,6 +52,8 @@ import    { mySharedFamilyMembers as Query_mySharedFamilyMembers } from './resol
 import    { mySharedNotes as Query_mySharedNotes } from './resolvers/Query/mySharedNotes';
 import    { note as Query_note } from './resolvers/Query/note';
 import    { notes as Query_notes } from './resolvers/Query/notes';
+import    { protocol as Query_protocol } from './resolvers/Query/protocol';
+import    { protocols as Query_protocols } from './resolvers/Query/protocols';
 import    { publicDiscussionGuide as Query_publicDiscussionGuide } from './resolvers/Query/publicDiscussionGuide';
 import    { recommendedBooks as Query_recommendedBooks } from './resolvers/Query/recommendedBooks';
 import    { relationship as Query_relationship } from './resolvers/Query/relationship';
@@ -73,6 +76,8 @@ import    { addCondition as Mutation_addCondition } from './resolvers/Mutation/a
 import    { addDoctor as Mutation_addDoctor } from './resolvers/Mutation/addDoctor';
 import    { addMedication as Mutation_addMedication } from './resolvers/Mutation/addMedication';
 import    { addMemoryEntry as Mutation_addMemoryEntry } from './resolvers/Mutation/addMemoryEntry';
+import    { addProtocol as Mutation_addProtocol } from './resolvers/Mutation/addProtocol';
+import    { addSupplement as Mutation_addSupplement } from './resolvers/Mutation/addSupplement';
 import    { addSymptom as Mutation_addSymptom } from './resolvers/Mutation/addSymptom';
 import    { buildClaimCards as Mutation_buildClaimCards } from './resolvers/Mutation/buildClaimCards';
 import    { checkNoteClaims as Mutation_checkNoteClaims } from './resolvers/Mutation/checkNoteClaims';
@@ -119,11 +124,13 @@ import    { deleteJournalEntry as Mutation_deleteJournalEntry } from './resolver
 import    { deleteMedication as Mutation_deleteMedication } from './resolvers/Mutation/deleteMedication';
 import    { deleteMemoryEntry as Mutation_deleteMemoryEntry } from './resolvers/Mutation/deleteMemoryEntry';
 import    { deleteNote as Mutation_deleteNote } from './resolvers/Mutation/deleteNote';
+import    { deleteProtocol as Mutation_deleteProtocol } from './resolvers/Mutation/deleteProtocol';
 import    { deleteRecommendedBooks as Mutation_deleteRecommendedBooks } from './resolvers/Mutation/deleteRecommendedBooks';
 import    { deleteRelationship as Mutation_deleteRelationship } from './resolvers/Mutation/deleteRelationship';
 import    { deleteResearch as Mutation_deleteResearch } from './resolvers/Mutation/deleteResearch';
 import    { deleteRoutineAnalysis as Mutation_deleteRoutineAnalysis } from './resolvers/Mutation/deleteRoutineAnalysis';
 import    { deleteStory as Mutation_deleteStory } from './resolvers/Mutation/deleteStory';
+import    { deleteSupplement as Mutation_deleteSupplement } from './resolvers/Mutation/deleteSupplement';
 import    { deleteSymptom as Mutation_deleteSymptom } from './resolvers/Mutation/deleteSymptom';
 import    { deleteTeacherFeedback as Mutation_deleteTeacherFeedback } from './resolvers/Mutation/deleteTeacherFeedback';
 import    { deleteTherapeuticQuestions as Mutation_deleteTherapeuticQuestions } from './resolvers/Mutation/deleteTherapeuticQuestions';
@@ -151,6 +158,8 @@ import    { lockVault as Mutation_lockVault } from './resolvers/Mutation/lockVau
 import    { logGameCompletion as Mutation_logGameCompletion } from './resolvers/Mutation/logGameCompletion';
 import    { logHabit as Mutation_logHabit } from './resolvers/Mutation/logHabit';
 import    { markTeacherFeedbackExtracted as Mutation_markTeacherFeedbackExtracted } from './resolvers/Mutation/markTeacherFeedbackExtracted';
+import    { recordCognitiveBaseline as Mutation_recordCognitiveBaseline } from './resolvers/Mutation/recordCognitiveBaseline';
+import    { recordCognitiveCheckIn as Mutation_recordCognitiveCheckIn } from './resolvers/Mutation/recordCognitiveCheckIn';
 import    { refreshClaimCard as Mutation_refreshClaimCard } from './resolvers/Mutation/refreshClaimCard';
 import    { sendConversationMessage as Mutation_sendConversationMessage } from './resolvers/Mutation/sendConversationMessage';
 import    { setMemoryBaseline as Mutation_setMemoryBaseline } from './resolvers/Mutation/setMemoryBaseline';
@@ -175,6 +184,7 @@ import    { updateHabit as Mutation_updateHabit } from './resolvers/Mutation/upd
 import    { updateIssue as Mutation_updateIssue } from './resolvers/Mutation/updateIssue';
 import    { updateJournalEntry as Mutation_updateJournalEntry } from './resolvers/Mutation/updateJournalEntry';
 import    { updateNote as Mutation_updateNote } from './resolvers/Mutation/updateNote';
+import    { updateProtocolStatus as Mutation_updateProtocolStatus } from './resolvers/Mutation/updateProtocolStatus';
 import    { updateRelationship as Mutation_updateRelationship } from './resolvers/Mutation/updateRelationship';
 import    { updateStory as Mutation_updateStory } from './resolvers/Mutation/updateStory';
 import    { updateTeacherFeedback as Mutation_updateTeacherFeedback } from './resolvers/Mutation/updateTeacherFeedback';
@@ -199,6 +209,8 @@ import    { Citation } from './resolvers/Citation';
 import    { ClaimCard } from './resolvers/ClaimCard';
 import    { ClaimProvenance } from './resolvers/ClaimProvenance';
 import    { ClaimScope } from './resolvers/ClaimScope';
+import    { CognitiveBaseline } from './resolvers/CognitiveBaseline';
+import    { CognitiveCheckIn } from './resolvers/CognitiveCheckIn';
 import    { Condition } from './resolvers/Condition';
 import    { Contact } from './resolvers/Contact';
 import    { ContactFeedback } from './resolvers/ContactFeedback';
@@ -231,12 +243,14 @@ import    { DeleteJournalEntryResult } from './resolvers/DeleteJournalEntryResul
 import    { DeleteMedicationResult } from './resolvers/DeleteMedicationResult';
 import    { DeleteMemoryEntryResult } from './resolvers/DeleteMemoryEntryResult';
 import    { DeleteNoteResult } from './resolvers/DeleteNoteResult';
+import    { DeleteProtocolResult } from './resolvers/DeleteProtocolResult';
 import    { DeleteQuestionsResult } from './resolvers/DeleteQuestionsResult';
 import    { DeleteRecommendedBooksResult } from './resolvers/DeleteRecommendedBooksResult';
 import    { DeleteRelationshipResult } from './resolvers/DeleteRelationshipResult';
 import    { DeleteResearchResult } from './resolvers/DeleteResearchResult';
 import    { DeleteRoutineAnalysisResult } from './resolvers/DeleteRoutineAnalysisResult';
 import    { DeleteStoryResult } from './resolvers/DeleteStoryResult';
+import    { DeleteSupplementResult } from './resolvers/DeleteSupplementResult';
 import    { DeleteSymptomResult } from './resolvers/DeleteSymptomResult';
 import    { DeleteTeacherFeedbackResult } from './resolvers/DeleteTeacherFeedbackResult';
 import    { DevelopmentalContext } from './resolvers/DevelopmentalContext';
@@ -272,6 +286,7 @@ import    { Goal } from './resolvers/Goal';
 import    { Habit } from './resolvers/Habit';
 import    { HabitAdherence } from './resolvers/HabitAdherence';
 import    { HabitLog } from './resolvers/HabitLog';
+import    { HealthcareSummary } from './resolvers/HealthcareSummary';
 import    { Issue } from './resolvers/Issue';
 import    { IssueContactLink } from './resolvers/IssueContactLink';
 import    { IssueLink } from './resolvers/IssueLink';
@@ -294,6 +309,9 @@ import    { ParentAdviceItem } from './resolvers/ParentAdviceItem';
 import    { PatternCluster } from './resolvers/PatternCluster';
 import    { PipelineDiagnostics } from './resolvers/PipelineDiagnostics';
 import    { PriorityRecommendation } from './resolvers/PriorityRecommendation';
+import    { Protocol } from './resolvers/Protocol';
+import    { ProtocolDetail } from './resolvers/ProtocolDetail';
+import    { ProtocolSupplement } from './resolvers/ProtocolSupplement';
 import    { PublicDiscussionGuideResult } from './resolvers/PublicDiscussionGuideResult';
 import    { RecommendedBook } from './resolvers/RecommendedBook';
 import    { Relationship } from './resolvers/Relationship';
@@ -322,8 +340,8 @@ import    { UserSettings } from './resolvers/UserSettings';
 import    { VaultStatus } from './resolvers/VaultStatus';
 import    { VaultUnlockResult } from './resolvers/VaultUnlockResult';
     export const resolvers: Resolvers = {
-      Query: { affirmation: Query_affirmation,affirmations: Query_affirmations,allIssues: Query_allIssues,allNotes: Query_allNotes,allRecommendedBooks: Query_allRecommendedBooks,allStories: Query_allStories,allTags: Query_allTags,allergies: Query_allergies,appointments: Query_appointments,audioFromR2: Query_audioFromR2,behaviorObservation: Query_behaviorObservation,behaviorObservations: Query_behaviorObservations,bogdanDiscussions: Query_bogdanDiscussions,claimCard: Query_claimCard,claimCardsForNote: Query_claimCardsForNote,condition: Query_condition,conditions: Query_conditions,contact: Query_contact,contactFeedback: Query_contactFeedback,contactFeedbacks: Query_contactFeedbacks,contacts: Query_contacts,conversation: Query_conversation,conversationsForIssue: Query_conversationsForIssue,deepAnalyses: Query_deepAnalyses,deepAnalysis: Query_deepAnalysis,deepIssueAnalyses: Query_deepIssueAnalyses,deepIssueAnalysis: Query_deepIssueAnalysis,doctors: Query_doctors,familyMember: Query_familyMember,familyMembers: Query_familyMembers,game: Query_game,gameCompletions: Query_gameCompletions,games: Query_games,generationJob: Query_generationJob,generationJobs: Query_generationJobs,goal: Query_goal,goals: Query_goals,habit: Query_habit,habits: Query_habits,issue: Query_issue,issues: Query_issues,journalEntries: Query_journalEntries,journalEntry: Query_journalEntry,latestBogdanDiscussion: Query_latestBogdanDiscussion,medications: Query_medications,memoryBaseline: Query_memoryBaseline,memoryEntries: Query_memoryEntries,mySharedFamilyMembers: Query_mySharedFamilyMembers,mySharedNotes: Query_mySharedNotes,note: Query_note,notes: Query_notes,publicDiscussionGuide: Query_publicDiscussionGuide,recommendedBooks: Query_recommendedBooks,relationship: Query_relationship,relationships: Query_relationships,research: Query_research,routineAnalyses: Query_routineAnalyses,routineAnalysis: Query_routineAnalysis,stories: Query_stories,story: Query_story,symptoms: Query_symptoms,tagLanguage: Query_tagLanguage,teacherFeedback: Query_teacherFeedback,teacherFeedbacks: Query_teacherFeedbacks,therapeuticQuestions: Query_therapeuticQuestions,userSettings: Query_userSettings,vaultStatus: Query_vaultStatus },
-      Mutation: { addAllergy: Mutation_addAllergy,addAppointment: Mutation_addAppointment,addCondition: Mutation_addCondition,addDoctor: Mutation_addDoctor,addMedication: Mutation_addMedication,addMemoryEntry: Mutation_addMemoryEntry,addSymptom: Mutation_addSymptom,buildClaimCards: Mutation_buildClaimCards,checkNoteClaims: Mutation_checkNoteClaims,convertIssueToGoal: Mutation_convertIssueToGoal,convertJournalEntryToIssue: Mutation_convertJournalEntryToIssue,createAffirmation: Mutation_createAffirmation,createContact: Mutation_createContact,createContactFeedback: Mutation_createContactFeedback,createConversation: Mutation_createConversation,createFamilyMember: Mutation_createFamilyMember,createGame: Mutation_createGame,createGoal: Mutation_createGoal,createHabit: Mutation_createHabit,createIssue: Mutation_createIssue,createJournalEntry: Mutation_createJournalEntry,createNote: Mutation_createNote,createRelatedIssue: Mutation_createRelatedIssue,createRelationship: Mutation_createRelationship,createStory: Mutation_createStory,createSubGoal: Mutation_createSubGoal,createTeacherFeedback: Mutation_createTeacherFeedback,deleteAffirmation: Mutation_deleteAffirmation,deleteAllergy: Mutation_deleteAllergy,deleteAppointment: Mutation_deleteAppointment,deleteBehaviorObservation: Mutation_deleteBehaviorObservation,deleteClaimCard: Mutation_deleteClaimCard,deleteCondition: Mutation_deleteCondition,deleteContact: Mutation_deleteContact,deleteContactFeedback: Mutation_deleteContactFeedback,deleteConversation: Mutation_deleteConversation,deleteDeepAnalysis: Mutation_deleteDeepAnalysis,deleteDeepIssueAnalysis: Mutation_deleteDeepIssueAnalysis,deleteDiscussionGuide: Mutation_deleteDiscussionGuide,deleteDoctor: Mutation_deleteDoctor,deleteFamilyMember: Mutation_deleteFamilyMember,deleteGame: Mutation_deleteGame,deleteGoal: Mutation_deleteGoal,deleteHabit: Mutation_deleteHabit,deleteHabitLog: Mutation_deleteHabitLog,deleteIssue: Mutation_deleteIssue,deleteIssueScreenshot: Mutation_deleteIssueScreenshot,deleteJournalAnalysis: Mutation_deleteJournalAnalysis,deleteJournalEntry: Mutation_deleteJournalEntry,deleteMedication: Mutation_deleteMedication,deleteMemoryEntry: Mutation_deleteMemoryEntry,deleteNote: Mutation_deleteNote,deleteRecommendedBooks: Mutation_deleteRecommendedBooks,deleteRelationship: Mutation_deleteRelationship,deleteResearch: Mutation_deleteResearch,deleteRoutineAnalysis: Mutation_deleteRoutineAnalysis,deleteStory: Mutation_deleteStory,deleteSymptom: Mutation_deleteSymptom,deleteTeacherFeedback: Mutation_deleteTeacherFeedback,deleteTherapeuticQuestions: Mutation_deleteTherapeuticQuestions,extractContactFeedbackIssues: Mutation_extractContactFeedbackIssues,generateAffirmationsForFamilyMember: Mutation_generateAffirmationsForFamilyMember,generateAudio: Mutation_generateAudio,generateBogdanDiscussion: Mutation_generateBogdanDiscussion,generateDeepAnalysis: Mutation_generateDeepAnalysis,generateDeepIssueAnalysis: Mutation_generateDeepIssueAnalysis,generateDiscussionGuide: Mutation_generateDiscussionGuide,generateGame: Mutation_generateGame,generateHabitsForFamilyMember: Mutation_generateHabitsForFamilyMember,generateHabitsFromIssue: Mutation_generateHabitsFromIssue,generateJournalAnalysis: Mutation_generateJournalAnalysis,generateLongFormText: Mutation_generateLongFormText,generateOpenAIAudio: Mutation_generateOpenAIAudio,generateParentAdvice: Mutation_generateParentAdvice,generateRecommendedBooks: Mutation_generateRecommendedBooks,generateResearch: Mutation_generateResearch,generateRoutineAnalysis: Mutation_generateRoutineAnalysis,generateTherapeuticQuestions: Mutation_generateTherapeuticQuestions,linkContactToIssue: Mutation_linkContactToIssue,linkIssues: Mutation_linkIssues,lockVault: Mutation_lockVault,logGameCompletion: Mutation_logGameCompletion,logHabit: Mutation_logHabit,markTeacherFeedbackExtracted: Mutation_markTeacherFeedbackExtracted,refreshClaimCard: Mutation_refreshClaimCard,sendConversationMessage: Mutation_sendConversationMessage,setMemoryBaseline: Mutation_setMemoryBaseline,setNoteVisibility: Mutation_setNoteVisibility,setTagLanguage: Mutation_setTagLanguage,shareFamilyMember: Mutation_shareFamilyMember,shareNote: Mutation_shareNote,unlinkContactFromIssue: Mutation_unlinkContactFromIssue,unlinkGoalFamilyMember: Mutation_unlinkGoalFamilyMember,unlinkIssues: Mutation_unlinkIssues,unlockVault: Mutation_unlockVault,unshareFamilyMember: Mutation_unshareFamilyMember,unshareNote: Mutation_unshareNote,updateAffirmation: Mutation_updateAffirmation,updateBehaviorObservation: Mutation_updateBehaviorObservation,updateContact: Mutation_updateContact,updateContactFeedback: Mutation_updateContactFeedback,updateFamilyMember: Mutation_updateFamilyMember,updateGame: Mutation_updateGame,updateGoal: Mutation_updateGoal,updateHabit: Mutation_updateHabit,updateIssue: Mutation_updateIssue,updateJournalEntry: Mutation_updateJournalEntry,updateNote: Mutation_updateNote,updateRelationship: Mutation_updateRelationship,updateStory: Mutation_updateStory,updateTeacherFeedback: Mutation_updateTeacherFeedback,updateUserSettings: Mutation_updateUserSettings },
+      Query: { affirmation: Query_affirmation,affirmations: Query_affirmations,allIssues: Query_allIssues,allNotes: Query_allNotes,allRecommendedBooks: Query_allRecommendedBooks,allStories: Query_allStories,allTags: Query_allTags,allergies: Query_allergies,appointments: Query_appointments,audioFromR2: Query_audioFromR2,behaviorObservation: Query_behaviorObservation,behaviorObservations: Query_behaviorObservations,bogdanDiscussions: Query_bogdanDiscussions,claimCard: Query_claimCard,claimCardsForNote: Query_claimCardsForNote,condition: Query_condition,conditions: Query_conditions,contact: Query_contact,contactFeedback: Query_contactFeedback,contactFeedbacks: Query_contactFeedbacks,contacts: Query_contacts,conversation: Query_conversation,conversationsForIssue: Query_conversationsForIssue,deepAnalyses: Query_deepAnalyses,deepAnalysis: Query_deepAnalysis,deepIssueAnalyses: Query_deepIssueAnalyses,deepIssueAnalysis: Query_deepIssueAnalysis,doctors: Query_doctors,familyMember: Query_familyMember,familyMembers: Query_familyMembers,game: Query_game,gameCompletions: Query_gameCompletions,games: Query_games,generationJob: Query_generationJob,generationJobs: Query_generationJobs,goal: Query_goal,goals: Query_goals,habit: Query_habit,habits: Query_habits,healthcareSummary: Query_healthcareSummary,issue: Query_issue,issues: Query_issues,journalEntries: Query_journalEntries,journalEntry: Query_journalEntry,latestBogdanDiscussion: Query_latestBogdanDiscussion,medications: Query_medications,memoryBaseline: Query_memoryBaseline,memoryEntries: Query_memoryEntries,mySharedFamilyMembers: Query_mySharedFamilyMembers,mySharedNotes: Query_mySharedNotes,note: Query_note,notes: Query_notes,protocol: Query_protocol,protocols: Query_protocols,publicDiscussionGuide: Query_publicDiscussionGuide,recommendedBooks: Query_recommendedBooks,relationship: Query_relationship,relationships: Query_relationships,research: Query_research,routineAnalyses: Query_routineAnalyses,routineAnalysis: Query_routineAnalysis,stories: Query_stories,story: Query_story,symptoms: Query_symptoms,tagLanguage: Query_tagLanguage,teacherFeedback: Query_teacherFeedback,teacherFeedbacks: Query_teacherFeedbacks,therapeuticQuestions: Query_therapeuticQuestions,userSettings: Query_userSettings,vaultStatus: Query_vaultStatus },
+      Mutation: { addAllergy: Mutation_addAllergy,addAppointment: Mutation_addAppointment,addCondition: Mutation_addCondition,addDoctor: Mutation_addDoctor,addMedication: Mutation_addMedication,addMemoryEntry: Mutation_addMemoryEntry,addProtocol: Mutation_addProtocol,addSupplement: Mutation_addSupplement,addSymptom: Mutation_addSymptom,buildClaimCards: Mutation_buildClaimCards,checkNoteClaims: Mutation_checkNoteClaims,convertIssueToGoal: Mutation_convertIssueToGoal,convertJournalEntryToIssue: Mutation_convertJournalEntryToIssue,createAffirmation: Mutation_createAffirmation,createContact: Mutation_createContact,createContactFeedback: Mutation_createContactFeedback,createConversation: Mutation_createConversation,createFamilyMember: Mutation_createFamilyMember,createGame: Mutation_createGame,createGoal: Mutation_createGoal,createHabit: Mutation_createHabit,createIssue: Mutation_createIssue,createJournalEntry: Mutation_createJournalEntry,createNote: Mutation_createNote,createRelatedIssue: Mutation_createRelatedIssue,createRelationship: Mutation_createRelationship,createStory: Mutation_createStory,createSubGoal: Mutation_createSubGoal,createTeacherFeedback: Mutation_createTeacherFeedback,deleteAffirmation: Mutation_deleteAffirmation,deleteAllergy: Mutation_deleteAllergy,deleteAppointment: Mutation_deleteAppointment,deleteBehaviorObservation: Mutation_deleteBehaviorObservation,deleteClaimCard: Mutation_deleteClaimCard,deleteCondition: Mutation_deleteCondition,deleteContact: Mutation_deleteContact,deleteContactFeedback: Mutation_deleteContactFeedback,deleteConversation: Mutation_deleteConversation,deleteDeepAnalysis: Mutation_deleteDeepAnalysis,deleteDeepIssueAnalysis: Mutation_deleteDeepIssueAnalysis,deleteDiscussionGuide: Mutation_deleteDiscussionGuide,deleteDoctor: Mutation_deleteDoctor,deleteFamilyMember: Mutation_deleteFamilyMember,deleteGame: Mutation_deleteGame,deleteGoal: Mutation_deleteGoal,deleteHabit: Mutation_deleteHabit,deleteHabitLog: Mutation_deleteHabitLog,deleteIssue: Mutation_deleteIssue,deleteIssueScreenshot: Mutation_deleteIssueScreenshot,deleteJournalAnalysis: Mutation_deleteJournalAnalysis,deleteJournalEntry: Mutation_deleteJournalEntry,deleteMedication: Mutation_deleteMedication,deleteMemoryEntry: Mutation_deleteMemoryEntry,deleteNote: Mutation_deleteNote,deleteProtocol: Mutation_deleteProtocol,deleteRecommendedBooks: Mutation_deleteRecommendedBooks,deleteRelationship: Mutation_deleteRelationship,deleteResearch: Mutation_deleteResearch,deleteRoutineAnalysis: Mutation_deleteRoutineAnalysis,deleteStory: Mutation_deleteStory,deleteSupplement: Mutation_deleteSupplement,deleteSymptom: Mutation_deleteSymptom,deleteTeacherFeedback: Mutation_deleteTeacherFeedback,deleteTherapeuticQuestions: Mutation_deleteTherapeuticQuestions,extractContactFeedbackIssues: Mutation_extractContactFeedbackIssues,generateAffirmationsForFamilyMember: Mutation_generateAffirmationsForFamilyMember,generateAudio: Mutation_generateAudio,generateBogdanDiscussion: Mutation_generateBogdanDiscussion,generateDeepAnalysis: Mutation_generateDeepAnalysis,generateDeepIssueAnalysis: Mutation_generateDeepIssueAnalysis,generateDiscussionGuide: Mutation_generateDiscussionGuide,generateGame: Mutation_generateGame,generateHabitsForFamilyMember: Mutation_generateHabitsForFamilyMember,generateHabitsFromIssue: Mutation_generateHabitsFromIssue,generateJournalAnalysis: Mutation_generateJournalAnalysis,generateLongFormText: Mutation_generateLongFormText,generateOpenAIAudio: Mutation_generateOpenAIAudio,generateParentAdvice: Mutation_generateParentAdvice,generateRecommendedBooks: Mutation_generateRecommendedBooks,generateResearch: Mutation_generateResearch,generateRoutineAnalysis: Mutation_generateRoutineAnalysis,generateTherapeuticQuestions: Mutation_generateTherapeuticQuestions,linkContactToIssue: Mutation_linkContactToIssue,linkIssues: Mutation_linkIssues,lockVault: Mutation_lockVault,logGameCompletion: Mutation_logGameCompletion,logHabit: Mutation_logHabit,markTeacherFeedbackExtracted: Mutation_markTeacherFeedbackExtracted,recordCognitiveBaseline: Mutation_recordCognitiveBaseline,recordCognitiveCheckIn: Mutation_recordCognitiveCheckIn,refreshClaimCard: Mutation_refreshClaimCard,sendConversationMessage: Mutation_sendConversationMessage,setMemoryBaseline: Mutation_setMemoryBaseline,setNoteVisibility: Mutation_setNoteVisibility,setTagLanguage: Mutation_setTagLanguage,shareFamilyMember: Mutation_shareFamilyMember,shareNote: Mutation_shareNote,unlinkContactFromIssue: Mutation_unlinkContactFromIssue,unlinkGoalFamilyMember: Mutation_unlinkGoalFamilyMember,unlinkIssues: Mutation_unlinkIssues,unlockVault: Mutation_unlockVault,unshareFamilyMember: Mutation_unshareFamilyMember,unshareNote: Mutation_unshareNote,updateAffirmation: Mutation_updateAffirmation,updateBehaviorObservation: Mutation_updateBehaviorObservation,updateContact: Mutation_updateContact,updateContactFeedback: Mutation_updateContactFeedback,updateFamilyMember: Mutation_updateFamilyMember,updateGame: Mutation_updateGame,updateGoal: Mutation_updateGoal,updateHabit: Mutation_updateHabit,updateIssue: Mutation_updateIssue,updateJournalEntry: Mutation_updateJournalEntry,updateNote: Mutation_updateNote,updateProtocolStatus: Mutation_updateProtocolStatus,updateRelationship: Mutation_updateRelationship,updateStory: Mutation_updateStory,updateTeacherFeedback: Mutation_updateTeacherFeedback,updateUserSettings: Mutation_updateUserSettings },
       Subscription: { audioJobStatus: Subscription_audioJobStatus,researchJobStatus: Subscription_researchJobStatus },
       ActionableRecommendation: ActionableRecommendation,
 Affirmation: Affirmation,
@@ -343,6 +361,8 @@ Citation: Citation,
 ClaimCard: ClaimCard,
 ClaimProvenance: ClaimProvenance,
 ClaimScope: ClaimScope,
+CognitiveBaseline: CognitiveBaseline,
+CognitiveCheckIn: CognitiveCheckIn,
 Condition: Condition,
 Contact: Contact,
 ContactFeedback: ContactFeedback,
@@ -375,12 +395,14 @@ DeleteJournalEntryResult: DeleteJournalEntryResult,
 DeleteMedicationResult: DeleteMedicationResult,
 DeleteMemoryEntryResult: DeleteMemoryEntryResult,
 DeleteNoteResult: DeleteNoteResult,
+DeleteProtocolResult: DeleteProtocolResult,
 DeleteQuestionsResult: DeleteQuestionsResult,
 DeleteRecommendedBooksResult: DeleteRecommendedBooksResult,
 DeleteRelationshipResult: DeleteRelationshipResult,
 DeleteResearchResult: DeleteResearchResult,
 DeleteRoutineAnalysisResult: DeleteRoutineAnalysisResult,
 DeleteStoryResult: DeleteStoryResult,
+DeleteSupplementResult: DeleteSupplementResult,
 DeleteSymptomResult: DeleteSymptomResult,
 DeleteTeacherFeedbackResult: DeleteTeacherFeedbackResult,
 DevelopmentalContext: DevelopmentalContext,
@@ -416,6 +438,7 @@ Goal: Goal,
 Habit: Habit,
 HabitAdherence: HabitAdherence,
 HabitLog: HabitLog,
+HealthcareSummary: HealthcareSummary,
 Issue: Issue,
 IssueContactLink: IssueContactLink,
 IssueLink: IssueLink,
@@ -438,6 +461,9 @@ ParentAdviceItem: ParentAdviceItem,
 PatternCluster: PatternCluster,
 PipelineDiagnostics: PipelineDiagnostics,
 PriorityRecommendation: PriorityRecommendation,
+Protocol: Protocol,
+ProtocolDetail: ProtocolDetail,
+ProtocolSupplement: ProtocolSupplement,
 PublicDiscussionGuideResult: PublicDiscussionGuideResult,
 RecommendedBook: RecommendedBook,
 Relationship: Relationship,

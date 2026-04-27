@@ -14,13 +14,17 @@ import {
   useAddAllergyMutation,
   AllergiesDocument,
   AllergyKind,
+  useGetFamilyMembersQuery,
 } from "../__generated__/hooks";
 
 export function AddAllergyForm() {
   const formRef = useRef<HTMLFormElement>(null);
+  const [familyMemberId, setFamilyMemberId] = useState<string>("none");
   const [kind, setKind] = useState<AllergyKind>(AllergyKind.Allergy);
   const [severity, setSeverity] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
+  const { data: famData } = useGetFamilyMembersQuery();
+  const familyMembers = famData?.familyMembers ?? [];
   const [addAllergy, { loading }] = useAddAllergyMutation({
     refetchQueries: [{ query: AllergiesDocument }],
   });
@@ -38,6 +42,8 @@ export function AddAllergyForm() {
       await addAllergy({
         variables: {
           input: {
+            familyMemberId:
+              familyMemberId === "none" ? null : Number(familyMemberId),
             kind,
             name,
             severity: severity || null,
@@ -48,6 +54,7 @@ export function AddAllergyForm() {
       form.reset();
       setKind(AllergyKind.Allergy);
       setSeverity("");
+      setFamilyMemberId("none");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to add entry");
     }
@@ -57,6 +64,26 @@ export function AddAllergyForm() {
     <form ref={formRef} onSubmit={handleSubmit}>
       <Flex direction="column" gap="3">
         <Flex gap="3" wrap="wrap">
+          <Flex direction="column" gap="1" style={{ minWidth: 160 }}>
+            <Text size="2" color="gray">
+              Person
+            </Text>
+            <Select.Root
+              value={familyMemberId}
+              onValueChange={setFamilyMemberId}
+            >
+              <Select.Trigger placeholder="—" />
+              <Select.Content>
+                <Select.Item value="none">— Unassigned —</Select.Item>
+                {familyMembers.map((fm) => (
+                  <Select.Item key={fm.id} value={String(fm.id)}>
+                    {fm.firstName}
+                    {fm.name ? ` (${fm.name})` : ""}
+                  </Select.Item>
+                ))}
+              </Select.Content>
+            </Select.Root>
+          </Flex>
           <Flex direction="column" gap="1" style={{ minWidth: 160 }}>
             <Text size="2" color="gray">
               Type

@@ -1,0 +1,7 @@
+mutation UpdateProtocolStatus($id: ID!, $status: String!) {
+  updateProtocolStatus(id: $id, status: $status) {
+    id
+    status
+    updatedAt
+  }
+}

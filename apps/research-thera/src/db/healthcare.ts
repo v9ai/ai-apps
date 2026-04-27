@@ -30,6 +30,48 @@ function vec(arr: number[]): string {
 }
 
 // ────────────────────────────────────────────────────────────────────
+// Dashboard summary — single round-trip count for all categories
+// ────────────────────────────────────────────────────────────────────
+
+export type HealthcareSummary = {
+  bloodTestsCount: number;
+  conditionsCount: number;
+  medicationsCount: number;
+  symptomsCount: number;
+  appointmentsCount: number;
+  doctorsCount: number;
+  memoryEntriesCount: number;
+  protocolsCount: number;
+};
+
+export async function getHealthcareSummary(
+  userId: string,
+): Promise<HealthcareSummary> {
+  const rows = await neonSql`
+    SELECT
+      (SELECT COUNT(*)::int FROM blood_tests WHERE user_id = ${userId}) AS blood_tests_count,
+      (SELECT COUNT(*)::int FROM conditions WHERE user_id = ${userId}) AS conditions_count,
+      (SELECT COUNT(*)::int FROM medications WHERE user_id = ${userId}) AS medications_count,
+      (SELECT COUNT(*)::int FROM symptoms WHERE user_id = ${userId}) AS symptoms_count,
+      (SELECT COUNT(*)::int FROM appointments WHERE user_id = ${userId}) AS appointments_count,
+      (SELECT COUNT(*)::int FROM doctors WHERE user_id = ${userId}) AS doctors_count,
+      (SELECT COUNT(*)::int FROM memory_entries WHERE user_id = ${userId}) AS memory_entries_count,
+      (SELECT COUNT(*)::int FROM brain_health_protocols WHERE user_id = ${userId}) AS protocols_count
+  `;
+  const r = rows[0];
+  return {
+    bloodTestsCount: Number(r.blood_tests_count ?? 0),
+    conditionsCount: Number(r.conditions_count ?? 0),
+    medicationsCount: Number(r.medications_count ?? 0),
+    symptomsCount: Number(r.symptoms_count ?? 0),
+    appointmentsCount: Number(r.appointments_count ?? 0),
+    doctorsCount: Number(r.doctors_count ?? 0),
+    memoryEntriesCount: Number(r.memory_entries_count ?? 0),
+    protocolsCount: Number(r.protocols_count ?? 0),
+  };
+}
+
+// ────────────────────────────────────────────────────────────────────
 // Conditions
 // ────────────────────────────────────────────────────────────────────
 
@@ -326,6 +368,7 @@ export type AllergyKind = "allergy" | "intolerance";
 export type Allergy = {
   id: string;
   userId: string;
+  familyMemberId: number | null;
   kind: AllergyKind;
   name: string;
   severity: string | null;
@@ -337,6 +380,8 @@ function toAllergy(r: Record<string, unknown>): Allergy {
   return {
     id: r.id as string,
     userId: r.user_id as string,
+    familyMemberId:
+      r.family_member_id == null ? null : Number(r.family_member_id),
     kind: ((r.kind as string) === "intolerance" ? "intolerance" : "allergy"),
     name: r.name as string,
     severity: (r.severity as string | null) ?? null,
@@ -350,7 +395,7 @@ function toAllergy(r: Record<string, unknown>): Allergy {
 
 export async function listAllergies(userId: string): Promise<Allergy[]> {
   const rows = await neonSql`
-    SELECT id, user_id, kind, name, severity, notes, created_at
+    SELECT id, user_id, family_member_id, kind, name, severity, notes, created_at
     FROM allergies
     WHERE user_id = ${userId}
     ORDER BY created_at DESC
@@ -360,15 +405,16 @@ export async function listAllergies(userId: string): Promise<Allergy[]> {
 
 export async function createAllergy(params: {
   userId: string;
+  familyMemberId: number | null;
   kind: AllergyKind;
   name: string;
   severity: string | null;
   notes: string | null;
 }): Promise<Allergy> {
   const rows = await neonSql`
-    INSERT INTO allergies (user_id, kind, name, severity, notes)
-    VALUES (${params.userId}, ${params.kind}, ${params.name}, ${params.severity}, ${params.notes})
-    RETURNING id, user_id, kind, name, severity, notes, created_at
+    INSERT INTO allergies (user_id, family_member_id, kind, name, severity, notes)
+    VALUES (${params.userId}, ${params.familyMemberId}, ${params.kind}, ${params.name}, ${params.severity}, ${params.notes})
+    RETURNING id, user_id, family_member_id, kind, name, severity, notes, created_at
   `;
   return toAllergy(rows[0]);
 }
@@ -751,4 +797,370 @@ export async function upsertMemoryBaseline(params: {
               working_memory_score, recall_speed, recorded_at
   `;
   return toMemoryBaseline(rows[0]);
+}
+
+// ────────────────────────────────────────────────────────────────────
+// Brain Health Protocols
+// ────────────────────────────────────────────────────────────────────
+
+export type Protocol = {
+  id: string;
+  userId: string;
+  name: string;
+  slug: string;
+  targetAreas: string[];
+  status: string;
+  notes: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  supplementCount: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ProtocolSupplement = {
+  id: string;
+  protocolId: string;
+  name: string;
+  dosage: string;
+  frequency: string;
+  mechanism: string | null;
+  targetAreas: string[];
+  notes: string | null;
+  url: string | null;
+  createdAt: string;
+};
+
+export type CognitiveBaseline = {
+  id: string;
+  protocolId: string;
+  memoryScore: number | null;
+  focusScore: number | null;
+  processingSpeedScore: number | null;
+  moodScore: number | null;
+  sleepScore: number | null;
+  recordedAt: string;
+};
+
+export type CognitiveCheckIn = {
+  id: string;
+  protocolId: string;
+  memoryScore: number | null;
+  focusScore: number | null;
+  processingSpeedScore: number | null;
+  moodScore: number | null;
+  sleepScore: number | null;
+  sideEffects: string | null;
+  notes: string | null;
+  recordedAt: string;
+};
+
+function toProtocol(r: Record<string, unknown>): Protocol {
+  return {
+    id: r.id as string,
+    userId: r.user_id as string,
+    name: r.name as string,
+    slug: r.slug as string,
+    targetAreas: Array.isArray(r.target_areas)
+      ? (r.target_areas as string[])
+      : [],
+    status: r.status as string,
+    notes: (r.notes as string | null) ?? null,
+    startDate:
+      r.start_date instanceof Date
+        ? r.start_date.toISOString().slice(0, 10)
+        : (r.start_date as string | null) ?? null,
+    endDate:
+      r.end_date instanceof Date
+        ? r.end_date.toISOString().slice(0, 10)
+        : (r.end_date as string | null) ?? null,
+    supplementCount:
+      r.supplement_count == null ? 0 : Number(r.supplement_count),
+    createdAt:
+      r.created_at instanceof Date
+        ? r.created_at.toISOString()
+        : (r.created_at as string),
+    updatedAt:
+      r.updated_at instanceof Date
+        ? r.updated_at.toISOString()
+        : (r.updated_at as string),
+  };
+}
+
+function toSupplement(r: Record<string, unknown>): ProtocolSupplement {
+  return {
+    id: r.id as string,
+    protocolId: r.protocol_id as string,
+    name: r.name as string,
+    dosage: r.dosage as string,
+    frequency: r.frequency as string,
+    mechanism: (r.mechanism as string | null) ?? null,
+    targetAreas: Array.isArray(r.target_areas)
+      ? (r.target_areas as string[])
+      : [],
+    notes: (r.notes as string | null) ?? null,
+    url: (r.url as string | null) ?? null,
+    createdAt:
+      r.created_at instanceof Date
+        ? r.created_at.toISOString()
+        : (r.created_at as string),
+  };
+}
+
+function toCognitiveBaseline(r: Record<string, unknown>): CognitiveBaseline {
+  const num = (k: string) =>
+    r[k] == null ? null : Number(r[k] as number | string);
+  return {
+    id: r.id as string,
+    protocolId: r.protocol_id as string,
+    memoryScore: num("memory_score"),
+    focusScore: num("focus_score"),
+    processingSpeedScore: num("processing_speed_score"),
+    moodScore: num("mood_score"),
+    sleepScore: num("sleep_score"),
+    recordedAt:
+      r.recorded_at instanceof Date
+        ? r.recorded_at.toISOString()
+        : (r.recorded_at as string),
+  };
+}
+
+function toCheckIn(r: Record<string, unknown>): CognitiveCheckIn {
+  const num = (k: string) =>
+    r[k] == null ? null : Number(r[k] as number | string);
+  return {
+    id: r.id as string,
+    protocolId: r.protocol_id as string,
+    memoryScore: num("memory_score"),
+    focusScore: num("focus_score"),
+    processingSpeedScore: num("processing_speed_score"),
+    moodScore: num("mood_score"),
+    sleepScore: num("sleep_score"),
+    sideEffects: (r.side_effects as string | null) ?? null,
+    notes: (r.notes as string | null) ?? null,
+    recordedAt:
+      r.recorded_at instanceof Date
+        ? r.recorded_at.toISOString()
+        : (r.recorded_at as string),
+  };
+}
+
+function toSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+export async function listProtocols(userId: string): Promise<Protocol[]> {
+  const rows = await neonSql`
+    SELECT p.id, p.user_id, p.name, p.slug, p.target_areas, p.status, p.notes,
+           p.start_date, p.end_date, p.created_at, p.updated_at,
+           COALESCE(s.cnt, 0) AS supplement_count
+    FROM brain_health_protocols p
+    LEFT JOIN (
+      SELECT protocol_id, COUNT(*)::int AS cnt
+      FROM protocol_supplements
+      GROUP BY protocol_id
+    ) s ON s.protocol_id = p.id
+    WHERE p.user_id = ${userId}
+    ORDER BY p.created_at DESC
+  `;
+  return rows.map(toProtocol);
+}
+
+export async function getProtocolBySlug(
+  slug: string,
+  userId: string,
+): Promise<Protocol | null> {
+  const rows = await neonSql`
+    SELECT p.id, p.user_id, p.name, p.slug, p.target_areas, p.status, p.notes,
+           p.start_date, p.end_date, p.created_at, p.updated_at,
+           COALESCE(s.cnt, 0) AS supplement_count
+    FROM brain_health_protocols p
+    LEFT JOIN (
+      SELECT protocol_id, COUNT(*)::int AS cnt
+      FROM protocol_supplements
+      GROUP BY protocol_id
+    ) s ON s.protocol_id = p.id
+    WHERE p.slug = ${slug} AND p.user_id = ${userId}
+    LIMIT 1
+  `;
+  return rows[0] ? toProtocol(rows[0]) : null;
+}
+
+export async function listSupplements(
+  protocolId: string,
+): Promise<ProtocolSupplement[]> {
+  const rows = await neonSql`
+    SELECT id, protocol_id, name, dosage, frequency, mechanism, target_areas, notes, url, created_at
+    FROM protocol_supplements
+    WHERE protocol_id = ${protocolId}
+    ORDER BY created_at ASC
+  `;
+  return rows.map(toSupplement);
+}
+
+export async function getCognitiveBaseline(
+  protocolId: string,
+): Promise<CognitiveBaseline | null> {
+  const rows = await neonSql`
+    SELECT id, protocol_id, memory_score, focus_score, processing_speed_score,
+           mood_score, sleep_score, recorded_at
+    FROM cognitive_baselines
+    WHERE protocol_id = ${protocolId}
+    LIMIT 1
+  `;
+  return rows[0] ? toCognitiveBaseline(rows[0]) : null;
+}
+
+export async function listCheckIns(
+  protocolId: string,
+): Promise<CognitiveCheckIn[]> {
+  const rows = await neonSql`
+    SELECT id, protocol_id, memory_score, focus_score, processing_speed_score,
+           mood_score, sleep_score, side_effects, notes, recorded_at
+    FROM cognitive_check_ins
+    WHERE protocol_id = ${protocolId}
+    ORDER BY recorded_at DESC
+  `;
+  return rows.map(toCheckIn);
+}
+
+export async function createProtocol(params: {
+  userId: string;
+  name: string;
+  notes: string | null;
+  targetAreas: string[];
+  startDate: string | null;
+}): Promise<Protocol> {
+  let slug = toSlug(params.name);
+  // Slug collision handling — append short suffix if needed
+  const existing = await neonSql`
+    SELECT 1 FROM brain_health_protocols WHERE slug = ${slug} LIMIT 1
+  `;
+  if (existing.length > 0) {
+    slug = `${slug}-${Date.now().toString(36).slice(-4)}`;
+  }
+
+  const rows = await neonSql`
+    INSERT INTO brain_health_protocols (user_id, name, slug, target_areas, notes, start_date)
+    VALUES (${params.userId}, ${params.name}, ${slug}, ${JSON.stringify(params.targetAreas)}::jsonb, ${params.notes}, ${params.startDate})
+    RETURNING id, user_id, name, slug, target_areas, status, notes, start_date, end_date, created_at, updated_at
+  `;
+  return toProtocol({ ...rows[0], supplement_count: 0 });
+}
+
+export async function deleteProtocol(id: string, userId: string): Promise<void> {
+  await neonSql`
+    DELETE FROM brain_health_protocols WHERE id = ${id} AND user_id = ${userId}
+  `;
+}
+
+export async function updateProtocolStatus(
+  id: string,
+  userId: string,
+  status: string,
+): Promise<Protocol | null> {
+  const rows = await neonSql`
+    UPDATE brain_health_protocols
+    SET status = ${status}, updated_at = NOW()
+    WHERE id = ${id} AND user_id = ${userId}
+    RETURNING id, user_id, name, slug, target_areas, status, notes, start_date, end_date, created_at, updated_at
+  `;
+  return rows[0] ? toProtocol({ ...rows[0], supplement_count: 0 }) : null;
+}
+
+export async function assertOwnsProtocol(
+  protocolId: string,
+  userId: string,
+): Promise<boolean> {
+  const rows = await neonSql`
+    SELECT 1 FROM brain_health_protocols
+    WHERE id = ${protocolId} AND user_id = ${userId}
+    LIMIT 1
+  `;
+  return rows.length > 0;
+}
+
+export async function createSupplement(params: {
+  protocolId: string;
+  name: string;
+  dosage: string;
+  frequency: string;
+  mechanism: string | null;
+  targetAreas: string[];
+  notes: string | null;
+  url: string | null;
+}): Promise<ProtocolSupplement> {
+  const rows = await neonSql`
+    INSERT INTO protocol_supplements (
+      protocol_id, name, dosage, frequency, mechanism, target_areas, notes, url
+    )
+    VALUES (
+      ${params.protocolId}, ${params.name}, ${params.dosage}, ${params.frequency},
+      ${params.mechanism}, ${JSON.stringify(params.targetAreas)}::jsonb, ${params.notes}, ${params.url}
+    )
+    RETURNING id, protocol_id, name, dosage, frequency, mechanism, target_areas, notes, url, created_at
+  `;
+  return toSupplement(rows[0]);
+}
+
+export async function deleteSupplement(id: string): Promise<void> {
+  await neonSql`DELETE FROM protocol_supplements WHERE id = ${id}`;
+}
+
+export async function upsertCognitiveBaseline(params: {
+  protocolId: string;
+  memoryScore: number | null;
+  focusScore: number | null;
+  processingSpeedScore: number | null;
+  moodScore: number | null;
+  sleepScore: number | null;
+}): Promise<CognitiveBaseline> {
+  const rows = await neonSql`
+    INSERT INTO cognitive_baselines (
+      protocol_id, memory_score, focus_score, processing_speed_score, mood_score, sleep_score
+    )
+    VALUES (
+      ${params.protocolId}, ${params.memoryScore}, ${params.focusScore},
+      ${params.processingSpeedScore}, ${params.moodScore}, ${params.sleepScore}
+    )
+    ON CONFLICT (protocol_id) DO UPDATE SET
+      memory_score = EXCLUDED.memory_score,
+      focus_score = EXCLUDED.focus_score,
+      processing_speed_score = EXCLUDED.processing_speed_score,
+      mood_score = EXCLUDED.mood_score,
+      sleep_score = EXCLUDED.sleep_score,
+      recorded_at = NOW()
+    RETURNING id, protocol_id, memory_score, focus_score, processing_speed_score,
+              mood_score, sleep_score, recorded_at
+  `;
+  return toCognitiveBaseline(rows[0]);
+}
+
+export async function createCheckIn(params: {
+  protocolId: string;
+  memoryScore: number | null;
+  focusScore: number | null;
+  processingSpeedScore: number | null;
+  moodScore: number | null;
+  sleepScore: number | null;
+  sideEffects: string | null;
+  notes: string | null;
+}): Promise<CognitiveCheckIn> {
+  const rows = await neonSql`
+    INSERT INTO cognitive_check_ins (
+      protocol_id, memory_score, focus_score, processing_speed_score, mood_score, sleep_score,
+      side_effects, notes
+    )
+    VALUES (
+      ${params.protocolId}, ${params.memoryScore}, ${params.focusScore},
+      ${params.processingSpeedScore}, ${params.moodScore}, ${params.sleepScore},
+      ${params.sideEffects}, ${params.notes}
+    )
+    RETURNING id, protocol_id, memory_score, focus_score, processing_speed_score,
+              mood_score, sleep_score, side_effects, notes, recorded_at
+  `;
+  return toCheckIn(rows[0]);
 }
