@@ -16,12 +16,16 @@ import { authClient } from "@/app/lib/auth/client";
 import { AuthDialog } from "./components/AuthDialog";
 import {
   RocketIcon,
-  FileTextIcon,
   MagnifyingGlassIcon,
   CheckCircledIcon,
   SpeakerLoudIcon,
-  LightningBoltIcon,
 } from "@radix-ui/react-icons";
+import {
+  LayoutDashboard,
+  MessageSquare,
+  FlaskConical,
+  Users,
+} from "lucide-react";
 
 export default function Home() {
   const router = useRouter();
@@ -42,20 +46,20 @@ export default function Home() {
       <Card size={{ initial: "2", md: "4" }} style={{ background: "var(--indigo-3)" }}>
         <Flex direction="column" gap="4" align="center" py="4">
           <Badge size="2" variant="soft" color="indigo">
-            Research-backed &middot; Personal &middot; Private
+            Personal Health &middot; Research-Backed &middot; Private
           </Badge>
           <Heading size={{ initial: "7", md: "9" }} align="center" style={{ maxWidth: "800px" }}>
-            Research-Backed Therapy Notes & Reflections
+            Your Personal Health & Research Companion
           </Heading>
           <Text
             size="4"
             align="center"
             color="gray"
-            style={{ maxWidth: "600px" }}
+            style={{ maxWidth: "640px" }}
           >
-            Connect your therapeutic journey with evidence-based research.
-            Generate insights, verify claims, and create personalized audio
-            content.
+            Track conditions, medications, and blood tests alongside
+            therapeutic goals and notes — connected to peer-reviewed research
+            and an AI health chat that knows your records.
           </Text>
 
           {user && (
@@ -86,17 +90,17 @@ export default function Home() {
               </>
             ) : (
               <>
-                <Button size="3" onClick={() => router.push("/goals")}>
-                  <RocketIcon />
-                  My Goals
+                <Button size="3" onClick={() => router.push("/dashboard")}>
+                  <LayoutDashboard size={16} />
+                  Open Dashboard
                 </Button>
                 <Button
                   size="3"
                   variant="soft"
-                  onClick={() => router.push("/notes")}
+                  onClick={() => router.push("/chat")}
                 >
-                  <FileTextIcon />
-                  My Notes
+                  <MessageSquare size={16} />
+                  Open Chat
                 </Button>
               </>
             )}
@@ -110,38 +114,100 @@ export default function Home() {
         <Grid columns={{ initial: "1", md: "2", lg: "3" }} gap="4">
           <Card
             style={{ cursor: "pointer" }}
-            onClick={() => (user ? router.push("/goals") : openAuth("signup"))}
+            onClick={() => (user ? router.push("/dashboard") : openAuth("signup"))}
           >
             <Flex direction="column" gap="3" p="2">
               <Flex align="center" gap="2">
-                <RocketIcon width="24" height="24" color="var(--indigo-9)" />
-                <Heading size="4">Therapeutic Goals</Heading>
+                <LayoutDashboard size={24} color="var(--indigo-9)" />
+                <Heading size="4">Health Dashboard</Heading>
               </Flex>
               <Text color="gray">
-                Create and track therapeutic goals with priority levels, target
-                dates, and comprehensive status management.
+                One-glance overview of conditions, medications, blood tests,
+                appointments, and brain-memory baselines — all in a single
+                query.
               </Text>
               <Button variant="soft" style={{ marginTop: "auto" }}>
-                {user ? "Manage Goals →" : "Get Started →"}
+                {user ? "Open Dashboard →" : "Get Started →"}
               </Button>
             </Flex>
           </Card>
 
           <Card
             style={{ cursor: "pointer" }}
-            onClick={() => (user ? router.push("/notes") : openAuth("signup"))}
+            onClick={() => (user ? router.push("/chat") : openAuth("signup"))}
           >
             <Flex direction="column" gap="3" p="2">
               <Flex align="center" gap="2">
-                <FileTextIcon width="24" height="24" color="var(--indigo-9)" />
-                <Heading size="4">Notes & Reflections</Heading>
+                <MessageSquare size={24} color="var(--indigo-9)" />
+                <Heading size="4">AI Health Chat</Heading>
               </Flex>
               <Text color="gray">
-                Document your journey with rich notes, tags, and connections to
-                research papers for evidence-based insights.
+                Ask questions about your own records. Backed by vector search
+                over your conditions, markers, medications, and symptoms with
+                safety guardrails.
               </Text>
               <Button variant="soft" style={{ marginTop: "auto" }}>
-                {user ? "View Notes →" : "Get Started →"}
+                {user ? "Open Chat →" : "Get Started →"}
+              </Button>
+            </Flex>
+          </Card>
+
+          <Card
+            style={{ cursor: "pointer" }}
+            onClick={() =>
+              user ? router.push("/blood-tests") : openAuth("signup")
+            }
+          >
+            <Flex direction="column" gap="3" p="2">
+              <Flex align="center" gap="2">
+                <FlaskConical size={24} color="var(--indigo-9)" />
+                <Heading size="4">Blood Tests & Trajectory</Heading>
+              </Flex>
+              <Text color="gray">
+                Upload lab PDFs; markers are extracted and embedded
+                automatically. View per-marker time-series trends across
+                every test.
+              </Text>
+              <Button variant="soft" style={{ marginTop: "auto" }}>
+                {user ? "Upload & View →" : "Get Started →"}
+              </Button>
+            </Flex>
+          </Card>
+
+          <Card
+            style={{ cursor: "pointer" }}
+            onClick={() => (user ? router.push("/family") : openAuth("signup"))}
+          >
+            <Flex direction="column" gap="3" p="2">
+              <Flex align="center" gap="2">
+                <Users size={24} color="var(--indigo-9)" />
+                <Heading size="4">Family Records</Heading>
+              </Flex>
+              <Text color="gray">
+                Track family members' conditions, documents, and shared
+                health history with read-only document viewing from R2.
+              </Text>
+              <Button variant="soft" style={{ marginTop: "auto" }}>
+                {user ? "View Family →" : "Get Started →"}
+              </Button>
+            </Flex>
+          </Card>
+
+          <Card
+            style={{ cursor: "pointer" }}
+            onClick={() => (user ? router.push("/goals") : openAuth("signup"))}
+          >
+            <Flex direction="column" gap="3" p="2">
+              <Flex align="center" gap="2">
+                <RocketIcon width="24" height="24" color="var(--indigo-9)" />
+                <Heading size="4">Therapeutic Goals & Notes</Heading>
+              </Flex>
+              <Text color="gray">
+                Goals with priorities and target dates, paired with rich
+                notes, tags, and connections to research papers.
+              </Text>
+              <Button variant="soft" style={{ marginTop: "auto" }}>
+                {user ? "Manage Goals →" : "Get Started →"}
               </Button>
             </Flex>
           </Card>
@@ -157,11 +223,11 @@ export default function Home() {
                 <Heading size="4">Research Integration</Heading>
               </Flex>
               <Text color="gray">
-                Automatically connect goals with peer-reviewed research from
-                PubMed, CrossRef, Semantic Scholar, and more.
+                Peer-reviewed research from PubMed, CrossRef, Semantic
+                Scholar, OpenAlex, arXiv, Europe PMC, and DataCite.
               </Text>
               <Badge variant="soft" color="green" style={{ marginTop: "auto" }}>
-                7+ Data Sources
+                7+ Sources
               </Badge>
             </Flex>
           </Card>
@@ -177,7 +243,7 @@ export default function Home() {
                 <Heading size="4">Claim Verification</Heading>
               </Flex>
               <Text color="gray">
-                AI-powered claim cards extract and verify statements against
+                AI claim cards extract and verify statements against
                 research literature with confidence scores.
               </Text>
               <Badge variant="soft" color="blue" style={{ marginTop: "auto" }}>
@@ -194,35 +260,11 @@ export default function Home() {
                   height="24"
                   color="var(--indigo-9)"
                 />
-                <Heading size="4">Audio Generation</Heading>
+                <Heading size="4">Audio + AI Workflows</Heading>
               </Flex>
               <Text color="gray">
-                Generate therapeutic audio content with ElevenLabs
-                text-to-speech in multiple languages.
-              </Text>
-              <Badge
-                variant="soft"
-                color="purple"
-                style={{ marginTop: "auto" }}
-              >
-                Multi-Language
-              </Badge>
-            </Flex>
-          </Card>
-
-          <Card>
-            <Flex direction="column" gap="3" p="2">
-              <Flex align="center" gap="2">
-                <LightningBoltIcon
-                  width="24"
-                  height="24"
-                  color="var(--indigo-9)"
-                />
-                <Heading size="4">AI Workflows</Heading>
-              </Flex>
-              <Text color="gray">
-                AI-powered async research generation, therapeutic questions,
-                and long-form synthesis.
+                ElevenLabs TTS for therapeutic audio plus async DeepSeek
+                workflows for research synthesis and questions.
               </Text>
               <Badge
                 variant="soft"
@@ -285,6 +327,9 @@ export default function Home() {
                 <Text size="2" color="gray">
                   DeepSeek
                 </Text>
+                <Text size="2" color="gray">
+                  LangGraph
+                </Text>
               </Flex>
               <Flex direction="column" gap="1">
                 <Text weight="bold" size="2">
@@ -297,7 +342,7 @@ export default function Home() {
                   PostgreSQL
                 </Text>
                 <Text size="2" color="gray">
-                  Serverless
+                  pgvector
                 </Text>
               </Flex>
             </Grid>
@@ -309,40 +354,44 @@ export default function Home() {
       <Flex direction="column" gap="4">
         <Heading size="6">Get Started</Heading>
         <Grid columns={{ initial: "1", md: "2" }} gap="4">
-          <Card style={{ background: "var(--violet-3)" }}>
+          <Card style={{ background: "var(--indigo-3)" }}>
             <Flex direction="column" gap="3" p="4">
               <Heading size="4">
-                {user ? "Create Your First Goal" : "Start Your Journey"}
+                {user ? "Open Your Dashboard" : "Start Your Journey"}
               </Heading>
               <Text color="gray">
                 {user
-                  ? "Start your therapeutic journey by setting meaningful goals and connecting them with evidence-based research."
-                  : "Sign up to create therapeutic goals backed by research and track your progress."}
+                  ? "See conditions, medications, blood tests, appointments, and brain-memory baselines together in one place."
+                  : "Sign up to track health records, therapeutic goals, and research-backed insights all in one private hub."}
               </Text>
               <Button
-                onClick={() => (user ? router.push("/goals") : openAuth("signup"))}
+                onClick={() =>
+                  user ? router.push("/dashboard") : openAuth("signup")
+                }
                 style={{ marginTop: "1rem" }}
               >
-                {user ? "Create Goal" : "Sign Up"}
+                {user ? "Open Dashboard" : "Sign Up"}
               </Button>
             </Flex>
           </Card>
-          <Card style={{ background: "var(--blue-3)" }}>
+          <Card style={{ background: "var(--violet-3)" }}>
             <Flex direction="column" gap="3" p="4">
               <Heading size="4">
-                {user ? "Browse Your Notes" : "Explore Features"}
+                {user ? "Chat With Your Records" : "Explore Features"}
               </Heading>
               <Text color="gray">
                 {user
-                  ? "View all your therapeutic notes, reflections, and claim verifications in one organized place."
-                  : "Discover research-backed insights, claim verification, and AI-powered audio content."}
+                  ? "Ask questions about your own conditions, markers, medications, and symptoms with safety guardrails."
+                  : "Discover health tracking, AI chat, blood-test analysis, and research-backed claim verification."}
               </Text>
               <Button
-                onClick={() => (user ? router.push("/notes") : openAuth("signin"))}
+                onClick={() =>
+                  user ? router.push("/chat") : openAuth("signin")
+                }
                 style={{ marginTop: "1rem" }}
                 variant={user ? "solid" : "soft"}
               >
-                {user ? "View Notes" : "Learn More"}
+                {user ? "Open Chat" : "Learn More"}
               </Button>
             </Flex>
           </Card>

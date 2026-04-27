@@ -11,9 +11,15 @@ export { SIDEBAR_WIDTH };
 
 const NAV_LINKS = [
   { href: "/allergies", label: "Allergies & Intolerances" },
+  { href: "/appointments", label: "Appointments" },
+  { href: "/blood-tests", label: "Blood Tests" },
   { href: "/books", label: "Books" },
+  { href: "/brain-memory", label: "Brain & Memory" },
+  { href: "/chat", label: "Chat" },
   { href: "/conditions", label: "Conditions" },
+  { href: "/dashboard", label: "Dashboard" },
   { href: "/discussions", label: "Discuții" },
+  { href: "/doctors", label: "Doctors" },
   { href: "/family", label: "Family" },
   { href: "/games", label: "Games" },
   { href: "/goals", label: "Goals" },
@@ -22,8 +28,12 @@ const NAV_LINKS = [
   { href: "/journal", label: "Journal" },
   { href: "/medications", label: "Medications" },
   { href: "/notes", label: "Notes" },
+  { href: "/protocols", label: "Protocols" },
   { href: "/routines", label: "Routines" },
+  { href: "/search", label: "Search" },
   { href: "/stories", label: "Stories" },
+  { href: "/symptoms", label: "Symptoms" },
+  { href: "/trajectory", label: "Trajectory" },
 ];
 
 export function Header() {
