@@ -406,6 +406,59 @@ export type Condition = {
   userId: Scalars['String']['output'];
 };
 
+export type ConditionAgeManifestation = {
+  __typename?: 'ConditionAgeManifestation';
+  developmentalTier: Scalars['String']['output'];
+  manifestations: Array<Scalars['String']['output']>;
+  notes?: Maybe<Scalars['String']['output']>;
+};
+
+export type ConditionComorbidity = {
+  __typename?: 'ConditionComorbidity';
+  name: Scalars['String']['output'];
+  notes?: Maybe<Scalars['String']['output']>;
+  prevalence?: Maybe<Scalars['String']['output']>;
+};
+
+export type ConditionDeepResearch = {
+  __typename?: 'ConditionDeepResearch';
+  ageManifestations: Array<ConditionAgeManifestation>;
+  comorbidities: Array<ConditionComorbidity>;
+  conditionName: Scalars['String']['output'];
+  conditionSlug: Scalars['String']['output'];
+  evidenceBasedTreatments: Array<ConditionTreatment>;
+  familyMember?: Maybe<FamilyMember>;
+  freshUntil?: Maybe<Scalars['String']['output']>;
+  generatedAt: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  language: Scalars['String']['output'];
+  pathophysiology?: Maybe<ConditionPathophysiology>;
+  redFlags: Array<ConditionRedFlag>;
+  sourceUrls: Array<Scalars['String']['output']>;
+  updatedAt: Scalars['String']['output'];
+};
+
+export type ConditionPathophysiology = {
+  __typename?: 'ConditionPathophysiology';
+  mechanisms: Array<Scalars['String']['output']>;
+  summary: Scalars['String']['output'];
+};
+
+export type ConditionRedFlag = {
+  __typename?: 'ConditionRedFlag';
+  action?: Maybe<Scalars['String']['output']>;
+  flag: Scalars['String']['output'];
+};
+
+export type ConditionTreatment = {
+  __typename?: 'ConditionTreatment';
+  ageAppropriate?: Maybe<Scalars['String']['output']>;
+  category: Scalars['String']['output'];
+  evidenceLevel?: Maybe<Scalars['String']['output']>;
+  name: Scalars['String']['output'];
+  notes?: Maybe<Scalars['String']['output']>;
+};
+
 export type Contact = {
   __typename?: 'Contact';
   ageYears?: Maybe<Scalars['Int']['output']>;
@@ -1514,6 +1567,7 @@ export enum JobStatus {
 
 export enum JobType {
   Audio = 'AUDIO',
+  ConditionDeepResearch = 'CONDITION_DEEP_RESEARCH',
   DeepAnalysis = 'DEEP_ANALYSIS',
   Longform = 'LONGFORM',
   MedicationDeepResearch = 'MEDICATION_DEEP_RESEARCH',
@@ -1805,6 +1859,7 @@ export type Mutation = {
   generateAffirmationsForFamilyMember: GenerateAffirmationsResult;
   generateAudio: GenerateAudioResult;
   generateBogdanDiscussion: GenerateBogdanDiscussionResult;
+  generateConditionDeepResearch: GenerateResearchResult;
   generateDeepAnalysis: GenerateDeepAnalysisResult;
   generateDeepIssueAnalysis: GenerateDeepAnalysisResult;
   generateDiscussionGuide: GenerateDiscussionGuideResult;
@@ -2221,6 +2276,13 @@ export type MutationGenerateAudioArgs = {
   storyId?: InputMaybe<Scalars['Int']['input']>;
   text?: InputMaybe<Scalars['String']['input']>;
   voice?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type MutationGenerateConditionDeepResearchArgs = {
+  language?: InputMaybe<Scalars['String']['input']>;
+  memberSlug: Scalars['String']['input'];
+  slug: Scalars['String']['input'];
 };
 
 
@@ -2761,6 +2823,7 @@ export type Query = {
   claimCard?: Maybe<ClaimCard>;
   claimCardsForNote: Array<ClaimCard>;
   condition?: Maybe<Condition>;
+  conditionDeepResearch?: Maybe<ConditionDeepResearch>;
   conditions: Array<Condition>;
   contact?: Maybe<Contact>;
   contactFeedback?: Maybe<ContactFeedback>;
@@ -2868,6 +2931,13 @@ export type QueryClaimCardsForNoteArgs = {
 
 export type QueryConditionArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type QueryConditionDeepResearchArgs = {
+  language?: InputMaybe<Scalars['String']['input']>;
+  memberSlug: Scalars['String']['input'];
+  slug: Scalars['String']['input'];
 };
 
 
@@ -3722,6 +3792,15 @@ export type DeleteClaimCardMutationVariables = Exact<{ [key: string]: never; }>;
 
 export type DeleteClaimCardMutation = { __typename?: 'Mutation', deleteClaimCard: boolean };
 
+export type ConditionDeepResearchQueryVariables = Exact<{
+  slug: Scalars['String']['input'];
+  memberSlug: Scalars['String']['input'];
+  language?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type ConditionDeepResearchQuery = { __typename?: 'Query', conditionDeepResearch?: { __typename?: 'ConditionDeepResearch', id: string, conditionSlug: string, conditionName: string, language: string, sourceUrls: Array<string>, freshUntil?: string | null, generatedAt: string, updatedAt: string, familyMember?: { __typename?: 'FamilyMember', id: number, slug?: string | null, firstName: string, ageYears?: number | null, dateOfBirth?: string | null } | null, pathophysiology?: { __typename?: 'ConditionPathophysiology', summary: string, mechanisms: Array<string> } | null, ageManifestations: Array<{ __typename?: 'ConditionAgeManifestation', developmentalTier: string, manifestations: Array<string>, notes?: string | null }>, evidenceBasedTreatments: Array<{ __typename?: 'ConditionTreatment', name: string, category: string, evidenceLevel?: string | null, ageAppropriate?: string | null, notes?: string | null }>, comorbidities: Array<{ __typename?: 'ConditionComorbidity', name: string, prevalence?: string | null, notes?: string | null }>, redFlags: Array<{ __typename?: 'ConditionRedFlag', flag: string, action?: string | null }> } | null };
+
 export type ConditionsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -4171,6 +4250,15 @@ export type GenerateBogdanDiscussionMutationVariables = Exact<{ [key: string]: n
 
 
 export type GenerateBogdanDiscussionMutation = { __typename?: 'Mutation', generateBogdanDiscussion: { __typename?: 'GenerateBogdanDiscussionResult', success: boolean, message?: string | null, jobId?: string | null } };
+
+export type GenerateConditionDeepResearchMutationVariables = Exact<{
+  slug: Scalars['String']['input'];
+  memberSlug: Scalars['String']['input'];
+  language?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type GenerateConditionDeepResearchMutation = { __typename?: 'Mutation', generateConditionDeepResearch: { __typename?: 'GenerateResearchResult', success: boolean, message?: string | null, jobId?: string | null, count?: number | null } };
 
 export type GenerateDeepAnalysisMutationVariables = Exact<{
   subjectType: DeepAnalysisSubjectType;
@@ -5953,6 +6041,90 @@ export function useDeleteClaimCardMutation(baseOptions?: Apollo.MutationHookOpti
 export type DeleteClaimCardMutationHookResult = ReturnType<typeof useDeleteClaimCardMutation>;
 export type DeleteClaimCardMutationResult = Apollo.MutationResult<DeleteClaimCardMutation>;
 export type DeleteClaimCardMutationOptions = Apollo.BaseMutationOptions<DeleteClaimCardMutation, DeleteClaimCardMutationVariables>;
+export const ConditionDeepResearchDocument = gql`
+    query ConditionDeepResearch($slug: String!, $memberSlug: String!, $language: String) {
+  conditionDeepResearch(slug: $slug, memberSlug: $memberSlug, language: $language) {
+    id
+    conditionSlug
+    conditionName
+    language
+    familyMember {
+      id
+      slug
+      firstName
+      ageYears
+      dateOfBirth
+    }
+    pathophysiology {
+      summary
+      mechanisms
+    }
+    ageManifestations {
+      developmentalTier
+      manifestations
+      notes
+    }
+    evidenceBasedTreatments {
+      name
+      category
+      evidenceLevel
+      ageAppropriate
+      notes
+    }
+    comorbidities {
+      name
+      prevalence
+      notes
+    }
+    redFlags {
+      flag
+      action
+    }
+    sourceUrls
+    freshUntil
+    generatedAt
+    updatedAt
+  }
+}
+    `;
+
+/**
+ * __useConditionDeepResearchQuery__
+ *
+ * To run a query within a React component, call `useConditionDeepResearchQuery` and pass it any options that fit your needs.
+ * When your component renders, `useConditionDeepResearchQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useConditionDeepResearchQuery({
+ *   variables: {
+ *      slug: // value for 'slug'
+ *      memberSlug: // value for 'memberSlug'
+ *      language: // value for 'language'
+ *   },
+ * });
+ */
+export function useConditionDeepResearchQuery(baseOptions: Apollo.QueryHookOptions<ConditionDeepResearchQuery, ConditionDeepResearchQueryVariables> & ({ variables: ConditionDeepResearchQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<ConditionDeepResearchQuery, ConditionDeepResearchQueryVariables>(ConditionDeepResearchDocument, options);
+      }
+export function useConditionDeepResearchLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<ConditionDeepResearchQuery, ConditionDeepResearchQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<ConditionDeepResearchQuery, ConditionDeepResearchQueryVariables>(ConditionDeepResearchDocument, options);
+        }
+// @ts-ignore
+export function useConditionDeepResearchSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<ConditionDeepResearchQuery, ConditionDeepResearchQueryVariables>): Apollo.UseSuspenseQueryResult<ConditionDeepResearchQuery, ConditionDeepResearchQueryVariables>;
+export function useConditionDeepResearchSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<ConditionDeepResearchQuery, ConditionDeepResearchQueryVariables>): Apollo.UseSuspenseQueryResult<ConditionDeepResearchQuery | undefined, ConditionDeepResearchQueryVariables>;
+export function useConditionDeepResearchSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<ConditionDeepResearchQuery, ConditionDeepResearchQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<ConditionDeepResearchQuery, ConditionDeepResearchQueryVariables>(ConditionDeepResearchDocument, options);
+        }
+export type ConditionDeepResearchQueryHookResult = ReturnType<typeof useConditionDeepResearchQuery>;
+export type ConditionDeepResearchLazyQueryHookResult = ReturnType<typeof useConditionDeepResearchLazyQuery>;
+export type ConditionDeepResearchSuspenseQueryHookResult = ReturnType<typeof useConditionDeepResearchSuspenseQuery>;
+export type ConditionDeepResearchQueryResult = Apollo.QueryResult<ConditionDeepResearchQuery, ConditionDeepResearchQueryVariables>;
 export const ConditionsDocument = gql`
     query Conditions {
   conditions {
@@ -8374,6 +8546,48 @@ export function useGenerateBogdanDiscussionMutation(baseOptions?: Apollo.Mutatio
 export type GenerateBogdanDiscussionMutationHookResult = ReturnType<typeof useGenerateBogdanDiscussionMutation>;
 export type GenerateBogdanDiscussionMutationResult = Apollo.MutationResult<GenerateBogdanDiscussionMutation>;
 export type GenerateBogdanDiscussionMutationOptions = Apollo.BaseMutationOptions<GenerateBogdanDiscussionMutation, GenerateBogdanDiscussionMutationVariables>;
+export const GenerateConditionDeepResearchDocument = gql`
+    mutation GenerateConditionDeepResearch($slug: String!, $memberSlug: String!, $language: String) {
+  generateConditionDeepResearch(
+    slug: $slug
+    memberSlug: $memberSlug
+    language: $language
+  ) {
+    success
+    message
+    jobId
+    count
+  }
+}
+    `;
+export type GenerateConditionDeepResearchMutationFn = Apollo.MutationFunction<GenerateConditionDeepResearchMutation, GenerateConditionDeepResearchMutationVariables>;
+
+/**
+ * __useGenerateConditionDeepResearchMutation__
+ *
+ * To run a mutation, you first call `useGenerateConditionDeepResearchMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useGenerateConditionDeepResearchMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [generateConditionDeepResearchMutation, { data, loading, error }] = useGenerateConditionDeepResearchMutation({
+ *   variables: {
+ *      slug: // value for 'slug'
+ *      memberSlug: // value for 'memberSlug'
+ *      language: // value for 'language'
+ *   },
+ * });
+ */
+export function useGenerateConditionDeepResearchMutation(baseOptions?: Apollo.MutationHookOptions<GenerateConditionDeepResearchMutation, GenerateConditionDeepResearchMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<GenerateConditionDeepResearchMutation, GenerateConditionDeepResearchMutationVariables>(GenerateConditionDeepResearchDocument, options);
+      }
+export type GenerateConditionDeepResearchMutationHookResult = ReturnType<typeof useGenerateConditionDeepResearchMutation>;
+export type GenerateConditionDeepResearchMutationResult = Apollo.MutationResult<GenerateConditionDeepResearchMutation>;
+export type GenerateConditionDeepResearchMutationOptions = Apollo.BaseMutationOptions<GenerateConditionDeepResearchMutation, GenerateConditionDeepResearchMutationVariables>;
 export const GenerateDeepAnalysisDocument = gql`
     mutation GenerateDeepAnalysis($subjectType: DeepAnalysisSubjectType!, $subjectId: Int!, $triggerType: DeepAnalysisTriggerType, $triggerId: Int) {
   generateDeepAnalysis(

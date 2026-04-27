@@ -365,6 +365,53 @@ type Condition {
   userId: String!
 }
 
+type ConditionAgeManifestation {
+  developmentalTier: String!
+  manifestations: [String!]!
+  notes: String
+}
+
+type ConditionComorbidity {
+  name: String!
+  notes: String
+  prevalence: String
+}
+
+type ConditionDeepResearch {
+  ageManifestations: [ConditionAgeManifestation!]!
+  comorbidities: [ConditionComorbidity!]!
+  conditionName: String!
+  conditionSlug: String!
+  evidenceBasedTreatments: [ConditionTreatment!]!
+  familyMember: FamilyMember
+  freshUntil: String
+  generatedAt: String!
+  id: ID!
+  language: String!
+  pathophysiology: ConditionPathophysiology
+  redFlags: [ConditionRedFlag!]!
+  sourceUrls: [String!]!
+  updatedAt: String!
+}
+
+type ConditionPathophysiology {
+  mechanisms: [String!]!
+  summary: String!
+}
+
+type ConditionRedFlag {
+  action: String
+  flag: String!
+}
+
+type ConditionTreatment {
+  ageAppropriate: String
+  category: String!
+  evidenceLevel: String
+  name: String!
+  notes: String
+}
+
 type Contact {
   ageYears: Int
   createdAt: String!
@@ -1378,6 +1425,7 @@ enum JobStatus {
 
 enum JobType {
   AUDIO
+  CONDITION_DEEP_RESEARCH
   DEEP_ANALYSIS
   LONGFORM
   MEDICATION_DEEP_RESEARCH
@@ -1652,6 +1700,7 @@ type Mutation {
   generateAffirmationsForFamilyMember(categoryFocus: AffirmationCategory, count: Int, familyMemberId: Int!, language: String): GenerateAffirmationsResult!
   generateAudio(goalId: Int!, language: String, storyId: Int, text: String, voice: String): GenerateAudioResult!
   generateBogdanDiscussion: GenerateBogdanDiscussionResult!
+  generateConditionDeepResearch(language: String, memberSlug: String!, slug: String!): GenerateResearchResult!
   generateDeepAnalysis(subjectId: Int!, subjectType: DeepAnalysisSubjectType!, triggerId: Int, triggerType: DeepAnalysisTriggerType): GenerateDeepAnalysisResult!
   generateDeepIssueAnalysis(familyMemberId: Int!, triggerIssueId: Int): GenerateDeepAnalysisResult!
   generateDiscussionGuide(journalEntryId: Int!): GenerateDiscussionGuideResult!
@@ -1910,6 +1959,7 @@ type Query {
   claimCard(id: ID!): ClaimCard
   claimCardsForNote(noteId: Int!): [ClaimCard!]!
   condition(id: ID!): Condition
+  conditionDeepResearch(language: String, memberSlug: String!, slug: String!): ConditionDeepResearch
   conditions: [Condition!]!
   contact(id: Int, slug: String): Contact
   contactFeedback(id: Int!): ContactFeedback

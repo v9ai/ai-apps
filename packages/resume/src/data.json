@@ -191,14 +191,14 @@
         "githubUrl": "https://github.com/v9ai/research-thera",
         "websiteUrl": "https://researchthera.com",
         "highlights": [
-          "LlamaIndex healthcare layer — blood-test PDFs → LlamaParse → custom BloodTestNodeParser (3-tier fallback: HTML tables → Romanian/EU FormKeysValues → tab/multi-space free-text) → FastEmbed (BAAI/bge-large-en-v1.5, 1024-dim, local ONNX) IngestionPipeline emitting blood_test + N blood_marker + health_state nodes per upload.",
-          "7 derived clinical ratios per upload with authored risk thresholds — TG/HDL (McLaughlin), TC/HDL (Castelli), HDL/LDL (Millán), NLR (Fest), De Ritis AST/ALT, BUN/Creatinine (Hosten), TyG Index (Simental-Mendía) — stored as JSONB on health_state alongside the embedding.",
-          "5-stage clinical chat pipeline (pure LlamaIndex, no LangGraph): triage → re_triage (confidence < 0.7, max 2 attempts) → route → ContextChatEngine (SimilarityPostprocessor + ClinicalRelevancePostprocessor + CompactAndRefine) → guard re-check; 9 intents with multi-intent CompositeRetriever fan-out and confidence-scaled k widening (≥0.8 → base, ≥0.6 → 1.5×, else 2×).",
-          "8 dedicated 1024-dim pgvector tables (blood_test, blood_marker hybrid FTS+vector, health_state, condition, medication, symptom, appointment, allergy) each paired with a BaseRetriever subclass; search_marker_trend powers longitudinal trajectory queries.",
-          "Local-only inference on Apple Silicon — mlx_lm.server with Qwen2.5-7B-Instruct-4bit, FastEmbed via ONNX Runtime — zero API calls, no PHI egress; LLM_BASE_URL is a one-line swap to a remote model.",
-          "Medication deep research LangGraph agent mines drug-biomarker interactions and persists structured pharmacology across 6 tables (pharmacology, indications, dosing, adverse_events, interactions, correlations) powering /medications/[slug] research panels.",
-          "7-node therapy research LangGraph (loadContext → normalizeGoal → planQuery → search → enrichAbstracts → extractAll → persist): ~2,350 candidates across 7 academic sources → DeepSeek scoring with 0.72 blended-quality gate → top 20 stored as 1024-dim pgvector embeddings.",
-          "~70 PostgreSQL tables via Drizzle ORM after the agentic-healthcare merge: therapeutic core (goals, issues, habits, journals, claims) + 32 healthcare tables (blood tests, conditions, medications, symptoms, appointments, brain protocols, medication pharmacology, plus the 8 pgvector embedding tables)."
+          "Healthcare RAG: lab PDFs → LlamaParse → custom 3-tier BloodTestNodeParser (HTML tables / Romanian FormKeysValues / free-text) → FastEmbed bge-large-en-v1.5 (1024-dim local ONNX) IngestionPipeline emitting blood_test + N blood_marker + health_state nodes.",
+          "7 clinical ratios per upload with authored risk thresholds, stored as JSONB on health_state: TG/HDL (McLaughlin), TC/HDL (Castelli), HDL/LDL (Millán), NLR (Fest), De Ritis AST/ALT, BUN/Creatinine (Hosten), TyG Index (Simental-Mendía).",
+          "5-stage pure-LlamaIndex chat (no LangGraph): triage → re_triage (<0.7 conf, ≤2 attempts) → route → ContextChatEngine (Similarity + ClinicalRelevance + CompactAndRefine) → guard. 9 intents, CompositeRetriever fan-out, confidence-scaled k (≥0.8 base / ≥0.6 1.5× / else 2×).",
+          "8 dedicated 1024-dim pgvector tables (blood_test, blood_marker hybrid FTS+vector, health_state, condition, medication, symptom, appointment, allergy), each with a BaseRetriever subclass; search_marker_trend for longitudinal queries.",
+          "Local-only Apple Silicon inference — Qwen2.5-7B-Instruct-4bit on mlx_lm.server, FastEmbed via ONNX — zero API calls, zero PHI egress; LLM_BASE_URL swappable for remote.",
+          "Medication deep research LangGraph agent persists pharmacology across 6 tables (pharmacology, indications, dosing, adverse_events, interactions, correlations) powering /medications/[slug] panels.",
+          "7-node therapy research LangGraph (loadContext → normalizeGoal → planQuery → search → enrichAbstracts → extractAll → persist): ~2,350 candidates from 7 sources → DeepSeek with 0.72 blended-quality gate → top 20 as 1024-dim pgvector.",
+          "~70-table Drizzle/PostgreSQL schema post agentic-healthcare merge: therapeutic core (goals, issues, habits, journals, claims) + 32 healthcare tables incl. 8 pgvector embedding tables."
         ]
       },
       {

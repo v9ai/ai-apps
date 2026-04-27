@@ -403,6 +403,59 @@ export type Condition = {
   userId: Scalars['String']['output'];
 };
 
+export type ConditionAgeManifestation = {
+  __typename?: 'ConditionAgeManifestation';
+  developmentalTier: Scalars['String']['output'];
+  manifestations: Array<Scalars['String']['output']>;
+  notes?: Maybe<Scalars['String']['output']>;
+};
+
+export type ConditionComorbidity = {
+  __typename?: 'ConditionComorbidity';
+  name: Scalars['String']['output'];
+  notes?: Maybe<Scalars['String']['output']>;
+  prevalence?: Maybe<Scalars['String']['output']>;
+};
+
+export type ConditionDeepResearch = {
+  __typename?: 'ConditionDeepResearch';
+  ageManifestations: Array<ConditionAgeManifestation>;
+  comorbidities: Array<ConditionComorbidity>;
+  conditionName: Scalars['String']['output'];
+  conditionSlug: Scalars['String']['output'];
+  evidenceBasedTreatments: Array<ConditionTreatment>;
+  familyMember?: Maybe<FamilyMember>;
+  freshUntil?: Maybe<Scalars['String']['output']>;
+  generatedAt: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  language: Scalars['String']['output'];
+  pathophysiology?: Maybe<ConditionPathophysiology>;
+  redFlags: Array<ConditionRedFlag>;
+  sourceUrls: Array<Scalars['String']['output']>;
+  updatedAt: Scalars['String']['output'];
+};
+
+export type ConditionPathophysiology = {
+  __typename?: 'ConditionPathophysiology';
+  mechanisms: Array<Scalars['String']['output']>;
+  summary: Scalars['String']['output'];
+};
+
+export type ConditionRedFlag = {
+  __typename?: 'ConditionRedFlag';
+  action?: Maybe<Scalars['String']['output']>;
+  flag: Scalars['String']['output'];
+};
+
+export type ConditionTreatment = {
+  __typename?: 'ConditionTreatment';
+  ageAppropriate?: Maybe<Scalars['String']['output']>;
+  category: Scalars['String']['output'];
+  evidenceLevel?: Maybe<Scalars['String']['output']>;
+  name: Scalars['String']['output'];
+  notes?: Maybe<Scalars['String']['output']>;
+};
+
 export type Contact = {
   __typename?: 'Contact';
   ageYears?: Maybe<Scalars['Int']['output']>;
@@ -1500,6 +1553,7 @@ export type JobStatus =
 
 export type JobType =
   | 'AUDIO'
+  | 'CONDITION_DEEP_RESEARCH'
   | 'DEEP_ANALYSIS'
   | 'LONGFORM'
   | 'MEDICATION_DEEP_RESEARCH'
@@ -1790,6 +1844,7 @@ export type Mutation = {
   generateAffirmationsForFamilyMember: GenerateAffirmationsResult;
   generateAudio: GenerateAudioResult;
   generateBogdanDiscussion: GenerateBogdanDiscussionResult;
+  generateConditionDeepResearch: GenerateResearchResult;
   generateDeepAnalysis: GenerateDeepAnalysisResult;
   generateDeepIssueAnalysis: GenerateDeepAnalysisResult;
   generateDiscussionGuide: GenerateDiscussionGuideResult;
@@ -2206,6 +2261,13 @@ export type MutationgenerateAudioArgs = {
   storyId?: InputMaybe<Scalars['Int']['input']>;
   text?: InputMaybe<Scalars['String']['input']>;
   voice?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type MutationgenerateConditionDeepResearchArgs = {
+  language?: InputMaybe<Scalars['String']['input']>;
+  memberSlug: Scalars['String']['input'];
+  slug: Scalars['String']['input'];
 };
 
 
@@ -2739,6 +2801,7 @@ export type Query = {
   claimCard?: Maybe<ClaimCard>;
   claimCardsForNote: Array<ClaimCard>;
   condition?: Maybe<Condition>;
+  conditionDeepResearch?: Maybe<ConditionDeepResearch>;
   conditions: Array<Condition>;
   contact?: Maybe<Contact>;
   contactFeedback?: Maybe<ContactFeedback>;
@@ -2846,6 +2909,13 @@ export type QueryclaimCardsForNoteArgs = {
 
 export type QueryconditionArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type QueryconditionDeepResearchArgs = {
+  language?: InputMaybe<Scalars['String']['input']>;
+  memberSlug: Scalars['String']['input'];
+  slug: Scalars['String']['input'];
 };
 
 
@@ -3695,6 +3765,12 @@ export type ResolversTypes = {
   CognitiveCheckInInput: CognitiveCheckInInput;
   CognitiveScoresInput: CognitiveScoresInput;
   Condition: ResolverTypeWrapper<Omit<Condition, 'familyMember'> & { familyMember?: Maybe<ResolversTypes['FamilyMember']> }>;
+  ConditionAgeManifestation: ResolverTypeWrapper<ConditionAgeManifestation>;
+  ConditionComorbidity: ResolverTypeWrapper<ConditionComorbidity>;
+  ConditionDeepResearch: ResolverTypeWrapper<Omit<ConditionDeepResearch, 'familyMember'> & { familyMember?: Maybe<ResolversTypes['FamilyMember']> }>;
+  ConditionPathophysiology: ResolverTypeWrapper<ConditionPathophysiology>;
+  ConditionRedFlag: ResolverTypeWrapper<ConditionRedFlag>;
+  ConditionTreatment: ResolverTypeWrapper<ConditionTreatment>;
   Contact: ResolverTypeWrapper<Contact>;
   ContactFeedback: ResolverTypeWrapper<Omit<ContactFeedback, 'familyMember' | 'issues' | 'source' | 'stories'> & { familyMember?: Maybe<ResolversTypes['FamilyMember']>, issues: Array<ResolversTypes['Issue']>, source?: Maybe<ResolversTypes['FeedbackSource']>, stories: Array<ResolversTypes['Story']> }>;
   Conversation: ResolverTypeWrapper<Conversation>;
@@ -3815,7 +3891,7 @@ export type ResolversTypes = {
   JobError: ResolverTypeWrapper<JobError>;
   JobResult: ResolverTypeWrapper<JobResult>;
   JobStatus: ResolverTypeWrapper<'RUNNING' | 'SUCCEEDED' | 'FAILED'>;
-  JobType: ResolverTypeWrapper<'AUDIO' | 'RESEARCH' | 'QUESTIONS' | 'LONGFORM' | 'DEEP_ANALYSIS' | 'RECOMMENDED_BOOKS' | 'ROUTINE_ANALYSIS' | 'MEDICATION_DEEP_RESEARCH'>;
+  JobType: ResolverTypeWrapper<'AUDIO' | 'RESEARCH' | 'QUESTIONS' | 'LONGFORM' | 'DEEP_ANALYSIS' | 'RECOMMENDED_BOOKS' | 'ROUTINE_ANALYSIS' | 'MEDICATION_DEEP_RESEARCH' | 'CONDITION_DEEP_RESEARCH'>;
   JournalAnalysis: ResolverTypeWrapper<JournalAnalysis>;
   JournalEntry: ResolverTypeWrapper<Omit<JournalEntry, 'familyMember' | 'goal' | 'issue'> & { familyMember?: Maybe<ResolversTypes['FamilyMember']>, goal?: Maybe<ResolversTypes['Goal']>, issue?: Maybe<ResolversTypes['Issue']> }>;
   LanguageExample: ResolverTypeWrapper<LanguageExample>;
@@ -3942,6 +4018,12 @@ export type ResolversParentTypes = {
   CognitiveCheckInInput: CognitiveCheckInInput;
   CognitiveScoresInput: CognitiveScoresInput;
   Condition: Omit<Condition, 'familyMember'> & { familyMember?: Maybe<ResolversParentTypes['FamilyMember']> };
+  ConditionAgeManifestation: ConditionAgeManifestation;
+  ConditionComorbidity: ConditionComorbidity;
+  ConditionDeepResearch: Omit<ConditionDeepResearch, 'familyMember'> & { familyMember?: Maybe<ResolversParentTypes['FamilyMember']> };
+  ConditionPathophysiology: ConditionPathophysiology;
+  ConditionRedFlag: ConditionRedFlag;
+  ConditionTreatment: ConditionTreatment;
   Contact: Contact;
   ContactFeedback: Omit<ContactFeedback, 'familyMember' | 'issues' | 'stories'> & { familyMember?: Maybe<ResolversParentTypes['FamilyMember']>, issues: Array<ResolversParentTypes['Issue']>, stories: Array<ResolversParentTypes['Story']> };
   Conversation: Conversation;
@@ -4354,6 +4436,53 @@ export type ConditionResolvers<ContextType = GraphQLContext, ParentType extends 
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   notes?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   userId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type ConditionAgeManifestationResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ConditionAgeManifestation'] = ResolversParentTypes['ConditionAgeManifestation']> = {
+  developmentalTier?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  manifestations?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  notes?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+};
+
+export type ConditionComorbidityResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ConditionComorbidity'] = ResolversParentTypes['ConditionComorbidity']> = {
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  notes?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  prevalence?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+};
+
+export type ConditionDeepResearchResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ConditionDeepResearch'] = ResolversParentTypes['ConditionDeepResearch']> = {
+  ageManifestations?: Resolver<Array<ResolversTypes['ConditionAgeManifestation']>, ParentType, ContextType>;
+  comorbidities?: Resolver<Array<ResolversTypes['ConditionComorbidity']>, ParentType, ContextType>;
+  conditionName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  conditionSlug?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  evidenceBasedTreatments?: Resolver<Array<ResolversTypes['ConditionTreatment']>, ParentType, ContextType>;
+  familyMember?: Resolver<Maybe<ResolversTypes['FamilyMember']>, ParentType, ContextType>;
+  freshUntil?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  generatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  language?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  pathophysiology?: Resolver<Maybe<ResolversTypes['ConditionPathophysiology']>, ParentType, ContextType>;
+  redFlags?: Resolver<Array<ResolversTypes['ConditionRedFlag']>, ParentType, ContextType>;
+  sourceUrls?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type ConditionPathophysiologyResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ConditionPathophysiology'] = ResolversParentTypes['ConditionPathophysiology']> = {
+  mechanisms?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  summary?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type ConditionRedFlagResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ConditionRedFlag'] = ResolversParentTypes['ConditionRedFlag']> = {
+  action?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  flag?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type ConditionTreatmentResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ConditionTreatment'] = ResolversParentTypes['ConditionTreatment']> = {
+  ageAppropriate?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  category?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  evidenceLevel?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  notes?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
 };
 
 export type ContactResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Contact'] = ResolversParentTypes['Contact']> = {
@@ -5149,7 +5278,7 @@ export type JobResultResolvers<ContextType = GraphQLContext, ParentType extends 
 
 export type JobStatusResolvers = EnumResolverSignature<{ FAILED?: any, RUNNING?: any, SUCCEEDED?: any }, ResolversTypes['JobStatus']>;
 
-export type JobTypeResolvers = EnumResolverSignature<{ AUDIO?: any, DEEP_ANALYSIS?: any, LONGFORM?: any, MEDICATION_DEEP_RESEARCH?: any, QUESTIONS?: any, RECOMMENDED_BOOKS?: any, RESEARCH?: any, ROUTINE_ANALYSIS?: any }, ResolversTypes['JobType']>;
+export type JobTypeResolvers = EnumResolverSignature<{ AUDIO?: any, CONDITION_DEEP_RESEARCH?: any, DEEP_ANALYSIS?: any, LONGFORM?: any, MEDICATION_DEEP_RESEARCH?: any, QUESTIONS?: any, RECOMMENDED_BOOKS?: any, RESEARCH?: any, ROUTINE_ANALYSIS?: any }, ResolversTypes['JobType']>;
 
 export type JournalAnalysisResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['JournalAnalysis'] = ResolversParentTypes['JournalAnalysis']> = {
   actionableRecommendations?: Resolver<Array<ResolversTypes['ActionableRecommendation']>, ParentType, ContextType>;
@@ -5409,6 +5538,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   generateAffirmationsForFamilyMember?: Resolver<ResolversTypes['GenerateAffirmationsResult'], ParentType, ContextType, RequireFields<MutationgenerateAffirmationsForFamilyMemberArgs, 'familyMemberId'>>;
   generateAudio?: Resolver<ResolversTypes['GenerateAudioResult'], ParentType, ContextType, RequireFields<MutationgenerateAudioArgs, 'goalId'>>;
   generateBogdanDiscussion?: Resolver<ResolversTypes['GenerateBogdanDiscussionResult'], ParentType, ContextType>;
+  generateConditionDeepResearch?: Resolver<ResolversTypes['GenerateResearchResult'], ParentType, ContextType, RequireFields<MutationgenerateConditionDeepResearchArgs, 'memberSlug' | 'slug'>>;
   generateDeepAnalysis?: Resolver<ResolversTypes['GenerateDeepAnalysisResult'], ParentType, ContextType, RequireFields<MutationgenerateDeepAnalysisArgs, 'subjectId' | 'subjectType'>>;
   generateDeepIssueAnalysis?: Resolver<ResolversTypes['GenerateDeepAnalysisResult'], ParentType, ContextType, RequireFields<MutationgenerateDeepIssueAnalysisArgs, 'familyMemberId'>>;
   generateDiscussionGuide?: Resolver<ResolversTypes['GenerateDiscussionGuideResult'], ParentType, ContextType, RequireFields<MutationgenerateDiscussionGuideArgs, 'journalEntryId'>>;
@@ -5630,6 +5760,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   claimCard?: Resolver<Maybe<ResolversTypes['ClaimCard']>, ParentType, ContextType, RequireFields<QueryclaimCardArgs, 'id'>>;
   claimCardsForNote?: Resolver<Array<ResolversTypes['ClaimCard']>, ParentType, ContextType, RequireFields<QueryclaimCardsForNoteArgs, 'noteId'>>;
   condition?: Resolver<Maybe<ResolversTypes['Condition']>, ParentType, ContextType, RequireFields<QueryconditionArgs, 'id'>>;
+  conditionDeepResearch?: Resolver<Maybe<ResolversTypes['ConditionDeepResearch']>, ParentType, ContextType, RequireFields<QueryconditionDeepResearchArgs, 'memberSlug' | 'slug'>>;
   conditions?: Resolver<Array<ResolversTypes['Condition']>, ParentType, ContextType>;
   contact?: Resolver<Maybe<ResolversTypes['Contact']>, ParentType, ContextType, Partial<QuerycontactArgs>>;
   contactFeedback?: Resolver<Maybe<ResolversTypes['ContactFeedback']>, ParentType, ContextType, RequireFields<QuerycontactFeedbackArgs, 'id'>>;
@@ -6008,6 +6139,12 @@ export type Resolvers<ContextType = GraphQLContext> = {
   CognitiveBaseline?: CognitiveBaselineResolvers<ContextType>;
   CognitiveCheckIn?: CognitiveCheckInResolvers<ContextType>;
   Condition?: ConditionResolvers<ContextType>;
+  ConditionAgeManifestation?: ConditionAgeManifestationResolvers<ContextType>;
+  ConditionComorbidity?: ConditionComorbidityResolvers<ContextType>;
+  ConditionDeepResearch?: ConditionDeepResearchResolvers<ContextType>;
+  ConditionPathophysiology?: ConditionPathophysiologyResolvers<ContextType>;
+  ConditionRedFlag?: ConditionRedFlagResolvers<ContextType>;
+  ConditionTreatment?: ConditionTreatmentResolvers<ContextType>;
   Contact?: ContactResolvers<ContextType>;
   ContactFeedback?: ContactFeedbackResolvers<ContextType>;
   Conversation?: ConversationResolvers<ContextType>;
