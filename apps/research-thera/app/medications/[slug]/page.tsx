@@ -303,7 +303,7 @@ function MedicationDetail({ slug }: { slug: string }) {
   );
 }
 
-function MedicationCard({
+export function MedicationCard({
   id,
   name,
   dosage,

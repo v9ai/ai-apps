@@ -66,7 +66,17 @@ class _OneShotConn:
         return self._conn
 
     async def __aexit__(self, exc_type, exc, tb) -> None:
-        if self._conn is not None:
+        if self._conn is None:
+            return
+        try:
+            # Match the pool's `async with conn:` semantics: commit on a clean
+            # exit, rollback on exception. Without this, INSERT/UPDATE inside
+            # a CLI/test path silently rolls back at close().
+            if exc_type is None:
+                await self._conn.commit()
+            else:
+                await self._conn.rollback()
+        finally:
             await self._conn.close()
             self._conn = None
 

@@ -25,7 +25,7 @@ query GetContact($id: Int, $slug: String) {
     nbSuggestedCorrection
     createdAt
     updatedAt
-    aiProfile {
+    profile {
       trigger
       enrichedAt
       linkedinHeadline

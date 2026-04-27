@@ -121,7 +121,7 @@ type Contact {
   # ML touch score (urgency to re-engage)
   nextTouchScore: Float
   lastContactedAt: String
-  aiProfile: ContactAIProfile
+  profile: ContactProfile
   # ML deletion scoring
   toBeDeleted: Boolean!
   deletionScore: Float
@@ -190,7 +190,7 @@ type EnrichContactPapersResult {
   enrichersCompleted: [String!]
 }
 
-type ContactAIGitHubRepo {
+type ContactGitHubRepo {
   name: String!
   description: String
   stars: Int!
@@ -210,14 +210,14 @@ type ContactWorkExperience {
   skills: [String!]!
 }
 
-type ContactAIProfile {
+type ContactProfile {
   trigger: String!
   enrichedAt: String!
   linkedinHeadline: String
   linkedinBio: String
   githubBio: String
   githubTopLanguages: [String!]!
-  githubAiRepos: [ContactAIGitHubRepo!]!
+  githubAiRepos: [ContactGitHubRepo!]!
   githubTotalStars: Int!
   specialization: String
   skills: [String!]!
@@ -232,7 +232,7 @@ type EnrichAIContactResult {
   success: Boolean!
   message: String!
   contactId: Int!
-  aiProfile: ContactAIProfile
+  profile: ContactProfile
 }
 
 type EnrichAIContactsBulkResult {

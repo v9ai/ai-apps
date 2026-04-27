@@ -397,7 +397,7 @@ async def persist(state: CompanyProblemsState) -> dict:
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, now()::text)
                         """,
                         (
-                            "nyx",
+                            "vadim",
                             int(company_id),
                             f"problem.{slug}",
                             json.dumps(p),

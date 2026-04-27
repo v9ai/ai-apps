@@ -40,7 +40,7 @@ from leadgen_agent.competitors_team_graph import build_graph as build_competitor
 from leadgen_agent.positioning_graph import build_graph as build_positioning
 from leadgen_agent.deep_icp_graph import _dsn
 
-TENANT_ID = "nyx"
+TENANT_ID = "vadim"
 PRODUCT_IDS = [1, 2, 3]
 
 

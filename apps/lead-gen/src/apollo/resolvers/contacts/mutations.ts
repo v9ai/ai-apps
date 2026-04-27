@@ -1230,7 +1230,7 @@ export const contactMutations = {
     const contact = rows[0];
 
     if (!contact) {
-      return { success: false, message: "Contact not found", contactId: args.contactId, aiProfile: null };
+      return { success: false, message: "Contact not found", contactId: args.contactId, profile: null };
     }
 
     if (!isAIContact(contact)) {
@@ -1238,19 +1238,19 @@ export const contactMutations = {
         success: false,
         message: "Contact is not AI-related (no AI/ML department or AI tag)",
         contactId: args.contactId,
-        aiProfile: null,
+        profile: null,
       };
     }
 
     const profile = await gatherAIContactProfile(contact);
     await context.db
       .update(contacts)
-      .set({ ai_profile: JSON.stringify(profile), updated_at: new Date().toISOString() })
+      .set({ profile: JSON.stringify(profile), updated_at: new Date().toISOString() })
       .where(eq(contacts.id, contact.id));
 
-    const contactObj = { ...contact, ai_profile: JSON.stringify(profile) };
-    // Re-use the Contact.aiProfile field resolver logic inline
-    const aiProfileOut = {
+    const contactObj = { ...contact, profile: JSON.stringify(profile) };
+    // Re-use the Contact.profile field resolver logic inline
+    const profileOut = {
       trigger: profile.trigger,
       enrichedAt: profile.enriched_at,
       linkedinHeadline: profile.linkedin_headline,
@@ -1272,7 +1272,7 @@ export const contactMutations = {
       success: true,
       message: `AI profile enriched (trigger: ${profile.trigger}, confidence: ${profile.synthesis_confidence.toFixed(2)})`,
       contactId: contact.id,
-      aiProfile: aiProfileOut,
+      profile: profileOut,
     };
   },
 
@@ -1370,7 +1370,7 @@ export const contactMutations = {
             const profile = await gatherAIContactProfile(contact);
             await context.db
               .update(contacts)
-              .set({ ai_profile: JSON.stringify(profile), updated_at: new Date().toISOString() })
+              .set({ profile: JSON.stringify(profile), updated_at: new Date().toISOString() })
               .where(eq(contacts.id, contact.id));
             enriched++;
           } catch (err) {
@@ -1760,7 +1760,7 @@ export const contactMutations = {
             await context.db
               .update(contacts)
               .set({
-                ai_profile: JSON.stringify(profile),
+                profile: JSON.stringify(profile),
                 updated_at: new Date().toISOString(),
               })
               .where(eq(contacts.id, contact.id));

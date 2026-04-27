@@ -453,7 +453,6 @@ export type ComputeNextTouchScoresResult = {
 
 export type Contact = {
   __typename?: 'Contact';
-  aiProfile: Maybe<ContactAiProfile>;
   authenticityFlags: Array<Scalars['String']['output']>;
   authenticityScore: Maybe<Scalars['Float']['output']>;
   authenticityVerdict: Maybe<Scalars['String']['output']>;
@@ -505,6 +504,7 @@ export type Contact = {
   papers: Array<ContactPaper>;
   papersEnrichedAt: Maybe<Scalars['String']['output']>;
   position: Maybe<Scalars['String']['output']>;
+  profile: Maybe<ContactProfile>;
   scholarProfile: Maybe<Scalars['JSON']['output']>;
   seniority: Maybe<Scalars['String']['output']>;
   slug: Maybe<Scalars['String']['output']>;
@@ -513,33 +513,6 @@ export type Contact = {
   toBeDeleted: Scalars['Boolean']['output'];
   updatedAt: Scalars['String']['output'];
   userId: Maybe<Scalars['String']['output']>;
-};
-
-export type ContactAiGitHubRepo = {
-  __typename?: 'ContactAIGitHubRepo';
-  description: Maybe<Scalars['String']['output']>;
-  name: Scalars['String']['output'];
-  stars: Scalars['Int']['output'];
-  topics: Array<Scalars['String']['output']>;
-};
-
-export type ContactAiProfile = {
-  __typename?: 'ContactAIProfile';
-  enrichedAt: Scalars['String']['output'];
-  experienceLevel: Scalars['String']['output'];
-  githubAiRepos: Array<ContactAiGitHubRepo>;
-  githubBio: Maybe<Scalars['String']['output']>;
-  githubTopLanguages: Array<Scalars['String']['output']>;
-  githubTotalStars: Scalars['Int']['output'];
-  linkedinBio: Maybe<Scalars['String']['output']>;
-  linkedinHeadline: Maybe<Scalars['String']['output']>;
-  researchAreas: Array<Scalars['String']['output']>;
-  skills: Array<Scalars['String']['output']>;
-  specialization: Maybe<Scalars['String']['output']>;
-  synthesisConfidence: Scalars['Float']['output'];
-  synthesisRationale: Maybe<Scalars['String']['output']>;
-  trigger: Scalars['String']['output'];
-  workExperience: Array<ContactWorkExperience>;
 };
 
 export type ContactEmail = {
@@ -574,6 +547,14 @@ export type ContactEmail = {
   textContent: Maybe<Scalars['String']['output']>;
   toEmails: Array<Scalars['String']['output']>;
   updatedAt: Scalars['String']['output'];
+};
+
+export type ContactGitHubRepo = {
+  __typename?: 'ContactGitHubRepo';
+  description: Maybe<Scalars['String']['output']>;
+  name: Scalars['String']['output'];
+  stars: Scalars['Int']['output'];
+  topics: Array<Scalars['String']['output']>;
 };
 
 export type ContactInput = {
@@ -647,6 +628,25 @@ export type ContactPaper = {
   url: Maybe<Scalars['String']['output']>;
   venue: Maybe<Scalars['String']['output']>;
   year: Maybe<Scalars['Int']['output']>;
+};
+
+export type ContactProfile = {
+  __typename?: 'ContactProfile';
+  enrichedAt: Scalars['String']['output'];
+  experienceLevel: Scalars['String']['output'];
+  githubAiRepos: Array<ContactGitHubRepo>;
+  githubBio: Maybe<Scalars['String']['output']>;
+  githubTopLanguages: Array<Scalars['String']['output']>;
+  githubTotalStars: Scalars['Int']['output'];
+  linkedinBio: Maybe<Scalars['String']['output']>;
+  linkedinHeadline: Maybe<Scalars['String']['output']>;
+  researchAreas: Array<Scalars['String']['output']>;
+  skills: Array<Scalars['String']['output']>;
+  specialization: Maybe<Scalars['String']['output']>;
+  synthesisConfidence: Scalars['Float']['output'];
+  synthesisRationale: Maybe<Scalars['String']['output']>;
+  trigger: Scalars['String']['output'];
+  workExperience: Array<ContactWorkExperience>;
 };
 
 export type ContactTagOption = {
@@ -1026,9 +1026,9 @@ export type EnhanceCompanyResponse = {
 
 export type EnrichAiContactResult = {
   __typename?: 'EnrichAIContactResult';
-  aiProfile: Maybe<ContactAiProfile>;
   contactId: Scalars['Int']['output'];
   message: Scalars['String']['output'];
+  profile: Maybe<ContactProfile>;
   success: Scalars['Boolean']['output'];
 };
 
@@ -4001,15 +4001,15 @@ export type ResolversTypes = {
   CompetitorStatus: ResolverTypeWrapper<Partial<CompetitorStatus>>;
   ComputeNextTouchScoresResult: ResolverTypeWrapper<Partial<ComputeNextTouchScoresResult>>;
   Contact: ResolverTypeWrapper<Partial<Contact>>;
-  ContactAIGitHubRepo: ResolverTypeWrapper<Partial<ContactAiGitHubRepo>>;
-  ContactAIProfile: ResolverTypeWrapper<Partial<ContactAiProfile>>;
   ContactEmail: ResolverTypeWrapper<Partial<ContactEmail>>;
+  ContactGitHubRepo: ResolverTypeWrapper<Partial<ContactGitHubRepo>>;
   ContactInput: ResolverTypeWrapper<Partial<ContactInput>>;
   ContactLoraScore: ResolverTypeWrapper<Partial<ContactLoraScore>>;
   ContactMLScore: ResolverTypeWrapper<Partial<ContactMlScore>>;
   ContactMessage: ResolverTypeWrapper<Partial<ContactMessage>>;
   ContactNextTouch: ResolverTypeWrapper<Partial<ContactNextTouch>>;
   ContactPaper: ResolverTypeWrapper<Partial<ContactPaper>>;
+  ContactProfile: ResolverTypeWrapper<Partial<ContactProfile>>;
   ContactTagOption: ResolverTypeWrapper<Partial<ContactTagOption>>;
   ContactWorkExperience: ResolverTypeWrapper<Partial<ContactWorkExperience>>;
   ContactsResult: ResolverTypeWrapper<Partial<ContactsResult>>;
@@ -4253,15 +4253,15 @@ export type ResolversParentTypes = {
   CompetitorProfile: Partial<CompetitorProfile>;
   ComputeNextTouchScoresResult: Partial<ComputeNextTouchScoresResult>;
   Contact: Partial<Contact>;
-  ContactAIGitHubRepo: Partial<ContactAiGitHubRepo>;
-  ContactAIProfile: Partial<ContactAiProfile>;
   ContactEmail: Partial<ContactEmail>;
+  ContactGitHubRepo: Partial<ContactGitHubRepo>;
   ContactInput: Partial<ContactInput>;
   ContactLoraScore: Partial<ContactLoraScore>;
   ContactMLScore: Partial<ContactMlScore>;
   ContactMessage: Partial<ContactMessage>;
   ContactNextTouch: Partial<ContactNextTouch>;
   ContactPaper: Partial<ContactPaper>;
+  ContactProfile: Partial<ContactProfile>;
   ContactTagOption: Partial<ContactTagOption>;
   ContactWorkExperience: Partial<ContactWorkExperience>;
   ContactsResult: Partial<ContactsResult>;
@@ -4773,7 +4773,6 @@ export type ComputeNextTouchScoresResultResolvers<ContextType = GraphQLContext, 
 };
 
 export type ContactResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Contact'] = ResolversParentTypes['Contact']> = {
-  aiProfile?: Resolver<Maybe<ResolversTypes['ContactAIProfile']>, ParentType, ContextType>;
   authenticityFlags?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   authenticityScore?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   authenticityVerdict?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -4825,6 +4824,7 @@ export type ContactResolvers<ContextType = GraphQLContext, ParentType extends Re
   papers?: Resolver<Array<ResolversTypes['ContactPaper']>, ParentType, ContextType>;
   papersEnrichedAt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   position?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  profile?: Resolver<Maybe<ResolversTypes['ContactProfile']>, ParentType, ContextType>;
   scholarProfile?: Resolver<Maybe<ResolversTypes['JSON']>, ParentType, ContextType>;
   seniority?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   slug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -4833,31 +4833,6 @@ export type ContactResolvers<ContextType = GraphQLContext, ParentType extends Re
   toBeDeleted?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   userId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-};
-
-export type ContactAiGitHubRepoResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ContactAIGitHubRepo'] = ResolversParentTypes['ContactAIGitHubRepo']> = {
-  description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  stars?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  topics?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-};
-
-export type ContactAiProfileResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ContactAIProfile'] = ResolversParentTypes['ContactAIProfile']> = {
-  enrichedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  experienceLevel?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  githubAiRepos?: Resolver<Array<ResolversTypes['ContactAIGitHubRepo']>, ParentType, ContextType>;
-  githubBio?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  githubTopLanguages?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  githubTotalStars?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  linkedinBio?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  linkedinHeadline?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  researchAreas?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  skills?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  specialization?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  synthesisConfidence?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
-  synthesisRationale?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  trigger?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  workExperience?: Resolver<Array<ResolversTypes['ContactWorkExperience']>, ParentType, ContextType>;
 };
 
 export type ContactEmailResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ContactEmail'] = ResolversParentTypes['ContactEmail']> = {
@@ -4891,6 +4866,13 @@ export type ContactEmailResolvers<ContextType = GraphQLContext, ParentType exten
   textContent?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   toEmails?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type ContactGitHubRepoResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ContactGitHubRepo'] = ResolversParentTypes['ContactGitHubRepo']> = {
+  description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  stars?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  topics?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
 };
 
 export type ContactLoraScoreResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ContactLoraScore'] = ResolversParentTypes['ContactLoraScore']> = {
@@ -4945,6 +4927,24 @@ export type ContactPaperResolvers<ContextType = GraphQLContext, ParentType exten
   url?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   venue?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   year?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+};
+
+export type ContactProfileResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ContactProfile'] = ResolversParentTypes['ContactProfile']> = {
+  enrichedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  experienceLevel?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  githubAiRepos?: Resolver<Array<ResolversTypes['ContactGitHubRepo']>, ParentType, ContextType>;
+  githubBio?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  githubTopLanguages?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  githubTotalStars?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  linkedinBio?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  linkedinHeadline?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  researchAreas?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  skills?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  specialization?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  synthesisConfidence?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  synthesisRationale?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  trigger?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  workExperience?: Resolver<Array<ResolversTypes['ContactWorkExperience']>, ParentType, ContextType>;
 };
 
 export type ContactTagOptionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ContactTagOption'] = ResolversParentTypes['ContactTagOption']> = {
@@ -5209,9 +5209,9 @@ export type EnhanceCompanyResponseResolvers<ContextType = GraphQLContext, Parent
 };
 
 export type EnrichAiContactResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['EnrichAIContactResult'] = ResolversParentTypes['EnrichAIContactResult']> = {
-  aiProfile?: Resolver<Maybe<ResolversTypes['ContactAIProfile']>, ParentType, ContextType>;
   contactId?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  profile?: Resolver<Maybe<ResolversTypes['ContactProfile']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
 };
 
@@ -6620,14 +6620,14 @@ export type Resolvers<ContextType = GraphQLContext> = {
   CompetitorProfile?: CompetitorProfileResolvers<ContextType>;
   ComputeNextTouchScoresResult?: ComputeNextTouchScoresResultResolvers<ContextType>;
   Contact?: ContactResolvers<ContextType>;
-  ContactAIGitHubRepo?: ContactAiGitHubRepoResolvers<ContextType>;
-  ContactAIProfile?: ContactAiProfileResolvers<ContextType>;
   ContactEmail?: ContactEmailResolvers<ContextType>;
+  ContactGitHubRepo?: ContactGitHubRepoResolvers<ContextType>;
   ContactLoraScore?: ContactLoraScoreResolvers<ContextType>;
   ContactMLScore?: ContactMlScoreResolvers<ContextType>;
   ContactMessage?: ContactMessageResolvers<ContextType>;
   ContactNextTouch?: ContactNextTouchResolvers<ContextType>;
   ContactPaper?: ContactPaperResolvers<ContextType>;
+  ContactProfile?: ContactProfileResolvers<ContextType>;
   ContactTagOption?: ContactTagOptionResolvers<ContextType>;
   ContactWorkExperience?: ContactWorkExperienceResolvers<ContextType>;
   ContactsResult?: ContactsResultResolvers<ContextType>;

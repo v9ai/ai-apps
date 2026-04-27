@@ -194,7 +194,7 @@ export const contacts = pgTable(
     dm_reasons: text("dm_reasons"),
     next_touch_score: real("next_touch_score").default(0.0),
     last_contacted_at: text("last_contacted_at"),
-    ai_profile: text("ai_profile"),
+    profile: text("profile"),
     to_be_deleted: boolean("to_be_deleted").notNull().default(false),
     deletion_score: real("deletion_score"),
     deletion_reasons: text("deletion_reasons"),

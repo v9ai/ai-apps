@@ -318,7 +318,7 @@ _Generated 2026-04-23 by a 10-expert parallel audit. Product-focused: one sectio
 | `/opportunities` | Server-side joined table (jobs, bounties, partnerships) with status/score + "Apply" tracking |
 | `/follow-ups` | Tabbed UI: emails awaiting replies + due reminders; snooze/dismiss + tag filtering (`follow-ups/page.tsx:33-274`) |
 | `/emails` | **Admin-only** (ADMIN_EMAIL guard, `emails/page.tsx:796-823`). Tabs: Inbox, Sent (Resend sync), Campaigns, Templates, LinkedIn Compose, Draft Review, CPN Followup, Stats, Webhook Logs |
-| `/products` | Product browser (tenant "nyx" only, `sidebar.tsx:43`) |
+| `/products` | Product browser (`sidebar.tsx:43`) |
 | `/admin/linkedin-posts` | Post scheduling + analytics |
 | `/settings` | Excluded companies chip input; unsaved-change detection (`settings/page.tsx:40-323`) |
 | `/sign-in`, `/sign-up` | AuthDialog modal on load |
@@ -335,7 +335,7 @@ _Generated 2026-04-23 by a 10-expert parallel audit. Product-focused: one sectio
 - `src/app/api/graphql/route.ts:117-258` — depth-limit, CORS, rate-limit, tenant-scoped DB, session cache.
 - `vercel.json:8-50` — 5-min timeout on `/api/*`, 3 cron jobs (backup 3am, cpn-campaign 9am, followup-scheduler 7am).
 
-**Current state:** Production on Vercel (Node 24.x). Multi-tenant (`default`, `nyx`) via cookie + TenantProvider. GraphQL-first. Admin UI live (Emails + LinkedIn Posts). Responsive sidebar (200px / 56px).
+**Current state:** Production on Vercel (Node 24.x). Single-tenant (`vadim`) via cookie + TenantProvider (RLS infrastructure retained for defense-in-depth). GraphQL-first. Admin UI live (Emails + LinkedIn Posts). Responsive sidebar (200px / 56px).
 
 **Limitations:** In-memory rate limiter (not shared across serverless invocations); no offline mode (GraphQL-only); email dashboard is binary admin-only (no RBAC); tenant selection client-only (no server-side enforcement beyond DB filtering); limited mobile UX (collapsible, not drawer).
 

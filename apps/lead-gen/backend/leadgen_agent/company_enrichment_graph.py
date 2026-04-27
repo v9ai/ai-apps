@@ -427,7 +427,7 @@ async def score_verticals(state: CompanyEnrichmentState) -> dict:
     if not verticals:
         return {"agent_timings": {"score_verticals": round(time.perf_counter() - t0, 3)}}
 
-    tenant_id = "nyx"
+    tenant_id = "vadim"
     product_ids = [int(v.product_id) for v in verticals]
     composite_weights = load_composite_weights()
     semantic_weight_icp = float(
@@ -646,7 +646,7 @@ async def persist(state: CompanyEnrichmentState) -> dict:
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, now()::text)
                     """,
                     (
-                        "nyx",
+                        "vadim",
                         int(company_id),
                         "classification.home",
                         home_value_json,
@@ -675,7 +675,7 @@ async def persist(state: CompanyEnrichmentState) -> dict:
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, now()::text)
                         """,
                         (
-                            "nyx",
+                            "vadim",
                             int(company_id),
                             "classification.careers",
                             careers_value_json,

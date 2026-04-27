@@ -249,10 +249,10 @@ async def persist(state: CompanyDiscoveryState) -> dict:
                 tags_list.append(vertical)
             if geography:
                 tags_list.append(geography)
-            key = f"nyx:discovery-{_slugify(c['domain'])}"[:200]
+            key = f"vadim:discovery-{_slugify(c['domain'])}"[:200]
             rows.append(
                 (
-                    "nyx",
+                    "vadim",
                     key,
                     c["name"],
                     c["domain"],

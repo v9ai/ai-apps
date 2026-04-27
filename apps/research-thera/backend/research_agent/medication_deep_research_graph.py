@@ -40,9 +40,7 @@ load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 from research_client import dailymed, openfda, rxnav  # noqa: E402
 
-from .generate_therapy_research_graph import (  # noqa: E402
-    create_generate_therapy_research_graph,
-)
+from .graph import create_research_pipeline  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
@@ -568,24 +566,57 @@ async def fanout_papers_per_row(state: MedicationDeepResearchState) -> dict:
         seen.add(key)
         unique_rows.append(r)
 
-    # Build the child graph once. Heavy: serialised by the parent graph's
-    # outer concurrency=1 semaphore in app.py.
-    child = create_generate_therapy_research_graph()
+    # ReAct research pipeline — mirrors what generateResearch.ts dispatches for
+    # medicationId. Built once; serialised internally by the heavy concurrency=1
+    # semaphore on the "research" graph in app.py.
+    child = create_research_pipeline()
 
     user_email = state.get("user_email") or ""
-    language = "en"
+    meta = state.get("_drug_meta") or {}
+    generic = meta.get("generic_name") or ""
 
     for row in unique_rows:
         age = _resolve_age(row.get("family_member_age_years"), row.get("family_member_date_of_birth"))
+        med_label_lines: list[str] = [
+            f"medication_id: {row['id']}",
+            f"Drug: {row.get('name')}",
+        ]
+        if generic and generic.lower() not in (row.get("name") or "").lower():
+            med_label_lines.append(f"Generic: {generic}")
+        if row.get("dosage"):
+            med_label_lines.append(f"Dosage: {row['dosage']}")
+        if row.get("frequency"):
+            med_label_lines.append(f"Frequency: {row['frequency']}")
+        if row.get("notes"):
+            med_label_lines.append(f"Notes: {row['notes']}")
+        if row.get("family_member_first_name"):
+            who = row["family_member_first_name"]
+            if age:
+                who = f"{who}, age {age}"
+            med_label_lines.append(f"Patient: {who}")
+        prompt = "\n".join([
+            "Find evidence-based clinical research for the following medication regimen:",
+            "",
+            *med_label_lines,
+            "",
+            "Search for: efficacy in the indicated condition, age-appropriate dosing, "
+            "safety profile, drug interactions, and long-term outcomes. "
+            "When the patient is a child, prioritize pediatric-specific safety findings "
+            "and any boxed/black-box warnings.",
+            "Only save papers with real abstracts (not \"None\", \"...\", or empty). "
+            "Skip papers lacking abstracts.",
+            "",
+            f"IMPORTANT: When calling save_research_papers, use medication_id: \"{row['id']}\" — "
+            "do NOT use goal_id, issue_id, feedback_id, or journal_entry_id.",
+        ])
+
         try:
             await asyncio.wait_for(
                 child.ainvoke(
                     {
-                        "userId": user_email,
+                        "messages": [{"role": "user", "content": prompt}],
+                        "userEmail": user_email,
                         "medicationId": row["id"],
-                        "familyMemberName": row.get("family_member_first_name"),
-                        "familyMemberAge": age,
-                        "language": language,
                     },
                     config={"configurable": {"thread_id": f"med-deep-paper-{row['id']}"}},
                 ),

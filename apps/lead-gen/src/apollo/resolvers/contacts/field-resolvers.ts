@@ -143,12 +143,12 @@ export const Contact = {
   lastContactedAt(parent: DbContact) {
     return parent.last_contacted_at ?? null;
   },
-  aiProfile(parent: DbContact) {
-    if (!parent.ai_profile) return null;
-    const raw = cachedParse<Record<string, unknown>>(parent, "ai_profile", parent.ai_profile, null as unknown as Record<string, unknown>);
+  profile(parent: DbContact) {
+    if (!parent.profile) return null;
+    const raw = cachedParse<Record<string, unknown>>(parent, "profile", parent.profile, null as unknown as Record<string, unknown>);
     if (!raw) return null;
     // Schema declares `trigger` and `enrichedAt` as non-nullable. If a row's
-    // ai_profile JSON predates the enrichment pipeline (e.g. ad-hoc merge
+    // profile JSON predates the enrichment pipeline (e.g. ad-hoc merge
     // metadata written by tooling), bail to null instead of erroring out the
     // whole `contact` query.
     if (!raw.trigger || !raw.enriched_at) return null;

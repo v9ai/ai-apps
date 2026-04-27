@@ -450,7 +450,6 @@ export type ComputeNextTouchScoresResult = {
 
 export type Contact = {
   __typename: 'Contact';
-  aiProfile: Maybe<ContactAiProfile>;
   authenticityFlags: Array<Scalars['String']['output']>;
   authenticityScore: Maybe<Scalars['Float']['output']>;
   authenticityVerdict: Maybe<Scalars['String']['output']>;
@@ -502,6 +501,7 @@ export type Contact = {
   papers: Array<ContactPaper>;
   papersEnrichedAt: Maybe<Scalars['String']['output']>;
   position: Maybe<Scalars['String']['output']>;
+  profile: Maybe<ContactProfile>;
   scholarProfile: Maybe<Scalars['JSON']['output']>;
   seniority: Maybe<Scalars['String']['output']>;
   slug: Maybe<Scalars['String']['output']>;
@@ -510,33 +510,6 @@ export type Contact = {
   toBeDeleted: Scalars['Boolean']['output'];
   updatedAt: Scalars['String']['output'];
   userId: Maybe<Scalars['String']['output']>;
-};
-
-export type ContactAiGitHubRepo = {
-  __typename: 'ContactAIGitHubRepo';
-  description: Maybe<Scalars['String']['output']>;
-  name: Scalars['String']['output'];
-  stars: Scalars['Int']['output'];
-  topics: Array<Scalars['String']['output']>;
-};
-
-export type ContactAiProfile = {
-  __typename: 'ContactAIProfile';
-  enrichedAt: Scalars['String']['output'];
-  experienceLevel: Scalars['String']['output'];
-  githubAiRepos: Array<ContactAiGitHubRepo>;
-  githubBio: Maybe<Scalars['String']['output']>;
-  githubTopLanguages: Array<Scalars['String']['output']>;
-  githubTotalStars: Scalars['Int']['output'];
-  linkedinBio: Maybe<Scalars['String']['output']>;
-  linkedinHeadline: Maybe<Scalars['String']['output']>;
-  researchAreas: Array<Scalars['String']['output']>;
-  skills: Array<Scalars['String']['output']>;
-  specialization: Maybe<Scalars['String']['output']>;
-  synthesisConfidence: Scalars['Float']['output'];
-  synthesisRationale: Maybe<Scalars['String']['output']>;
-  trigger: Scalars['String']['output'];
-  workExperience: Array<ContactWorkExperience>;
 };
 
 export type ContactEmail = {
@@ -571,6 +544,14 @@ export type ContactEmail = {
   textContent: Maybe<Scalars['String']['output']>;
   toEmails: Array<Scalars['String']['output']>;
   updatedAt: Scalars['String']['output'];
+};
+
+export type ContactGitHubRepo = {
+  __typename: 'ContactGitHubRepo';
+  description: Maybe<Scalars['String']['output']>;
+  name: Scalars['String']['output'];
+  stars: Scalars['Int']['output'];
+  topics: Array<Scalars['String']['output']>;
 };
 
 export type ContactInput = {
@@ -644,6 +625,25 @@ export type ContactPaper = {
   url: Maybe<Scalars['String']['output']>;
   venue: Maybe<Scalars['String']['output']>;
   year: Maybe<Scalars['Int']['output']>;
+};
+
+export type ContactProfile = {
+  __typename: 'ContactProfile';
+  enrichedAt: Scalars['String']['output'];
+  experienceLevel: Scalars['String']['output'];
+  githubAiRepos: Array<ContactGitHubRepo>;
+  githubBio: Maybe<Scalars['String']['output']>;
+  githubTopLanguages: Array<Scalars['String']['output']>;
+  githubTotalStars: Scalars['Int']['output'];
+  linkedinBio: Maybe<Scalars['String']['output']>;
+  linkedinHeadline: Maybe<Scalars['String']['output']>;
+  researchAreas: Array<Scalars['String']['output']>;
+  skills: Array<Scalars['String']['output']>;
+  specialization: Maybe<Scalars['String']['output']>;
+  synthesisConfidence: Scalars['Float']['output'];
+  synthesisRationale: Maybe<Scalars['String']['output']>;
+  trigger: Scalars['String']['output'];
+  workExperience: Array<ContactWorkExperience>;
 };
 
 export type ContactTagOption = {
@@ -1023,9 +1023,9 @@ export type EnhanceCompanyResponse = {
 
 export type EnrichAiContactResult = {
   __typename: 'EnrichAIContactResult';
-  aiProfile: Maybe<ContactAiProfile>;
   contactId: Scalars['Int']['output'];
   message: Scalars['String']['output'];
+  profile: Maybe<ContactProfile>;
   success: Scalars['Boolean']['output'];
 };
 

@@ -393,7 +393,6 @@ type ComputeNextTouchScoresResult {
 }
 
 type Contact {
-  aiProfile: ContactAIProfile
   authenticityFlags: [String!]!
   authenticityScore: Float
   authenticityVerdict: String
@@ -445,6 +444,7 @@ type Contact {
   papers: [ContactPaper!]!
   papersEnrichedAt: String
   position: String
+  profile: ContactProfile
   scholarProfile: JSON
   seniority: String
   slug: String
@@ -453,31 +453,6 @@ type Contact {
   toBeDeleted: Boolean!
   updatedAt: String!
   userId: String
-}
-
-type ContactAIGitHubRepo {
-  description: String
-  name: String!
-  stars: Int!
-  topics: [String!]!
-}
-
-type ContactAIProfile {
-  enrichedAt: String!
-  experienceLevel: String!
-  githubAiRepos: [ContactAIGitHubRepo!]!
-  githubBio: String
-  githubTopLanguages: [String!]!
-  githubTotalStars: Int!
-  linkedinBio: String
-  linkedinHeadline: String
-  researchAreas: [String!]!
-  skills: [String!]!
-  specialization: String
-  synthesisConfidence: Float!
-  synthesisRationale: String
-  trigger: String!
-  workExperience: [ContactWorkExperience!]!
 }
 
 type ContactEmail {
@@ -511,6 +486,13 @@ type ContactEmail {
   textContent: String
   toEmails: [String!]!
   updatedAt: String!
+}
+
+type ContactGitHubRepo {
+  description: String
+  name: String!
+  stars: Int!
+  topics: [String!]!
 }
 
 input ContactInput {
@@ -579,6 +561,24 @@ type ContactPaper {
   url: String
   venue: String
   year: Int
+}
+
+type ContactProfile {
+  enrichedAt: String!
+  experienceLevel: String!
+  githubAiRepos: [ContactGitHubRepo!]!
+  githubBio: String
+  githubTopLanguages: [String!]!
+  githubTotalStars: Int!
+  linkedinBio: String
+  linkedinHeadline: String
+  researchAreas: [String!]!
+  skills: [String!]!
+  specialization: String
+  synthesisConfidence: Float!
+  synthesisRationale: String
+  trigger: String!
+  workExperience: [ContactWorkExperience!]!
 }
 
 type ContactTagOption {
@@ -934,9 +934,9 @@ type EnhanceCompanyResponse {
 }
 
 type EnrichAIContactResult {
-  aiProfile: ContactAIProfile
   contactId: Int!
   message: String!
+  profile: ContactProfile
   success: Boolean!
 }
 

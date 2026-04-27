@@ -21,6 +21,17 @@ import hmac
 import logging
 import os
 import uuid
+from pathlib import Path
+
+# Load backend/.env before reading env vars so direct ``uvicorn app:app`` runs
+# pick up NEON_DATABASE_URL / DEEPSEEK_API_KEY / LANGGRAPH_AUTH_TOKEN. In
+# Cloudflare Containers env vars come from the container config — `load_dotenv`
+# is a no-op when no .env file exists.
+try:
+    from dotenv import load_dotenv as _load_dotenv  # type: ignore
+    _load_dotenv(Path(__file__).resolve().parent / ".env")
+except Exception:
+    pass
 
 logging.basicConfig(
     level=os.environ.get("LOG_LEVEL", "INFO"),

@@ -589,7 +589,7 @@ async def persist(state: ContactDiscoveryState) -> dict:
                         cur.execute(
                             insert_sql,
                             (
-                                "nyx",
+                                "vadim",
                                 c.get("first_name") or "",
                                 c.get("last_name") or "",
                                 company_id,

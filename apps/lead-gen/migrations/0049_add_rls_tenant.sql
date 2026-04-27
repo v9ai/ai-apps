@@ -6,7 +6,7 @@
 --
 -- Per-request flow (see src/db/with-tenant.ts):
 --   BEGIN;
---   SET LOCAL app.tenant = 'vadim' | 'nyx';
+--   SET LOCAL app.tenant = 'vadim';
 --   -- resolvers query as usual; RLS filters rows automatically
 --   COMMIT;
 --

@@ -4,7 +4,7 @@ One run = one team. Given a ``product_id`` and a ``segment_index`` (0-based
 into ``products.icp_analysis.segments``), the graph asks deepseek-v4-pro
 for 12–15 real companies that fit the segment, deduplicates them against
 existing ``companies`` rows by ``canonical_domain``, and inserts the rest
-with ``tenant_id='nyx'``.
+with ``tenant_id='vadim'``.
 
 Dispatched by ``POST /dispatch/lead-gen-teams`` in ``backend/app.py``, which
 fans out (3 products × 3 segments) = 9 background runs.
@@ -286,10 +286,10 @@ async def persist(state: LeadGenTeamState) -> dict:
     if filtered:
         rows: list[tuple[Any, ...]] = []
         for c in filtered:
-            key = f"nyx:{product_slug}-{seg_key}-{_slugify(c['domain'])}"[:200]
+            key = f"vadim:{product_slug}-{seg_key}-{_slugify(c['domain'])}"[:200]
             rows.append(
                 (
-                    "nyx",
+                    "vadim",
                     key,
                     c["name"],
                     c["domain"],
