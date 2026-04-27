@@ -471,7 +471,7 @@ export const extraSections: { heading: string; content: string }[] = [
   {
     heading: "Healthcare: Local-Only Inference",
     content:
-      "All clinical inference runs on Apple Silicon — no PHI ever leaves the host. The LLM backend (backend/healthcare/llm_backend.py) uses an OpenAI-compatible HTTP client pointed at LLM_BASE_URL (default http://localhost:8080, served by mlx_lm.server with Qwen2.5-7B-Instruct-4bit). Embeddings use FastEmbed running BAAI/bge-large-en-v1.5 via ONNX Runtime — same 1024 dimensions as OpenAI text-embedding-3-small but zero API calls and zero cold-start lag. The same model is exposed twice: as a synchronous generate_embedding helper for ad-hoc encoding, and as a LlamaIndex-compatible FastEmbedEmbedding singleton so the IngestionPipeline can use it as a transformation step. Swapping to a remote model is a one-line LLM_BASE_URL change without any code edit.",
+      "All clinical inference runs on Apple Silicon — no PHI ever leaves the host. The LLM backend (backend/healthcare/llm_backend.py) uses an OpenAI-compatible HTTP client pointed at LLM_BASE_URL, served by mlx_lm.server with Qwen2.5-7B-Instruct-4bit. Embeddings use FastEmbed running BAAI/bge-large-en-v1.5 via ONNX Runtime — same 1024 dimensions as OpenAI text-embedding-3-small but zero API calls and zero cold-start lag. The same model is exposed twice: as a synchronous generate_embedding helper for ad-hoc encoding, and as a LlamaIndex-compatible FastEmbedEmbedding singleton so the IngestionPipeline can use it as a transformation step. Swapping to a remote model is a one-line LLM_BASE_URL change without any code edit.",
   },
   {
     heading: "Healthcare: Eight pgvector Tables",
