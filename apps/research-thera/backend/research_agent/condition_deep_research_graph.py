@@ -79,6 +79,7 @@ class ConditionDeepResearchState(TypedDict, total=False):
     _family_member: dict
     _age: Optional[int]
     _developmental_tier: str
+    _personal_evidence: dict  # all records related to the person
     _facts: dict
     _cache_hit: bool
     _research_id: Optional[str]
@@ -128,6 +129,197 @@ def _age_to_tier(age: Optional[int]) -> str:
     if age <= 17:
         return "adolescent"
     return "adult"
+
+
+def _render_evidence_block(evidence: dict) -> str:
+    """Render the personal evidence dict as compact, prompt-friendly markdown."""
+    if not evidence:
+        return ""
+
+    sections: list[str] = []
+
+    def _section(title: str, items: list[dict], render_item) -> None:
+        if not items:
+            return
+        lines = [f"### {title} ({len(items)})"]
+        for item in items:
+            rendered = render_item(item)
+            if rendered:
+                lines.append(f"- {rendered}")
+        sections.append("\n".join(lines))
+
+    _section(
+        "Family-member characteristics",
+        evidence.get("characteristics") or [],
+        lambda c: " · ".join(
+            filter(
+                None,
+                [
+                    c.get("trait") or c.get("name"),
+                    c.get("value"),
+                    f"severity={c['severity']}" if c.get("severity") else None,
+                    c.get("notes"),
+                ],
+            )
+        ),
+    )
+
+    _section(
+        "Sibling/comorbid conditions already tracked",
+        evidence.get("other_conditions") or [],
+        lambda c: " — ".join(filter(None, [c.get("name"), c.get("notes")])),
+    )
+
+    _section(
+        "Active medications",
+        evidence.get("medications") or [],
+        lambda m: " · ".join(
+            filter(
+                None,
+                [
+                    m.get("name"),
+                    m.get("dosage"),
+                    m.get("frequency"),
+                    "ACTIVE" if m.get("is_active") else "discontinued",
+                    f"start={m['start_date']}" if m.get("start_date") else None,
+                    m.get("notes"),
+                ],
+            )
+        ),
+    )
+
+    _section(
+        "Allergies & intolerances",
+        evidence.get("allergies") or [],
+        lambda a: " · ".join(
+            filter(
+                None,
+                [
+                    f"[{a['kind']}]" if a.get("kind") else None,
+                    a.get("name"),
+                    f"severity={a['severity']}" if a.get("severity") else None,
+                    a.get("notes"),
+                ],
+            )
+        ),
+    )
+
+    _section(
+        "Tracked issues",
+        evidence.get("issues") or [],
+        lambda i: " — ".join(
+            filter(
+                None,
+                [
+                    f"[{i.get('category')}]" if i.get("category") else None,
+                    i.get("title"),
+                    f"severity={i['severity']}" if i.get("severity") else None,
+                    f"({i['date']})" if i.get("date") else None,
+                    i.get("description"),
+                ],
+            )
+        ),
+    )
+
+    _section(
+        "Behavior observations",
+        evidence.get("behavior_observations") or [],
+        lambda o: " · ".join(
+            filter(
+                None,
+                [
+                    f"({o['date']})" if o.get("date") else None,
+                    o.get("type"),
+                    f"freq={o['frequency']}" if o.get("frequency") else None,
+                    f"intensity={o['intensity']}" if o.get("intensity") else None,
+                    o.get("context"),
+                    o.get("notes"),
+                ],
+            )
+        ),
+    )
+
+    _section(
+        "Teacher feedback",
+        evidence.get("teacher_feedbacks") or [],
+        lambda t: " — ".join(
+            filter(
+                None,
+                [
+                    f"({t['date']})" if t.get("date") else None,
+                    t.get("teacher"),
+                    f"re: {t['subject']}" if t.get("subject") else None,
+                    t.get("content"),
+                ],
+            )
+        ),
+    )
+
+    _section(
+        "Other contact feedback",
+        evidence.get("contact_feedbacks") or [],
+        lambda c: " — ".join(
+            filter(
+                None,
+                [
+                    f"({c['date']})" if c.get("date") else None,
+                    c.get("subject"),
+                    c.get("content"),
+                ],
+            )
+        ),
+    )
+
+    _section(
+        "Journal entries (most recent)",
+        evidence.get("journal_entries") or [],
+        lambda j: " — ".join(
+            filter(
+                None,
+                [
+                    f"({j['date']})" if j.get("date") else None,
+                    j.get("title"),
+                    f"mood={j['mood']}" if j.get("mood") else None,
+                    j.get("content"),
+                ],
+            )
+        ),
+    )
+
+    _section(
+        "Active goals",
+        evidence.get("goals") or [],
+        lambda g: " · ".join(
+            filter(
+                None,
+                [
+                    g.get("title"),
+                    f"status={g['status']}" if g.get("status") else None,
+                    f"priority={g['priority']}" if g.get("priority") else None,
+                    g.get("description"),
+                ],
+            )
+        ),
+    )
+
+    _section(
+        "Tracked habits",
+        evidence.get("habits") or [],
+        lambda h: " · ".join(
+            filter(
+                None,
+                [
+                    h.get("title"),
+                    h.get("frequency"),
+                    f"target={h['target_count']}" if h.get("target_count") else None,
+                    f"status={h['status']}" if h.get("status") else None,
+                    h.get("description"),
+                ],
+            )
+        ),
+    )
+
+    return "\n\n".join(sections)
 
 
 async def _deepseek_json(
@@ -348,6 +540,255 @@ async def check_freshness(state: ConditionDeepResearchState) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# Node: gather_personal_evidence
+# ---------------------------------------------------------------------------
+# Per-table soft caps so the prompt stays bounded even for very active users.
+_PERSON_LIMITS = {
+    "characteristics": 30,
+    "issues": 25,
+    "journal": 20,
+    "observations": 25,
+    "teacher": 10,
+    "contact": 10,
+    "goals": 15,
+    "habits": 15,
+    "medications": 20,
+    "allergies": 30,
+}
+
+
+async def gather_personal_evidence(state: ConditionDeepResearchState) -> dict:
+    """Pull every relevant record for this family member and condense it into a
+    structured payload that ``extract_facts`` injects into the LLM prompt.
+
+    The goal is condition research that is calibrated to *this* person's actual
+    history — observed behaviors, teacher reports, current medications, comorbid
+    conditions, allergies, etc. — not a generic pediatric reference.
+    """
+    if state.get("_cache_hit"):
+        return {}
+
+    fm = state.get("_family_member") or {}
+    user_email = state["user_email"].strip().lower()
+    job_id = state.get("job_id")
+    fm_id = fm.get("id")
+
+    if not fm_id:
+        return {"_personal_evidence": {}}
+
+    await _update_job_progress(job_id, 25)
+
+    cond_slug = state.get("condition_slug", "").strip().lower()
+    cond_name = (state.get("_condition_row") or {}).get("name") or cond_slug
+
+    async with neon.connection() as conn:
+        async with conn.cursor() as cur:
+            # Family characteristics (severity / risk tiers)
+            await cur.execute(
+                "SELECT trait, value, severity, notes FROM family_member_characteristics "
+                "WHERE family_member_id = %s AND user_id = %s "
+                "ORDER BY created_at DESC LIMIT %s",
+                (fm_id, user_email, _PERSON_LIMITS["characteristics"]),
+            )
+            characteristics = [
+                {"trait": r[0], "value": r[1], "severity": r[2], "notes": r[3]}
+                for r in await cur.fetchall()
+            ]
+
+            await cur.execute(
+                "SELECT title, description, category, severity, recommendations, "
+                "created_at FROM issues "
+                "WHERE family_member_id = %s AND user_id = %s "
+                "ORDER BY created_at DESC LIMIT %s",
+                (fm_id, user_email, _PERSON_LIMITS["issues"]),
+            )
+            issues = [
+                {
+                    "title": r[0],
+                    "description": (r[1] or "")[:600],
+                    "category": r[2],
+                    "severity": r[3],
+                    "recommendations": (r[4] or "")[:400] if r[4] else None,
+                    "date": str(r[5])[:10] if r[5] else None,
+                }
+                for r in await cur.fetchall()
+            ]
+
+            await cur.execute(
+                "SELECT title, content, mood, mood_score, tags, entry_date "
+                "FROM journal_entries "
+                "WHERE family_member_id = %s AND user_id = %s "
+                "ORDER BY entry_date DESC NULLS LAST, id DESC LIMIT %s",
+                (fm_id, user_email, _PERSON_LIMITS["journal"]),
+            )
+            journal = [
+                {
+                    "title": r[0],
+                    "content": (r[1] or "")[:600],
+                    "mood": r[2],
+                    "mood_score": r[3],
+                    "tags": r[4],
+                    "date": r[5],
+                }
+                for r in await cur.fetchall()
+            ]
+
+            await cur.execute(
+                "SELECT observation_type, frequency, intensity, context, notes, "
+                "observed_at FROM behavior_observations "
+                "WHERE family_member_id = %s AND user_id = %s "
+                "ORDER BY observed_at DESC LIMIT %s",
+                (fm_id, user_email, _PERSON_LIMITS["observations"]),
+            )
+            observations = [
+                {
+                    "type": r[0],
+                    "frequency": r[1],
+                    "intensity": r[2],
+                    "context": (r[3] or "")[:300] if r[3] else None,
+                    "notes": (r[4] or "")[:400] if r[4] else None,
+                    "date": r[5],
+                }
+                for r in await cur.fetchall()
+            ]
+
+            await cur.execute(
+                "SELECT teacher_name, subject, feedback_date, content, tags "
+                "FROM teacher_feedbacks "
+                "WHERE family_member_id = %s AND user_id = %s "
+                "ORDER BY feedback_date DESC LIMIT %s",
+                (fm_id, user_email, _PERSON_LIMITS["teacher"]),
+            )
+            teacher_feedbacks = [
+                {
+                    "teacher": r[0],
+                    "subject": r[1],
+                    "date": r[2],
+                    "content": (r[3] or "")[:800],
+                    "tags": r[4],
+                }
+                for r in await cur.fetchall()
+            ]
+
+            await cur.execute(
+                "SELECT subject, feedback_date, content, tags "
+                "FROM contact_feedbacks "
+                "WHERE family_member_id = %s AND user_id = %s "
+                "ORDER BY feedback_date DESC LIMIT %s",
+                (fm_id, user_email, _PERSON_LIMITS["contact"]),
+            )
+            contact_feedbacks = [
+                {
+                    "subject": r[0],
+                    "date": r[1],
+                    "content": (r[2] or "")[:800],
+                    "tags": r[3],
+                }
+                for r in await cur.fetchall()
+            ]
+
+            await cur.execute(
+                "SELECT title, description, status, priority, target_date "
+                "FROM goals "
+                "WHERE family_member_id = %s AND user_id = %s "
+                "ORDER BY created_at DESC LIMIT %s",
+                (fm_id, user_email, _PERSON_LIMITS["goals"]),
+            )
+            goals = [
+                {
+                    "title": r[0],
+                    "description": (r[1] or "")[:400] if r[1] else None,
+                    "status": r[2],
+                    "priority": r[3],
+                    "target_date": r[4],
+                }
+                for r in await cur.fetchall()
+            ]
+
+            await cur.execute(
+                "SELECT title, description, frequency, target_count, status "
+                "FROM habits "
+                "WHERE family_member_id = %s AND user_id = %s "
+                "ORDER BY created_at DESC LIMIT %s",
+                (fm_id, user_email, _PERSON_LIMITS["habits"]),
+            )
+            habits = [
+                {
+                    "title": r[0],
+                    "description": (r[1] or "")[:300] if r[1] else None,
+                    "frequency": r[2],
+                    "target_count": r[3],
+                    "status": r[4],
+                }
+                for r in await cur.fetchall()
+            ]
+
+            await cur.execute(
+                "SELECT name, dosage, frequency, notes, is_active, "
+                "start_date, end_date FROM medications "
+                "WHERE family_member_id = %s AND user_id = %s "
+                "ORDER BY COALESCE(is_active, TRUE) DESC, created_at DESC "
+                "LIMIT %s",
+                (fm_id, user_email, _PERSON_LIMITS["medications"]),
+            )
+            medications = [
+                {
+                    "name": r[0],
+                    "dosage": r[1],
+                    "frequency": r[2],
+                    "notes": (r[3] or "")[:300] if r[3] else None,
+                    "is_active": bool(r[4]) if r[4] is not None else True,
+                    "start_date": str(r[5]) if r[5] else None,
+                    "end_date": str(r[6]) if r[6] else None,
+                }
+                for r in await cur.fetchall()
+            ]
+
+            await cur.execute(
+                "SELECT kind, name, severity, notes FROM allergies "
+                "WHERE family_member_id = %s AND user_id = %s "
+                "ORDER BY created_at DESC LIMIT %s",
+                (fm_id, user_email, _PERSON_LIMITS["allergies"]),
+            )
+            allergies = [
+                {"kind": r[0], "name": r[1], "severity": r[2], "notes": r[3]}
+                for r in await cur.fetchall()
+            ]
+
+            # Sibling conditions tracked for this person.
+            await cur.execute(
+                "SELECT name, notes FROM conditions "
+                "WHERE family_member_id = %s AND user_id = %s "
+                "ORDER BY created_at DESC",
+                (fm_id, user_email),
+            )
+            other_conditions = [
+                {"name": r[0], "notes": (r[1] or "")[:300] if r[1] else None}
+                for r in await cur.fetchall()
+                if (r[0] or "").strip().lower() != cond_name.strip().lower()
+            ]
+
+    evidence = {
+        "characteristics": characteristics,
+        "issues": issues,
+        "journal_entries": journal,
+        "behavior_observations": observations,
+        "teacher_feedbacks": teacher_feedbacks,
+        "contact_feedbacks": contact_feedbacks,
+        "goals": goals,
+        "habits": habits,
+        "medications": medications,
+        "allergies": allergies,
+        "other_conditions": other_conditions,
+    }
+
+    counts = {k: len(v) for k, v in evidence.items()}
+    print(f"[condition_deep_research] gathered evidence: {counts}")
+
+    return {"_personal_evidence": evidence}
+
+
+# ---------------------------------------------------------------------------
 # Node: extract_facts
 # ---------------------------------------------------------------------------
 async def extract_facts(state: ConditionDeepResearchState) -> dict:
@@ -414,12 +855,38 @@ async def extract_facts(state: ConditionDeepResearchState) -> dict:
         "}"
     )
 
+    evidence = state.get("_personal_evidence") or {}
+    evidence_block = _render_evidence_block(evidence)
+
     user_prompt = (
         f"Condition: {cond_name}\n"
         f"Subject: {person_label}, {age_label} (developmental tier: {tier})\n"
         + (f"Existing notes on this condition: {cond.get('notes')}\n" if cond.get("notes") else "")
         + "\n"
-        f"Tailor the age_manifestations and evidence_based_treatments to be MOST relevant to "
+        + (
+            "PERSONAL CLINICAL FILE — every section below is real recorded data "
+            "for this person. Use it to PERSONALIZE the research:\n"
+            "- In `pathophysiology.summary`, reference the actual presentation when "
+            "it matches the documented behaviors / observations.\n"
+            "- In `age_manifestations`, prioritize manifestations that are already "
+            "evidenced in this person's record. Keep generic ones too.\n"
+            "- In `evidence_based_treatments`, factor in active medications, "
+            "documented allergies, sibling conditions (drug interactions, "
+            "contraindications, augmentation strategies). Mention specific "
+            "interactions when relevant.\n"
+            "- In `comorbidities`, weight the list toward conditions already "
+            "tracked OR strongly suggested by the journal / teacher feedback / "
+            "behavior observations.\n"
+            "- In `red_flags`, be EXTRA concrete — if the file shows escalating "
+            "intensity / frequency in observations, surface that pattern.\n"
+            "When you reference the personal file, do so concisely (e.g. "
+            "\"per 2026-03-12 teacher feedback\", \"per existing methylphenidate "
+            "regimen\").\n\n"
+            f"{evidence_block}\n\n"
+            if evidence_block
+            else ""
+        )
+        + f"Tailor the age_manifestations and evidence_based_treatments to be MOST relevant to "
         f"the {tier} tier first, but include adjacent tiers when useful. Be concrete and "
         f"actionable. Cite well-known guidelines or trial names in the notes when helpful "
         f"(e.g. AAP, NICE, MTA Cooperative Group)."
@@ -592,7 +1059,7 @@ async def finalize(state: ConditionDeepResearchState) -> dict:
 def _route_after_freshness(state: ConditionDeepResearchState) -> str:
     if state.get("_cache_hit"):
         return "persist"  # persist short-circuits to message + counts
-    return "extract_facts"
+    return "gather_personal_evidence"
 
 
 def _route_after_load_context(state: ConditionDeepResearchState) -> str:
@@ -607,6 +1074,11 @@ def _route_after_load_context(state: ConditionDeepResearchState) -> str:
 builder = StateGraph(ConditionDeepResearchState)
 builder.add_node("load_context", load_context, retry_policy=RetryPolicy(max_attempts=2))
 builder.add_node("check_freshness", check_freshness, retry_policy=RetryPolicy(max_attempts=2))
+builder.add_node(
+    "gather_personal_evidence",
+    gather_personal_evidence,
+    retry_policy=RetryPolicy(max_attempts=2),
+)
 builder.add_node("extract_facts", extract_facts, retry_policy=RetryPolicy(max_attempts=2))
 builder.add_node("persist", persist, retry_policy=RetryPolicy(max_attempts=2))
 builder.add_node("fan_out_papers", fan_out_papers)
@@ -621,8 +1093,12 @@ builder.add_conditional_edges(
 builder.add_conditional_edges(
     "check_freshness",
     _route_after_freshness,
-    {"extract_facts": "extract_facts", "persist": "persist"},
+    {
+        "gather_personal_evidence": "gather_personal_evidence",
+        "persist": "persist",
+    },
 )
+builder.add_edge("gather_personal_evidence", "extract_facts")
 builder.add_edge("extract_facts", "persist")
 builder.add_edge("persist", "fan_out_papers")
 builder.add_edge("fan_out_papers", "finalize")

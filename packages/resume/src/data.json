@@ -187,7 +187,7 @@
       {
         "id": "0",
         "name": "ResearchThera.com",
-        "description": "Therapeutic + clinical-intelligence platform for families. LlamaIndex-powered healthcare RAG ingests lab PDFs into 8 pgvector tables with 7 derived clinical ratios and a 5-stage local-only clinical chat pipeline; a 7-node LangGraph research generator surfaces evidence-based therapeutic content across 7 academic sources. 6 AI agents (3 Python LangGraph + 1 Python LlamaIndex + 2 TypeScript AI SDK) over a GraphQL API.",
+        "description": "Therapeutic + clinical-intelligence platform for families. LlamaIndex-powered healthcare RAG ingests lab PDFs into 8 pgvector tables with 7 derived clinical ratios and a 5-stage local-only clinical chat pipeline; a 7-node LangGraph research generator surfaces evidence-based therapeutic content across 7 academic sources. 6 AI agents (3 Python LangGraph + 1 Python LlamaIndex + 2 AI SDK) over a GraphQL API.",
         "githubUrl": "https://github.com/v9ai/research-thera",
         "websiteUrl": "https://researchthera.com",
         "highlights": [
@@ -198,7 +198,7 @@
           "Local-only Apple Silicon inference — Qwen2.5-7B-Instruct-4bit on mlx_lm.server, FastEmbed via ONNX — zero API calls, zero PHI egress; LLM_BASE_URL swappable for remote.",
           "Medication deep research LangGraph agent persists pharmacology across 6 tables (pharmacology, indications, dosing, adverse_events, interactions, correlations) powering /medications/[slug] panels.",
           "Deep issue analysis LangGraph agent clusters a child's issues into thematic patterns with timeline + family-system insights, root-cause analysis, and research-relevance-mapped priority recommendations.",
-          "TypeScript AI SDK (generateObject + Zod): storyTeller (3-part CYOA) + therapeutic (CBT/ACT/DBT/MBSR/LEGO) → gpt-4o-mini-tts → R2.",
+          "AI SDK (generateObject + Zod): storyTeller (3-part CYOA) + therapeutic (CBT/ACT/DBT/MBSR/LEGO) → gpt-4o-mini-tts → R2.",
           "7-node therapy research LangGraph (loadContext → normalizeGoal → planQuery → search → enrichAbstracts → extractAll → persist): ~2,350 candidates from 7 sources → DeepSeek with 0.72 blended-quality gate → top 20 as 1024-dim pgvector.",
           "~70-table Drizzle/PostgreSQL schema post agentic-healthcare merge: therapeutic core (goals, issues, habits, journals, claims) + 32 healthcare tables incl. 8 pgvector embedding tables."
         ]
