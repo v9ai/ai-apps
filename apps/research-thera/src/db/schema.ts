@@ -1489,3 +1489,24 @@ export const medicationCorrelations = pgTable(
     ),
   ],
 );
+
+export const regimenAnalysis = pgTable(
+  "regimen_analysis",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id").notNull(),
+    slug: text("slug").notNull(),
+    severityOverall: text("severity_overall"),
+    summary: text("summary"),
+    flags: jsonb("flags").notNull().default(sql`'[]'::jsonb`),
+    missingFacts: jsonb("missing_facts").notNull().default(sql`'[]'::jsonb`),
+    medsCount: integer("meds_count").notNull().default(0),
+    language: text("language"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("regimen_analysis_user_idx").on(table.userId),
+    uniqueIndex("regimen_analysis_user_slug_unique").on(table.userId, table.slug),
+  ],
+);

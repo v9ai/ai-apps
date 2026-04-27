@@ -155,10 +155,24 @@ def _render_evidence_block(evidence: dict) -> str:
             filter(
                 None,
                 [
-                    c.get("trait") or c.get("name"),
-                    c.get("value"),
+                    f"[{c['category']}]" if c.get("category") else None,
+                    c.get("title"),
                     f"severity={c['severity']}" if c.get("severity") else None,
-                    c.get("notes"),
+                    f"risk_tier={c['risk_tier']}" if c.get("risk_tier") else None,
+                    f"freq/wk={c['frequency_per_week']}"
+                    if c.get("frequency_per_week") is not None
+                    else None,
+                    f"duration={c['duration_weeks']}wk"
+                    if c.get("duration_weeks") is not None
+                    else None,
+                    f"onset_age={c['age_of_onset']}"
+                    if c.get("age_of_onset") is not None
+                    else None,
+                    f"domains={c['impairment_domains']}"
+                    if c.get("impairment_domains")
+                    else None,
+                    c.get("description"),
+                    f"strengths: {c['strengths']}" if c.get("strengths") else None,
                 ],
             )
         ),
@@ -585,13 +599,27 @@ async def gather_personal_evidence(state: ConditionDeepResearchState) -> dict:
         async with conn.cursor() as cur:
             # Family characteristics (severity / risk tiers)
             await cur.execute(
-                "SELECT trait, value, severity, notes FROM family_member_characteristics "
+                "SELECT category, title, description, severity, "
+                "frequency_per_week, duration_weeks, age_of_onset, "
+                "impairment_domains, strengths, risk_tier "
+                "FROM family_member_characteristics "
                 "WHERE family_member_id = %s AND user_id = %s "
                 "ORDER BY created_at DESC LIMIT %s",
                 (fm_id, user_email, _PERSON_LIMITS["characteristics"]),
             )
             characteristics = [
-                {"trait": r[0], "value": r[1], "severity": r[2], "notes": r[3]}
+                {
+                    "category": r[0],
+                    "title": r[1],
+                    "description": (r[2] or "")[:400] if r[2] else None,
+                    "severity": r[3],
+                    "frequency_per_week": r[4],
+                    "duration_weeks": r[5],
+                    "age_of_onset": r[6],
+                    "impairment_domains": r[7],
+                    "strengths": (r[8] or "")[:300] if r[8] else None,
+                    "risk_tier": r[9],
+                }
                 for r in await cur.fetchall()
             ]
 
