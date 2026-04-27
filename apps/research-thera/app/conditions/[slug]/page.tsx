@@ -102,7 +102,14 @@ function PersonConditionsContent({ slug }: { slug: string }) {
     member.firstName + (member.name ? ` (${member.name})` : "");
 
   return (
-    <Box py="6">
+    <Box
+      style={{
+        width: "calc(100vw - var(--sidebar-offset, 0px))",
+        marginLeft: "calc(50% - 50vw + (var(--sidebar-offset, 0px) / 2))",
+        padding: "1.5rem 2rem 4rem",
+        boxSizing: "border-box",
+      }}
+    >
       <Flex direction="column" gap="6">
         <Flex direction="column" gap="2">
           <Link href="/conditions" style={{ textDecoration: "none" }}>
