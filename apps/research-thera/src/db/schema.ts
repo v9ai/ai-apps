@@ -1421,3 +1421,33 @@ export const medicationInteractions = pgTable(
     uniqueIndex("medication_interactions_dedup_idx").on(table.drugSlug, table.interactingDrug),
   ],
 );
+
+export const medicationCorrelations = pgTable(
+  "medication_correlations",
+  {
+    id: serial("id").primaryKey(),
+    medicationId: uuid("medication_id")
+      .notNull()
+      .references(() => medications.id, { onDelete: "cascade" }),
+    familyMemberId: integer("family_member_id").references(() => familyMembers.id, {
+      onDelete: "set null",
+    }),
+    relatedEntityType: text("related_entity_type").notNull(),
+    relatedEntityId: integer("related_entity_id").notNull(),
+    correlationType: text("correlation_type").notNull(),
+    confidence: integer("confidence").notNull().default(50),
+    rationale: text("rationale"),
+    matchedFact: text("matched_fact"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("medication_correlations_med_idx").on(table.medicationId),
+    index("medication_correlations_fm_idx").on(table.familyMemberId),
+    uniqueIndex("medication_correlations_dedup_idx").on(
+      table.medicationId,
+      table.relatedEntityType,
+      table.relatedEntityId,
+      table.correlationType,
+    ),
+  ],
+);
