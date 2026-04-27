@@ -388,12 +388,42 @@ export const researchStats: Stat[] = [
     label: "cross-encoder ms-marco-MiniLM-L-6-v2 (22M params)",
     source: "Sits between multi-source search and LLM extraction in the Python research agent",
   },
+  {
+    number: "9 intents",
+    label: "clinical chat triage classifies each query into",
+    source: "markers, derived_ratios, trajectory, conditions, medications, symptoms, appointments, general_health, safety_refusal",
+  },
+  {
+    number: "8 pgvector tables",
+    label: "healthcare embeddings (all 1024-dim, local FastEmbed bge-large-en-v1.5)",
+    source: "blood_test_embeddings, blood_marker_embeddings, health_state_embeddings, condition_embeddings, medication_embeddings, symptom_embeddings, appointment_embeddings, allergy_embeddings",
+  },
+  {
+    number: "7 derived ratios",
+    label: "computed per blood test with authored risk thresholds",
+    source: "TG/HDL (McLaughlin), TC/HDL (Castelli), HDL/LDL (Millán), NLR (Fest), De Ritis AST/ALT, BUN/Creatinine (Hosten), TyG Index (Simental-Mendía)",
+  },
+  {
+    number: "3 node types",
+    label: "produced per blood test by BloodTestNodeParser",
+    source: "blood_test (test-level summary) + blood_marker (one per extracted marker) + health_state (derived metrics + risk classification)",
+  },
+  {
+    number: "0.7 confidence",
+    label: "intent-triage threshold; lower triggers a 2nd-attempt re-triage",
+    source: "_TRIAGE_MAX_ATTEMPTS=2 — confidence-scaled k widens retrieval (≥0.8 → base, ≥0.6 → 1.5×, else 2×)",
+  },
+  {
+    number: "3-tier parsing",
+    label: "blood-marker extraction fallback chain",
+    source: "Tier 1: HTML tables (standard panels) → Tier 2: title + FormKeysValues (Romanian/EU labs) → Tier 3: tab/multi-space free-text",
+  },
 ];
 
 // ─── Narrative ─────────────────────────────────────────────────────
 
 export const story =
-  "Research Thera is a therapeutic platform for families — parents and caregivers create goals, track issues, log journals and habits, and receive AI-generated discussion guides, therapeutic questions, recommended books, and evidence-based audio content. Four DeepSeek-powered AI agents handle different concerns: a research agent discovers and persists academic papers via multi-source search and cross-encoder reranking, a deep analysis agent clusters patterns across a child's issues and family dynamics, a storyTeller agent generates interactive choose-your-own-adventure narratives, and a therapeutic agent produces audio-first guidance grounded in CBT, ACT, DBT, and LEGO-based therapy. At the core, a 7-node TypeScript pipeline (loadContext → normalizeGoal → planQuery → search → enrichAbstracts → extractAll → persist) fetches ~2,350 raw candidates from Crossref, PubMed, and Semantic Scholar, enriches abstracts via OpenAlex, batch-scores with DeepSeek, and persists the top 20 as pgvector embeddings. Meanwhile, a separate Python LangGraph ReAct agent uses cross-encoder reranking across OpenAlex, Crossref, and Semantic Scholar to discover, evaluate, and save therapy research on demand.";
+  "Research Thera is a therapeutic platform for families — parents and caregivers create goals, track issues, log journals and habits, and receive AI-generated discussion guides, therapeutic questions, recommended books, and evidence-based audio content. Four DeepSeek-powered AI agents handle different concerns: a research agent discovers and persists academic papers via multi-source search and cross-encoder reranking, a deep analysis agent clusters patterns across a child's issues and family dynamics, a storyTeller agent generates interactive choose-your-own-adventure narratives, and a therapeutic agent produces audio-first guidance grounded in CBT, ACT, DBT, and LEGO-based therapy. At the core, a 7-node TypeScript pipeline (loadContext → normalizeGoal → planQuery → search → enrichAbstracts → extractAll → persist) fetches ~2,350 raw candidates from Crossref, PubMed, and Semantic Scholar, enriches abstracts via OpenAlex, batch-scores with DeepSeek, and persists the top 20 as pgvector embeddings. Meanwhile, a separate Python LangGraph ReAct agent uses cross-encoder reranking across OpenAlex, Crossref, and Semantic Scholar to discover, evaluate, and save therapy research on demand. The platform also absorbs a full clinical-intelligence layer (originally agentic-healthcare): blood-test PDFs flow through LlamaParse → a custom BloodTestNodeParser → FastEmbed (BAAI/bge-large-en-v1.5, local ONNX) → a LlamaIndex IngestionPipeline that emits one test-summary, N per-marker, and one health-state node — with seven derived clinical ratios (TG/HDL, TC/HDL, HDL/LDL, NLR, De Ritis AST/ALT, BUN/Creatinine, TyG Index) computed per upload and risk-classified against authored references. Clinical chat runs on a pure-LlamaIndex pipeline (triage → re-triage → route → ContextChatEngine → guard) that classifies queries into 9 intents, fans out via a CompositeRetriever across up to 8 pgvector tables, reranks with a ClinicalRelevancePostprocessor, and short-circuits on safety_refusal — no LangGraph, no API embeddings, no PHI leaving the host.";
 
 // ─── Extra Sections ────────────────────────────────────────────────
 
@@ -511,11 +541,13 @@ export const platformFeatures: FeatureCategory[] = [
     category: "Healthcare (LlamaIndex)",
     color: "var(--green-9)",
     features: [
-      { name: "Blood Tests", description: "Upload lab PDFs. LlamaParse extracts structured marker data (name, value, unit, reference range, flag). Stored in blood_tests + blood_markers, plus a derived health-state snapshot per upload", color: "var(--green-9)" },
-      { name: "Conditions, Medications, Symptoms, Allergies", description: "Per-family-member health records with per-person routes (/conditions/[slug]/[condition], /medications/[slug], /allergies/[slug]). Each record is embedded with LlamaIndex Document/TextNode builders and stored in dedicated pgvector tables", color: "var(--green-9)" },
+      { name: "Blood Tests", description: "Upload lab PDFs to a FastAPI route that proxies LlamaParse. A 3-tier parser handles HTML tables, Romanian/EU FormKeysValues, and free-text fallback — automatic flag computation (low/normal/high) against the printed reference range. Stored in blood_tests + blood_markers, plus a derived health-state snapshot per upload", color: "var(--green-9)" },
+      { name: "Ingestion Pipeline", description: "LlamaIndex IngestionPipeline composes BloodTestNodeParser (custom TransformComponent that emits 1 blood_test Document + N blood_marker TextNodes + 1 health_state TextNode) → FastEmbedEmbedding (local ONNX, no API). All embeddings are upserted to dedicated pgvector tables via psycopg + Drizzle-managed schema", color: "var(--green-9)" },
+      { name: "Conditions, Medications, Symptoms, Allergies", description: "Per-family-member health records with per-person routes (/conditions/[slug]/[condition], /medications/[slug], /allergies/[slug]). Each record is embedded with LlamaIndex Document/TextNode builders and stored in dedicated pgvector tables — content is fully searchable from clinical chat", color: "var(--green-9)" },
       { name: "Appointments & Doctors", description: "Track providers (family_member_doctors), upcoming visits, and medical letters. Appointments are embedded for chat retrieval alongside other clinical context", color: "var(--green-9)" },
-      { name: "Derived Clinical Ratios", description: "TG/HDL, TC/HDL, HDL/LDL, NLR, De Ritis (AST/ALT), BUN/Creatinine, TyG Index — automatically computed per upload with optimal/borderline/elevated/low risk classification and authored references (McLaughlin, Castelli, Millán, Fest, De Ritis, Hosten, Simental-Mendía)", color: "var(--green-9)" },
-      { name: "Clinical Chat", description: "LlamaIndex ContextChatEngine with intent triage (9 intents: markers, derived_ratios, trajectory, conditions, medications, symptoms, appointments, general_health, safety_refusal). Multi-intent fan-out via CompositeRetriever, post-retrieval guard re-check, safety refusal short-circuit", color: "var(--green-9)" },
+      { name: "Derived Clinical Ratios", description: "Seven ratios computed per upload from extracted markers — TG/HDL (McLaughlin), TC/HDL (Castelli), HDL/LDL (Millán), NLR (Fest), De Ritis AST/ALT, BUN/Creatinine (Hosten), TyG Index = ln(TG×Glucose×0.5) (Simental-Mendía). Each is risk-classified as optimal / borderline / elevated / low against authored thresholds and stored as JSONB on the health_state row alongside the embedding", color: "var(--green-9)" },
+      { name: "Clinical Chat (5-stage pipeline)", description: "Pure LlamaIndex composition (no LangGraph): (1) triage llm_call returns {intent, confidence, entities, multi_intent, sub_intents, sub_queries}; (2) re_triage fires when confidence < 0.7, max 2 total attempts; (3) route maps intent → build_retriever_for_intent or fans out via CompositeRetriever for multi-intent — safety_refusal short-circuits to a fixed disclaimer; (4) ContextChatEngine.from_defaults runs retrieval + [SimilarityPostprocessor, ClinicalRelevancePostprocessor] reranking + CompactAndRefine synthesis with chat history; (5) guard llm_call post-checks the answer, re-synthesises once on failure, else appends a safety disclaimer", color: "var(--green-9)" },
+      { name: "Confidence-Scaled Retrieval", description: "_dynamic_k widens the retrieval net for low-confidence triage: confidence ≥ 0.8 → base k, ≥ 0.6 → 1.5×, < 0.6 → 2×. Markers intent uses MarkerHybridRetriever (FTS + vector hybrid), trajectory adds up to 3 MarkerTrendRetrievers per named entity, general_health fans out across all 6 retrievers and dedupes by content hash before sorting by score", color: "var(--green-9)" },
       { name: "Brain & Memory Protocols", description: "Brain-health protocols with linked supplements, cognitive baselines, recurring check-ins, and memory entries — connecting health data with cognitive trajectory tracking", color: "var(--green-9)" },
     ],
   },
