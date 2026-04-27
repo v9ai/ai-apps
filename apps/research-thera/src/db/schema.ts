@@ -1098,6 +1098,36 @@ export const symptomEmbeddings = pgTable(
   (table) => [index("symptom_emb_user_idx").on(table.userId)],
 );
 
+export const allergies = pgTable(
+  "allergies",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id").notNull(),
+    kind: text("kind").notNull().default("allergy"),
+    name: text("name").notNull(),
+    severity: text("severity"),
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("allergies_user_idx").on(table.userId)],
+);
+
+export const allergyEmbeddings = pgTable(
+  "allergy_embeddings",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    allergyId: uuid("allergy_id")
+      .notNull()
+      .references(() => allergies.id, { onDelete: "cascade" })
+      .unique(),
+    userId: text("user_id").notNull(),
+    content: text("content").notNull(),
+    embedding: vector("embedding").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("allergy_emb_user_idx").on(table.userId)],
+);
+
 export const appointmentEmbeddings = pgTable(
   "appointment_embeddings",
   {

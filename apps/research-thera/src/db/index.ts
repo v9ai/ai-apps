@@ -22,6 +22,15 @@ import {
   createAppointment as _createAppointment,
   deleteAppointment as _deleteAppointment,
   embedAppointment as _embedAppointment,
+  listMemoryEntries as _listMemoryEntries,
+  getMemoryBaseline as _getMemoryBaseline,
+  createMemoryEntry as _createMemoryEntry,
+  deleteMemoryEntry as _deleteMemoryEntry,
+  upsertMemoryBaseline as _upsertMemoryBaseline,
+  listAllergies as _listAllergies,
+  createAllergy as _createAllergy,
+  deleteAllergy as _deleteAllergy,
+  embedAllergy as _embedAllergy,
 } from "./healthcare";
 
 // Re-export healthcare functions so they're reachable as top-level exports
@@ -46,6 +55,15 @@ export {
   _createAppointment as createAppointment,
   _deleteAppointment as deleteAppointment,
   _embedAppointment as embedAppointment,
+  _listMemoryEntries as listMemoryEntries,
+  _getMemoryBaseline as getMemoryBaseline,
+  _createMemoryEntry as createMemoryEntry,
+  _deleteMemoryEntry as deleteMemoryEntry,
+  _upsertMemoryBaseline as upsertMemoryBaseline,
+  _listAllergies as listAllergies,
+  _createAllergy as createAllergy,
+  _deleteAllergy as deleteAllergy,
+  _embedAllergy as embedAllergy,
 };
 export type {
   Condition,
@@ -53,6 +71,10 @@ export type {
   Symptom,
   Doctor,
   Appointment,
+  MemoryEntry,
+  MemoryBaseline,
+  Allergy,
+  AllergyKind,
 } from "./healthcare";
 
 /**
@@ -4236,5 +4258,16 @@ export const db = {
   createAppointment: _createAppointment,
   deleteAppointment: _deleteAppointment,
   embedAppointment: _embedAppointment,
+  // Healthcare — Brain / Memory
+  listMemoryEntries: _listMemoryEntries,
+  getMemoryBaseline: _getMemoryBaseline,
+  createMemoryEntry: _createMemoryEntry,
+  deleteMemoryEntry: _deleteMemoryEntry,
+  upsertMemoryBaseline: _upsertMemoryBaseline,
+  // Healthcare — Allergies & Intolerances
+  listAllergies: _listAllergies,
+  createAllergy: _createAllergy,
+  deleteAllergy: _deleteAllergy,
+  embedAllergy: _embedAllergy,
 };
 

@@ -1,0 +1,11 @@
+mutation SetMemoryBaseline($input: SetMemoryBaselineInput!) {
+  setMemoryBaseline(input: $input) {
+    id
+    overallScore
+    shortTermScore
+    longTermScore
+    workingMemoryScore
+    recallSpeed
+    recordedAt
+  }
+}

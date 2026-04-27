@@ -1,0 +1,13 @@
+mutation AddMemoryEntry($input: AddMemoryEntryInput!) {
+  addMemoryEntry(input: $input) {
+    id
+    category
+    description
+    overallScore
+    shortTermScore
+    longTermScore
+    workingMemoryScore
+    recallSpeed
+    loggedAt
+  }
+}

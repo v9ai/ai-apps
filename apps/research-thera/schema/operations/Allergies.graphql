@@ -1,0 +1,10 @@
+query Allergies {
+  allergies {
+    id
+    kind
+    name
+    severity
+    notes
+    createdAt
+  }
+}

@@ -14,11 +14,14 @@ import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/
  * Learn more about it here: https://the-guild.dev/graphql/codegen/plugins/presets/preset-client#reducing-bundle-size
  */
 type Documents = {
+    "mutation AddAllergy($input: AddAllergyInput!) {\n  addAllergy(input: $input) {\n    id\n    kind\n    name\n    severity\n    notes\n    createdAt\n  }\n}": typeof types.AddAllergyDocument,
     "mutation AddAppointment($input: AddAppointmentInput!) {\n  addAppointment(input: $input) {\n    id\n    title\n    doctorId\n    familyMemberId\n    provider\n    notes\n    appointmentDate\n    createdAt\n  }\n}": typeof types.AddAppointmentDocument,
     "mutation AddCondition($input: AddConditionInput!) {\n  addCondition(input: $input) {\n    id\n    name\n    notes\n    createdAt\n  }\n}": typeof types.AddConditionDocument,
     "mutation AddDoctor($input: AddDoctorInput!) {\n  addDoctor(input: $input) {\n    id\n    name\n    specialty\n    phone\n    email\n    address\n    notes\n    createdAt\n  }\n}": typeof types.AddDoctorDocument,
     "mutation AddMedication($input: AddMedicationInput!) {\n  addMedication(input: $input) {\n    id\n    name\n    dosage\n    frequency\n    notes\n    startDate\n    endDate\n    createdAt\n  }\n}": typeof types.AddMedicationDocument,
+    "mutation AddMemoryEntry($input: AddMemoryEntryInput!) {\n  addMemoryEntry(input: $input) {\n    id\n    category\n    description\n    overallScore\n    shortTermScore\n    longTermScore\n    workingMemoryScore\n    recallSpeed\n    loggedAt\n  }\n}": typeof types.AddMemoryEntryDocument,
     "mutation AddSymptom($input: AddSymptomInput!) {\n  addSymptom(input: $input) {\n    id\n    description\n    severity\n    loggedAt\n    createdAt\n  }\n}": typeof types.AddSymptomDocument,
+    "query Allergies {\n  allergies {\n    id\n    kind\n    name\n    severity\n    notes\n    createdAt\n  }\n}": typeof types.AllergiesDocument,
     "query Appointments {\n  appointments {\n    id\n    title\n    doctorId\n    familyMemberId\n    provider\n    notes\n    appointmentDate\n    createdAt\n  }\n}": typeof types.AppointmentsDocument,
     "query BogdanDiscussions {\n  bogdanDiscussions {\n    id\n    familyMemberId\n    childAge\n    behaviorSummary\n    createdAt\n  }\n}": typeof types.BogdanDiscussionsDocument,
     "mutation CheckNoteClaims($input: CheckNoteClaimsInput!) {\n  checkNoteClaims(input: $input) {\n    success\n    message\n    noteId\n    cards {\n      id\n      claim\n      scope {\n        population\n        intervention\n        comparator\n        outcome\n        timeframe\n        setting\n      }\n      verdict\n      confidence\n      evidence {\n        paper {\n          title\n          doi\n          url\n          year\n          source\n          authors\n          abstract\n          journal\n        }\n        polarity\n        excerpt\n        rationale\n        score\n        locator {\n          section\n          page\n          url\n        }\n      }\n      queries\n      createdAt\n      updatedAt\n      provenance {\n        generatedBy\n        model\n        sourceTools\n      }\n      notes\n    }\n  }\n}": typeof types.CheckNoteClaimsDocument,
@@ -43,6 +46,7 @@ type Documents = {
     "mutation CreateSubGoal($goalId: Int!, $input: CreateSubGoalInput!) {\n  createSubGoal(goalId: $goalId, input: $input) {\n    id\n    slug\n    title\n    description\n    status\n    parentGoalId\n    createdAt\n    updatedAt\n    familyMemberId\n  }\n}": typeof types.CreateSubGoalDocument,
     "mutation CreateTeacherFeedback($input: CreateTeacherFeedbackInput!) {\n  createTeacherFeedback(input: $input) {\n    id\n    familyMemberId\n    createdBy\n    teacherName\n    subject\n    feedbackDate\n    content\n    tags\n    source\n    extracted\n    createdAt\n    updatedAt\n  }\n}": typeof types.CreateTeacherFeedbackDocument,
     "mutation DeleteAffirmation($id: Int!) {\n  deleteAffirmation(id: $id) {\n    success\n    message\n  }\n}": typeof types.DeleteAffirmationDocument,
+    "mutation DeleteAllergy($id: ID!) {\n  deleteAllergy(id: $id) {\n    success\n  }\n}": typeof types.DeleteAllergyDocument,
     "mutation DeleteAppointment($id: ID!) {\n  deleteAppointment(id: $id) {\n    success\n  }\n}": typeof types.DeleteAppointmentDocument,
     "mutation DeleteBehaviorObservation($id: Int!) {\n  deleteBehaviorObservation(id: $id) {\n    success\n    message\n  }\n}": typeof types.DeleteBehaviorObservationDocument,
     "mutation DeleteCondition($id: ID!) {\n  deleteCondition(id: $id) {\n    success\n  }\n}": typeof types.DeleteConditionDocument,
@@ -64,6 +68,7 @@ type Documents = {
     "mutation DeleteJournalEntry($id: Int!) {\n  deleteJournalEntry(id: $id) {\n    success\n    message\n  }\n}": typeof types.DeleteJournalEntryDocument,
     "mutation DeleteJournalRecommendedBooks($journalEntryId: Int!) {\n  deleteRecommendedBooks(journalEntryId: $journalEntryId) {\n    success\n    message\n    deletedCount\n  }\n}": typeof types.DeleteJournalRecommendedBooksDocument,
     "mutation DeleteMedication($id: ID!) {\n  deleteMedication(id: $id) {\n    success\n  }\n}": typeof types.DeleteMedicationDocument,
+    "mutation DeleteMemoryEntry($id: ID!) {\n  deleteMemoryEntry(id: $id) {\n    success\n  }\n}": typeof types.DeleteMemoryEntryDocument,
     "mutation DeleteNote($id: Int!) {\n  deleteNote(id: $id) {\n    success\n    message\n  }\n}": typeof types.DeleteNoteDocument,
     "mutation DeleteRecommendedBooks($goalId: Int!) {\n  deleteRecommendedBooks(goalId: $goalId) {\n    success\n    message\n    deletedCount\n  }\n}": typeof types.DeleteRecommendedBooksDocument,
     "mutation DeleteRelationship($id: Int!) {\n  deleteRelationship(id: $id) {\n    success\n    message\n  }\n}": typeof types.DeleteRelationshipDocument,
@@ -149,7 +154,9 @@ type Documents = {
     "mutation LogGameCompletion($input: LogGameCompletionInput!) {\n  logGameCompletion(input: $input) {\n    id\n    gameId\n    durationSeconds\n    responses\n    linkedNoteId\n    completedAt\n  }\n}": typeof types.LogGameCompletionDocument,
     "mutation LogHabit($habitId: Int!, $loggedDate: String!, $count: Int, $notes: String) {\n  logHabit(\n    habitId: $habitId\n    loggedDate: $loggedDate\n    count: $count\n    notes: $notes\n  ) {\n    id\n    habitId\n    loggedDate\n    count\n    notes\n    createdAt\n  }\n}": typeof types.LogHabitDocument,
     "query Medications {\n  medications {\n    id\n    name\n    dosage\n    frequency\n    notes\n    startDate\n    endDate\n    createdAt\n  }\n}": typeof types.MedicationsDocument,
+    "query MemoryEntries {\n  memoryEntries {\n    id\n    category\n    description\n    context\n    protocolId\n    overallScore\n    shortTermScore\n    longTermScore\n    workingMemoryScore\n    recallSpeed\n    loggedAt\n    createdAt\n  }\n  memoryBaseline {\n    id\n    overallScore\n    shortTermScore\n    longTermScore\n    workingMemoryScore\n    recallSpeed\n    recordedAt\n  }\n}": typeof types.MemoryEntriesDocument,
     "mutation SendConversationMessage($conversationId: Int!, $message: String!) {\n  sendConversationMessage(conversationId: $conversationId, message: $message) {\n    id\n    issueId\n    userId\n    title\n    createdAt\n    updatedAt\n    messages {\n      id\n      conversationId\n      role\n      content\n      createdAt\n    }\n  }\n}": typeof types.SendConversationMessageDocument,
+    "mutation SetMemoryBaseline($input: SetMemoryBaselineInput!) {\n  setMemoryBaseline(input: $input) {\n    id\n    overallScore\n    shortTermScore\n    longTermScore\n    workingMemoryScore\n    recallSpeed\n    recordedAt\n  }\n}": typeof types.SetMemoryBaselineDocument,
     "mutation ShareFamilyMember($familyMemberId: Int!, $email: String!, $role: FamilyMemberShareRole) {\n  shareFamilyMember(familyMemberId: $familyMemberId, email: $email, role: $role) {\n    familyMemberId\n    email\n    role\n    createdAt\n  }\n}": typeof types.ShareFamilyMemberDocument,
     "query Symptoms {\n  symptoms {\n    id\n    description\n    severity\n    loggedAt\n    createdAt\n  }\n}": typeof types.SymptomsDocument,
     "query TagLanguage($tag: String!) {\n  tagLanguage(tag: $tag)\n}\n\nmutation SetTagLanguage($tag: String!, $language: String!) {\n  setTagLanguage(tag: $tag, language: $language)\n}": typeof types.TagLanguageDocument,
@@ -176,11 +183,14 @@ type Documents = {
     "query VaultStatus {\n  vaultStatus {\n    unlocked\n    available\n  }\n}": typeof types.VaultStatusDocument,
 };
 const documents: Documents = {
+    "mutation AddAllergy($input: AddAllergyInput!) {\n  addAllergy(input: $input) {\n    id\n    kind\n    name\n    severity\n    notes\n    createdAt\n  }\n}": types.AddAllergyDocument,
     "mutation AddAppointment($input: AddAppointmentInput!) {\n  addAppointment(input: $input) {\n    id\n    title\n    doctorId\n    familyMemberId\n    provider\n    notes\n    appointmentDate\n    createdAt\n  }\n}": types.AddAppointmentDocument,
     "mutation AddCondition($input: AddConditionInput!) {\n  addCondition(input: $input) {\n    id\n    name\n    notes\n    createdAt\n  }\n}": types.AddConditionDocument,
     "mutation AddDoctor($input: AddDoctorInput!) {\n  addDoctor(input: $input) {\n    id\n    name\n    specialty\n    phone\n    email\n    address\n    notes\n    createdAt\n  }\n}": types.AddDoctorDocument,
     "mutation AddMedication($input: AddMedicationInput!) {\n  addMedication(input: $input) {\n    id\n    name\n    dosage\n    frequency\n    notes\n    startDate\n    endDate\n    createdAt\n  }\n}": types.AddMedicationDocument,
+    "mutation AddMemoryEntry($input: AddMemoryEntryInput!) {\n  addMemoryEntry(input: $input) {\n    id\n    category\n    description\n    overallScore\n    shortTermScore\n    longTermScore\n    workingMemoryScore\n    recallSpeed\n    loggedAt\n  }\n}": types.AddMemoryEntryDocument,
     "mutation AddSymptom($input: AddSymptomInput!) {\n  addSymptom(input: $input) {\n    id\n    description\n    severity\n    loggedAt\n    createdAt\n  }\n}": types.AddSymptomDocument,
+    "query Allergies {\n  allergies {\n    id\n    kind\n    name\n    severity\n    notes\n    createdAt\n  }\n}": types.AllergiesDocument,
     "query Appointments {\n  appointments {\n    id\n    title\n    doctorId\n    familyMemberId\n    provider\n    notes\n    appointmentDate\n    createdAt\n  }\n}": types.AppointmentsDocument,
     "query BogdanDiscussions {\n  bogdanDiscussions {\n    id\n    familyMemberId\n    childAge\n    behaviorSummary\n    createdAt\n  }\n}": types.BogdanDiscussionsDocument,
     "mutation CheckNoteClaims($input: CheckNoteClaimsInput!) {\n  checkNoteClaims(input: $input) {\n    success\n    message\n    noteId\n    cards {\n      id\n      claim\n      scope {\n        population\n        intervention\n        comparator\n        outcome\n        timeframe\n        setting\n      }\n      verdict\n      confidence\n      evidence {\n        paper {\n          title\n          doi\n          url\n          year\n          source\n          authors\n          abstract\n          journal\n        }\n        polarity\n        excerpt\n        rationale\n        score\n        locator {\n          section\n          page\n          url\n        }\n      }\n      queries\n      createdAt\n      updatedAt\n      provenance {\n        generatedBy\n        model\n        sourceTools\n      }\n      notes\n    }\n  }\n}": types.CheckNoteClaimsDocument,
@@ -205,6 +215,7 @@ const documents: Documents = {
     "mutation CreateSubGoal($goalId: Int!, $input: CreateSubGoalInput!) {\n  createSubGoal(goalId: $goalId, input: $input) {\n    id\n    slug\n    title\n    description\n    status\n    parentGoalId\n    createdAt\n    updatedAt\n    familyMemberId\n  }\n}": types.CreateSubGoalDocument,
     "mutation CreateTeacherFeedback($input: CreateTeacherFeedbackInput!) {\n  createTeacherFeedback(input: $input) {\n    id\n    familyMemberId\n    createdBy\n    teacherName\n    subject\n    feedbackDate\n    content\n    tags\n    source\n    extracted\n    createdAt\n    updatedAt\n  }\n}": types.CreateTeacherFeedbackDocument,
     "mutation DeleteAffirmation($id: Int!) {\n  deleteAffirmation(id: $id) {\n    success\n    message\n  }\n}": types.DeleteAffirmationDocument,
+    "mutation DeleteAllergy($id: ID!) {\n  deleteAllergy(id: $id) {\n    success\n  }\n}": types.DeleteAllergyDocument,
     "mutation DeleteAppointment($id: ID!) {\n  deleteAppointment(id: $id) {\n    success\n  }\n}": types.DeleteAppointmentDocument,
     "mutation DeleteBehaviorObservation($id: Int!) {\n  deleteBehaviorObservation(id: $id) {\n    success\n    message\n  }\n}": types.DeleteBehaviorObservationDocument,
     "mutation DeleteCondition($id: ID!) {\n  deleteCondition(id: $id) {\n    success\n  }\n}": types.DeleteConditionDocument,
@@ -226,6 +237,7 @@ const documents: Documents = {
     "mutation DeleteJournalEntry($id: Int!) {\n  deleteJournalEntry(id: $id) {\n    success\n    message\n  }\n}": types.DeleteJournalEntryDocument,
     "mutation DeleteJournalRecommendedBooks($journalEntryId: Int!) {\n  deleteRecommendedBooks(journalEntryId: $journalEntryId) {\n    success\n    message\n    deletedCount\n  }\n}": types.DeleteJournalRecommendedBooksDocument,
     "mutation DeleteMedication($id: ID!) {\n  deleteMedication(id: $id) {\n    success\n  }\n}": types.DeleteMedicationDocument,
+    "mutation DeleteMemoryEntry($id: ID!) {\n  deleteMemoryEntry(id: $id) {\n    success\n  }\n}": types.DeleteMemoryEntryDocument,
     "mutation DeleteNote($id: Int!) {\n  deleteNote(id: $id) {\n    success\n    message\n  }\n}": types.DeleteNoteDocument,
     "mutation DeleteRecommendedBooks($goalId: Int!) {\n  deleteRecommendedBooks(goalId: $goalId) {\n    success\n    message\n    deletedCount\n  }\n}": types.DeleteRecommendedBooksDocument,
     "mutation DeleteRelationship($id: Int!) {\n  deleteRelationship(id: $id) {\n    success\n    message\n  }\n}": types.DeleteRelationshipDocument,
@@ -311,7 +323,9 @@ const documents: Documents = {
     "mutation LogGameCompletion($input: LogGameCompletionInput!) {\n  logGameCompletion(input: $input) {\n    id\n    gameId\n    durationSeconds\n    responses\n    linkedNoteId\n    completedAt\n  }\n}": types.LogGameCompletionDocument,
     "mutation LogHabit($habitId: Int!, $loggedDate: String!, $count: Int, $notes: String) {\n  logHabit(\n    habitId: $habitId\n    loggedDate: $loggedDate\n    count: $count\n    notes: $notes\n  ) {\n    id\n    habitId\n    loggedDate\n    count\n    notes\n    createdAt\n  }\n}": types.LogHabitDocument,
     "query Medications {\n  medications {\n    id\n    name\n    dosage\n    frequency\n    notes\n    startDate\n    endDate\n    createdAt\n  }\n}": types.MedicationsDocument,
+    "query MemoryEntries {\n  memoryEntries {\n    id\n    category\n    description\n    context\n    protocolId\n    overallScore\n    shortTermScore\n    longTermScore\n    workingMemoryScore\n    recallSpeed\n    loggedAt\n    createdAt\n  }\n  memoryBaseline {\n    id\n    overallScore\n    shortTermScore\n    longTermScore\n    workingMemoryScore\n    recallSpeed\n    recordedAt\n  }\n}": types.MemoryEntriesDocument,
     "mutation SendConversationMessage($conversationId: Int!, $message: String!) {\n  sendConversationMessage(conversationId: $conversationId, message: $message) {\n    id\n    issueId\n    userId\n    title\n    createdAt\n    updatedAt\n    messages {\n      id\n      conversationId\n      role\n      content\n      createdAt\n    }\n  }\n}": types.SendConversationMessageDocument,
+    "mutation SetMemoryBaseline($input: SetMemoryBaselineInput!) {\n  setMemoryBaseline(input: $input) {\n    id\n    overallScore\n    shortTermScore\n    longTermScore\n    workingMemoryScore\n    recallSpeed\n    recordedAt\n  }\n}": types.SetMemoryBaselineDocument,
     "mutation ShareFamilyMember($familyMemberId: Int!, $email: String!, $role: FamilyMemberShareRole) {\n  shareFamilyMember(familyMemberId: $familyMemberId, email: $email, role: $role) {\n    familyMemberId\n    email\n    role\n    createdAt\n  }\n}": types.ShareFamilyMemberDocument,
     "query Symptoms {\n  symptoms {\n    id\n    description\n    severity\n    loggedAt\n    createdAt\n  }\n}": types.SymptomsDocument,
     "query TagLanguage($tag: String!) {\n  tagLanguage(tag: $tag)\n}\n\nmutation SetTagLanguage($tag: String!, $language: String!) {\n  setTagLanguage(tag: $tag, language: $language)\n}": types.TagLanguageDocument,
@@ -355,6 +369,10 @@ export function gql(source: string): unknown;
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function gql(source: "mutation AddAllergy($input: AddAllergyInput!) {\n  addAllergy(input: $input) {\n    id\n    kind\n    name\n    severity\n    notes\n    createdAt\n  }\n}"): (typeof documents)["mutation AddAllergy($input: AddAllergyInput!) {\n  addAllergy(input: $input) {\n    id\n    kind\n    name\n    severity\n    notes\n    createdAt\n  }\n}"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function gql(source: "mutation AddAppointment($input: AddAppointmentInput!) {\n  addAppointment(input: $input) {\n    id\n    title\n    doctorId\n    familyMemberId\n    provider\n    notes\n    appointmentDate\n    createdAt\n  }\n}"): (typeof documents)["mutation AddAppointment($input: AddAppointmentInput!) {\n  addAppointment(input: $input) {\n    id\n    title\n    doctorId\n    familyMemberId\n    provider\n    notes\n    appointmentDate\n    createdAt\n  }\n}"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -371,7 +389,15 @@ export function gql(source: "mutation AddMedication($input: AddMedicationInput!)
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function gql(source: "mutation AddMemoryEntry($input: AddMemoryEntryInput!) {\n  addMemoryEntry(input: $input) {\n    id\n    category\n    description\n    overallScore\n    shortTermScore\n    longTermScore\n    workingMemoryScore\n    recallSpeed\n    loggedAt\n  }\n}"): (typeof documents)["mutation AddMemoryEntry($input: AddMemoryEntryInput!) {\n  addMemoryEntry(input: $input) {\n    id\n    category\n    description\n    overallScore\n    shortTermScore\n    longTermScore\n    workingMemoryScore\n    recallSpeed\n    loggedAt\n  }\n}"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function gql(source: "mutation AddSymptom($input: AddSymptomInput!) {\n  addSymptom(input: $input) {\n    id\n    description\n    severity\n    loggedAt\n    createdAt\n  }\n}"): (typeof documents)["mutation AddSymptom($input: AddSymptomInput!) {\n  addSymptom(input: $input) {\n    id\n    description\n    severity\n    loggedAt\n    createdAt\n  }\n}"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "query Allergies {\n  allergies {\n    id\n    kind\n    name\n    severity\n    notes\n    createdAt\n  }\n}"): (typeof documents)["query Allergies {\n  allergies {\n    id\n    kind\n    name\n    severity\n    notes\n    createdAt\n  }\n}"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -471,6 +497,10 @@ export function gql(source: "mutation DeleteAffirmation($id: Int!) {\n  deleteAf
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function gql(source: "mutation DeleteAllergy($id: ID!) {\n  deleteAllergy(id: $id) {\n    success\n  }\n}"): (typeof documents)["mutation DeleteAllergy($id: ID!) {\n  deleteAllergy(id: $id) {\n    success\n  }\n}"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function gql(source: "mutation DeleteAppointment($id: ID!) {\n  deleteAppointment(id: $id) {\n    success\n  }\n}"): (typeof documents)["mutation DeleteAppointment($id: ID!) {\n  deleteAppointment(id: $id) {\n    success\n  }\n}"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -552,6 +582,10 @@ export function gql(source: "mutation DeleteJournalRecommendedBooks($journalEntr
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(source: "mutation DeleteMedication($id: ID!) {\n  deleteMedication(id: $id) {\n    success\n  }\n}"): (typeof documents)["mutation DeleteMedication($id: ID!) {\n  deleteMedication(id: $id) {\n    success\n  }\n}"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "mutation DeleteMemoryEntry($id: ID!) {\n  deleteMemoryEntry(id: $id) {\n    success\n  }\n}"): (typeof documents)["mutation DeleteMemoryEntry($id: ID!) {\n  deleteMemoryEntry(id: $id) {\n    success\n  }\n}"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -895,7 +929,15 @@ export function gql(source: "query Medications {\n  medications {\n    id\n    n
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function gql(source: "query MemoryEntries {\n  memoryEntries {\n    id\n    category\n    description\n    context\n    protocolId\n    overallScore\n    shortTermScore\n    longTermScore\n    workingMemoryScore\n    recallSpeed\n    loggedAt\n    createdAt\n  }\n  memoryBaseline {\n    id\n    overallScore\n    shortTermScore\n    longTermScore\n    workingMemoryScore\n    recallSpeed\n    recordedAt\n  }\n}"): (typeof documents)["query MemoryEntries {\n  memoryEntries {\n    id\n    category\n    description\n    context\n    protocolId\n    overallScore\n    shortTermScore\n    longTermScore\n    workingMemoryScore\n    recallSpeed\n    loggedAt\n    createdAt\n  }\n  memoryBaseline {\n    id\n    overallScore\n    shortTermScore\n    longTermScore\n    workingMemoryScore\n    recallSpeed\n    recordedAt\n  }\n}"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function gql(source: "mutation SendConversationMessage($conversationId: Int!, $message: String!) {\n  sendConversationMessage(conversationId: $conversationId, message: $message) {\n    id\n    issueId\n    userId\n    title\n    createdAt\n    updatedAt\n    messages {\n      id\n      conversationId\n      role\n      content\n      createdAt\n    }\n  }\n}"): (typeof documents)["mutation SendConversationMessage($conversationId: Int!, $message: String!) {\n  sendConversationMessage(conversationId: $conversationId, message: $message) {\n    id\n    issueId\n    userId\n    title\n    createdAt\n    updatedAt\n    messages {\n      id\n      conversationId\n      role\n      content\n      createdAt\n    }\n  }\n}"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "mutation SetMemoryBaseline($input: SetMemoryBaselineInput!) {\n  setMemoryBaseline(input: $input) {\n    id\n    overallScore\n    shortTermScore\n    longTermScore\n    workingMemoryScore\n    recallSpeed\n    recordedAt\n  }\n}"): (typeof documents)["mutation SetMemoryBaseline($input: SetMemoryBaselineInput!) {\n  setMemoryBaseline(input: $input) {\n    id\n    overallScore\n    shortTermScore\n    longTermScore\n    workingMemoryScore\n    recallSpeed\n    recordedAt\n  }\n}"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

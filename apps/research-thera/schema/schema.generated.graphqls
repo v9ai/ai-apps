@@ -6,6 +6,13 @@ type ActionableRecommendation {
   title: String!
 }
 
+input AddAllergyInput {
+  kind: AllergyKind!
+  name: String!
+  notes: String
+  severity: String
+}
+
 input AddAppointmentInput {
   appointmentDate: String
   doctorId: ID
@@ -38,6 +45,18 @@ input AddMedicationInput {
   startDate: String
 }
 
+input AddMemoryEntryInput {
+  category: String!
+  context: String
+  description: String
+  longTermScore: Float
+  overallScore: Float
+  protocolId: ID
+  recallSpeed: Float
+  shortTermScore: Float
+  workingMemoryScore: Float
+}
+
 input AddSymptomInput {
   description: String!
   loggedAt: String
@@ -61,6 +80,21 @@ enum AffirmationCategory {
   GROWTH
   SELF_WORTH
   STRENGTH
+}
+
+type Allergy {
+  createdAt: String!
+  id: ID!
+  kind: AllergyKind!
+  name: String!
+  notes: String
+  severity: String
+  userId: String!
+}
+
+enum AllergyKind {
+  allergy
+  intolerance
 }
 
 type AnticipatedReaction {
@@ -535,6 +569,10 @@ type DeleteAffirmationResult {
   success: Boolean!
 }
 
+type DeleteAllergyResult {
+  success: Boolean!
+}
+
 type DeleteAppointmentResult {
   success: Boolean!
 }
@@ -616,6 +654,10 @@ type DeleteJournalEntryResult {
 }
 
 type DeleteMedicationResult {
+  success: Boolean!
+}
+
+type DeleteMemoryEntryResult {
   success: Boolean!
 }
 
@@ -1221,6 +1263,33 @@ type Medication {
   userId: String!
 }
 
+type MemoryBaseline {
+  id: ID!
+  longTermScore: Float
+  overallScore: Float
+  recallSpeed: Float
+  recordedAt: String!
+  shortTermScore: Float
+  userId: String!
+  workingMemoryScore: Float
+}
+
+type MemoryEntry {
+  category: String!
+  context: String
+  createdAt: String!
+  description: String
+  id: ID!
+  loggedAt: String!
+  longTermScore: Float
+  overallScore: Float
+  protocolId: ID
+  recallSpeed: Float
+  shortTermScore: Float
+  userId: String!
+  workingMemoryScore: Float
+}
+
 type MicroScript {
   childResponse: String!
   parentFollowUp: String!
@@ -1228,10 +1297,12 @@ type MicroScript {
 }
 
 type Mutation {
+  addAllergy(input: AddAllergyInput!): Allergy!
   addAppointment(input: AddAppointmentInput!): Appointment!
   addCondition(input: AddConditionInput!): Condition!
   addDoctor(input: AddDoctorInput!): Doctor!
   addMedication(input: AddMedicationInput!): Medication!
+  addMemoryEntry(input: AddMemoryEntryInput!): MemoryEntry!
   addSymptom(input: AddSymptomInput!): Symptom!
   buildClaimCards(input: BuildClaimCardsInput!): BuildClaimCardsResult!
   checkNoteClaims(input: CheckNoteClaimsInput!): CheckNoteClaimsResult!
@@ -1254,6 +1325,7 @@ type Mutation {
   createSubGoal(goalId: Int!, input: CreateSubGoalInput!): Goal!
   createTeacherFeedback(input: CreateTeacherFeedbackInput!): TeacherFeedback!
   deleteAffirmation(id: Int!): DeleteAffirmationResult!
+  deleteAllergy(id: ID!): DeleteAllergyResult!
   deleteAppointment(id: ID!): DeleteAppointmentResult!
   deleteBehaviorObservation(id: Int!): DeleteBehaviorObservationResult!
   deleteClaimCard(id: ID!): Boolean!
@@ -1275,6 +1347,7 @@ type Mutation {
   deleteJournalAnalysis(journalEntryId: Int!): DeleteJournalAnalysisResult!
   deleteJournalEntry(id: Int!): DeleteJournalEntryResult!
   deleteMedication(id: ID!): DeleteMedicationResult!
+  deleteMemoryEntry(id: ID!): DeleteMemoryEntryResult!
   deleteNote(id: Int!): DeleteNoteResult!
   deleteRecommendedBooks(goalId: Int, journalEntryId: Int): DeleteRecommendedBooksResult!
   deleteRelationship(id: Int!): DeleteRelationshipResult!
@@ -1310,6 +1383,7 @@ type Mutation {
   markTeacherFeedbackExtracted(id: Int!): TeacherFeedback!
   refreshClaimCard(id: ID!): ClaimCard!
   sendConversationMessage(conversationId: Int!, message: String!): Conversation!
+  setMemoryBaseline(input: SetMemoryBaselineInput!): MemoryBaseline!
   setNoteVisibility(noteId: Int!, visibility: NoteVisibility!): Note!
   setTagLanguage(language: String!, tag: String!): Boolean!
   shareFamilyMember(email: String!, familyMemberId: Int!, role: FamilyMemberShareRole): FamilyMemberShare!
@@ -1494,6 +1568,7 @@ type Query {
   allRecommendedBooks(category: String): [RecommendedBook!]!
   allStories: [Story!]!
   allTags: [String!]!
+  allergies: [Allergy!]!
   appointments: [Appointment!]!
   audioFromR2(key: String!): AudioFromR2Result
   behaviorObservation(id: Int!): BehaviorObservation
@@ -1531,6 +1606,8 @@ type Query {
   journalEntry(id: Int!): JournalEntry
   latestBogdanDiscussion: BogdanDiscussionGuide
   medications: [Medication!]!
+  memoryBaseline: MemoryBaseline
+  memoryEntries: [MemoryEntry!]!
   mySharedFamilyMembers: [FamilyMember!]!
   mySharedNotes: [Note!]!
   note(id: Int, slug: String): Note
@@ -1711,6 +1788,14 @@ type RoutineResearchMapping {
   relevantResearchIds: [Int!]!
   relevantResearchTitles: [String!]!
   topic: String!
+}
+
+input SetMemoryBaselineInput {
+  longTermScore: Float
+  overallScore: Float
+  recallSpeed: Float
+  shortTermScore: Float
+  workingMemoryScore: Float
 }
 
 type Story {

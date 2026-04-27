@@ -1,0 +1,5 @@
+mutation DeleteMemoryEntry($id: ID!) {
+  deleteMemoryEntry(id: $id) {
+    success
+  }
+}

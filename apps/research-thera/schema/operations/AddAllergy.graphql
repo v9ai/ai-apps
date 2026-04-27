@@ -1,0 +1,10 @@
+mutation AddAllergy($input: AddAllergyInput!) {
+  addAllergy(input: $input) {
+    id
+    kind
+    name
+    severity
+    notes
+    createdAt
+  }
+}

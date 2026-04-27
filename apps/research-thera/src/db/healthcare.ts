@@ -318,6 +318,99 @@ export async function embedSymptom(
 }
 
 // ────────────────────────────────────────────────────────────────────
+// Allergies & Intolerances
+// ────────────────────────────────────────────────────────────────────
+
+export type AllergyKind = "allergy" | "intolerance";
+
+export type Allergy = {
+  id: string;
+  userId: string;
+  kind: AllergyKind;
+  name: string;
+  severity: string | null;
+  notes: string | null;
+  createdAt: string;
+};
+
+function toAllergy(r: Record<string, unknown>): Allergy {
+  return {
+    id: r.id as string,
+    userId: r.user_id as string,
+    kind: ((r.kind as string) === "intolerance" ? "intolerance" : "allergy"),
+    name: r.name as string,
+    severity: (r.severity as string | null) ?? null,
+    notes: (r.notes as string | null) ?? null,
+    createdAt:
+      r.created_at instanceof Date
+        ? r.created_at.toISOString()
+        : (r.created_at as string),
+  };
+}
+
+export async function listAllergies(userId: string): Promise<Allergy[]> {
+  const rows = await neonSql`
+    SELECT id, user_id, kind, name, severity, notes, created_at
+    FROM allergies
+    WHERE user_id = ${userId}
+    ORDER BY created_at DESC
+  `;
+  return rows.map(toAllergy);
+}
+
+export async function createAllergy(params: {
+  userId: string;
+  kind: AllergyKind;
+  name: string;
+  severity: string | null;
+  notes: string | null;
+}): Promise<Allergy> {
+  const rows = await neonSql`
+    INSERT INTO allergies (user_id, kind, name, severity, notes)
+    VALUES (${params.userId}, ${params.kind}, ${params.name}, ${params.severity}, ${params.notes})
+    RETURNING id, user_id, kind, name, severity, notes, created_at
+  `;
+  return toAllergy(rows[0]);
+}
+
+export async function deleteAllergy(id: string, userId: string): Promise<void> {
+  await neonSql`
+    DELETE FROM allergies
+    WHERE id = ${id} AND user_id = ${userId}
+  `;
+}
+
+function formatAllergy(
+  kind: AllergyKind,
+  name: string,
+  severity: string | null,
+  notes: string | null,
+): string {
+  const lines = [`${kind === "intolerance" ? "Intolerance" : "Allergy"}: ${name}`];
+  if (severity) lines.push(`Severity: ${severity}`);
+  if (notes) lines.push(`Notes: ${notes}`);
+  return lines.join("\n");
+}
+
+export async function embedAllergy(
+  allergyId: string,
+  userId: string,
+  kind: AllergyKind,
+  name: string,
+  opts: { severity: string | null; notes: string | null },
+): Promise<void> {
+  const content = formatAllergy(kind, name, opts.severity, opts.notes);
+  const embedding = await generateEmbedding(content);
+  await neonSql`
+    INSERT INTO allergy_embeddings (allergy_id, user_id, content, embedding)
+    VALUES (${allergyId}, ${userId}, ${content}, ${vec(embedding)}::vector)
+    ON CONFLICT (allergy_id) DO UPDATE
+      SET content = EXCLUDED.content,
+          embedding = EXCLUDED.embedding
+  `;
+}
+
+// ────────────────────────────────────────────────────────────────────
 // Doctors
 // ────────────────────────────────────────────────────────────────────
 
@@ -492,4 +585,170 @@ export async function embedAppointment(
       SET content = EXCLUDED.content,
           embedding = EXCLUDED.embedding
   `;
+}
+
+// ────────────────────────────────────────────────────────────────────
+// Brain / Memory Tracking
+// ────────────────────────────────────────────────────────────────────
+
+export type MemoryEntry = {
+  id: string;
+  userId: string;
+  overallScore: number | null;
+  shortTermScore: number | null;
+  longTermScore: number | null;
+  workingMemoryScore: number | null;
+  recallSpeed: number | null;
+  category: string;
+  description: string | null;
+  context: string | null;
+  protocolId: string | null;
+  loggedAt: string;
+  createdAt: string;
+};
+
+export type MemoryBaseline = {
+  id: string;
+  userId: string;
+  overallScore: number | null;
+  shortTermScore: number | null;
+  longTermScore: number | null;
+  workingMemoryScore: number | null;
+  recallSpeed: number | null;
+  recordedAt: string;
+};
+
+function toMemoryEntry(r: Record<string, unknown>): MemoryEntry {
+  const num = (k: string) =>
+    r[k] == null ? null : Number(r[k] as number | string);
+  return {
+    id: r.id as string,
+    userId: r.user_id as string,
+    overallScore: num("overall_score"),
+    shortTermScore: num("short_term_score"),
+    longTermScore: num("long_term_score"),
+    workingMemoryScore: num("working_memory_score"),
+    recallSpeed: num("recall_speed"),
+    category: r.category as string,
+    description: (r.description as string | null) ?? null,
+    context: (r.context as string | null) ?? null,
+    protocolId: (r.protocol_id as string | null) ?? null,
+    loggedAt:
+      r.logged_at instanceof Date
+        ? r.logged_at.toISOString()
+        : (r.logged_at as string),
+    createdAt:
+      r.created_at instanceof Date
+        ? r.created_at.toISOString()
+        : (r.created_at as string),
+  };
+}
+
+function toMemoryBaseline(r: Record<string, unknown>): MemoryBaseline {
+  const num = (k: string) =>
+    r[k] == null ? null : Number(r[k] as number | string);
+  return {
+    id: r.id as string,
+    userId: r.user_id as string,
+    overallScore: num("overall_score"),
+    shortTermScore: num("short_term_score"),
+    longTermScore: num("long_term_score"),
+    workingMemoryScore: num("working_memory_score"),
+    recallSpeed: num("recall_speed"),
+    recordedAt:
+      r.recorded_at instanceof Date
+        ? r.recorded_at.toISOString()
+        : (r.recorded_at as string),
+  };
+}
+
+export async function listMemoryEntries(userId: string): Promise<MemoryEntry[]> {
+  const rows = await neonSql`
+    SELECT id, user_id, overall_score, short_term_score, long_term_score,
+           working_memory_score, recall_speed, category, description, context,
+           protocol_id, logged_at, created_at
+    FROM memory_entries
+    WHERE user_id = ${userId}
+    ORDER BY logged_at DESC
+  `;
+  return rows.map(toMemoryEntry);
+}
+
+export async function getMemoryBaseline(
+  userId: string,
+): Promise<MemoryBaseline | null> {
+  const rows = await neonSql`
+    SELECT id, user_id, overall_score, short_term_score, long_term_score,
+           working_memory_score, recall_speed, recorded_at
+    FROM memory_baseline
+    WHERE user_id = ${userId}
+    LIMIT 1
+  `;
+  return rows[0] ? toMemoryBaseline(rows[0]) : null;
+}
+
+export async function createMemoryEntry(params: {
+  userId: string;
+  category: string;
+  description: string | null;
+  context: string | null;
+  protocolId: string | null;
+  overallScore: number | null;
+  shortTermScore: number | null;
+  longTermScore: number | null;
+  workingMemoryScore: number | null;
+  recallSpeed: number | null;
+}): Promise<MemoryEntry> {
+  const rows = await neonSql`
+    INSERT INTO memory_entries (
+      user_id, category, description, context, protocol_id,
+      overall_score, short_term_score, long_term_score, working_memory_score, recall_speed
+    )
+    VALUES (
+      ${params.userId}, ${params.category}, ${params.description}, ${params.context}, ${params.protocolId},
+      ${params.overallScore}, ${params.shortTermScore}, ${params.longTermScore}, ${params.workingMemoryScore}, ${params.recallSpeed}
+    )
+    RETURNING id, user_id, overall_score, short_term_score, long_term_score,
+              working_memory_score, recall_speed, category, description, context,
+              protocol_id, logged_at, created_at
+  `;
+  return toMemoryEntry(rows[0]);
+}
+
+export async function deleteMemoryEntry(
+  id: string,
+  userId: string,
+): Promise<void> {
+  await neonSql`
+    DELETE FROM memory_entries
+    WHERE id = ${id} AND user_id = ${userId}
+  `;
+}
+
+export async function upsertMemoryBaseline(params: {
+  userId: string;
+  overallScore: number | null;
+  shortTermScore: number | null;
+  longTermScore: number | null;
+  workingMemoryScore: number | null;
+  recallSpeed: number | null;
+}): Promise<MemoryBaseline> {
+  const rows = await neonSql`
+    INSERT INTO memory_baseline (
+      user_id, overall_score, short_term_score, long_term_score, working_memory_score, recall_speed
+    )
+    VALUES (
+      ${params.userId}, ${params.overallScore}, ${params.shortTermScore}, ${params.longTermScore}, ${params.workingMemoryScore}, ${params.recallSpeed}
+    )
+    ON CONFLICT (user_id) DO UPDATE SET
+      overall_score = EXCLUDED.overall_score,
+      short_term_score = EXCLUDED.short_term_score,
+      long_term_score = EXCLUDED.long_term_score,
+      working_memory_score = EXCLUDED.working_memory_score,
+      recall_speed = EXCLUDED.recall_speed,
+      recorded_at = NOW()
+    RETURNING id, user_id, overall_score, short_term_score, long_term_score,
+              working_memory_score, recall_speed, recorded_at
+  `;
+  return toMemoryBaseline(rows[0]);
 }

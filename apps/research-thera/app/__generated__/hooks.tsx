@@ -26,6 +26,13 @@ export type ActionableRecommendation = {
   title: Scalars['String']['output'];
 };
 
+export type AddAllergyInput = {
+  kind: AllergyKind;
+  name: Scalars['String']['input'];
+  notes?: InputMaybe<Scalars['String']['input']>;
+  severity?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type AddAppointmentInput = {
   appointmentDate?: InputMaybe<Scalars['String']['input']>;
   doctorId?: InputMaybe<Scalars['ID']['input']>;
@@ -58,6 +65,18 @@ export type AddMedicationInput = {
   startDate?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type AddMemoryEntryInput = {
+  category: Scalars['String']['input'];
+  context?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  longTermScore?: InputMaybe<Scalars['Float']['input']>;
+  overallScore?: InputMaybe<Scalars['Float']['input']>;
+  protocolId?: InputMaybe<Scalars['ID']['input']>;
+  recallSpeed?: InputMaybe<Scalars['Float']['input']>;
+  shortTermScore?: InputMaybe<Scalars['Float']['input']>;
+  workingMemoryScore?: InputMaybe<Scalars['Float']['input']>;
+};
+
 export type AddSymptomInput = {
   description: Scalars['String']['input'];
   loggedAt?: InputMaybe<Scalars['String']['input']>;
@@ -82,6 +101,22 @@ export enum AffirmationCategory {
   Growth = 'GROWTH',
   SelfWorth = 'SELF_WORTH',
   Strength = 'STRENGTH'
+}
+
+export type Allergy = {
+  __typename?: 'Allergy';
+  createdAt: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  kind: AllergyKind;
+  name: Scalars['String']['output'];
+  notes?: Maybe<Scalars['String']['output']>;
+  severity?: Maybe<Scalars['String']['output']>;
+  userId: Scalars['String']['output'];
+};
+
+export enum AllergyKind {
+  Allergy = 'allergy',
+  Intolerance = 'intolerance'
 }
 
 export type AnticipatedReaction = {
@@ -582,6 +617,11 @@ export type DeleteAffirmationResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type DeleteAllergyResult = {
+  __typename?: 'DeleteAllergyResult';
+  success: Scalars['Boolean']['output'];
+};
+
 export type DeleteAppointmentResult = {
   __typename?: 'DeleteAppointmentResult';
   success: Scalars['Boolean']['output'];
@@ -681,6 +721,11 @@ export type DeleteJournalEntryResult = {
 
 export type DeleteMedicationResult = {
   __typename?: 'DeleteMedicationResult';
+  success: Scalars['Boolean']['output'];
+};
+
+export type DeleteMemoryEntryResult = {
+  __typename?: 'DeleteMemoryEntryResult';
   success: Scalars['Boolean']['output'];
 };
 
@@ -1344,6 +1389,35 @@ export type Medication = {
   userId: Scalars['String']['output'];
 };
 
+export type MemoryBaseline = {
+  __typename?: 'MemoryBaseline';
+  id: Scalars['ID']['output'];
+  longTermScore?: Maybe<Scalars['Float']['output']>;
+  overallScore?: Maybe<Scalars['Float']['output']>;
+  recallSpeed?: Maybe<Scalars['Float']['output']>;
+  recordedAt: Scalars['String']['output'];
+  shortTermScore?: Maybe<Scalars['Float']['output']>;
+  userId: Scalars['String']['output'];
+  workingMemoryScore?: Maybe<Scalars['Float']['output']>;
+};
+
+export type MemoryEntry = {
+  __typename?: 'MemoryEntry';
+  category: Scalars['String']['output'];
+  context?: Maybe<Scalars['String']['output']>;
+  createdAt: Scalars['String']['output'];
+  description?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  loggedAt: Scalars['String']['output'];
+  longTermScore?: Maybe<Scalars['Float']['output']>;
+  overallScore?: Maybe<Scalars['Float']['output']>;
+  protocolId?: Maybe<Scalars['ID']['output']>;
+  recallSpeed?: Maybe<Scalars['Float']['output']>;
+  shortTermScore?: Maybe<Scalars['Float']['output']>;
+  userId: Scalars['String']['output'];
+  workingMemoryScore?: Maybe<Scalars['Float']['output']>;
+};
+
 export type MicroScript = {
   __typename?: 'MicroScript';
   childResponse: Scalars['String']['output'];
@@ -1353,10 +1427,12 @@ export type MicroScript = {
 
 export type Mutation = {
   __typename?: 'Mutation';
+  addAllergy: Allergy;
   addAppointment: Appointment;
   addCondition: Condition;
   addDoctor: Doctor;
   addMedication: Medication;
+  addMemoryEntry: MemoryEntry;
   addSymptom: Symptom;
   buildClaimCards: BuildClaimCardsResult;
   checkNoteClaims: CheckNoteClaimsResult;
@@ -1379,6 +1455,7 @@ export type Mutation = {
   createSubGoal: Goal;
   createTeacherFeedback: TeacherFeedback;
   deleteAffirmation: DeleteAffirmationResult;
+  deleteAllergy: DeleteAllergyResult;
   deleteAppointment: DeleteAppointmentResult;
   deleteBehaviorObservation: DeleteBehaviorObservationResult;
   deleteClaimCard: Scalars['Boolean']['output'];
@@ -1400,6 +1477,7 @@ export type Mutation = {
   deleteJournalAnalysis: DeleteJournalAnalysisResult;
   deleteJournalEntry: DeleteJournalEntryResult;
   deleteMedication: DeleteMedicationResult;
+  deleteMemoryEntry: DeleteMemoryEntryResult;
   deleteNote: DeleteNoteResult;
   deleteRecommendedBooks: DeleteRecommendedBooksResult;
   deleteRelationship: DeleteRelationshipResult;
@@ -1435,6 +1513,7 @@ export type Mutation = {
   markTeacherFeedbackExtracted: TeacherFeedback;
   refreshClaimCard: ClaimCard;
   sendConversationMessage: Conversation;
+  setMemoryBaseline: MemoryBaseline;
   setNoteVisibility: Note;
   setTagLanguage: Scalars['Boolean']['output'];
   shareFamilyMember: FamilyMemberShare;
@@ -1463,6 +1542,11 @@ export type Mutation = {
 };
 
 
+export type MutationAddAllergyArgs = {
+  input: AddAllergyInput;
+};
+
+
 export type MutationAddAppointmentArgs = {
   input: AddAppointmentInput;
 };
@@ -1480,6 +1564,11 @@ export type MutationAddDoctorArgs = {
 
 export type MutationAddMedicationArgs = {
   input: AddMedicationInput;
+};
+
+
+export type MutationAddMemoryEntryArgs = {
+  input: AddMemoryEntryInput;
 };
 
 
@@ -1599,6 +1688,11 @@ export type MutationDeleteAffirmationArgs = {
 };
 
 
+export type MutationDeleteAllergyArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
 export type MutationDeleteAppointmentArgs = {
   id: Scalars['ID']['input'];
 };
@@ -1700,6 +1794,11 @@ export type MutationDeleteJournalEntryArgs = {
 
 
 export type MutationDeleteMedicationArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationDeleteMemoryEntryArgs = {
   id: Scalars['ID']['input'];
 };
 
@@ -1903,6 +2002,11 @@ export type MutationRefreshClaimCardArgs = {
 export type MutationSendConversationMessageArgs = {
   conversationId: Scalars['Int']['input'];
   message: Scalars['String']['input'];
+};
+
+
+export type MutationSetMemoryBaselineArgs = {
+  input: SetMemoryBaselineInput;
 };
 
 
@@ -2222,6 +2326,7 @@ export type Query = {
   allRecommendedBooks: Array<RecommendedBook>;
   allStories: Array<Story>;
   allTags: Array<Scalars['String']['output']>;
+  allergies: Array<Allergy>;
   appointments: Array<Appointment>;
   audioFromR2?: Maybe<AudioFromR2Result>;
   behaviorObservation?: Maybe<BehaviorObservation>;
@@ -2259,6 +2364,8 @@ export type Query = {
   journalEntry?: Maybe<JournalEntry>;
   latestBogdanDiscussion?: Maybe<BogdanDiscussionGuide>;
   medications: Array<Medication>;
+  memoryBaseline?: Maybe<MemoryBaseline>;
+  memoryEntries: Array<MemoryEntry>;
   mySharedFamilyMembers: Array<FamilyMember>;
   mySharedNotes: Array<Note>;
   note?: Maybe<Note>;
@@ -2716,6 +2823,14 @@ export type RoutineResearchMapping = {
   topic: Scalars['String']['output'];
 };
 
+export type SetMemoryBaselineInput = {
+  longTermScore?: InputMaybe<Scalars['Float']['input']>;
+  overallScore?: InputMaybe<Scalars['Float']['input']>;
+  recallSpeed?: InputMaybe<Scalars['Float']['input']>;
+  shortTermScore?: InputMaybe<Scalars['Float']['input']>;
+  workingMemoryScore?: InputMaybe<Scalars['Float']['input']>;
+};
+
 export type Story = {
   __typename?: 'Story';
   audioAssets: Array<AudioAsset>;
@@ -3006,6 +3121,13 @@ export type VaultUnlockResult = {
   unlocked: Scalars['Boolean']['output'];
 };
 
+export type AddAllergyMutationVariables = Exact<{
+  input: AddAllergyInput;
+}>;
+
+
+export type AddAllergyMutation = { __typename?: 'Mutation', addAllergy: { __typename?: 'Allergy', id: string, kind: AllergyKind, name: string, severity?: string | null, notes?: string | null, createdAt: string } };
+
 export type AddAppointmentMutationVariables = Exact<{
   input: AddAppointmentInput;
 }>;
@@ -3034,12 +3156,24 @@ export type AddMedicationMutationVariables = Exact<{
 
 export type AddMedicationMutation = { __typename?: 'Mutation', addMedication: { __typename?: 'Medication', id: string, name: string, dosage?: string | null, frequency?: string | null, notes?: string | null, startDate?: string | null, endDate?: string | null, createdAt: string } };
 
+export type AddMemoryEntryMutationVariables = Exact<{
+  input: AddMemoryEntryInput;
+}>;
+
+
+export type AddMemoryEntryMutation = { __typename?: 'Mutation', addMemoryEntry: { __typename?: 'MemoryEntry', id: string, category: string, description?: string | null, overallScore?: number | null, shortTermScore?: number | null, longTermScore?: number | null, workingMemoryScore?: number | null, recallSpeed?: number | null, loggedAt: string } };
+
 export type AddSymptomMutationVariables = Exact<{
   input: AddSymptomInput;
 }>;
 
 
 export type AddSymptomMutation = { __typename?: 'Mutation', addSymptom: { __typename?: 'Symptom', id: string, description: string, severity?: string | null, loggedAt: string, createdAt: string } };
+
+export type AllergiesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type AllergiesQuery = { __typename?: 'Query', allergies: Array<{ __typename?: 'Allergy', id: string, kind: AllergyKind, name: string, severity?: string | null, notes?: string | null, createdAt: string }> };
 
 export type AppointmentsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -3232,6 +3366,13 @@ export type DeleteAffirmationMutationVariables = Exact<{
 
 export type DeleteAffirmationMutation = { __typename?: 'Mutation', deleteAffirmation: { __typename?: 'DeleteAffirmationResult', success: boolean, message?: string | null } };
 
+export type DeleteAllergyMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteAllergyMutation = { __typename?: 'Mutation', deleteAllergy: { __typename?: 'DeleteAllergyResult', success: boolean } };
+
 export type DeleteAppointmentMutationVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
@@ -3378,6 +3519,13 @@ export type DeleteMedicationMutationVariables = Exact<{
 
 
 export type DeleteMedicationMutation = { __typename?: 'Mutation', deleteMedication: { __typename?: 'DeleteMedicationResult', success: boolean } };
+
+export type DeleteMemoryEntryMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteMemoryEntryMutation = { __typename?: 'Mutation', deleteMemoryEntry: { __typename?: 'DeleteMemoryEntryResult', success: boolean } };
 
 export type DeleteNoteMutationVariables = Exact<{
   id: Scalars['Int']['input'];
@@ -4007,6 +4155,11 @@ export type MedicationsQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type MedicationsQuery = { __typename?: 'Query', medications: Array<{ __typename?: 'Medication', id: string, name: string, dosage?: string | null, frequency?: string | null, notes?: string | null, startDate?: string | null, endDate?: string | null, createdAt: string }> };
 
+export type MemoryEntriesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MemoryEntriesQuery = { __typename?: 'Query', memoryEntries: Array<{ __typename?: 'MemoryEntry', id: string, category: string, description?: string | null, context?: string | null, protocolId?: string | null, overallScore?: number | null, shortTermScore?: number | null, longTermScore?: number | null, workingMemoryScore?: number | null, recallSpeed?: number | null, loggedAt: string, createdAt: string }>, memoryBaseline?: { __typename?: 'MemoryBaseline', id: string, overallScore?: number | null, shortTermScore?: number | null, longTermScore?: number | null, workingMemoryScore?: number | null, recallSpeed?: number | null, recordedAt: string } | null };
+
 export type SendConversationMessageMutationVariables = Exact<{
   conversationId: Scalars['Int']['input'];
   message: Scalars['String']['input'];
@@ -4014,6 +4167,13 @@ export type SendConversationMessageMutationVariables = Exact<{
 
 
 export type SendConversationMessageMutation = { __typename?: 'Mutation', sendConversationMessage: { __typename?: 'Conversation', id: number, issueId: number, userId: string, title?: string | null, createdAt: string, updatedAt: string, messages: Array<{ __typename?: 'ConversationMessage', id: number, conversationId: number, role: string, content: string, createdAt: string }> } };
+
+export type SetMemoryBaselineMutationVariables = Exact<{
+  input: SetMemoryBaselineInput;
+}>;
+
+
+export type SetMemoryBaselineMutation = { __typename?: 'Mutation', setMemoryBaseline: { __typename?: 'MemoryBaseline', id: string, overallScore?: number | null, shortTermScore?: number | null, longTermScore?: number | null, workingMemoryScore?: number | null, recallSpeed?: number | null, recordedAt: string } };
 
 export type ShareFamilyMemberMutationVariables = Exact<{
   familyMemberId: Scalars['Int']['input'];
@@ -4213,6 +4373,44 @@ export type VaultStatusQueryVariables = Exact<{ [key: string]: never; }>;
 export type VaultStatusQuery = { __typename?: 'Query', vaultStatus: { __typename?: 'VaultStatus', unlocked: boolean, available: boolean } };
 
 
+export const AddAllergyDocument = gql`
+    mutation AddAllergy($input: AddAllergyInput!) {
+  addAllergy(input: $input) {
+    id
+    kind
+    name
+    severity
+    notes
+    createdAt
+  }
+}
+    `;
+export type AddAllergyMutationFn = Apollo.MutationFunction<AddAllergyMutation, AddAllergyMutationVariables>;
+
+/**
+ * __useAddAllergyMutation__
+ *
+ * To run a mutation, you first call `useAddAllergyMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAddAllergyMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [addAllergyMutation, { data, loading, error }] = useAddAllergyMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useAddAllergyMutation(baseOptions?: Apollo.MutationHookOptions<AddAllergyMutation, AddAllergyMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<AddAllergyMutation, AddAllergyMutationVariables>(AddAllergyDocument, options);
+      }
+export type AddAllergyMutationHookResult = ReturnType<typeof useAddAllergyMutation>;
+export type AddAllergyMutationResult = Apollo.MutationResult<AddAllergyMutation>;
+export type AddAllergyMutationOptions = Apollo.BaseMutationOptions<AddAllergyMutation, AddAllergyMutationVariables>;
 export const AddAppointmentDocument = gql`
     mutation AddAppointment($input: AddAppointmentInput!) {
   addAppointment(input: $input) {
@@ -4369,6 +4567,47 @@ export function useAddMedicationMutation(baseOptions?: Apollo.MutationHookOption
 export type AddMedicationMutationHookResult = ReturnType<typeof useAddMedicationMutation>;
 export type AddMedicationMutationResult = Apollo.MutationResult<AddMedicationMutation>;
 export type AddMedicationMutationOptions = Apollo.BaseMutationOptions<AddMedicationMutation, AddMedicationMutationVariables>;
+export const AddMemoryEntryDocument = gql`
+    mutation AddMemoryEntry($input: AddMemoryEntryInput!) {
+  addMemoryEntry(input: $input) {
+    id
+    category
+    description
+    overallScore
+    shortTermScore
+    longTermScore
+    workingMemoryScore
+    recallSpeed
+    loggedAt
+  }
+}
+    `;
+export type AddMemoryEntryMutationFn = Apollo.MutationFunction<AddMemoryEntryMutation, AddMemoryEntryMutationVariables>;
+
+/**
+ * __useAddMemoryEntryMutation__
+ *
+ * To run a mutation, you first call `useAddMemoryEntryMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAddMemoryEntryMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [addMemoryEntryMutation, { data, loading, error }] = useAddMemoryEntryMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useAddMemoryEntryMutation(baseOptions?: Apollo.MutationHookOptions<AddMemoryEntryMutation, AddMemoryEntryMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<AddMemoryEntryMutation, AddMemoryEntryMutationVariables>(AddMemoryEntryDocument, options);
+      }
+export type AddMemoryEntryMutationHookResult = ReturnType<typeof useAddMemoryEntryMutation>;
+export type AddMemoryEntryMutationResult = Apollo.MutationResult<AddMemoryEntryMutation>;
+export type AddMemoryEntryMutationOptions = Apollo.BaseMutationOptions<AddMemoryEntryMutation, AddMemoryEntryMutationVariables>;
 export const AddSymptomDocument = gql`
     mutation AddSymptom($input: AddSymptomInput!) {
   addSymptom(input: $input) {
@@ -4406,6 +4645,53 @@ export function useAddSymptomMutation(baseOptions?: Apollo.MutationHookOptions<A
 export type AddSymptomMutationHookResult = ReturnType<typeof useAddSymptomMutation>;
 export type AddSymptomMutationResult = Apollo.MutationResult<AddSymptomMutation>;
 export type AddSymptomMutationOptions = Apollo.BaseMutationOptions<AddSymptomMutation, AddSymptomMutationVariables>;
+export const AllergiesDocument = gql`
+    query Allergies {
+  allergies {
+    id
+    kind
+    name
+    severity
+    notes
+    createdAt
+  }
+}
+    `;
+
+/**
+ * __useAllergiesQuery__
+ *
+ * To run a query within a React component, call `useAllergiesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useAllergiesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useAllergiesQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useAllergiesQuery(baseOptions?: Apollo.QueryHookOptions<AllergiesQuery, AllergiesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<AllergiesQuery, AllergiesQueryVariables>(AllergiesDocument, options);
+      }
+export function useAllergiesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<AllergiesQuery, AllergiesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<AllergiesQuery, AllergiesQueryVariables>(AllergiesDocument, options);
+        }
+// @ts-ignore
+export function useAllergiesSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<AllergiesQuery, AllergiesQueryVariables>): Apollo.UseSuspenseQueryResult<AllergiesQuery, AllergiesQueryVariables>;
+export function useAllergiesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<AllergiesQuery, AllergiesQueryVariables>): Apollo.UseSuspenseQueryResult<AllergiesQuery | undefined, AllergiesQueryVariables>;
+export function useAllergiesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<AllergiesQuery, AllergiesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<AllergiesQuery, AllergiesQueryVariables>(AllergiesDocument, options);
+        }
+export type AllergiesQueryHookResult = ReturnType<typeof useAllergiesQuery>;
+export type AllergiesLazyQueryHookResult = ReturnType<typeof useAllergiesLazyQuery>;
+export type AllergiesSuspenseQueryHookResult = ReturnType<typeof useAllergiesSuspenseQuery>;
+export type AllergiesQueryResult = Apollo.QueryResult<AllergiesQuery, AllergiesQueryVariables>;
 export const AppointmentsDocument = gql`
     query Appointments {
   appointments {
@@ -5749,6 +6035,39 @@ export function useDeleteAffirmationMutation(baseOptions?: Apollo.MutationHookOp
 export type DeleteAffirmationMutationHookResult = ReturnType<typeof useDeleteAffirmationMutation>;
 export type DeleteAffirmationMutationResult = Apollo.MutationResult<DeleteAffirmationMutation>;
 export type DeleteAffirmationMutationOptions = Apollo.BaseMutationOptions<DeleteAffirmationMutation, DeleteAffirmationMutationVariables>;
+export const DeleteAllergyDocument = gql`
+    mutation DeleteAllergy($id: ID!) {
+  deleteAllergy(id: $id) {
+    success
+  }
+}
+    `;
+export type DeleteAllergyMutationFn = Apollo.MutationFunction<DeleteAllergyMutation, DeleteAllergyMutationVariables>;
+
+/**
+ * __useDeleteAllergyMutation__
+ *
+ * To run a mutation, you first call `useDeleteAllergyMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteAllergyMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteAllergyMutation, { data, loading, error }] = useDeleteAllergyMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteAllergyMutation(baseOptions?: Apollo.MutationHookOptions<DeleteAllergyMutation, DeleteAllergyMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteAllergyMutation, DeleteAllergyMutationVariables>(DeleteAllergyDocument, options);
+      }
+export type DeleteAllergyMutationHookResult = ReturnType<typeof useDeleteAllergyMutation>;
+export type DeleteAllergyMutationResult = Apollo.MutationResult<DeleteAllergyMutation>;
+export type DeleteAllergyMutationOptions = Apollo.BaseMutationOptions<DeleteAllergyMutation, DeleteAllergyMutationVariables>;
 export const DeleteAppointmentDocument = gql`
     mutation DeleteAppointment($id: ID!) {
   deleteAppointment(id: $id) {
@@ -6455,6 +6774,39 @@ export function useDeleteMedicationMutation(baseOptions?: Apollo.MutationHookOpt
 export type DeleteMedicationMutationHookResult = ReturnType<typeof useDeleteMedicationMutation>;
 export type DeleteMedicationMutationResult = Apollo.MutationResult<DeleteMedicationMutation>;
 export type DeleteMedicationMutationOptions = Apollo.BaseMutationOptions<DeleteMedicationMutation, DeleteMedicationMutationVariables>;
+export const DeleteMemoryEntryDocument = gql`
+    mutation DeleteMemoryEntry($id: ID!) {
+  deleteMemoryEntry(id: $id) {
+    success
+  }
+}
+    `;
+export type DeleteMemoryEntryMutationFn = Apollo.MutationFunction<DeleteMemoryEntryMutation, DeleteMemoryEntryMutationVariables>;
+
+/**
+ * __useDeleteMemoryEntryMutation__
+ *
+ * To run a mutation, you first call `useDeleteMemoryEntryMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteMemoryEntryMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteMemoryEntryMutation, { data, loading, error }] = useDeleteMemoryEntryMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteMemoryEntryMutation(baseOptions?: Apollo.MutationHookOptions<DeleteMemoryEntryMutation, DeleteMemoryEntryMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteMemoryEntryMutation, DeleteMemoryEntryMutationVariables>(DeleteMemoryEntryDocument, options);
+      }
+export type DeleteMemoryEntryMutationHookResult = ReturnType<typeof useDeleteMemoryEntryMutation>;
+export type DeleteMemoryEntryMutationResult = Apollo.MutationResult<DeleteMemoryEntryMutation>;
+export type DeleteMemoryEntryMutationOptions = Apollo.BaseMutationOptions<DeleteMemoryEntryMutation, DeleteMemoryEntryMutationVariables>;
 export const DeleteNoteDocument = gql`
     mutation DeleteNote($id: Int!) {
   deleteNote(id: $id) {
@@ -11599,6 +11951,68 @@ export type MedicationsQueryHookResult = ReturnType<typeof useMedicationsQuery>;
 export type MedicationsLazyQueryHookResult = ReturnType<typeof useMedicationsLazyQuery>;
 export type MedicationsSuspenseQueryHookResult = ReturnType<typeof useMedicationsSuspenseQuery>;
 export type MedicationsQueryResult = Apollo.QueryResult<MedicationsQuery, MedicationsQueryVariables>;
+export const MemoryEntriesDocument = gql`
+    query MemoryEntries {
+  memoryEntries {
+    id
+    category
+    description
+    context
+    protocolId
+    overallScore
+    shortTermScore
+    longTermScore
+    workingMemoryScore
+    recallSpeed
+    loggedAt
+    createdAt
+  }
+  memoryBaseline {
+    id
+    overallScore
+    shortTermScore
+    longTermScore
+    workingMemoryScore
+    recallSpeed
+    recordedAt
+  }
+}
+    `;
+
+/**
+ * __useMemoryEntriesQuery__
+ *
+ * To run a query within a React component, call `useMemoryEntriesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useMemoryEntriesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useMemoryEntriesQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useMemoryEntriesQuery(baseOptions?: Apollo.QueryHookOptions<MemoryEntriesQuery, MemoryEntriesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<MemoryEntriesQuery, MemoryEntriesQueryVariables>(MemoryEntriesDocument, options);
+      }
+export function useMemoryEntriesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<MemoryEntriesQuery, MemoryEntriesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<MemoryEntriesQuery, MemoryEntriesQueryVariables>(MemoryEntriesDocument, options);
+        }
+// @ts-ignore
+export function useMemoryEntriesSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<MemoryEntriesQuery, MemoryEntriesQueryVariables>): Apollo.UseSuspenseQueryResult<MemoryEntriesQuery, MemoryEntriesQueryVariables>;
+export function useMemoryEntriesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<MemoryEntriesQuery, MemoryEntriesQueryVariables>): Apollo.UseSuspenseQueryResult<MemoryEntriesQuery | undefined, MemoryEntriesQueryVariables>;
+export function useMemoryEntriesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<MemoryEntriesQuery, MemoryEntriesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<MemoryEntriesQuery, MemoryEntriesQueryVariables>(MemoryEntriesDocument, options);
+        }
+export type MemoryEntriesQueryHookResult = ReturnType<typeof useMemoryEntriesQuery>;
+export type MemoryEntriesLazyQueryHookResult = ReturnType<typeof useMemoryEntriesLazyQuery>;
+export type MemoryEntriesSuspenseQueryHookResult = ReturnType<typeof useMemoryEntriesSuspenseQuery>;
+export type MemoryEntriesQueryResult = Apollo.QueryResult<MemoryEntriesQuery, MemoryEntriesQueryVariables>;
 export const SendConversationMessageDocument = gql`
     mutation SendConversationMessage($conversationId: Int!, $message: String!) {
   sendConversationMessage(conversationId: $conversationId, message: $message) {
@@ -11645,6 +12059,45 @@ export function useSendConversationMessageMutation(baseOptions?: Apollo.Mutation
 export type SendConversationMessageMutationHookResult = ReturnType<typeof useSendConversationMessageMutation>;
 export type SendConversationMessageMutationResult = Apollo.MutationResult<SendConversationMessageMutation>;
 export type SendConversationMessageMutationOptions = Apollo.BaseMutationOptions<SendConversationMessageMutation, SendConversationMessageMutationVariables>;
+export const SetMemoryBaselineDocument = gql`
+    mutation SetMemoryBaseline($input: SetMemoryBaselineInput!) {
+  setMemoryBaseline(input: $input) {
+    id
+    overallScore
+    shortTermScore
+    longTermScore
+    workingMemoryScore
+    recallSpeed
+    recordedAt
+  }
+}
+    `;
+export type SetMemoryBaselineMutationFn = Apollo.MutationFunction<SetMemoryBaselineMutation, SetMemoryBaselineMutationVariables>;
+
+/**
+ * __useSetMemoryBaselineMutation__
+ *
+ * To run a mutation, you first call `useSetMemoryBaselineMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useSetMemoryBaselineMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [setMemoryBaselineMutation, { data, loading, error }] = useSetMemoryBaselineMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useSetMemoryBaselineMutation(baseOptions?: Apollo.MutationHookOptions<SetMemoryBaselineMutation, SetMemoryBaselineMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<SetMemoryBaselineMutation, SetMemoryBaselineMutationVariables>(SetMemoryBaselineDocument, options);
+      }
+export type SetMemoryBaselineMutationHookResult = ReturnType<typeof useSetMemoryBaselineMutation>;
+export type SetMemoryBaselineMutationResult = Apollo.MutationResult<SetMemoryBaselineMutation>;
+export type SetMemoryBaselineMutationOptions = Apollo.BaseMutationOptions<SetMemoryBaselineMutation, SetMemoryBaselineMutationVariables>;
 export const ShareFamilyMemberDocument = gql`
     mutation ShareFamilyMember($familyMemberId: Int!, $email: String!, $role: FamilyMemberShareRole) {
   shareFamilyMember(familyMemberId: $familyMemberId, email: $email, role: $role) {

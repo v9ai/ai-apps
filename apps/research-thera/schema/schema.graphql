@@ -275,6 +275,13 @@ type Query {
 
   # Healthcare — Appointments
   appointments: [Appointment!]!
+
+  # Healthcare — Brain / Memory
+  memoryEntries: [MemoryEntry!]!
+  memoryBaseline: MemoryBaseline
+
+  # Healthcare — Allergies & Intolerances
+  allergies: [Allergy!]!
 }
 
 type Mutation {
@@ -476,6 +483,15 @@ type Mutation {
   # Healthcare — Appointments
   addAppointment(input: AddAppointmentInput!): Appointment!
   deleteAppointment(id: ID!): DeleteAppointmentResult!
+
+  # Healthcare — Brain / Memory
+  addMemoryEntry(input: AddMemoryEntryInput!): MemoryEntry!
+  deleteMemoryEntry(id: ID!): DeleteMemoryEntryResult!
+  setMemoryBaseline(input: SetMemoryBaselineInput!): MemoryBaseline!
+
+  # Healthcare — Allergies & Intolerances
+  addAllergy(input: AddAllergyInput!): Allergy!
+  deleteAllergy(id: ID!): DeleteAllergyResult!
 }
 
 type Subscription {
@@ -2241,5 +2257,90 @@ input AddAppointmentInput {
 }
 
 type DeleteAppointmentResult {
+  success: Boolean!
+}
+
+# ============================================
+# Healthcare — Brain / Memory
+# ============================================
+
+type MemoryEntry {
+  id: ID!
+  userId: String!
+  category: String!
+  description: String
+  context: String
+  protocolId: ID
+  overallScore: Float
+  shortTermScore: Float
+  longTermScore: Float
+  workingMemoryScore: Float
+  recallSpeed: Float
+  loggedAt: String!
+  createdAt: String!
+}
+
+type MemoryBaseline {
+  id: ID!
+  userId: String!
+  overallScore: Float
+  shortTermScore: Float
+  longTermScore: Float
+  workingMemoryScore: Float
+  recallSpeed: Float
+  recordedAt: String!
+}
+
+input AddMemoryEntryInput {
+  category: String!
+  description: String
+  context: String
+  protocolId: ID
+  overallScore: Float
+  shortTermScore: Float
+  longTermScore: Float
+  workingMemoryScore: Float
+  recallSpeed: Float
+}
+
+input SetMemoryBaselineInput {
+  overallScore: Float
+  shortTermScore: Float
+  longTermScore: Float
+  workingMemoryScore: Float
+  recallSpeed: Float
+}
+
+type DeleteMemoryEntryResult {
+  success: Boolean!
+}
+
+# ============================================
+# Healthcare — Allergies & Intolerances
+# ============================================
+
+enum AllergyKind {
+  allergy
+  intolerance
+}
+
+type Allergy {
+  id: ID!
+  userId: String!
+  kind: AllergyKind!
+  name: String!
+  severity: String
+  notes: String
+  createdAt: String!
+}
+
+input AddAllergyInput {
+  kind: AllergyKind!
+  name: String!
+  severity: String
+  notes: String
+}
+
+type DeleteAllergyResult {
   success: Boolean!
 }

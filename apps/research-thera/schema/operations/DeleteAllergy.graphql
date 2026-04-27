@@ -1,0 +1,5 @@
+mutation DeleteAllergy($id: ID!) {
+  deleteAllergy(id: $id) {
+    success
+  }
+}

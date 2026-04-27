@@ -1,0 +1,25 @@
+query MemoryEntries {
+  memoryEntries {
+    id
+    category
+    description
+    context
+    protocolId
+    overallScore
+    shortTermScore
+    longTermScore
+    workingMemoryScore
+    recallSpeed
+    loggedAt
+    createdAt
+  }
+  memoryBaseline {
+    id
+    overallScore
+    shortTermScore
+    longTermScore
+    workingMemoryScore
+    recallSpeed
+    recordedAt
+  }
+}
