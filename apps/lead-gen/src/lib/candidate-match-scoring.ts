@@ -6,14 +6,14 @@
  * talent), this score measures **how well a candidate fits THIS job**.
  */
 
-import type { ContactAIProfile } from "./ai-contact-enrichment";
+import type { ContactProfile } from "./ai-contact-enrichment";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export interface CandidateData {
   tags: string[];
   authority_score: number | null;
-  ai_profile: ContactAIProfile | null;
+  profile: ContactProfile | null;
   github_handle: string | null;
   position: string | null;
 }
@@ -153,7 +153,7 @@ function scoreSkillMatch(
  */
 function scoreGitHubDepth(
   tags: string[],
-  profile: ContactAIProfile | null,
+  profile: ContactProfile | null,
 ): number {
   // Base: tier from Rust pipeline
   const tierTag = tags.find((t) => t.startsWith("github:score:"));
@@ -180,7 +180,7 @@ function scoreGitHubDepth(
   return Math.max(base, profileSignals);
 }
 
-function computeProfileSignals(profile: ContactAIProfile): number {
+function computeProfileSignals(profile: ContactProfile): number {
   const aiRepoCount = profile.github_ai_repos?.length ?? 0;
   const totalStars = profile.github_total_stars ?? 0;
   const langCount = profile.github_top_languages?.length ?? 0;
@@ -217,7 +217,7 @@ function computeProfileSignals(profile: ContactAIProfile): number {
  * match the seniority required by the job?
  */
 function scoreExperienceFit(
-  profile: ContactAIProfile | null,
+  profile: ContactProfile | null,
   position: string | null,
   oppTags: string[],
 ): number {
@@ -262,7 +262,7 @@ function inferLevelFromPosition(position: string | null): string {
  */
 function scoreProfileDepth(
   tags: string[],
-  profile: ContactAIProfile | null,
+  profile: ContactProfile | null,
   hasGithub: boolean,
 ): number {
   let score = 0;
@@ -300,7 +300,7 @@ function scoreProfileDepth(
  *
  * Returns 0.3–1.0: low-credibility profiles get skill scores reduced by up to 70%.
  */
-function computeCredibility(profile: ContactAIProfile | null): number {
+function computeCredibility(profile: ContactProfile | null): number {
   if (!profile) return 0.5;
 
   const followers = profile.github_followers ?? 0;
@@ -348,19 +348,19 @@ export function computeCandidateMatchScore(
     .map((t) => t.replace("skill:", ""));
 
   // Also include skills from AI profile
-  if (candidate.ai_profile?.skills) {
-    for (const s of candidate.ai_profile.skills) {
+  if (candidate.profile?.skills) {
+    for (const s of candidate.profile.skills) {
       candSkills.push(s.toLowerCase());
     }
   }
 
   const skillResult = scoreSkillMatch(candSkills, requiredSkills);
-  const githubDepth = scoreGitHubDepth(candidate.tags, candidate.ai_profile);
-  const experienceFit = scoreExperienceFit(candidate.ai_profile, candidate.position, opportunity.tags);
-  const profileDepth = scoreProfileDepth(candidate.tags, candidate.ai_profile, !!candidate.github_handle);
+  const githubDepth = scoreGitHubDepth(candidate.tags, candidate.profile);
+  const experienceFit = scoreExperienceFit(candidate.profile, candidate.position, opportunity.tags);
+  const profileDepth = scoreProfileDepth(candidate.tags, candidate.profile, !!candidate.github_handle);
 
   // Credibility gate: discount skill match for low-evidence profiles
-  const credibility = computeCredibility(candidate.ai_profile);
+  const credibility = computeCredibility(candidate.profile);
   const adjustedSkillMatch = skillResult.ratio * credibility;
 
   const score =

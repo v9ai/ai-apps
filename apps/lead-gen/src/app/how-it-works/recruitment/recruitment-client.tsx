@@ -280,7 +280,7 @@ const stages = [
   {
     title: "persistence",
     graphName: "persistence",
-    description: "LanceDB stores vector embeddings for semantic similarity search; Neon stores the canonical contact row with ai_profile jsonb. Every candidate carries a prefix-tagged provenance array (github:* · skill:* · seniority:* · opp:* · src:*) — recruiters see exactly why each candidate surfaced.",
+    description: "LanceDB stores vector embeddings for semantic similarity search; Neon stores the canonical contact row with profile jsonb. Every candidate carries a prefix-tagged provenance array (github:* · skill:* · seniority:* · opp:* · src:*) — recruiters see exactly why each candidate surfaced.",
     pattern: "Dual-store with auditable tags",
     nodes: persistenceNodes,
     edges: persistenceEdges,

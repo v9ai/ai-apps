@@ -2226,7 +2226,7 @@ export function ContactDetailClient({ contactId, contactSlug }: { contactId?: nu
         </Card>
 
         {/* AI Profile + Work Experience */}
-        {contact.aiProfile && (
+        {contact.profile && (
           <Card>
             <Box p="4">
               <Flex direction="column" gap="4">
@@ -2235,26 +2235,26 @@ export function ContactDetailClient({ contactId, contactSlug }: { contactId?: nu
                   <Flex align="center" gap="2">
                     <Heading size="4">Profile</Heading>
                     <Badge color="violet" variant="soft" size="1">
-                      {contact.aiProfile.experienceLevel}
+                      {contact.profile.experienceLevel}
                     </Badge>
                   </Flex>
-                  {contact.aiProfile.specialization && (
-                    <Text size="2" color="gray">{contact.aiProfile.specialization}</Text>
+                  {contact.profile.specialization && (
+                    <Text size="2" color="gray">{contact.profile.specialization}</Text>
                   )}
                 </Flex>
 
-                {contact.aiProfile.linkedinHeadline && (
+                {contact.profile.linkedinHeadline && (
                   <Text size="2" as="p" color="gray" style={{ fontStyle: "italic" }}>
-                    {contact.aiProfile.linkedinHeadline}
+                    {contact.profile.linkedinHeadline}
                   </Text>
                 )}
 
                 {/* Skills */}
-                {contact.aiProfile.skills.length > 0 && (
+                {contact.profile.skills.length > 0 && (
                   <Box>
                     <Text size="2" color="gray" weight="medium">Skills</Text>
                     <Flex gap="1" mt="2" wrap="wrap">
-                      {contact.aiProfile.skills.map((skill) => (
+                      {contact.profile.skills.map((skill) => (
                         <Badge key={skill} color="blue" variant="soft" size="1">{skill}</Badge>
                       ))}
                     </Flex>
@@ -2262,11 +2262,11 @@ export function ContactDetailClient({ contactId, contactSlug }: { contactId?: nu
                 )}
 
                 {/* Research areas */}
-                {contact.aiProfile.researchAreas.length > 0 && (
+                {contact.profile.researchAreas.length > 0 && (
                   <Box>
                     <Text size="2" color="gray" weight="medium">Research areas</Text>
                     <Flex gap="1" mt="2" wrap="wrap">
-                      {contact.aiProfile.researchAreas.map((area) => (
+                      {contact.profile.researchAreas.map((area) => (
                         <Badge key={area} color="purple" variant="soft" size="1">{area}</Badge>
                       ))}
                     </Flex>
@@ -2276,25 +2276,25 @@ export function ContactDetailClient({ contactId, contactSlug }: { contactId?: nu
                 {/* Confidence + enriched date */}
                 <Flex gap="4" wrap="wrap">
                   <Text size="1" color="gray">
-                    Confidence: {Math.round((contact.aiProfile.synthesisConfidence ?? 0) * 100)}%
+                    Confidence: {Math.round((contact.profile.synthesisConfidence ?? 0) * 100)}%
                   </Text>
                   <Text size="1" color="gray">
-                    Enriched: {new Date(contact.aiProfile.enrichedAt).toLocaleDateString()}
+                    Enriched: {new Date(contact.profile.enrichedAt).toLocaleDateString()}
                   </Text>
                 </Flex>
 
                 {/* Work Experience */}
-                {contact.aiProfile.workExperience.length > 0 && (
+                {contact.profile.workExperience.length > 0 && (
                   <>
                     <Separator size="4" />
                     <Flex align="center" gap="2">
                       <Heading size="3">Experience</Heading>
                       <Badge color="gray" variant="soft" size="1">
-                        {contact.aiProfile.workExperience.length}
+                        {contact.profile.workExperience.length}
                       </Badge>
                     </Flex>
 
-                    {contact.aiProfile.workExperience.map((exp, i) => (
+                    {contact.profile.workExperience.map((exp, i) => (
                       <Box key={i}>
                         {i > 0 && <Separator size="4" mb="3" />}
                         <Flex direction="column" gap="2">

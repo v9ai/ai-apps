@@ -97,7 +97,7 @@ export const papers: Paper[] = [
     authors: "Neon",
     year: 2024,
     finding: "Serverless PostgreSQL — the canonical contacts store shared with the company pipeline",
-    relevance: "Scored candidates land in contacts with github_handle unique key, ai_profile jsonb, authority_score, and a searchable tag array.",
+    relevance: "Scored candidates land in contacts with github_handle unique key, profile jsonb, authority_score, and a searchable tag array.",
     url: "https://neon.tech",
     categoryColor: "var(--green-9)",
   },
@@ -125,7 +125,7 @@ export const papers: Paper[] = [
     authors: "Drizzle Team",
     year: 2024,
     finding: "TypeScript ORM with typed queries — the contacts schema definition shared by Rust writes and TS reads",
-    relevance: "contacts.github_handle (unique), contacts.ai_profile (jsonb ContactAIProfile), contacts.authority_score — all surfaced through Drizzle types.",
+    relevance: "contacts.github_handle (unique), contacts.profile (jsonb ContactProfile), contacts.authority_score — all surfaced through Drizzle types.",
     url: "https://orm.drizzle.team",
     categoryColor: "var(--green-9)",
   },
@@ -321,8 +321,8 @@ export const nodeDetails: Record<string, NodeDetail> = {
     color: "cyan",
   },
   "neon-contacts": {
-    description: "Passing candidates are upserted into the shared contacts table on github_handle. GitHub-specific enrichment lands in the ai_profile jsonb column (bio, top languages, AI repos, total stars, public_repos, followers, account_age_days, recent_push_count, hireable flag, computed activity_score, specialization, skills, experience_level). authority_score mirrors strength_score; next_touch_score and deletion_score are left for downstream ML. The same row is later reachable by the email outreach pipeline.",
-    tech: [{ name: "sqlx upsert" }, { name: "ON CONFLICT (github_handle) DO UPDATE" }, { name: "ai_profile jsonb" }, { name: "shared contacts schema" }],
+    description: "Passing candidates are upserted into the shared contacts table on github_handle. GitHub-specific enrichment lands in the profile jsonb column (bio, top languages, AI repos, total stars, public_repos, followers, account_age_days, recent_push_count, hireable flag, computed activity_score, specialization, skills, experience_level). authority_score mirrors strength_score; next_touch_score and deletion_score are left for downstream ML. The same row is later reachable by the email outreach pipeline.",
+    tech: [{ name: "sqlx upsert" }, { name: "ON CONFLICT (github_handle) DO UPDATE" }, { name: "profile jsonb" }, { name: "shared contacts schema" }],
     dataIn: "Scored candidate + skills + AI profile",
     dataOut: "Persisted contact row with GitHub-specific enrichment",
     insight: "Writing to the same contacts table the company pipeline uses means recruitment candidates and lead-gen prospects share scoring, tagging, and outreach infrastructure — a single engagement log per person regardless of how they entered the funnel.",
@@ -478,7 +478,7 @@ for org in london_ai_orgs() {
 export const contacts = pgTable("contacts", {
   id: serial("id").primaryKey(),
   github_handle: text("github_handle"),              // unique partial index
-  ai_profile: jsonb("ai_profile"),                   // ContactAIProfile
+  profile: jsonb("profile"),                   // ContactProfile
   authority_score: real("authority_score"),          // ← strength_score
   tags: jsonb("tags").default([]),                   // GIN-indexed
   // ...

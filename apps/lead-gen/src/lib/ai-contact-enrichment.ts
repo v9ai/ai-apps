@@ -5,7 +5,7 @@ import type { Contact } from "@/db/schema";
 
 // ─── Zod schema for the stored JSON blob ─────────────────────────────────────
 
-export const ContactAIProfileSchema = z.object({
+export const ContactProfileSchema = z.object({
   trigger: z.enum(["department", "tag"]),
   enriched_at: z.string(),
   linkedin_headline: z.string().nullable(),
@@ -44,7 +44,7 @@ export const ContactAIProfileSchema = z.object({
   synthesis_rationale: z.string().nullable(),
 });
 
-export type ContactAIProfile = z.infer<typeof ContactAIProfileSchema>;
+export type ContactProfile = z.infer<typeof ContactProfileSchema>;
 
 // ─── AI-contact gate check ────────────────────────────────────────────────────
 
@@ -427,7 +427,7 @@ Return JSON with exactly these fields:
 
 // ─── Main orchestrator ────────────────────────────────────────────────────────
 
-export async function gatherAIContactProfile(contact: Contact): Promise<ContactAIProfile> {
+export async function gatherAIContactProfile(contact: Contact): Promise<ContactProfile> {
   const trigger: "department" | "tag" = contact.department === "AI/ML" ? "department" : "tag";
 
   const [github, linkedin] = await Promise.all([

@@ -189,9 +189,9 @@ export function evaluateFakeAccount(input: FakeAccountInput): FakeAccountResult 
   }
 
   // 10. Low AI synthesis confidence
-  if (contact.ai_profile) {
+  if (contact.profile) {
     try {
-      const profile = JSON.parse(contact.ai_profile);
+      const profile = JSON.parse(contact.profile);
       if (typeof profile.synthesis_confidence === "number" && profile.synthesis_confidence < 0.2) {
         flags.push("low_ai_confidence");
         recommendations.push("AI enrichment had very low confidence in profile synthesis");

@@ -19,7 +19,6 @@ import { css } from "styled-system/css";
 import type { ComponentType } from "react";
 import { AuthHeader } from "@/components/auth-header";
 import { useSidebar } from "@/components/sidebar-provider";
-import { TenantSelect } from "@/components/tenant-select";
 
 const SIDEBAR_WIDTH = 200;
 const SIDEBAR_COLLAPSED_WIDTH = 56;
@@ -127,7 +126,6 @@ export function Sidebar() {
           mt="auto"
           style={{ borderTop: "1px solid var(--gray-6)" }}
         >
-          <TenantSelect />
           {!collapsed && <AuthHeader />}
           <Flex align="center" justify={collapsed ? "center" : "between"}>
             {!collapsed && (

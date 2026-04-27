@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { Container, Text } from "@radix-ui/themes";
 import { OpportunityDetailClient } from "./opportunity-detail-client";
-import { ContactAIProfileSchema } from "@/lib/ai-contact-enrichment";
+import { ContactProfileSchema } from "@/lib/ai-contact-enrichment";
 import { computeCandidateMatchScore } from "@/lib/candidate-match-scoring";
 
 export default async function OpportunityDetailPage({
@@ -61,7 +61,7 @@ export default async function OpportunityDetailPage({
 
   const opp = rows[0];
 
-  // Load contacts tagged with this opportunity — fetch full ai_profile for scoring
+  // Load contacts tagged with this opportunity — fetch full profile for scoring
   const rawCandidates = await db
     .select({
       id: contacts.id,
@@ -74,7 +74,7 @@ export default async function OpportunityDetailPage({
       github_handle: contacts.github_handle,
       tags: contacts.tags,
       authority_score: contacts.authority_score,
-      ai_profile: contacts.ai_profile,
+      profile: contacts.profile,
     })
     .from(contacts)
     .where(sql`${contacts.tags}::text LIKE ${"%" + `opp:${id}` + "%"}`)
@@ -127,11 +127,11 @@ export default async function OpportunityDetailPage({
   const sourcedCandidates = rawCandidates
     .map((c) => {
       const cTags: string[] = c.tags ? JSON.parse(c.tags) : [];
-      let aiProfile = null;
-      if (c.ai_profile) {
+      let profile = null;
+      if (c.profile) {
         try {
-          const parsed = ContactAIProfileSchema.safeParse(JSON.parse(c.ai_profile));
-          if (parsed.success) aiProfile = parsed.data;
+          const parsed = ContactProfileSchema.safeParse(JSON.parse(c.profile));
+          if (parsed.success) profile = parsed.data;
         } catch { /* ignore parse errors */ }
       }
 
@@ -139,7 +139,7 @@ export default async function OpportunityDetailPage({
         {
           tags: cTags,
           authority_score: c.authority_score,
-          ai_profile: aiProfile,
+          profile: profile,
           github_handle: c.github_handle,
           position: c.position,
         },
@@ -159,12 +159,12 @@ export default async function OpportunityDetailPage({
         authority_score: c.authority_score,
         match_score: match.score,
         match_breakdown: match,
-        github_activity_score: aiProfile?.github_activity_score ?? null,
-        github_public_repos: aiProfile?.github_public_repos ?? null,
-        github_followers: aiProfile?.github_followers ?? null,
-        github_recent_push_count: aiProfile?.github_recent_push_count ?? null,
-        experience_level: aiProfile?.experience_level ?? null,
-        specialization: aiProfile?.specialization ?? null,
+        github_activity_score: profile?.github_activity_score ?? null,
+        github_public_repos: profile?.github_public_repos ?? null,
+        github_followers: profile?.github_followers ?? null,
+        github_recent_push_count: profile?.github_recent_push_count ?? null,
+        experience_level: profile?.experience_level ?? null,
+        specialization: profile?.specialization ?? null,
       };
     })
     .sort((a, b) => b.match_score - a.match_score);
