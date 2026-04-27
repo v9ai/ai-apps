@@ -1269,7 +1269,7 @@ export async function cleanupStaleJobs(minutes = 15): Promise<void> {
 export async function createGenerationJob(
   id: string,
   userId: string,
-  type: "AUDIO" | "RESEARCH" | "QUESTIONS" | "LONGFORM" | "DEEP_ANALYSIS" | "RECOMMENDED_BOOKS" | "DISCUSSION_GUIDE" | "ROUTINE_ANALYSIS" | "BOGDAN_DISCUSSION" | "MEDICATION_DEEP_RESEARCH" | "CONDITION_DEEP_RESEARCH",
+  type: "AUDIO" | "RESEARCH" | "QUESTIONS" | "LONGFORM" | "DEEP_ANALYSIS" | "RECOMMENDED_BOOKS" | "DISCUSSION_GUIDE" | "ROUTINE_ANALYSIS" | "BOGDAN_DISCUSSION" | "MEDICATION_DEEP_RESEARCH" | "CONDITION_DEEP_RESEARCH" | "REGIMEN_INTERACTION_SCREEN",
   goalId?: number | null,
   storyId?: number,
 ) {
