@@ -7,6 +7,36 @@
 
 import { neon } from "@neondatabase/serverless";
 
+export interface IntelRunMeta {
+  productId: number;
+  kind: string;
+  startedAt: string;
+}
+
+export async function loadRunMeta(
+  databaseUrl: string,
+  appRunId: string,
+): Promise<IntelRunMeta | null> {
+  const sql = neon(databaseUrl);
+  const rows = (await sql`
+    SELECT product_id, kind, started_at
+    FROM product_intel_runs
+    WHERE id = ${appRunId}
+    LIMIT 1
+  `) as { product_id: number; kind: string; started_at: unknown }[];
+  if (rows.length === 0) return null;
+  const r = rows[0]!;
+  const started =
+    r.started_at && typeof (r.started_at as { toISOString?: unknown }).toISOString === "function"
+      ? (r.started_at as Date).toISOString()
+      : String(r.started_at);
+  return {
+    productId: r.product_id,
+    kind: r.kind,
+    startedAt: started,
+  };
+}
+
 interface RunFinishedRow {
   appRunId: string;
   status: "success" | "error" | "timeout";

@@ -12,7 +12,7 @@
 
 import { JobPubSub } from "./job-pubsub";
 import { verifyHmac } from "./auth";
-import { persistRunFinished } from "./db";
+import { loadRunMeta, persistRunFinished } from "./db";
 
 export { JobPubSub };
 
@@ -23,14 +23,16 @@ interface Env {
   NEON_DATABASE_URL: string;
 }
 
+/**
+ * Payload posted by LangGraph's notify_complete (or notify_error). Only the
+ * minimal fields are required — productId/kind/startedAt are looked up from
+ * product_intel_runs so the graph doesn't need to track them.
+ */
 interface RunFinishedPayload {
   appRunId: string;
-  productId: number;
-  kind: string;
   status: "success" | "error" | "timeout";
   error?: string | null;
   output?: unknown;
-  startedAt: string;
 }
 
 const SUBSCRIPTION_DO_NAME = "global";
@@ -79,6 +81,10 @@ export default {
       if (!ok) return new Response("Unauthorized", { status: 401 });
 
       const payload = JSON.parse(body) as RunFinishedPayload;
+      const meta = await loadRunMeta(env.NEON_DATABASE_URL, payload.appRunId);
+      if (!meta) {
+        return new Response("Unknown run", { status: 404 });
+      }
       const finishedAt = new Date().toISOString();
 
       await persistRunFinished(env.NEON_DATABASE_URL, {
@@ -87,21 +93,21 @@ export default {
         error: payload.error ?? null,
         finishedAt,
         output: payload.output,
-        productId: payload.productId,
-        kind: payload.kind,
+        productId: meta.productId,
+        kind: meta.kind,
       });
 
       const id = env.JOB_PUBSUB.idFromName(SUBSCRIPTION_DO_NAME);
       const stub = env.JOB_PUBSUB.get(id);
       const broadcastBody = JSON.stringify({
-        productId: payload.productId,
-        kind: payload.kind,
+        productId: meta.productId,
+        kind: meta.kind,
         intelRun: {
           id: payload.appRunId,
-          productId: payload.productId,
-          kind: payload.kind,
+          productId: meta.productId,
+          kind: meta.kind,
           status: payload.status,
-          startedAt: payload.startedAt,
+          startedAt: meta.startedAt,
           finishedAt,
           error: payload.error ?? null,
         },
