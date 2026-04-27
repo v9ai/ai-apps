@@ -573,6 +573,37 @@ async def fetch_drug_facts(drug_slug: str) -> dict:
     return out
 
 
+async def purge_drug_slug_text_rows(drug_slug: str) -> None:
+    """Delete every row whose content is free-form translated text for a drug.
+    Called by the medication_deep_research graph before re-inserting in a
+    different language so English rows don't linger alongside Romanian ones.
+
+    Includes interactions because their `recommendation` column is mixed
+    LLM-translated + RxNav English text; clearing forces a clean rewrite.
+    Pharmacology is 1:1 UPSERT keyed on drug_slug — overwrites cleanly, no
+    purge needed. Correlations are keyed on (medication_id, entity_type,
+    entity_id, correlation_type) and use language-aware UPSERT — unaffected.
+    """
+    async with _conn_ctx() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "DELETE FROM medication_indications    WHERE drug_slug = %s",
+                (drug_slug,),
+            )
+            await cur.execute(
+                "DELETE FROM medication_dosing         WHERE drug_slug = %s",
+                (drug_slug,),
+            )
+            await cur.execute(
+                "DELETE FROM medication_adverse_events WHERE drug_slug = %s",
+                (drug_slug,),
+            )
+            await cur.execute(
+                "DELETE FROM medication_interactions   WHERE drug_slug = %s",
+                (drug_slug,),
+            )
+
+
 async def fetch_pharmacology_updated_at(drug_slug: str) -> Optional[str]:
     """Return the ``updated_at`` ISO timestamp for a drug's pharmacology row,
     or None when nothing has been persisted yet. Drives the 30-day freshness

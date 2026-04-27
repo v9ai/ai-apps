@@ -460,6 +460,16 @@ async def persist_facts(state: MedicationDeepResearchState) -> dict:
 
     await _update_job_progress(state.get("job_id"), 65)
 
+    # When running with an explicit language (e.g. ro), purge the existing
+    # text-content rows for this drug before re-inserting. Otherwise the old
+    # English rows stick around because the dedup keys include the translated
+    # text and we'd just append new rows alongside the English originals.
+    if (state.get("language") or "").strip():
+        try:
+            await neon.purge_drug_slug_text_rows(drug_slug)
+        except Exception as exc:
+            print(f"[medication_deep_research] purge before re-insert failed: {exc}")
+
     spl = sources.get("dailymed") or {}
     fda = sources.get("openfda") or {}
     primary_url = spl.get("source_url") or openfda.label_url(fda) or None
