@@ -4139,6 +4139,7 @@ export type GenerateResearchMutationVariables = Exact<{
   issueId?: InputMaybe<Scalars['Int']['input']>;
   feedbackId?: InputMaybe<Scalars['Int']['input']>;
   journalEntryId?: InputMaybe<Scalars['Int']['input']>;
+  medicationId?: InputMaybe<Scalars['ID']['input']>;
 }>;
 
 
@@ -4456,10 +4457,11 @@ export type GetResearchQueryVariables = Exact<{
   issueId?: InputMaybe<Scalars['Int']['input']>;
   feedbackId?: InputMaybe<Scalars['Int']['input']>;
   journalEntryId?: InputMaybe<Scalars['Int']['input']>;
+  medicationId?: InputMaybe<Scalars['ID']['input']>;
 }>;
 
 
-export type GetResearchQuery = { __typename?: 'Query', research: Array<{ __typename?: 'Research', id: number, goalId?: number | null, feedbackId?: number | null, journalEntryId?: number | null, title: string, authors: Array<string>, year?: number | null, journal?: string | null, doi?: string | null, url?: string | null, abstract?: string | null, keyFindings: Array<string>, therapeuticTechniques: Array<string>, evidenceLevel?: string | null, relevanceScore: number, extractedBy: string, extractionConfidence: number, createdAt: string }> };
+export type GetResearchQuery = { __typename?: 'Query', research: Array<{ __typename?: 'Research', id: number, goalId?: number | null, feedbackId?: number | null, journalEntryId?: number | null, medicationId?: string | null, title: string, authors: Array<string>, year?: number | null, journal?: string | null, doi?: string | null, url?: string | null, abstract?: string | null, keyFindings: Array<string>, therapeuticTechniques: Array<string>, evidenceLevel?: string | null, relevanceScore: number, extractedBy: string, extractionConfidence: number, createdAt: string }> };
 
 export type GetRoutineAnalysesQueryVariables = Exact<{
   familyMemberId: Scalars['Int']['input'];
@@ -8707,12 +8709,13 @@ export type GenerateRecommendedBooksMutationHookResult = ReturnType<typeof useGe
 export type GenerateRecommendedBooksMutationResult = Apollo.MutationResult<GenerateRecommendedBooksMutation>;
 export type GenerateRecommendedBooksMutationOptions = Apollo.BaseMutationOptions<GenerateRecommendedBooksMutation, GenerateRecommendedBooksMutationVariables>;
 export const GenerateResearchDocument = gql`
-    mutation GenerateResearch($goalId: Int, $issueId: Int, $feedbackId: Int, $journalEntryId: Int) {
+    mutation GenerateResearch($goalId: Int, $issueId: Int, $feedbackId: Int, $journalEntryId: Int, $medicationId: ID) {
   generateResearch(
     goalId: $goalId
     issueId: $issueId
     feedbackId: $feedbackId
     journalEntryId: $journalEntryId
+    medicationId: $medicationId
   ) {
     success
     message
@@ -8740,6 +8743,7 @@ export type GenerateResearchMutationFn = Apollo.MutationFunction<GenerateResearc
  *      issueId: // value for 'issueId'
  *      feedbackId: // value for 'feedbackId'
  *      journalEntryId: // value for 'journalEntryId'
+ *      medicationId: // value for 'medicationId'
  *   },
  * });
  */
@@ -11852,17 +11856,19 @@ export type GetRelationshipsLazyQueryHookResult = ReturnType<typeof useGetRelati
 export type GetRelationshipsSuspenseQueryHookResult = ReturnType<typeof useGetRelationshipsSuspenseQuery>;
 export type GetRelationshipsQueryResult = Apollo.QueryResult<GetRelationshipsQuery, GetRelationshipsQueryVariables>;
 export const GetResearchDocument = gql`
-    query GetResearch($goalId: Int, $issueId: Int, $feedbackId: Int, $journalEntryId: Int) {
+    query GetResearch($goalId: Int, $issueId: Int, $feedbackId: Int, $journalEntryId: Int, $medicationId: ID) {
   research(
     goalId: $goalId
     issueId: $issueId
     feedbackId: $feedbackId
     journalEntryId: $journalEntryId
+    medicationId: $medicationId
   ) {
     id
     goalId
     feedbackId
     journalEntryId
+    medicationId
     title
     authors
     year
@@ -11897,6 +11903,7 @@ export const GetResearchDocument = gql`
  *      issueId: // value for 'issueId'
  *      feedbackId: // value for 'feedbackId'
  *      journalEntryId: // value for 'journalEntryId'
+ *      medicationId: // value for 'medicationId'
  *   },
  * });
  */
