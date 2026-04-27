@@ -6,6 +6,7 @@ import { typeDefs } from "../../../schema/typeDefs.generated";
 import { resolvers } from "../../../schema/resolvers.generated";
 import { makeExecutableSchema } from "@graphql-tools/schema";
 import { GraphQLContext } from "../../apollo/context";
+import { createLoaders } from "../../apollo/loaders";
 import { auth } from "@/app/lib/auth/server";
 import { VAULT_COOKIE_NAME, verifyVaultToken } from "@/src/lib/vault-session";
 
@@ -49,6 +50,7 @@ const handler = startServerAndCreateNextHandler<NextRequest, GraphQLContext>(
         userEmail: session?.user?.email,
         userName: session?.user?.name ?? undefined,
         vaultUnlocked,
+        loaders: createLoaders(),
       };
     },
   },
