@@ -190,40 +190,55 @@ function MedicationCard({
           </Flex>
         </Link>
 
-        <AlertDialog.Root>
-          <AlertDialog.Trigger>
-            <Button
-              variant="ghost"
-              color="gray"
-              size="1"
-              disabled={deleting}
-              aria-label="Delete medication"
+        <Flex direction="column" align="end" gap="1" style={{ flexShrink: 0 }}>
+          {slugify(name) === "singulair" && (
+            <Link
+              href="/medications/singulair"
+              aria-label="Singulair patient information leaflet"
+              style={{
+                display: "inline-flex",
+                color: "var(--gray-11)",
+                padding: 4,
+              }}
             >
-              <Trash2 size={14} />
-            </Button>
-          </AlertDialog.Trigger>
-          <AlertDialog.Content maxWidth="400px">
-            <AlertDialog.Title>Delete medication?</AlertDialog.Title>
-            <AlertDialog.Description size="2">
-              This medication will be permanently removed.
-            </AlertDialog.Description>
-            <Flex gap="3" mt="4" justify="end">
-              <AlertDialog.Cancel>
-                <Button variant="soft" color="gray">
-                  Cancel
-                </Button>
-              </AlertDialog.Cancel>
-              <AlertDialog.Action>
-                <Button
-                  color="red"
-                  onClick={() => deleteMed({ variables: { id } })}
-                >
-                  Delete
-                </Button>
-              </AlertDialog.Action>
-            </Flex>
-          </AlertDialog.Content>
-        </AlertDialog.Root>
+              <Info size={14} />
+            </Link>
+          )}
+          <AlertDialog.Root>
+            <AlertDialog.Trigger>
+              <Button
+                variant="ghost"
+                color="gray"
+                size="1"
+                disabled={deleting}
+                aria-label="Delete medication"
+              >
+                <Trash2 size={14} />
+              </Button>
+            </AlertDialog.Trigger>
+            <AlertDialog.Content maxWidth="400px">
+              <AlertDialog.Title>Delete medication?</AlertDialog.Title>
+              <AlertDialog.Description size="2">
+                This medication will be permanently removed.
+              </AlertDialog.Description>
+              <Flex gap="3" mt="4" justify="end">
+                <AlertDialog.Cancel>
+                  <Button variant="soft" color="gray">
+                    Cancel
+                  </Button>
+                </AlertDialog.Cancel>
+                <AlertDialog.Action>
+                  <Button
+                    color="red"
+                    onClick={() => deleteMed({ variables: { id } })}
+                  >
+                    Delete
+                  </Button>
+                </AlertDialog.Action>
+              </Flex>
+            </AlertDialog.Content>
+          </AlertDialog.Root>
+        </Flex>
       </Flex>
     </Card>
   );
