@@ -169,6 +169,7 @@ export async function embedCondition(
 export type Medication = {
   id: string;
   userId: string;
+  familyMemberId: number | null;
   name: string;
   dosage: string | null;
   frequency: string | null;
@@ -182,6 +183,8 @@ function toMedication(r: Record<string, unknown>): Medication {
   return {
     id: r.id as string,
     userId: r.user_id as string,
+    familyMemberId:
+      r.family_member_id == null ? null : Number(r.family_member_id),
     name: r.name as string,
     dosage: (r.dosage as string | null) ?? null,
     frequency: (r.frequency as string | null) ?? null,
@@ -203,7 +206,7 @@ function toMedication(r: Record<string, unknown>): Medication {
 
 export async function listMedications(userId: string): Promise<Medication[]> {
   const rows = await neonSql`
-    SELECT id, user_id, name, dosage, frequency, notes, start_date, end_date, created_at
+    SELECT id, user_id, family_member_id, name, dosage, frequency, notes, start_date, end_date, created_at
     FROM medications
     WHERE user_id = ${userId}
     ORDER BY created_at DESC

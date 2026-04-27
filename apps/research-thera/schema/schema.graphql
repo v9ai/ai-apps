@@ -2173,6 +2173,7 @@ type DeleteConditionResult {
 type Medication {
   id: ID!
   userId: String!
+  familyMemberId: Int
   name: String!
   dosage: String
   frequency: String
@@ -2180,6 +2181,7 @@ type Medication {
   startDate: String
   endDate: String
   createdAt: String!
+  familyMember: FamilyMember
 }
 
 input AddMedicationInput {

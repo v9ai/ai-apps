@@ -1,6 +1,7 @@
 query Medications {
   medications {
     id
+    familyMemberId
     name
     dosage
     frequency
@@ -8,5 +9,11 @@ query Medications {
     startDate
     endDate
     createdAt
+    familyMember {
+      id
+      slug
+      firstName
+      name
+    }
   }
 }

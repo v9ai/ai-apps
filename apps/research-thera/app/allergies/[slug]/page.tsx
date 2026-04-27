@@ -11,12 +11,14 @@ import {
   Spinner,
   Text,
 } from "@radix-ui/themes";
-import { ArrowLeft, ShieldAlert } from "lucide-react";
+import { ArrowLeft, ShieldAlert, Pill } from "lucide-react";
 import Link from "next/link";
 import {
   useAllergiesQuery,
   useGetFamilyMemberQuery,
+  useMedicationsQuery,
 } from "../../__generated__/hooks";
+import { Card } from "@radix-ui/themes";
 import { AuthGate } from "../../components/AuthGate";
 import { AddAllergyForm } from "../add-allergy-form";
 import { AllergyCard } from "../allergy-card";
@@ -48,10 +50,15 @@ function PersonAllergiesContent({ slug }: { slug: string }) {
     loading: allergiesLoading,
     error: allergiesError,
   } = useAllergiesQuery();
+  const {
+    data: medsData,
+    loading: medsLoading,
+    error: medsError,
+  } = useMedicationsQuery();
 
   const member = memberData?.familyMember;
-  const loading = memberLoading || allergiesLoading;
-  const error = memberError ?? allergiesError;
+  const loading = memberLoading || allergiesLoading || medsLoading;
+  const error = memberError ?? allergiesError ?? medsError;
 
   if (loading) {
     return (
@@ -90,6 +97,9 @@ function PersonAllergiesContent({ slug }: { slug: string }) {
 
   const personAllergies = (allergiesData?.allergies ?? []).filter(
     (a) => a.familyMemberId === member.id,
+  );
+  const personMedications = (medsData?.medications ?? []).filter(
+    (m) => m.familyMemberId === member.id,
   );
   const personDisplayName = member.firstName + (member.name ? ` (${member.name})` : "");
 
@@ -167,7 +177,102 @@ function PersonAllergiesContent({ slug }: { slug: string }) {
             </Flex>
           </Flex>
         )}
+
+        {personMedications.length > 0 && (
+          <>
+            <Separator size="4" />
+            <Flex direction="column" gap="3">
+              <Flex align="center" gap="2">
+                <Pill size={18} color="var(--gray-11)" />
+                <Heading size="4">
+                  Medications ({personMedications.length})
+                </Heading>
+              </Flex>
+              <Flex
+                direction="column"
+                gap="3"
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+                }}
+              >
+                {personMedications.map((m) => (
+                  <MedicationCard
+                    key={m.id}
+                    name={m.name}
+                    dosage={m.dosage ?? null}
+                    frequency={m.frequency ?? null}
+                    notes={m.notes ?? null}
+                    startDate={m.startDate ?? null}
+                    endDate={m.endDate ?? null}
+                  />
+                ))}
+              </Flex>
+            </Flex>
+          </>
+        )}
       </Flex>
     </Box>
+  );
+}
+
+function MedicationCard({
+  name,
+  dosage,
+  frequency,
+  notes,
+  startDate,
+  endDate,
+}: {
+  name: string;
+  dosage: string | null;
+  frequency: string | null;
+  notes: string | null;
+  startDate: string | null;
+  endDate: string | null;
+}) {
+  const formatDate = (d: string | null) =>
+    d ? new Date(d).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }) : null;
+  const start = formatDate(startDate);
+  const end = formatDate(endDate);
+  return (
+    <Card>
+      <Flex direction="column" gap="2">
+        <Flex align="center" gap="2" wrap="wrap">
+          <Text size="2" weight="medium">
+            {name}
+          </Text>
+          {dosage && (
+            <Badge color="indigo" variant="soft" size="1">
+              {dosage}
+            </Badge>
+          )}
+          {frequency && (
+            <Badge color="gray" variant="outline" size="1">
+              {frequency}
+            </Badge>
+          )}
+        </Flex>
+        {(start || end) && (
+          <Text size="1" color="gray">
+            {start ?? "—"} → {end ?? "ongoing"}
+          </Text>
+        )}
+        {notes && (
+          <Text
+            size="1"
+            color="gray"
+            style={{
+              display: "-webkit-box",
+              WebkitLineClamp: 3,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+            }}
+          >
+            {notes}
+          </Text>
+        )}
+      </Flex>
+    </Card>
   );
 }

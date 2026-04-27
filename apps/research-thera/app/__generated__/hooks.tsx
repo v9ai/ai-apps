@@ -1467,6 +1467,8 @@ export type Medication = {
   createdAt: Scalars['String']['output'];
   dosage?: Maybe<Scalars['String']['output']>;
   endDate?: Maybe<Scalars['String']['output']>;
+  familyMember?: Maybe<FamilyMember>;
+  familyMemberId?: Maybe<Scalars['Int']['output']>;
   frequency?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
@@ -4365,7 +4367,7 @@ export type LogHabitMutation = { __typename?: 'Mutation', logHabit: { __typename
 export type MedicationsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type MedicationsQuery = { __typename?: 'Query', medications: Array<{ __typename?: 'Medication', id: string, name: string, dosage?: string | null, frequency?: string | null, notes?: string | null, startDate?: string | null, endDate?: string | null, createdAt: string }> };
+export type MedicationsQuery = { __typename?: 'Query', medications: Array<{ __typename?: 'Medication', id: string, familyMemberId?: number | null, name: string, dosage?: string | null, frequency?: string | null, notes?: string | null, startDate?: string | null, endDate?: string | null, createdAt: string, familyMember?: { __typename?: 'FamilyMember', id: number, slug?: string | null, firstName: string, name?: string | null } | null }> };
 
 export type MemoryEntriesQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -12362,6 +12364,7 @@ export const MedicationsDocument = gql`
     query Medications {
   medications {
     id
+    familyMemberId
     name
     dosage
     frequency
@@ -12369,6 +12372,12 @@ export const MedicationsDocument = gql`
     startDate
     endDate
     createdAt
+    familyMember {
+      id
+      slug
+      firstName
+      name
+    }
   }
 }
     `;

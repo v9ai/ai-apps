@@ -1452,6 +1452,8 @@ export type Medication = {
   createdAt: Scalars['String']['output'];
   dosage?: Maybe<Scalars['String']['output']>;
   endDate?: Maybe<Scalars['String']['output']>;
+  familyMember?: Maybe<FamilyMember>;
+  familyMemberId?: Maybe<Scalars['Int']['output']>;
   frequency?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
@@ -3507,7 +3509,7 @@ export type ResolversTypes = {
   LanguageExample: ResolverTypeWrapper<LanguageExample>;
   LanguageGuide: ResolverTypeWrapper<LanguageGuide>;
   LogGameCompletionInput: LogGameCompletionInput;
-  Medication: ResolverTypeWrapper<Medication>;
+  Medication: ResolverTypeWrapper<Omit<Medication, 'familyMember'> & { familyMember?: Maybe<ResolversTypes['FamilyMember']> }>;
   MemoryBaseline: ResolverTypeWrapper<MemoryBaseline>;
   MemoryEntry: ResolverTypeWrapper<MemoryEntry>;
   MicroScript: ResolverTypeWrapper<MicroScript>;
@@ -3722,7 +3724,7 @@ export type ResolversParentTypes = {
   LanguageExample: LanguageExample;
   LanguageGuide: LanguageGuide;
   LogGameCompletionInput: LogGameCompletionInput;
-  Medication: Medication;
+  Medication: Omit<Medication, 'familyMember'> & { familyMember?: Maybe<ResolversParentTypes['FamilyMember']> };
   MemoryBaseline: MemoryBaseline;
   MemoryEntry: MemoryEntry;
   MicroScript: MicroScript;
@@ -4763,6 +4765,8 @@ export type MedicationResolvers<ContextType = GraphQLContext, ParentType extends
   createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   dosage?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   endDate?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  familyMember?: Resolver<Maybe<ResolversTypes['FamilyMember']>, ParentType, ContextType>;
+  familyMemberId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   frequency?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;

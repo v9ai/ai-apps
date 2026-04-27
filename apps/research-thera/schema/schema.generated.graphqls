@@ -1336,6 +1336,8 @@ type Medication {
   createdAt: String!
   dosage: String
   endDate: String
+  familyMember: FamilyMember
+  familyMemberId: Int
   frequency: String
   id: ID!
   name: String!
