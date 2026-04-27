@@ -41,6 +41,8 @@
     "backend",
     "mlx-training",
     "crates",
-    "consultancies"
+    "consultancies",
+    "edge",
+    "workers"
   ]
 }

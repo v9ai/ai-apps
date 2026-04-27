@@ -33,7 +33,7 @@ import {
   PaperPlaneIcon,
 } from "@radix-ui/react-icons";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-hooks";
 import { ADMIN_EMAIL } from "@/lib/constants";
 import { getSentEmails, getEmailSubscribers } from "./actions";
@@ -673,6 +673,7 @@ const TAB_VALUES = new Set([
 ]);
 
 function EmailsPageContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const initialTab = searchParams.get("tab");
   const [tab, setTab] = useState(
@@ -751,11 +752,9 @@ function EmailsPageContent() {
             <LinkedInLogoIcon />
             &nbsp;Compose
           </Tabs.Trigger>
-          <Tabs.Trigger value="drafts" asChild>
-            <Link href="/emails/drafts">
-              <Pencil1Icon />
-              &nbsp;Drafts
-            </Link>
+          <Tabs.Trigger value="drafts" onClick={() => router.push("/emails/drafts")}>
+            <Pencil1Icon />
+            &nbsp;Drafts
           </Tabs.Trigger>
           <Tabs.Trigger value="cpn">
             <PaperPlaneIcon />

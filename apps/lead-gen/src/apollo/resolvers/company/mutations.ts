@@ -446,7 +446,7 @@ export const companyMutations = {
       const result = await context.db
         .delete(companies)
         .where(inArray(companies.id, companyIds))
-        .returning({ id: companies.id });
+        .returning();
 
       return {
         success: true,
@@ -672,7 +672,7 @@ export const companyMutations = {
             size: sql`COALESCE(${companies.size}, excluded.size)`,
             updated_at: sql`now()::text`,
           },
-        }).returning({ id: companies.id });
+        }).returning();
         imported++;
 
         // Fire-and-forget: send to SalesCue classifier for staffing detection

@@ -8,13 +8,30 @@ export async function GET(request: Request) {
   const authError = verifyCronSecret(request);
   if (authError) return authError;
 
+  const databaseUrl = process.env.NEON_DATABASE_URL;
+  const accountId = process.env.R2_ACCOUNT_ID;
+  const accessKeyId = process.env.R2_ACCESS_KEY_ID;
+  const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
+  const missing = [
+    !databaseUrl && "NEON_DATABASE_URL",
+    !accountId && "R2_ACCOUNT_ID",
+    !accessKeyId && "R2_ACCESS_KEY_ID",
+    !secretAccessKey && "R2_SECRET_ACCESS_KEY",
+  ].filter(Boolean);
+  if (missing.length > 0 || !databaseUrl || !accountId || !accessKeyId || !secretAccessKey) {
+    return NextResponse.json(
+      { error: `missing env: ${missing.join(", ")}` },
+      { status: 500 },
+    );
+  }
+
   const result = await runBackup({
     appName: "lead-gen",
-    databaseUrl: process.env.NEON_DATABASE_URL!,
+    databaseUrl,
     r2: {
-      accountId: process.env.R2_ACCOUNT_ID!,
-      accessKeyId: process.env.R2_ACCESS_KEY_ID!,
-      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
+      accountId,
+      accessKeyId,
+      secretAccessKey,
       bucketName: "db-backups",
     },
     maxDurationMs: 280_000,

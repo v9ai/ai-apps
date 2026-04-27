@@ -236,6 +236,7 @@ export function createLoaders(db: DbInstance) {
         const rows = await db
           .select({
             id: opportunities.id,
+            tenant_id: opportunities.tenant_id,
             title: opportunities.title,
             url: opportunities.url,
             source: opportunities.source,
@@ -281,6 +282,7 @@ export function createLoaders(db: DbInstance) {
         const rows = await db
           .select({
             id: opportunities.id,
+            tenant_id: opportunities.tenant_id,
             title: opportunities.title,
             url: opportunities.url,
             source: opportunities.source,

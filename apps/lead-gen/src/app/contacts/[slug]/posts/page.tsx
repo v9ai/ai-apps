@@ -77,7 +77,7 @@ export default async function ContactPostsPage({ params }: Props) {
 
           <Flex justify="between" align="end" wrap="wrap" gap="3">
             <Box>
-              <Text size="6" weight="bold">{fullName}'s Posts</Text>
+              <Text size="6" weight="bold">{fullName}&apos;s Posts</Text>
               {company && (
                 <Text size="2" color="gray" as="p" mt="1">
                   {contact.position ? `${contact.position} · ` : ""}

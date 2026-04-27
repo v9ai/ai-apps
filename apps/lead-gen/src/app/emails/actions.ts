@@ -76,7 +76,11 @@ export async function getEmailSubscribers(): Promise<EmailSubscriber[]> {
   if (rows.length === 0) return [];
 
   // Look up user emails from Neon Auth database
-  const sql = neon(process.env.NEON_DATABASE_URL!);
+  const databaseUrl = process.env.NEON_DATABASE_URL ?? process.env.DATABASE_URL;
+  if (!databaseUrl) {
+    throw new Error("NEON_DATABASE_URL or DATABASE_URL must be set");
+  }
+  const sql = neon(databaseUrl);
   const userIds = rows.map((r) => r.user_id);
   const users = await sql`
     SELECT id, email, name FROM "user" WHERE id = ANY(${userIds})

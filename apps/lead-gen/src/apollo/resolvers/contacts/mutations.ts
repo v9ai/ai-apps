@@ -291,7 +291,7 @@ export const contactMutations = {
         const result = await context.db
           .insert(contacts)
           .values(toInsert)
-          .returning({ id: contacts.id });
+          .returning();
         imported = result.length;
       } catch {
         // If batch fails, fall back to individual inserts to identify bad rows
@@ -797,7 +797,7 @@ export const contactMutations = {
       .update(contacts)
       .set({ email_verified: false, updated_at: new Date().toISOString() })
       .where(eq(contacts.company_id, args.companyId))
-      .returning({ id: contacts.id });
+      .returning();
     return { success: true, count: rows.length };
   },
 

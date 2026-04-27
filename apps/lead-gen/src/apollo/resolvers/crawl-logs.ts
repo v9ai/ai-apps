@@ -62,7 +62,7 @@ export const crawlLogResolvers = {
             started_at: input.startedAt,
             completed_at: input.completedAt ?? null,
           })
-          .returning({ id: crawlLogs.id });
+          .returning();
 
         return {
           success: true,

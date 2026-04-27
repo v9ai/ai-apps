@@ -110,7 +110,7 @@ export function ProductDetail({ slug }: { slug: string }) {
   const leadsPreview = leadsPreviewData?.productLeads ?? null;
   const hasLeads = (leadsPreview?.totalCount ?? 0) > 0;
 
-  const navBtnBase = button({ variant: "soft", size: "sm" });
+  const navBtnBase = button({ variant: "outline", size: "sm" });
   const navBtnDisabledCls = css({ opacity: 0.38, cursor: "not-allowed", pointerEvents: "none" });
   const cardCls = css({
     bg: "ui.surface",

@@ -1303,7 +1303,7 @@ function BackendInferenceSection() {
         <Heading size="5">Backend &amp; Local Inference</Heading>
       </Flex>
       <Text size="2" color="gray" as="p" mb="4" style={{ lineHeight: 1.7, maxWidth: 760 }}>
-        Two runtimes carry work off the user's machine. <strong>LangGraph</strong> runs stateful multi-turn agents (admin chat, ICP research, text-to-SQL, email composition) with Postgres-checkpointed threads. <strong>MLX</strong> runs high-volume per-row classification on Apple Silicon via an OpenAI-compatible local server — zero cloud cost for contact, company, and opportunity scoring.
+        Two runtimes carry work off the user&apos;s machine. <strong>LangGraph</strong> runs stateful multi-turn agents (admin chat, ICP research, text-to-SQL, email composition) with Postgres-checkpointed threads. <strong>MLX</strong> runs high-volume per-row classification on Apple Silicon via an OpenAI-compatible local server — zero cloud cost for contact, company, and opportunity scoring.
       </Text>
 
       <Flex gap="4" wrap="wrap" style={{ alignItems: "stretch" }}>

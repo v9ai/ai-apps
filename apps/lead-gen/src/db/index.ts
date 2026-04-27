@@ -3,7 +3,13 @@ import { neon } from "@neondatabase/serverless";
 import type { NeonDatabase } from "drizzle-orm/neon-serverless";
 import * as schema from "./schema";
 
-const sql = neon(process.env.NEON_DATABASE_URL ?? process.env.DATABASE_URL!);
+const databaseUrl = process.env.NEON_DATABASE_URL ?? process.env.DATABASE_URL;
+if (!databaseUrl) {
+  throw new Error(
+    "NEON_DATABASE_URL or DATABASE_URL must be set. Add it to .env.local (dev) or the deploy target's environment.",
+  );
+}
+const sql = neon(databaseUrl);
 export const db = drizzle(sql, { schema });
 
 // DbInstance is a union so tenant-scoped (WebSocket-pool) transactions from

@@ -152,7 +152,7 @@ export const receivedEmailResolvers = {
           updated_at: new Date().toISOString(),
         })
         .where(eq(receivedEmails.id, args.id))
-        .returning({ id: receivedEmails.id });
+        .returning();
 
       if (rows.length === 0) {
         return { success: false, message: "Email not found" };
@@ -177,7 +177,7 @@ export const receivedEmailResolvers = {
           updated_at: new Date().toISOString(),
         })
         .where(eq(receivedEmails.id, args.id))
-        .returning({ id: receivedEmails.id });
+        .returning();
 
       if (rows.length === 0) {
         return { success: false, message: "Email not found" };

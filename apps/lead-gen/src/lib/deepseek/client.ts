@@ -29,7 +29,6 @@ export function getDeepSeekModel(tier: "standard" | "deep" = "standard"): string
  * Note: temperature / top_p / penalties are silently ignored in thinking mode. */
 export const DEEPSEEK_REASONING_DEFAULTS = {
   reasoning_effort: "high" as const,
-  // @ts-expect-error — DeepSeek extension, not in OpenAI types
   thinking: { type: "enabled" as const },
 };
 

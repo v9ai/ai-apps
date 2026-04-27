@@ -42,14 +42,44 @@ interface PostRow {
   post_text: string;
 }
 
+// wrangler --json prefixes stdout with non-JSON progress glyphs (e.g. "├ Checking…").
+// Walk back from the trailing `]`/`}` and parse the balanced slice so a leading
+// banner doesn't blow up JSON.parse.
+function parseTrailingJson(out: string): unknown {
+  const s = out.trimEnd();
+  const lastBracket = s.lastIndexOf("]");
+  const lastBrace = s.lastIndexOf("}");
+  const last = Math.max(lastBracket, lastBrace);
+  if (last < 0) {
+    throw new Error(`wrangler: no JSON in output: ${s.slice(0, 200)}`);
+  }
+  const close = s[last];
+  const open = close === "]" ? "[" : "{";
+  let depth = 0;
+  let inStr = false;
+  let esc = false;
+  for (let i = last; i >= 0; i--) {
+    const ch = s[i];
+    if (esc) { esc = false; continue; }
+    if (ch === "\\") { esc = true; continue; }
+    if (ch === '"') { inStr = !inStr; continue; }
+    if (inStr) continue;
+    if (ch === close) depth++;
+    else if (ch === open) {
+      depth--;
+      if (depth === 0) return JSON.parse(s.slice(i, last + 1));
+    }
+  }
+  throw new Error(`wrangler: unbalanced JSON in output: ${s.slice(0, 200)}`);
+}
+
 function execD1Json(sql: string): unknown {
   const out = execFileSync(
     "pnpm",
     ["exec", "wrangler", "d1", "execute", DB, "--remote", "--json", "--command", sql],
     { cwd: EDGE_DIR, encoding: "utf-8", maxBuffer: 64 * 1024 * 1024 },
   );
-  // wrangler emits debug warnings on stderr; stdout is JSON.
-  return JSON.parse(out);
+  return parseTrailingJson(out);
 }
 
 function execD1File(filePath: string): unknown {
@@ -59,7 +89,7 @@ function execD1File(filePath: string): unknown {
     ["exec", "wrangler", "d1", "execute", DB, "--remote", "--json", "--file", rel],
     { cwd: EDGE_DIR, encoding: "utf-8", maxBuffer: 64 * 1024 * 1024 },
   );
-  return JSON.parse(out);
+  return parseTrailingJson(out);
 }
 
 function chunk<T>(xs: T[], size: number): T[][] {
