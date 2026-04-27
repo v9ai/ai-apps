@@ -1,10 +1,10 @@
 import type { GoalResolvers } from "./../types.generated";
-import { getFamilyMember, listTherapyResearch, listNotesForEntity, listTherapeuticQuestions, listRecommendedBooks, listStories, listGoals, getGoal } from "@/src/db";
+import { listTherapyResearch, listNotesForEntity, listTherapeuticQuestions, listRecommendedBooks, listStories, listGoals, getGoal } from "@/src/db";
 
 export const Goal: GoalResolvers = {
-  familyMember: async (parent, _args, _ctx) => {
+  familyMember: async (parent, _args, ctx) => {
     if (!parent.familyMemberId) return null;
-    const member = await getFamilyMember(parent.familyMemberId);
+    const member = await ctx.loaders.familyMember.load(parent.familyMemberId);
     if (!member) return null;
     return { ...member, goals: [], shares: [] } as any;
   },
