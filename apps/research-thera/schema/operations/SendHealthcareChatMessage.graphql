@@ -1,0 +1,11 @@
+mutation SendHealthcareChatMessage($input: HealthcareChatInput!) {
+  sendHealthcareChatMessage(input: $input) {
+    answer
+    intent
+    intentConfidence
+    retrievalSources
+    citations
+    guardPassed
+    guardIssues
+  }
+}

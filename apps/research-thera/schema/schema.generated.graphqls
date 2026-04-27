@@ -1185,6 +1185,26 @@ enum HabitStatus {
   PAUSED
 }
 
+input HealthcareChatInput {
+  messages: [HealthcareChatTurn!]!
+}
+
+type HealthcareChatResponse {
+  answer: String!
+  citations: [String!]!
+  guardIssues: [String!]!
+  guardPassed: Boolean!
+  intent: String!
+  intentConfidence: Float!
+  rerankScores: [Float!]!
+  retrievalSources: [String!]!
+}
+
+input HealthcareChatTurn {
+  content: String!
+  role: String!
+}
+
 type HealthcareSummary {
   appointmentsCount: Int!
   bloodTestsCount: Int!
@@ -1472,6 +1492,7 @@ type Mutation {
   recordCognitiveCheckIn(input: CognitiveCheckInInput!, protocolId: ID!): CognitiveCheckIn!
   refreshClaimCard(id: ID!): ClaimCard!
   sendConversationMessage(conversationId: Int!, message: String!): Conversation!
+  sendHealthcareChatMessage(input: HealthcareChatInput!): HealthcareChatResponse!
   setMemoryBaseline(input: SetMemoryBaselineInput!): MemoryBaseline!
   setNoteVisibility(noteId: Int!, visibility: NoteVisibility!): Note!
   setTagLanguage(language: String!, tag: String!): Boolean!

@@ -1291,6 +1291,27 @@ export type HabitStatus =
   | 'ARCHIVED'
   | 'PAUSED';
 
+export type HealthcareChatInput = {
+  messages: Array<HealthcareChatTurn>;
+};
+
+export type HealthcareChatResponse = {
+  __typename?: 'HealthcareChatResponse';
+  answer: Scalars['String']['output'];
+  citations: Array<Scalars['String']['output']>;
+  guardIssues: Array<Scalars['String']['output']>;
+  guardPassed: Scalars['Boolean']['output'];
+  intent: Scalars['String']['output'];
+  intentConfidence: Scalars['Float']['output'];
+  rerankScores: Array<Scalars['Float']['output']>;
+  retrievalSources: Array<Scalars['String']['output']>;
+};
+
+export type HealthcareChatTurn = {
+  content: Scalars['String']['input'];
+  role: Scalars['String']['input'];
+};
+
 export type HealthcareSummary = {
   __typename?: 'HealthcareSummary';
   appointmentsCount: Scalars['Int']['output'];
@@ -1592,6 +1613,7 @@ export type Mutation = {
   recordCognitiveCheckIn: CognitiveCheckIn;
   refreshClaimCard: ClaimCard;
   sendConversationMessage: Conversation;
+  sendHealthcareChatMessage: HealthcareChatResponse;
   setMemoryBaseline: MemoryBaseline;
   setNoteVisibility: Note;
   setTagLanguage: Scalars['Boolean']['output'];
@@ -2115,6 +2137,11 @@ export type MutationrefreshClaimCardArgs = {
 export type MutationsendConversationMessageArgs = {
   conversationId: Scalars['Int']['input'];
   message: Scalars['String']['input'];
+};
+
+
+export type MutationsendHealthcareChatMessageArgs = {
+  input: HealthcareChatInput;
 };
 
 
@@ -3495,6 +3522,9 @@ export type ResolversTypes = {
   HabitFrequency: ResolverTypeWrapper<'DAILY' | 'WEEKLY'>;
   HabitLog: ResolverTypeWrapper<HabitLog>;
   HabitStatus: ResolverTypeWrapper<'ACTIVE' | 'PAUSED' | 'ARCHIVED'>;
+  HealthcareChatInput: HealthcareChatInput;
+  HealthcareChatResponse: ResolverTypeWrapper<HealthcareChatResponse>;
+  HealthcareChatTurn: HealthcareChatTurn;
   HealthcareSummary: ResolverTypeWrapper<HealthcareSummary>;
   Issue: ResolverTypeWrapper<Omit<Issue, 'familyMember' | 'feedback' | 'journalEntry' | 'relatedFamilyMember' | 'relatedIssues' | 'stories'> & { familyMember?: Maybe<ResolversTypes['FamilyMember']>, feedback?: Maybe<ResolversTypes['ContactFeedback']>, journalEntry?: Maybe<ResolversTypes['JournalEntry']>, relatedFamilyMember?: Maybe<ResolversTypes['FamilyMember']>, relatedIssues: Array<ResolversTypes['IssueLink']>, stories: Array<ResolversTypes['Story']> }>;
   IssueContactLink: ResolverTypeWrapper<IssueContactLink>;
@@ -3712,6 +3742,9 @@ export type ResolversParentTypes = {
   Habit: Habit;
   HabitAdherence: HabitAdherence;
   HabitLog: HabitLog;
+  HealthcareChatInput: HealthcareChatInput;
+  HealthcareChatResponse: HealthcareChatResponse;
+  HealthcareChatTurn: HealthcareChatTurn;
   HealthcareSummary: HealthcareSummary;
   Issue: Omit<Issue, 'familyMember' | 'feedback' | 'journalEntry' | 'relatedFamilyMember' | 'relatedIssues' | 'stories'> & { familyMember?: Maybe<ResolversParentTypes['FamilyMember']>, feedback?: Maybe<ResolversParentTypes['ContactFeedback']>, journalEntry?: Maybe<ResolversParentTypes['JournalEntry']>, relatedFamilyMember?: Maybe<ResolversParentTypes['FamilyMember']>, relatedIssues: Array<ResolversParentTypes['IssueLink']>, stories: Array<ResolversParentTypes['Story']> };
   IssueContactLink: IssueContactLink;
@@ -4633,6 +4666,17 @@ export type HabitLogResolvers<ContextType = GraphQLContext, ParentType extends R
 
 export type HabitStatusResolvers = EnumResolverSignature<{ ACTIVE?: any, ARCHIVED?: any, PAUSED?: any }, ResolversTypes['HabitStatus']>;
 
+export type HealthcareChatResponseResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['HealthcareChatResponse'] = ResolversParentTypes['HealthcareChatResponse']> = {
+  answer?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  citations?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  guardIssues?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  guardPassed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  intent?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  intentConfidence?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  rerankScores?: Resolver<Array<ResolversTypes['Float']>, ParentType, ContextType>;
+  retrievalSources?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+};
+
 export type HealthcareSummaryResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['HealthcareSummary'] = ResolversParentTypes['HealthcareSummary']> = {
   appointmentsCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   bloodTestsCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
@@ -4901,6 +4945,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   recordCognitiveCheckIn?: Resolver<ResolversTypes['CognitiveCheckIn'], ParentType, ContextType, RequireFields<MutationrecordCognitiveCheckInArgs, 'input' | 'protocolId'>>;
   refreshClaimCard?: Resolver<ResolversTypes['ClaimCard'], ParentType, ContextType, RequireFields<MutationrefreshClaimCardArgs, 'id'>>;
   sendConversationMessage?: Resolver<ResolversTypes['Conversation'], ParentType, ContextType, RequireFields<MutationsendConversationMessageArgs, 'conversationId' | 'message'>>;
+  sendHealthcareChatMessage?: Resolver<ResolversTypes['HealthcareChatResponse'], ParentType, ContextType, RequireFields<MutationsendHealthcareChatMessageArgs, 'input'>>;
   setMemoryBaseline?: Resolver<ResolversTypes['MemoryBaseline'], ParentType, ContextType, RequireFields<MutationsetMemoryBaselineArgs, 'input'>>;
   setNoteVisibility?: Resolver<ResolversTypes['Note'], ParentType, ContextType, RequireFields<MutationsetNoteVisibilityArgs, 'noteId' | 'visibility'>>;
   setTagLanguage?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationsetTagLanguageArgs, 'language' | 'tag'>>;
@@ -5547,6 +5592,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   HabitFrequency?: HabitFrequencyResolvers;
   HabitLog?: HabitLogResolvers<ContextType>;
   HabitStatus?: HabitStatusResolvers;
+  HealthcareChatResponse?: HealthcareChatResponseResolvers<ContextType>;
   HealthcareSummary?: HealthcareSummaryResolvers<ContextType>;
   Issue?: IssueResolvers<ContextType>;
   IssueContactLink?: IssueContactLinkResolvers<ContextType>;

@@ -1304,6 +1304,27 @@ export enum HabitStatus {
   Paused = 'PAUSED'
 }
 
+export type HealthcareChatInput = {
+  messages: Array<HealthcareChatTurn>;
+};
+
+export type HealthcareChatResponse = {
+  __typename?: 'HealthcareChatResponse';
+  answer: Scalars['String']['output'];
+  citations: Array<Scalars['String']['output']>;
+  guardIssues: Array<Scalars['String']['output']>;
+  guardPassed: Scalars['Boolean']['output'];
+  intent: Scalars['String']['output'];
+  intentConfidence: Scalars['Float']['output'];
+  rerankScores: Array<Scalars['Float']['output']>;
+  retrievalSources: Array<Scalars['String']['output']>;
+};
+
+export type HealthcareChatTurn = {
+  content: Scalars['String']['input'];
+  role: Scalars['String']['input'];
+};
+
 export type HealthcareSummary = {
   __typename?: 'HealthcareSummary';
   appointmentsCount: Scalars['Int']['output'];
@@ -1607,6 +1628,7 @@ export type Mutation = {
   recordCognitiveCheckIn: CognitiveCheckIn;
   refreshClaimCard: ClaimCard;
   sendConversationMessage: Conversation;
+  sendHealthcareChatMessage: HealthcareChatResponse;
   setMemoryBaseline: MemoryBaseline;
   setNoteVisibility: Note;
   setTagLanguage: Scalars['Boolean']['output'];
@@ -2130,6 +2152,11 @@ export type MutationRefreshClaimCardArgs = {
 export type MutationSendConversationMessageArgs = {
   conversationId: Scalars['Int']['input'];
   message: Scalars['String']['input'];
+};
+
+
+export type MutationSendHealthcareChatMessageArgs = {
+  input: HealthcareChatInput;
 };
 
 
@@ -4409,6 +4436,13 @@ export type SendConversationMessageMutationVariables = Exact<{
 
 
 export type SendConversationMessageMutation = { __typename?: 'Mutation', sendConversationMessage: { __typename?: 'Conversation', id: number, issueId: number, userId: string, title?: string | null, createdAt: string, updatedAt: string, messages: Array<{ __typename?: 'ConversationMessage', id: number, conversationId: number, role: string, content: string, createdAt: string }> } };
+
+export type SendHealthcareChatMessageMutationVariables = Exact<{
+  input: HealthcareChatInput;
+}>;
+
+
+export type SendHealthcareChatMessageMutation = { __typename?: 'Mutation', sendHealthcareChatMessage: { __typename?: 'HealthcareChatResponse', answer: string, intent: string, intentConfidence: number, retrievalSources: Array<string>, citations: Array<string>, guardPassed: boolean, guardIssues: Array<string> } };
 
 export type SetMemoryBaselineMutationVariables = Exact<{
   input: SetMemoryBaselineInput;
@@ -12743,6 +12777,45 @@ export function useSendConversationMessageMutation(baseOptions?: Apollo.Mutation
 export type SendConversationMessageMutationHookResult = ReturnType<typeof useSendConversationMessageMutation>;
 export type SendConversationMessageMutationResult = Apollo.MutationResult<SendConversationMessageMutation>;
 export type SendConversationMessageMutationOptions = Apollo.BaseMutationOptions<SendConversationMessageMutation, SendConversationMessageMutationVariables>;
+export const SendHealthcareChatMessageDocument = gql`
+    mutation SendHealthcareChatMessage($input: HealthcareChatInput!) {
+  sendHealthcareChatMessage(input: $input) {
+    answer
+    intent
+    intentConfidence
+    retrievalSources
+    citations
+    guardPassed
+    guardIssues
+  }
+}
+    `;
+export type SendHealthcareChatMessageMutationFn = Apollo.MutationFunction<SendHealthcareChatMessageMutation, SendHealthcareChatMessageMutationVariables>;
+
+/**
+ * __useSendHealthcareChatMessageMutation__
+ *
+ * To run a mutation, you first call `useSendHealthcareChatMessageMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useSendHealthcareChatMessageMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [sendHealthcareChatMessageMutation, { data, loading, error }] = useSendHealthcareChatMessageMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useSendHealthcareChatMessageMutation(baseOptions?: Apollo.MutationHookOptions<SendHealthcareChatMessageMutation, SendHealthcareChatMessageMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<SendHealthcareChatMessageMutation, SendHealthcareChatMessageMutationVariables>(SendHealthcareChatMessageDocument, options);
+      }
+export type SendHealthcareChatMessageMutationHookResult = ReturnType<typeof useSendHealthcareChatMessageMutation>;
+export type SendHealthcareChatMessageMutationResult = Apollo.MutationResult<SendHealthcareChatMessageMutation>;
+export type SendHealthcareChatMessageMutationOptions = Apollo.BaseMutationOptions<SendHealthcareChatMessageMutation, SendHealthcareChatMessageMutationVariables>;
 export const SetMemoryBaselineDocument = gql`
     mutation SetMemoryBaseline($input: SetMemoryBaselineInput!) {
   setMemoryBaseline(input: $input) {

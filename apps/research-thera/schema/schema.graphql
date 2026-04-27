@@ -291,6 +291,8 @@ type Query {
   healthcareSummary: HealthcareSummary!
 }
 
+# (chat mutation lives under Mutation type below)
+
 type Mutation {
   # Goals
   createGoal(input: CreateGoalInput!): Goal!
@@ -508,6 +510,9 @@ type Mutation {
   deleteSupplement(id: ID!): DeleteSupplementResult!
   recordCognitiveBaseline(protocolId: ID!, input: CognitiveScoresInput!): CognitiveBaseline!
   recordCognitiveCheckIn(protocolId: ID!, input: CognitiveCheckInInput!): CognitiveCheckIn!
+
+  # Healthcare — Chat (proxies to merged Python /chat at :2024)
+  sendHealthcareChatMessage(input: HealthcareChatInput!): HealthcareChatResponse!
 }
 
 type Subscription {
@@ -2485,4 +2490,28 @@ type HealthcareSummary {
   doctorsCount: Int!
   memoryEntriesCount: Int!
   protocolsCount: Int!
+}
+
+# ============================================
+# Healthcare — Chat (proxies to merged Python /chat at :2024)
+# ============================================
+
+input HealthcareChatTurn {
+  role: String!
+  content: String!
+}
+
+input HealthcareChatInput {
+  messages: [HealthcareChatTurn!]!
+}
+
+type HealthcareChatResponse {
+  answer: String!
+  intent: String!
+  intentConfidence: Float!
+  retrievalSources: [String!]!
+  rerankScores: [Float!]!
+  guardPassed: Boolean!
+  guardIssues: [String!]!
+  citations: [String!]!
 }
