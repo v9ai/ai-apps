@@ -197,9 +197,9 @@
           "8 pgvector tables (blood_test, blood_marker FTS+vector, health_state, condition, medication, symptom, appointment, allergy) each with a BaseRetriever; search_marker_trend for longitudinal.",
           "Medication deep research LangGraph → 6 pharmacology tables (pharmacology, indications, dosing, adverse_events, interactions, correlations) → /medications/[slug].",
           "Deep issue analysis LangGraph: thematic clusters, timeline + family-system insights, root-cause, research-mapped priorities.",
-          "AI SDK (generateObject + Zod): storyTeller (3-part CYOA) + therapeutic (CBT/ACT/DBT/MBSR/LEGO) → gpt-4o-mini-tts → R2.",
+          "AI SDK (generateObject + Zod): storyTeller (3-part CYOA) + therapeutic (CBT/ACT/DBT/MBSR/LEGO) → R2.",
           "7-node therapy research LangGraph (loadContext → normalizeGoal → planQuery → search → enrichAbstracts → extractAll → persist): 7 sources → DeepSeek + 0.72 gate → top 20 as 1024-dim pgvector.",
-          "~70-table Drizzle/PG post-merge: therapeutic core (goals, issues, habits, journals, claims) + 32 healthcare tables incl. 8 pgvector."
+          "~70-table Drizzle/Postgres schema after the agentic-healthcare merge: therapeutic core (goals, issues, habits, journals, claims) + 32 healthcare tables including 8 pgvector embedding tables."
         ]
       },
       {
