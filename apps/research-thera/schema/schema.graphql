@@ -163,6 +163,7 @@ type Query {
   allTags: [String!]!
   research(goalId: Int, issueId: Int, feedbackId: Int, journalEntryId: Int, medicationId: ID): [Research!]!
   medicationDeepResearch(slug: String!, memberSlug: String!): MedicationDeepResearch
+  conditionDeepResearch(slug: String!, memberSlug: String!, language: String): ConditionDeepResearch
   therapeuticQuestions(goalId: Int, issueId: Int, journalEntryId: Int): [TherapeuticQuestion!]!
   recommendedBooks(goalId: Int, journalEntryId: Int): [RecommendedBook!]!
   allRecommendedBooks(category: String): [RecommendedBook!]!
@@ -323,6 +324,7 @@ type Mutation {
   # Async generation workflows
   generateResearch(goalId: Int, issueId: Int, feedbackId: Int, journalEntryId: Int, medicationId: ID): GenerateResearchResult!
   generateMedicationDeepResearch(slug: String!, language: String): GenerateResearchResult!
+  generateConditionDeepResearch(slug: String!, memberSlug: String!, language: String): GenerateResearchResult!
   deleteResearch(goalId: Int!): DeleteResearchResult!
   generateTherapeuticQuestions(goalId: Int, issueId: Int, journalEntryId: Int): GenerateQuestionsResult!
   deleteTherapeuticQuestions(goalId: Int, issueId: Int, journalEntryId: Int): DeleteQuestionsResult!
@@ -2321,6 +2323,57 @@ type MedicationDeepResearch {
   adverseEvents: [MedicationAdverseEvent!]!
   interactions: [MedicationInteraction!]!
   correlations: [MedicationCorrelation!]!
+}
+
+# ============================================
+# Healthcare — Condition Deep Research
+# ============================================
+
+type ConditionPathophysiology {
+  summary: String!
+  mechanisms: [String!]!
+}
+
+type ConditionAgeManifestation {
+  developmentalTier: String!
+  manifestations: [String!]!
+  notes: String
+}
+
+type ConditionTreatment {
+  name: String!
+  category: String!
+  evidenceLevel: String
+  ageAppropriate: String
+  notes: String
+}
+
+type ConditionComorbidity {
+  name: String!
+  prevalence: String
+  notes: String
+}
+
+type ConditionRedFlag {
+  flag: String!
+  action: String
+}
+
+type ConditionDeepResearch {
+  id: ID!
+  conditionSlug: String!
+  conditionName: String!
+  language: String!
+  familyMember: FamilyMember
+  pathophysiology: ConditionPathophysiology
+  ageManifestations: [ConditionAgeManifestation!]!
+  evidenceBasedTreatments: [ConditionTreatment!]!
+  comorbidities: [ConditionComorbidity!]!
+  redFlags: [ConditionRedFlag!]!
+  sourceUrls: [String!]!
+  freshUntil: String
+  generatedAt: String!
+  updatedAt: String!
 }
 
 # ============================================

@@ -1,0 +1,8 @@
+mutation GenerateConditionDeepResearch($slug: String!, $memberSlug: String!, $language: String) {
+  generateConditionDeepResearch(slug: $slug, memberSlug: $memberSlug, language: $language) {
+    success
+    message
+    jobId
+    count
+  }
+}

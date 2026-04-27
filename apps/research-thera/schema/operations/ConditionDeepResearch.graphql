@@ -1,0 +1,44 @@
+query ConditionDeepResearch($slug: String!, $memberSlug: String!, $language: String) {
+  conditionDeepResearch(slug: $slug, memberSlug: $memberSlug, language: $language) {
+    id
+    conditionSlug
+    conditionName
+    language
+    familyMember {
+      id
+      slug
+      firstName
+      ageYears
+      dateOfBirth
+    }
+    pathophysiology {
+      summary
+      mechanisms
+    }
+    ageManifestations {
+      developmentalTier
+      manifestations
+      notes
+    }
+    evidenceBasedTreatments {
+      name
+      category
+      evidenceLevel
+      ageAppropriate
+      notes
+    }
+    comorbidities {
+      name
+      prevalence
+      notes
+    }
+    redFlags {
+      flag
+      action
+    }
+    sourceUrls
+    freshUntil
+    generatedAt
+    updatedAt
+  }
+}
