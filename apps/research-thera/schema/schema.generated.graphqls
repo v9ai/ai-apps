@@ -1207,6 +1207,40 @@ input HealthcareChatTurn {
   role: String!
 }
 
+type HealthcareMultiSearchResult {
+  appointments: [HealthcareSearchHit!]!
+  conditions: [HealthcareSearchHit!]!
+  markers: [HealthcareSearchMarkerHit!]!
+  medications: [HealthcareSearchHit!]!
+  symptoms: [HealthcareSearchHit!]!
+  tests: [HealthcareSearchTestHit!]!
+}
+
+type HealthcareSearchHit {
+  content: String!
+  entityId: ID!
+  id: ID!
+  similarity: Float!
+}
+
+type HealthcareSearchMarkerHit {
+  combinedScore: Float!
+  content: String!
+  markerId: ID!
+  markerName: String!
+  testId: ID!
+  vectorSimilarity: Float!
+}
+
+type HealthcareSearchTestHit {
+  content: String!
+  fileName: String
+  id: ID!
+  similarity: Float!
+  testDate: String
+  testId: ID!
+}
+
 type HealthcareSummary {
   appointmentsCount: Int!
   bloodTestsCount: Int!
@@ -1748,6 +1782,7 @@ type Query {
   goals(familyMemberId: Int, status: String, tag: String): [Goal!]!
   habit(id: Int!): Habit
   habits(familyMemberId: Int, status: String): [Habit!]!
+  healthcareSearch(query: String!): HealthcareMultiSearchResult!
   healthcareSummary: HealthcareSummary!
   issue(id: Int!): Issue
   issues(familyMemberId: Int!, feedbackId: Int): [Issue!]!

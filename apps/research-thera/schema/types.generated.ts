@@ -1314,6 +1314,44 @@ export type HealthcareChatTurn = {
   role: Scalars['String']['input'];
 };
 
+export type HealthcareMultiSearchResult = {
+  __typename?: 'HealthcareMultiSearchResult';
+  appointments: Array<HealthcareSearchHit>;
+  conditions: Array<HealthcareSearchHit>;
+  markers: Array<HealthcareSearchMarkerHit>;
+  medications: Array<HealthcareSearchHit>;
+  symptoms: Array<HealthcareSearchHit>;
+  tests: Array<HealthcareSearchTestHit>;
+};
+
+export type HealthcareSearchHit = {
+  __typename?: 'HealthcareSearchHit';
+  content: Scalars['String']['output'];
+  entityId: Scalars['ID']['output'];
+  id: Scalars['ID']['output'];
+  similarity: Scalars['Float']['output'];
+};
+
+export type HealthcareSearchMarkerHit = {
+  __typename?: 'HealthcareSearchMarkerHit';
+  combinedScore: Scalars['Float']['output'];
+  content: Scalars['String']['output'];
+  markerId: Scalars['ID']['output'];
+  markerName: Scalars['String']['output'];
+  testId: Scalars['ID']['output'];
+  vectorSimilarity: Scalars['Float']['output'];
+};
+
+export type HealthcareSearchTestHit = {
+  __typename?: 'HealthcareSearchTestHit';
+  content: Scalars['String']['output'];
+  fileName?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  similarity: Scalars['Float']['output'];
+  testDate?: Maybe<Scalars['String']['output']>;
+  testId: Scalars['ID']['output'];
+};
+
 export type HealthcareSummary = {
   __typename?: 'HealthcareSummary';
   appointmentsCount: Scalars['Int']['output'];
@@ -2537,6 +2575,7 @@ export type Query = {
   goals: Array<Goal>;
   habit?: Maybe<Habit>;
   habits: Array<Habit>;
+  healthcareSearch: HealthcareMultiSearchResult;
   healthcareSummary: HealthcareSummary;
   issue?: Maybe<Issue>;
   issues: Array<Issue>;
@@ -2722,6 +2761,11 @@ export type QueryhabitArgs = {
 export type QueryhabitsArgs = {
   familyMemberId?: InputMaybe<Scalars['Int']['input']>;
   status?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryhealthcareSearchArgs = {
+  query: Scalars['String']['input'];
 };
 
 
@@ -3527,6 +3571,10 @@ export type ResolversTypes = {
   HealthcareChatInput: HealthcareChatInput;
   HealthcareChatResponse: ResolverTypeWrapper<HealthcareChatResponse>;
   HealthcareChatTurn: HealthcareChatTurn;
+  HealthcareMultiSearchResult: ResolverTypeWrapper<HealthcareMultiSearchResult>;
+  HealthcareSearchHit: ResolverTypeWrapper<HealthcareSearchHit>;
+  HealthcareSearchMarkerHit: ResolverTypeWrapper<HealthcareSearchMarkerHit>;
+  HealthcareSearchTestHit: ResolverTypeWrapper<HealthcareSearchTestHit>;
   HealthcareSummary: ResolverTypeWrapper<HealthcareSummary>;
   Issue: ResolverTypeWrapper<Omit<Issue, 'familyMember' | 'feedback' | 'journalEntry' | 'relatedFamilyMember' | 'relatedIssues' | 'stories'> & { familyMember?: Maybe<ResolversTypes['FamilyMember']>, feedback?: Maybe<ResolversTypes['ContactFeedback']>, journalEntry?: Maybe<ResolversTypes['JournalEntry']>, relatedFamilyMember?: Maybe<ResolversTypes['FamilyMember']>, relatedIssues: Array<ResolversTypes['IssueLink']>, stories: Array<ResolversTypes['Story']> }>;
   IssueContactLink: ResolverTypeWrapper<IssueContactLink>;
@@ -3747,6 +3795,10 @@ export type ResolversParentTypes = {
   HealthcareChatInput: HealthcareChatInput;
   HealthcareChatResponse: HealthcareChatResponse;
   HealthcareChatTurn: HealthcareChatTurn;
+  HealthcareMultiSearchResult: HealthcareMultiSearchResult;
+  HealthcareSearchHit: HealthcareSearchHit;
+  HealthcareSearchMarkerHit: HealthcareSearchMarkerHit;
+  HealthcareSearchTestHit: HealthcareSearchTestHit;
   HealthcareSummary: HealthcareSummary;
   Issue: Omit<Issue, 'familyMember' | 'feedback' | 'journalEntry' | 'relatedFamilyMember' | 'relatedIssues' | 'stories'> & { familyMember?: Maybe<ResolversParentTypes['FamilyMember']>, feedback?: Maybe<ResolversParentTypes['ContactFeedback']>, journalEntry?: Maybe<ResolversParentTypes['JournalEntry']>, relatedFamilyMember?: Maybe<ResolversParentTypes['FamilyMember']>, relatedIssues: Array<ResolversParentTypes['IssueLink']>, stories: Array<ResolversParentTypes['Story']> };
   IssueContactLink: IssueContactLink;
@@ -4681,6 +4733,40 @@ export type HealthcareChatResponseResolvers<ContextType = GraphQLContext, Parent
   retrievalSources?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
 };
 
+export type HealthcareMultiSearchResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['HealthcareMultiSearchResult'] = ResolversParentTypes['HealthcareMultiSearchResult']> = {
+  appointments?: Resolver<Array<ResolversTypes['HealthcareSearchHit']>, ParentType, ContextType>;
+  conditions?: Resolver<Array<ResolversTypes['HealthcareSearchHit']>, ParentType, ContextType>;
+  markers?: Resolver<Array<ResolversTypes['HealthcareSearchMarkerHit']>, ParentType, ContextType>;
+  medications?: Resolver<Array<ResolversTypes['HealthcareSearchHit']>, ParentType, ContextType>;
+  symptoms?: Resolver<Array<ResolversTypes['HealthcareSearchHit']>, ParentType, ContextType>;
+  tests?: Resolver<Array<ResolversTypes['HealthcareSearchTestHit']>, ParentType, ContextType>;
+};
+
+export type HealthcareSearchHitResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['HealthcareSearchHit'] = ResolversParentTypes['HealthcareSearchHit']> = {
+  content?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  entityId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  similarity?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+};
+
+export type HealthcareSearchMarkerHitResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['HealthcareSearchMarkerHit'] = ResolversParentTypes['HealthcareSearchMarkerHit']> = {
+  combinedScore?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  content?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  markerId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  markerName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  testId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  vectorSimilarity?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+};
+
+export type HealthcareSearchTestHitResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['HealthcareSearchTestHit'] = ResolversParentTypes['HealthcareSearchTestHit']> = {
+  content?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  fileName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  similarity?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  testDate?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  testId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+};
+
 export type HealthcareSummaryResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['HealthcareSummary'] = ResolversParentTypes['HealthcareSummary']> = {
   appointmentsCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   bloodTestsCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
@@ -5166,6 +5252,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   goals?: Resolver<Array<ResolversTypes['Goal']>, ParentType, ContextType, Partial<QuerygoalsArgs>>;
   habit?: Resolver<Maybe<ResolversTypes['Habit']>, ParentType, ContextType, RequireFields<QueryhabitArgs, 'id'>>;
   habits?: Resolver<Array<ResolversTypes['Habit']>, ParentType, ContextType, Partial<QueryhabitsArgs>>;
+  healthcareSearch?: Resolver<ResolversTypes['HealthcareMultiSearchResult'], ParentType, ContextType, RequireFields<QueryhealthcareSearchArgs, 'query'>>;
   healthcareSummary?: Resolver<ResolversTypes['HealthcareSummary'], ParentType, ContextType>;
   issue?: Resolver<Maybe<ResolversTypes['Issue']>, ParentType, ContextType, RequireFields<QueryissueArgs, 'id'>>;
   issues?: Resolver<Array<ResolversTypes['Issue']>, ParentType, ContextType, RequireFields<QueryissuesArgs, 'familyMemberId'>>;
@@ -5597,6 +5684,10 @@ export type Resolvers<ContextType = GraphQLContext> = {
   HabitLog?: HabitLogResolvers<ContextType>;
   HabitStatus?: HabitStatusResolvers;
   HealthcareChatResponse?: HealthcareChatResponseResolvers<ContextType>;
+  HealthcareMultiSearchResult?: HealthcareMultiSearchResultResolvers<ContextType>;
+  HealthcareSearchHit?: HealthcareSearchHitResolvers<ContextType>;
+  HealthcareSearchMarkerHit?: HealthcareSearchMarkerHitResolvers<ContextType>;
+  HealthcareSearchTestHit?: HealthcareSearchTestHitResolvers<ContextType>;
   HealthcareSummary?: HealthcareSummaryResolvers<ContextType>;
   Issue?: IssueResolvers<ContextType>;
   IssueContactLink?: IssueContactLinkResolvers<ContextType>;

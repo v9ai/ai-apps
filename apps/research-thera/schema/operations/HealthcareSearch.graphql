@@ -1,0 +1,43 @@
+query HealthcareSearch($query: String!) {
+  healthcareSearch(query: $query) {
+    tests {
+      id
+      testId
+      content
+      similarity
+      fileName
+      testDate
+    }
+    markers {
+      markerId
+      testId
+      markerName
+      content
+      combinedScore
+    }
+    conditions {
+      id
+      entityId
+      content
+      similarity
+    }
+    medications {
+      id
+      entityId
+      content
+      similarity
+    }
+    symptoms {
+      id
+      entityId
+      content
+      similarity
+    }
+    appointments {
+      id
+      entityId
+      content
+      similarity
+    }
+  }
+}

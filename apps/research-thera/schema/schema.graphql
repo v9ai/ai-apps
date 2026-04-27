@@ -289,6 +289,9 @@ type Query {
 
   # Healthcare — Dashboard summary
   healthcareSummary: HealthcareSummary!
+
+  # Healthcare — Multi-entity vector search (proxies Python /search/multi at :2024)
+  healthcareSearch(query: String!): HealthcareMultiSearchResult!
 }
 
 # (chat mutation lives under Mutation type below)
@@ -2516,4 +2519,42 @@ type HealthcareChatResponse {
   guardPassed: Boolean!
   guardIssues: [String!]!
   citations: [String!]!
+}
+
+# ============================================
+# Healthcare — Multi-entity search
+# ============================================
+
+type HealthcareSearchHit {
+  id: ID!
+  entityId: ID!
+  content: String!
+  similarity: Float!
+}
+
+type HealthcareSearchTestHit {
+  id: ID!
+  testId: ID!
+  content: String!
+  similarity: Float!
+  fileName: String
+  testDate: String
+}
+
+type HealthcareSearchMarkerHit {
+  markerId: ID!
+  testId: ID!
+  markerName: String!
+  content: String!
+  vectorSimilarity: Float!
+  combinedScore: Float!
+}
+
+type HealthcareMultiSearchResult {
+  tests: [HealthcareSearchTestHit!]!
+  markers: [HealthcareSearchMarkerHit!]!
+  conditions: [HealthcareSearchHit!]!
+  medications: [HealthcareSearchHit!]!
+  symptoms: [HealthcareSearchHit!]!
+  appointments: [HealthcareSearchHit!]!
 }

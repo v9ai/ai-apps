@@ -33,6 +33,130 @@ export type ChatResponse = {
   citations: string[];
 };
 
+export type SearchHit = {
+  id: string;
+  entityId: string;
+  content: string;
+  similarity: number;
+};
+
+export type SearchTestHit = {
+  id: string;
+  testId: string;
+  content: string;
+  similarity: number;
+  fileName: string | null;
+  testDate: string | null;
+};
+
+export type SearchMarkerHit = {
+  markerId: string;
+  testId: string;
+  markerName: string;
+  content: string;
+  vectorSimilarity: number;
+  combinedScore: number;
+};
+
+export type MultiSearchResult = {
+  tests: SearchTestHit[];
+  markers: SearchMarkerHit[];
+  conditions: SearchHit[];
+  medications: SearchHit[];
+  symptoms: SearchHit[];
+  appointments: SearchHit[];
+};
+
+export async function multiSearch(
+  query: string,
+  userId: string,
+): Promise<MultiSearchResult> {
+  const res = await fetch(`${BACKEND_URL}/search/multi`, {
+    method: "POST",
+    headers: headers(true),
+    body: JSON.stringify({ query, user_id: userId }),
+    signal: AbortSignal.timeout(60_000),
+  });
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "Unknown error");
+    throw new Error(`Healthcare /search/multi failed (${res.status}): ${detail}`);
+  }
+  const data = (await res.json()) as {
+    tests: Array<{
+      id: string;
+      test_id: string;
+      content: string;
+      similarity: number;
+      file_name?: string | null;
+      test_date?: string | null;
+    }>;
+    markers: Array<{
+      marker_id: string;
+      test_id: string;
+      marker_name: string;
+      content: string;
+      vector_similarity: number;
+      combined_score: number;
+    }>;
+    conditions: Array<{
+      id: string;
+      condition_id: string;
+      content: string;
+      similarity: number;
+    }>;
+    medications: Array<{
+      id: string;
+      medication_id: string;
+      content: string;
+      similarity: number;
+    }>;
+    symptoms: Array<{
+      id: string;
+      symptom_id: string;
+      content: string;
+      similarity: number;
+    }>;
+    appointments: Array<{
+      id: string;
+      appointment_id: string;
+      content: string;
+      similarity: number;
+    }>;
+  };
+  const flat = (
+    rows: Array<{ id: string; content: string; similarity: number } & Record<string, unknown>>,
+    fkField: string,
+  ): SearchHit[] =>
+    rows.map((r) => ({
+      id: r.id,
+      entityId: String(r[fkField] ?? r.id),
+      content: r.content,
+      similarity: r.similarity,
+    }));
+  return {
+    tests: data.tests.map((r) => ({
+      id: r.id,
+      testId: r.test_id,
+      content: r.content,
+      similarity: r.similarity,
+      fileName: r.file_name ?? null,
+      testDate: r.test_date ?? null,
+    })),
+    markers: data.markers.map((r) => ({
+      markerId: r.marker_id,
+      testId: r.test_id,
+      markerName: r.marker_name,
+      content: r.content,
+      vectorSimilarity: r.vector_similarity,
+      combinedScore: r.combined_score,
+    })),
+    conditions: flat(data.conditions, "condition_id"),
+    medications: flat(data.medications, "medication_id"),
+    symptoms: flat(data.symptoms, "symptom_id"),
+    appointments: flat(data.appointments, "appointment_id"),
+  };
+}
+
 export async function sendHealthcareChat(
   messages: ChatTurn[],
   userId: string,

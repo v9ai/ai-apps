@@ -1327,6 +1327,44 @@ export type HealthcareChatTurn = {
   role: Scalars['String']['input'];
 };
 
+export type HealthcareMultiSearchResult = {
+  __typename?: 'HealthcareMultiSearchResult';
+  appointments: Array<HealthcareSearchHit>;
+  conditions: Array<HealthcareSearchHit>;
+  markers: Array<HealthcareSearchMarkerHit>;
+  medications: Array<HealthcareSearchHit>;
+  symptoms: Array<HealthcareSearchHit>;
+  tests: Array<HealthcareSearchTestHit>;
+};
+
+export type HealthcareSearchHit = {
+  __typename?: 'HealthcareSearchHit';
+  content: Scalars['String']['output'];
+  entityId: Scalars['ID']['output'];
+  id: Scalars['ID']['output'];
+  similarity: Scalars['Float']['output'];
+};
+
+export type HealthcareSearchMarkerHit = {
+  __typename?: 'HealthcareSearchMarkerHit';
+  combinedScore: Scalars['Float']['output'];
+  content: Scalars['String']['output'];
+  markerId: Scalars['ID']['output'];
+  markerName: Scalars['String']['output'];
+  testId: Scalars['ID']['output'];
+  vectorSimilarity: Scalars['Float']['output'];
+};
+
+export type HealthcareSearchTestHit = {
+  __typename?: 'HealthcareSearchTestHit';
+  content: Scalars['String']['output'];
+  fileName?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  similarity: Scalars['Float']['output'];
+  testDate?: Maybe<Scalars['String']['output']>;
+  testId: Scalars['ID']['output'];
+};
+
 export type HealthcareSummary = {
   __typename?: 'HealthcareSummary';
   appointmentsCount: Scalars['Int']['output'];
@@ -2559,6 +2597,7 @@ export type Query = {
   goals: Array<Goal>;
   habit?: Maybe<Habit>;
   habits: Array<Habit>;
+  healthcareSearch: HealthcareMultiSearchResult;
   healthcareSummary: HealthcareSummary;
   issue?: Maybe<Issue>;
   issues: Array<Issue>;
@@ -2744,6 +2783,11 @@ export type QueryHabitArgs = {
 export type QueryHabitsArgs = {
   familyMemberId?: InputMaybe<Scalars['Int']['input']>;
   status?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryHealthcareSearchArgs = {
+  query: Scalars['String']['input'];
 };
 
 
@@ -4343,6 +4387,13 @@ export type GetTherapeuticQuestionsQueryVariables = Exact<{
 
 
 export type GetTherapeuticQuestionsQuery = { __typename?: 'Query', therapeuticQuestions: Array<{ __typename?: 'TherapeuticQuestion', id: number, goalId?: number | null, issueId?: number | null, journalEntryId?: number | null, question: string, researchId?: number | null, researchTitle?: string | null, rationale: string, generatedAt: string, createdAt: string, updatedAt: string }> };
+
+export type HealthcareSearchQueryVariables = Exact<{
+  query: Scalars['String']['input'];
+}>;
+
+
+export type HealthcareSearchQuery = { __typename?: 'Query', healthcareSearch: { __typename?: 'HealthcareMultiSearchResult', tests: Array<{ __typename?: 'HealthcareSearchTestHit', id: string, testId: string, content: string, similarity: number, fileName?: string | null, testDate?: string | null }>, markers: Array<{ __typename?: 'HealthcareSearchMarkerHit', markerId: string, testId: string, markerName: string, content: string, combinedScore: number }>, conditions: Array<{ __typename?: 'HealthcareSearchHit', id: string, entityId: string, content: string, similarity: number }>, medications: Array<{ __typename?: 'HealthcareSearchHit', id: string, entityId: string, content: string, similarity: number }>, symptoms: Array<{ __typename?: 'HealthcareSearchHit', id: string, entityId: string, content: string, similarity: number }>, appointments: Array<{ __typename?: 'HealthcareSearchHit', id: string, entityId: string, content: string, similarity: number }> } };
 
 export type HealthcareSummaryQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -12031,6 +12082,87 @@ export type GetTherapeuticQuestionsQueryHookResult = ReturnType<typeof useGetThe
 export type GetTherapeuticQuestionsLazyQueryHookResult = ReturnType<typeof useGetTherapeuticQuestionsLazyQuery>;
 export type GetTherapeuticQuestionsSuspenseQueryHookResult = ReturnType<typeof useGetTherapeuticQuestionsSuspenseQuery>;
 export type GetTherapeuticQuestionsQueryResult = Apollo.QueryResult<GetTherapeuticQuestionsQuery, GetTherapeuticQuestionsQueryVariables>;
+export const HealthcareSearchDocument = gql`
+    query HealthcareSearch($query: String!) {
+  healthcareSearch(query: $query) {
+    tests {
+      id
+      testId
+      content
+      similarity
+      fileName
+      testDate
+    }
+    markers {
+      markerId
+      testId
+      markerName
+      content
+      combinedScore
+    }
+    conditions {
+      id
+      entityId
+      content
+      similarity
+    }
+    medications {
+      id
+      entityId
+      content
+      similarity
+    }
+    symptoms {
+      id
+      entityId
+      content
+      similarity
+    }
+    appointments {
+      id
+      entityId
+      content
+      similarity
+    }
+  }
+}
+    `;
+
+/**
+ * __useHealthcareSearchQuery__
+ *
+ * To run a query within a React component, call `useHealthcareSearchQuery` and pass it any options that fit your needs.
+ * When your component renders, `useHealthcareSearchQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useHealthcareSearchQuery({
+ *   variables: {
+ *      query: // value for 'query'
+ *   },
+ * });
+ */
+export function useHealthcareSearchQuery(baseOptions: Apollo.QueryHookOptions<HealthcareSearchQuery, HealthcareSearchQueryVariables> & ({ variables: HealthcareSearchQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<HealthcareSearchQuery, HealthcareSearchQueryVariables>(HealthcareSearchDocument, options);
+      }
+export function useHealthcareSearchLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<HealthcareSearchQuery, HealthcareSearchQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<HealthcareSearchQuery, HealthcareSearchQueryVariables>(HealthcareSearchDocument, options);
+        }
+// @ts-ignore
+export function useHealthcareSearchSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<HealthcareSearchQuery, HealthcareSearchQueryVariables>): Apollo.UseSuspenseQueryResult<HealthcareSearchQuery, HealthcareSearchQueryVariables>;
+export function useHealthcareSearchSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<HealthcareSearchQuery, HealthcareSearchQueryVariables>): Apollo.UseSuspenseQueryResult<HealthcareSearchQuery | undefined, HealthcareSearchQueryVariables>;
+export function useHealthcareSearchSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<HealthcareSearchQuery, HealthcareSearchQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<HealthcareSearchQuery, HealthcareSearchQueryVariables>(HealthcareSearchDocument, options);
+        }
+export type HealthcareSearchQueryHookResult = ReturnType<typeof useHealthcareSearchQuery>;
+export type HealthcareSearchLazyQueryHookResult = ReturnType<typeof useHealthcareSearchLazyQuery>;
+export type HealthcareSearchSuspenseQueryHookResult = ReturnType<typeof useHealthcareSearchSuspenseQuery>;
+export type HealthcareSearchQueryResult = Apollo.QueryResult<HealthcareSearchQuery, HealthcareSearchQueryVariables>;
 export const HealthcareSummaryDocument = gql`
     query HealthcareSummary {
   healthcareSummary {

@@ -13,6 +13,7 @@ import {
   AlertDialog,
 } from "@radix-ui/themes";
 import { Pill, Trash2 } from "lucide-react";
+import Link from "next/link";
 import {
   useMedicationsQuery,
   useDeleteMedicationMutation,
@@ -137,42 +138,52 @@ function MedicationCard({
   return (
     <Card>
       <Flex justify="between" align="start" gap="2">
-        <Flex direction="column" gap="2" style={{ flexGrow: 1, minWidth: 0 }}>
-          <Flex align="center" gap="2" wrap="wrap">
-            <Text size="2" weight="medium">
-              {name}
-            </Text>
-            {dosage && (
-              <Badge color="blue" variant="soft" size="1">
-                {dosage}
-              </Badge>
+        <Link
+          href={`/medications/m/${id}`}
+          style={{
+            flexGrow: 1,
+            minWidth: 0,
+            color: "inherit",
+            textDecoration: "none",
+          }}
+        >
+          <Flex direction="column" gap="2">
+            <Flex align="center" gap="2" wrap="wrap">
+              <Text size="2" weight="medium">
+                {name}
+              </Text>
+              {dosage && (
+                <Badge color="blue" variant="soft" size="1">
+                  {dosage}
+                </Badge>
+              )}
+            </Flex>
+            {frequency && (
+              <Text size="1" color="gray">
+                {frequency}
+              </Text>
+            )}
+            {notes && (
+              <Text
+                size="1"
+                color="gray"
+                style={{
+                  display: "-webkit-box",
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: "vertical",
+                  overflow: "hidden",
+                }}
+              >
+                {notes}
+              </Text>
+            )}
+            {(startDate || endDate) && (
+              <Text size="1" color="gray">
+                {startDate ?? "?"} → {endDate ?? "ongoing"}
+              </Text>
             )}
           </Flex>
-          {frequency && (
-            <Text size="1" color="gray">
-              {frequency}
-            </Text>
-          )}
-          {notes && (
-            <Text
-              size="1"
-              color="gray"
-              style={{
-                display: "-webkit-box",
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: "vertical",
-                overflow: "hidden",
-              }}
-            >
-              {notes}
-            </Text>
-          )}
-          {(startDate || endDate) && (
-            <Text size="1" color="gray">
-              {startDate ?? "?"} → {endDate ?? "ongoing"}
-            </Text>
-          )}
-        </Flex>
+        </Link>
 
         <AlertDialog.Root>
           <AlertDialog.Trigger>

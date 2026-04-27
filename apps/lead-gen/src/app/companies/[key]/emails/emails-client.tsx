@@ -614,6 +614,9 @@ export function CompanyEmailsClient({
               <Link href={`/companies/${companyKey}/emails`} className="rt-reset rt-TabsTrigger" data-state="active" style={{ textDecoration: "none" }}>
                 Emails
               </Link>
+              <Link href={`/companies/${companyKey}/posts`} className="rt-reset rt-TabsTrigger" style={{ textDecoration: "none" }}>
+                Posts
+              </Link>
             </div>
           </div>
         </Box>

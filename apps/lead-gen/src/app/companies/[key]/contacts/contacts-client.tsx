@@ -928,6 +928,9 @@ export function CompanyContactsClient({
             <TabNav.Link asChild>
               <Link href={`/companies/${companyKey}/emails`}>Emails</Link>
             </TabNav.Link>
+            <TabNav.Link asChild>
+              <Link href={`/companies/${companyKey}/posts`}>Posts</Link>
+            </TabNav.Link>
           </TabNav.Root>
         </Box>
         )}

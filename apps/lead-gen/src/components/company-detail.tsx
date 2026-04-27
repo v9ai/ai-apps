@@ -1289,6 +1289,11 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
               <Link href={`/companies/${effectiveKey}/emails`}>Emails</Link>
             </TabNav.Link>
           )}
+          {isAdmin && (
+            <TabNav.Link asChild>
+              <Link href={`/companies/${effectiveKey}/posts`}>Posts</Link>
+            </TabNav.Link>
+          )}
         </TabNav.Root>
 
         {/* Overview */}
