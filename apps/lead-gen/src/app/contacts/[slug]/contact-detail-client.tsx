@@ -1948,9 +1948,9 @@ export function ContactDetailClient({ contactId, contactSlug }: { contactId?: nu
                   )}
                   {contact.company && (
                     <Text size="2" as="p" mt="1" color="gray">
-                      {contact.companyId ? (
+                      {(contact.companyKey || contact.companyId) ? (
                         <RadixLink asChild>
-                          <Link href={`/companies/${contact.companyId}`}>
+                          <Link href={`/companies/${contact.companyKey ?? contact.companyId}`}>
                             {contact.company}
                           </Link>
                         </RadixLink>

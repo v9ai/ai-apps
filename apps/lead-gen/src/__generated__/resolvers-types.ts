@@ -460,6 +460,7 @@ export type Contact = {
   bouncedEmails: Array<Scalars['String']['output']>;
   company: Maybe<Scalars['String']['output']>;
   companyId: Maybe<Scalars['Int']['output']>;
+  companyKey: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['String']['output'];
   deletionFlaggedAt: Maybe<Scalars['String']['output']>;
   deletionReasons: Array<Scalars['String']['output']>;
@@ -4780,6 +4781,7 @@ export type ContactResolvers<ContextType = GraphQLContext, ParentType extends Re
   bouncedEmails?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   company?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   companyId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  companyKey?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   deletionFlaggedAt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   deletionReasons?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;

@@ -400,6 +400,7 @@ type Contact {
   bouncedEmails: [String!]!
   company: String
   companyId: Int
+  companyKey: String
   createdAt: String!
   deletionFlaggedAt: String
   deletionReasons: [String!]!

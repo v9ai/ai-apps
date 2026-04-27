@@ -457,6 +457,7 @@ export type Contact = {
   bouncedEmails: Array<Scalars['String']['output']>;
   company: Maybe<Scalars['String']['output']>;
   companyId: Maybe<Scalars['Int']['output']>;
+  companyKey: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['String']['output'];
   deletionFlaggedAt: Maybe<Scalars['String']['output']>;
   deletionReasons: Array<Scalars['String']['output']>;
