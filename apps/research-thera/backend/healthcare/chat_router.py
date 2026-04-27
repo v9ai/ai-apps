@@ -1,54 +1,25 @@
 """
-FastAPI chat server — LangGraph clinical intelligence pipeline.
+Healthcare chat router (extracted from agentic-healthcare/langgraph/chat_server.py).
 
-The /chat endpoint runs the full agentic graph:
-  triage → retrieve → synthesize → guard
-
-Run:
-  cd apps/agentic-healthcare/langgraph
-  cp .env.example .env  # fill in DEEPSEEK_API_KEY, DATABASE_URL, R2_*, etc.
-  uv run uvicorn chat_server:app --port 8001 --reload
+The parent FastAPI app at apps/research-thera/backend/app.py mounts this router
+plus the upload/embed/search routers from healthcare/routes/. No standalone
+FastAPI app is created here — this module exposes routers only.
 """
 
 from __future__ import annotations
 
-from dotenv import load_dotenv
-
-load_dotenv()
-
-from .llm_settings import configure_llamaindex
-
-configure_llamaindex()
-
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import APIRouter
 from pydantic import BaseModel
-from .routes.upload import router as upload_router
-from .routes.embed import router as embed_router
-from .routes.search import router as search_router
-from .config import settings
+
 from .chat_pipeline import run_chat
+from .config import settings
 
-app = FastAPI(title="Blood Marker Intelligence Chat")
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "https://agentic-healthcare.vercel.app",
-        "http://localhost:3000",
-        "http://localhost:3001",
-    ],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
-# Mount routes
-app.include_router(upload_router)
-app.include_router(embed_router)
-app.include_router(search_router)
+router = APIRouter()
 
 
 class ChatRequest(BaseModel):
-    messages: list[dict]  # [{role: "user"|"assistant", content: str}]
+    messages: list[dict]
     user_id: str = ""
 
 
@@ -63,10 +34,7 @@ class GraphChatResponse(BaseModel):
     citations: list[str]
 
 
-# ── Primary endpoint: LlamaIndex clinical chat pipeline ────────────────────
-
-
-@app.post("/chat")
+@router.post("/chat")
 async def chat(req: ChatRequest) -> GraphChatResponse:
     """Run the full LlamaIndex clinical intelligence chat pipeline."""
     if not req.messages:
@@ -100,8 +68,8 @@ async def chat(req: ChatRequest) -> GraphChatResponse:
     )
 
 
-@app.get("/health")
-async def health():
+@router.get("/healthcare/health")
+async def healthcare_health():
     return {
         "status": "ok",
         "llm_base_url": settings.llm_base_url,

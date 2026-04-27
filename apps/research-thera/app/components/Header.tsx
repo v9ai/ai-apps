@@ -22,6 +22,7 @@ const NAV_LINKS = [
   { href: "/discussions", label: "Discuții" },
   { href: "/games", label: "Games" },
   { href: "/allergies", label: "Allergies & Intolerances" },
+  { href: "/medications", label: "Medications" },
 ];
 
 export function Header() {

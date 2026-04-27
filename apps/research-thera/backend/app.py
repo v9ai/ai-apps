@@ -214,6 +214,27 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="research-thera LangGraph", lifespan=lifespan)
 app.add_middleware(BearerTokenMiddleware)
 
+# ── Healthcare routers (mounted from agentic-healthcare merge 2026-04-27) ──
+# Configures LlamaIndex on import; lazy because of FastEmbed model download.
+try:
+    from healthcare.llm_settings import configure_llamaindex as _configure_llamaindex
+    _configure_llamaindex()
+    from healthcare.routes.upload import router as _healthcare_upload_router
+    from healthcare.routes.embed import router as _healthcare_embed_router
+    from healthcare.routes.search import router as _healthcare_search_router
+    from healthcare.chat_router import router as _healthcare_chat_router
+
+    app.include_router(_healthcare_upload_router)
+    app.include_router(_healthcare_embed_router)
+    app.include_router(_healthcare_search_router)
+    app.include_router(_healthcare_chat_router)
+except Exception as _healthcare_import_err:  # noqa: BLE001
+    # Healthcare deps may not be installed in every env (e.g. minimal LangGraph
+    # CI). Log and continue — research-thera's own routes still work.
+    logging.getLogger(__name__).warning(
+        "healthcare routers not mounted: %s", _healthcare_import_err
+    )
+
 
 class RunRequest(BaseModel):
     assistant_id: str
