@@ -143,6 +143,18 @@ export const Contact = {
   lastContactedAt(parent: DbContact) {
     return parent.last_contacted_at ?? null;
   },
+  /**
+   * `contacts.company` is a denormalized text cache that's often null on
+   * contacts imported via LinkedIn / paste flows where only `company_id` was
+   * set. Fall back to `companies.name` via the per-request DataLoader so the
+   * company link on the contact detail page renders without a backfill.
+   */
+  async company(parent: DbContact, _args: unknown, context: GraphQLContext) {
+    if (parent.company) return parent.company;
+    if (!parent.company_id) return null;
+    const co = await context.loaders.company.load(parent.company_id);
+    return co?.name ?? null;
+  },
   profile(parent: DbContact) {
     if (!parent.profile) return null;
     const raw = cachedParse<Record<string, unknown>>(parent, "profile", parent.profile, null as unknown as Record<string, unknown>);

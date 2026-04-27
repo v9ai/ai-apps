@@ -564,7 +564,7 @@ function postInputToBindings(p: PostInput): unknown[] {
     p.content ?? null,
     p.posted_date ?? null,
     p.posted_at ?? null,
-    p.scraped_at ?? null,
+    p.scraped_at ?? new Date().toISOString(),
     p.reactions_count ?? 0,
     p.comments_count ?? 0,
     p.reposts_count ?? 0,
@@ -635,13 +635,18 @@ async function handlePostsD1Upsert(req: Request, env: Env): Promise<Response> {
   // Chunk so a single batch never exceeds D1's per-request size budget.
   const CHUNK = 100;
   let upserted = 0;
-  for (let i = 0; i < stmts.length; i += CHUNK) {
-    const slice = stmts.slice(i, i + CHUNK);
-    const results = await env.DB.batch(slice);
-    for (const r of results) {
-      const changes = (r as { meta?: { changes?: number } }).meta?.changes ?? 0;
-      upserted += changes;
+  try {
+    for (let i = 0; i < stmts.length; i += CHUNK) {
+      const slice = stmts.slice(i, i + CHUNK);
+      const results = await env.DB.batch(slice);
+      for (const r of results) {
+        const changes = (r as { meta?: { changes?: number } }).meta?.changes ?? 0;
+        upserted += changes;
+      }
     }
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    return json(req, { error: "upsert failed", message }, 500);
   }
 
   return json(req, { upserted, skipped });
