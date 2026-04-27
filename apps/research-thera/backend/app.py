@@ -72,6 +72,7 @@ _GRAPH_PATHS: dict[str, str] = {
     "generate_therapy_research": "research_agent.generate_therapy_research_graph:graph",
     "habits": "research_agent.habits_graph:graph",
     "journal_analysis": "research_agent.journal_analysis_graph:graph",
+    "medication_deep_research": "research_agent.medication_deep_research_graph:graph",
     "parent_advice": "research_agent.parent_advice_graph:graph",
     "research": "research_agent.graph:graph",
     "routine_analysis": "research_agent.routine_analysis_graph:graph",
@@ -86,7 +87,7 @@ _GRAPH_SEMAPHORES: dict[str, asyncio.Semaphore] = {}
 # Heavy ML graphs run rerankers / large fan-outs — cap concurrency to 1 per graph
 # so they can't OOM the container. Light graphs allowed 4 concurrent.
 _HEAVY_GRAPHS = frozenset(
-    {"research", "books", "generate_therapy_research", "bogdan_discussion"}
+    {"research", "books", "generate_therapy_research", "bogdan_discussion", "medication_deep_research"}
 )
 
 

@@ -321,6 +321,7 @@ type Mutation {
 
   # Async generation workflows
   generateResearch(goalId: Int, issueId: Int, feedbackId: Int, journalEntryId: Int, medicationId: ID): GenerateResearchResult!
+  generateMedicationDeepResearch(slug: String!): GenerateResearchResult!
   deleteResearch(goalId: Int!): DeleteResearchResult!
   generateTherapeuticQuestions(goalId: Int, issueId: Int, journalEntryId: Int): GenerateQuestionsResult!
   deleteTherapeuticQuestions(goalId: Int, issueId: Int, journalEntryId: Int): DeleteQuestionsResult!
@@ -735,6 +736,7 @@ enum JobType {
   DEEP_ANALYSIS
   RECOMMENDED_BOOKS
   ROUTINE_ANALYSIS
+  MEDICATION_DEEP_RESEARCH
 }
 
 enum JobStatus {

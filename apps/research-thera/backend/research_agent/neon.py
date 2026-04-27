@@ -270,3 +270,221 @@ async def upsert_research_paper(
             )
             row = await cur.fetchone()
             return row[0] if row else 0
+
+
+# ---------------------------------------------------------------------------
+# Medication deep-research fact UPSERTs.
+#
+# Drug-level facts keyed on `drug_slug` = first-word lowercased of the
+# medication name. Populated by the `medication_deep_research` LangGraph; read
+# by GraphQL resolvers to render the medication detail page.
+#
+# Each helper has a fixed dedup key (no caller-controlled column composition),
+# so we don't extend `_ALLOWED_DEDUP_COLS` here.
+# ---------------------------------------------------------------------------
+async def upsert_medication_pharmacology(
+    drug_slug: str,
+    generic_name: Optional[str],
+    brand_names: list[str],
+    atc_code: Optional[str],
+    moa: Optional[str],
+    half_life: Optional[str],
+    peak_time: Optional[str],
+    metabolism: Optional[str],
+    excretion: Optional[str],
+    source_url: Optional[str],
+) -> None:
+    """1:1 UPSERT keyed on drug_slug. Bumps updated_at on every write."""
+    brands_json = json.dumps(brand_names or [])
+    async with _conn_ctx() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                """
+                INSERT INTO medication_pharmacology (
+                    drug_slug, generic_name, brand_names, atc_code, moa,
+                    half_life, peak_time, metabolism, excretion, source_url,
+                    updated_at
+                )
+                VALUES (%s, %s, %s::jsonb, %s, %s, %s, %s, %s, %s, %s, NOW())
+                ON CONFLICT (drug_slug) DO UPDATE SET
+                    generic_name = EXCLUDED.generic_name,
+                    brand_names  = EXCLUDED.brand_names,
+                    atc_code     = EXCLUDED.atc_code,
+                    moa          = EXCLUDED.moa,
+                    half_life    = EXCLUDED.half_life,
+                    peak_time    = EXCLUDED.peak_time,
+                    metabolism   = EXCLUDED.metabolism,
+                    excretion    = EXCLUDED.excretion,
+                    source_url   = EXCLUDED.source_url,
+                    updated_at   = NOW()
+                """,
+                (
+                    drug_slug, generic_name, brands_json, atc_code, moa,
+                    half_life, peak_time, metabolism, excretion, source_url,
+                ),
+            )
+
+
+async def upsert_medication_indication(
+    drug_slug: str,
+    kind: str,  # 'primary' | 'off_label'
+    condition: str,
+    evidence_level: Optional[str] = None,
+    source: Optional[str] = None,
+    source_url: Optional[str] = None,
+    confidence: Optional[int] = None,
+) -> None:
+    """Idempotent insert. Dedup key: (drug_slug, kind, condition)."""
+    async with _conn_ctx() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                """
+                INSERT INTO medication_indications (
+                    drug_slug, kind, condition, evidence_level,
+                    source, source_url, confidence
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (drug_slug, kind, condition) DO UPDATE SET
+                    evidence_level = COALESCE(EXCLUDED.evidence_level, medication_indications.evidence_level),
+                    source         = COALESCE(EXCLUDED.source,         medication_indications.source),
+                    source_url     = COALESCE(EXCLUDED.source_url,     medication_indications.source_url),
+                    confidence     = COALESCE(EXCLUDED.confidence,     medication_indications.confidence)
+                """,
+                (drug_slug, kind, condition, evidence_level, source, source_url, confidence),
+            )
+
+
+async def upsert_medication_dosing(
+    drug_slug: str,
+    population: str,  # 'adult' | 'pediatric' | 'elderly' | 'renal' | 'hepatic'
+    dose_text: str,
+    age_band: Optional[str] = None,
+    weight_band: Optional[str] = None,
+    frequency: Optional[str] = None,
+    max_daily: Optional[str] = None,
+    source_url: Optional[str] = None,
+) -> None:
+    """Idempotent insert via the medication_dosing_dedup_idx UNIQUE INDEX
+    (covers (drug_slug, population, COALESCE(age_band,''), COALESCE(weight_band,''), dose_text))."""
+    async with _conn_ctx() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                """
+                INSERT INTO medication_dosing (
+                    drug_slug, population, age_band, weight_band,
+                    dose_text, frequency, max_daily, source_url
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (drug_slug, population, COALESCE(age_band,''), COALESCE(weight_band,''), dose_text) DO NOTHING
+                """,
+                (drug_slug, population, age_band, weight_band, dose_text, frequency, max_daily, source_url),
+            )
+
+
+async def upsert_medication_adverse_event(
+    drug_slug: str,
+    event: str,
+    frequency_band: str,  # 'common' | 'uncommon' | 'rare' | 'black_box'
+    severity: Optional[str] = None,
+    source_url: Optional[str] = None,
+) -> None:
+    """Idempotent insert. Dedup key: (drug_slug, event, frequency_band)."""
+    async with _conn_ctx() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                """
+                INSERT INTO medication_adverse_events (
+                    drug_slug, event, frequency_band, severity, source_url
+                )
+                VALUES (%s, %s, %s, %s, %s)
+                ON CONFLICT (drug_slug, event, frequency_band) DO UPDATE SET
+                    severity   = COALESCE(EXCLUDED.severity,   medication_adverse_events.severity),
+                    source_url = COALESCE(EXCLUDED.source_url, medication_adverse_events.source_url)
+                """,
+                (drug_slug, event, frequency_band, severity, source_url),
+            )
+
+
+async def upsert_medication_interaction(
+    drug_slug: str,
+    interacting_drug: str,
+    severity: str,  # 'contraindicated' | 'major' | 'moderate' | 'minor'
+    mechanism: Optional[str] = None,
+    recommendation: Optional[str] = None,
+    source_url: Optional[str] = None,
+) -> None:
+    """Idempotent insert. Dedup key: (drug_slug, interacting_drug)."""
+    async with _conn_ctx() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                """
+                INSERT INTO medication_interactions (
+                    drug_slug, interacting_drug, severity,
+                    mechanism, recommendation, source_url
+                )
+                VALUES (%s, %s, %s, %s, %s, %s)
+                ON CONFLICT (drug_slug, interacting_drug) DO UPDATE SET
+                    severity       = EXCLUDED.severity,
+                    mechanism      = COALESCE(EXCLUDED.mechanism,      medication_interactions.mechanism),
+                    recommendation = COALESCE(EXCLUDED.recommendation, medication_interactions.recommendation),
+                    source_url     = COALESCE(EXCLUDED.source_url,     medication_interactions.source_url)
+                """,
+                (drug_slug, interacting_drug, severity, mechanism, recommendation, source_url),
+            )
+
+
+async def fetch_pharmacology_updated_at(drug_slug: str) -> Optional[str]:
+    """Return the ``updated_at`` ISO timestamp for a drug's pharmacology row,
+    or None when nothing has been persisted yet. Drives the 30-day freshness
+    gate in the medication_deep_research graph."""
+    async with _conn_ctx() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "SELECT updated_at FROM medication_pharmacology WHERE drug_slug = %s",
+                (drug_slug,),
+            )
+            row = await cur.fetchone()
+    return str(row[0]) if row else None
+
+
+async def fetch_medications_for_slug(
+    user_email: str,
+    drug_slug: str,
+) -> list[dict]:
+    """Return every medications row whose first-word-lowercased name matches
+    ``drug_slug`` for the given user, joined with family_member age data.
+
+    The match uses the ``medications_drug_slug_idx`` expression index added in
+    migration 0020, so this is cheap even with thousands of rows."""
+    async with _conn_ctx() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                """
+                SELECT m.id::text, m.name, m.dosage, m.frequency, m.notes,
+                       m.start_date, m.end_date, m.family_member_id,
+                       fm."firstName", fm.age_years, fm.date_of_birth
+                FROM medications m
+                LEFT JOIN family_members fm ON fm.id = m.family_member_id
+                WHERE m.user_id = %s
+                  AND lower(split_part(m.name, ' ', 1)) = %s
+                ORDER BY m.created_at DESC
+                """,
+                (user_email, drug_slug),
+            )
+            rows = await cur.fetchall()
+    out: list[dict] = []
+    for r in rows:
+        out.append({
+            "id": r[0],
+            "name": r[1],
+            "dosage": r[2],
+            "frequency": r[3],
+            "notes": r[4],
+            "start_date": str(r[5]) if r[5] else None,
+            "end_date": str(r[6]) if r[6] else None,
+            "family_member_id": r[7],
+            "family_member_first_name": r[8],
+            "family_member_age_years": r[9],
+            "family_member_date_of_birth": str(r[10]) if r[10] else None,
+        })
+    return out
