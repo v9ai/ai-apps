@@ -184,7 +184,7 @@ export default function Home() {
                 <Heading size="4">Family Records</Heading>
               </Flex>
               <Text color="gray">
-                Track family members' conditions, documents, and shared
+                Track family members&apos; conditions, documents, and shared
                 health history with read-only document viewing from R2.
               </Text>
               <Button variant="soft" style={{ marginTop: "auto" }}>
