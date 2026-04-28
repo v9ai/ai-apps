@@ -136,12 +136,13 @@ const LESSON_SLUGS = [
   "aws-architecture",
   "aws-ai-ml-services",
   "dynamodb-data-services",
-  // Software Engineering (86-90)
+  // Software Engineering (86-91)
   "microservices",
   "ci-cd",
   "nodejs",
   "solid-principles",
   "acid-properties",
+  "postgresql-joins",
 ];
 
 export const LESSON_NUMBER: Record<string, number> = Object.fromEntries(
@@ -162,7 +163,7 @@ export const CATEGORIES: [number, number, string][] = [
   [66, 71, "Applied AI & Production"],
   [72, 76, "Cloud Platforms"],
   [77, 85, "AWS Deep Dives"],
-  [86, 90, "Software Engineering"],
+  [86, 91, "Software Engineering"],
 ];
 
 export const CATEGORY_META: Record<string, CategoryMeta> = {

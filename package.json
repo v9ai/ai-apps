@@ -42,6 +42,9 @@
   },
   "packageManager": "pnpm@10.31.0",
   "pnpm": {
+    "overrides": {
+      "graphql": "16.13.2"
+    },
     "onlyBuiltDependencies": [
       "@apollo/protobufjs",
       "@swc/core",
