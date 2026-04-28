@@ -211,6 +211,7 @@ enum BehaviorObservationType {
 
 type BloodTest {
   errorMessage: String
+  familyMemberId: Int
   fileName: String!
   filePath: String!
   id: ID!
@@ -1000,6 +1001,7 @@ type FamilyMember {
   allergies: String
   behaviorObservations(goalId: Int): [BehaviorObservation!]!
   bio: String
+  bloodTests: [BloodTest!]!
   createdAt: String!
   dateOfBirth: String
   email: String

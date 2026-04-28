@@ -51,6 +51,7 @@ export type HealthcareSummary = {
 export type BloodTest = {
   id: string;
   userId: string;
+  familyMemberId: number | null;
   fileName: string;
   filePath: string;
   status: string;
@@ -64,6 +65,8 @@ function toBloodTest(r: Record<string, unknown>): BloodTest {
   return {
     id: r.id as string,
     userId: r.user_id as string,
+    familyMemberId:
+      r.family_member_id == null ? null : Number(r.family_member_id),
     fileName: r.file_name as string,
     filePath: r.file_path as string,
     status: r.status as string,
@@ -239,7 +242,7 @@ export async function getDoctor(
 
 export async function listBloodTests(userId: string): Promise<BloodTest[]> {
   const rows = await neonSql`
-    SELECT t.id, t.user_id, t.file_name, t.file_path, t.status, t.test_date,
+    SELECT t.id, t.user_id, t.family_member_id, t.file_name, t.file_path, t.status, t.test_date,
            t.error_message, t.uploaded_at,
            COALESCE(m.cnt, 0) AS markers_count
     FROM blood_tests t
@@ -249,6 +252,26 @@ export async function listBloodTests(userId: string): Promise<BloodTest[]> {
       GROUP BY test_id
     ) m ON m.test_id = t.id
     WHERE t.user_id = ${userId}
+    ORDER BY COALESCE(t.test_date::timestamptz, t.uploaded_at) DESC
+  `;
+  return rows.map(toBloodTest);
+}
+
+export async function getBloodTestsForFamilyMember(
+  familyMemberId: number,
+  userId: string,
+): Promise<BloodTest[]> {
+  const rows = await neonSql`
+    SELECT t.id, t.user_id, t.family_member_id, t.file_name, t.file_path, t.status, t.test_date,
+           t.error_message, t.uploaded_at,
+           COALESCE(m.cnt, 0) AS markers_count
+    FROM blood_tests t
+    LEFT JOIN (
+      SELECT test_id, COUNT(*)::int AS cnt
+      FROM blood_markers
+      GROUP BY test_id
+    ) m ON m.test_id = t.id
+    WHERE t.family_member_id = ${familyMemberId} AND t.user_id = ${userId}
     ORDER BY COALESCE(t.test_date::timestamptz, t.uploaded_at) DESC
   `;
   return rows.map(toBloodTest);

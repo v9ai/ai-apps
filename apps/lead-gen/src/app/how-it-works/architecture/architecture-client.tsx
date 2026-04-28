@@ -26,7 +26,6 @@ import {
   Shield,
   Search,
   Brain,
-  Users,
   Mail,
   Server,
   Cpu,
@@ -45,7 +44,6 @@ import {
   Activity,
   HardDrive,
   Workflow,
-  Bot,
 } from "lucide-react";
 import { Badge, Flex, Heading, Text, Card, Code, Separator } from "@radix-ui/themes";
 import Link from "next/link";
@@ -318,22 +316,14 @@ const s9Edges: Edge[] = [
   { id: "s9-d", source: "lg-endpoint", target: "lg-deploy",   ...edgeDefaults, style: { ...edgeDefaults.style, stroke: "var(--violet-8)" } },
 ];
 
-// ── Stage 10: agent_teams ────────────────────────────────────────────
+// ── Stage 10: control_plane ──────────────────────────────────────────
 
 const s10Nodes: Node[] = [
-  { id: "at-improve",  type: "agent", position: { x: 0,   y: 0   }, data: { label: "improve-* team",  sublabel: "pipeline · discover · classify · skills",  icon: Bot,           color: "var(--violet-9)" } },
-  { id: "at-codefix",  type: "agent", position: { x: 0,   y: 90  }, data: { label: "codefix-* team",  sublabel: "mine → audit → evolve → apply → verify",    icon: CodeIcon,       color: "var(--amber-9)" } },
-  { id: "at-pipeline", type: "agent", position: { x: 0,   y: 180 }, data: { label: "pipeline-* team", sublabel: "discover → enrich → contacts → outreach",   icon: Workflow,       color: "var(--green-9)" } },
-  { id: "at-research", type: "agent", position: { x: 0,   y: 270 }, data: { label: "research-* team", sublabel: "analyst · hiring · icp · debate protocol",  icon: Users,          color: "var(--blue-9)" } },
-  { id: "at-hook",     type: "agent", position: { x: 360, y: 90  }, data: { label: "stop_hook.py",    sublabel: "session score → improvement_queue.json",    icon: Inbox,          color: "var(--red-9)" } },
-  { id: "at-strategy", type: "agent", position: { x: 360, y: 180 }, data: { label: "strategy-enforcer", sublabel: "eval-first · grounding-first",             icon: Shield,         color: "var(--amber-9)" } },
+  { id: "at-hook",     type: "agent", position: { x: 0,   y: 0 }, data: { label: "stop_hook.py",    sublabel: "session score → improvement_queue.json", icon: Inbox,  color: "var(--red-9)" } },
+  { id: "at-strategy", type: "agent", position: { x: 340, y: 0 }, data: { label: "strategy-enforcer", sublabel: "eval-first · grounding-first",          icon: Shield, color: "var(--amber-9)" } },
 ];
 const s10Edges: Edge[] = [
-  { id: "s10-a", source: "at-improve",  target: "at-hook",     ...edgeDefaults, animated: true, style: { ...edgeDefaults.style, stroke: "var(--red-8)" } },
-  { id: "s10-b", source: "at-codefix",  target: "at-hook",     ...edgeDefaults, animated: true, style: { ...edgeDefaults.style, stroke: "var(--red-8)" } },
-  { id: "s10-c", source: "at-pipeline", target: "at-strategy", ...edgeDefaults, style: { ...edgeDefaults.style, stroke: "var(--amber-8)" } },
-  { id: "s10-d", source: "at-research", target: "at-strategy", ...edgeDefaults, style: { ...edgeDefaults.style, stroke: "var(--amber-8)" } },
-  { id: "s10-e", source: "at-hook",     target: "at-strategy", ...edgeDefaults, style: { ...edgeDefaults.style, stroke: "var(--amber-8)" } },
+  { id: "s10-e", source: "at-hook", target: "at-strategy", ...edgeDefaults, style: { ...edgeDefaults.style, stroke: "var(--amber-8)" } },
 ];
 
 // ── Stage Definitions ────────────────────────────────────────────────
@@ -394,10 +384,10 @@ const stages = [
     nodes: s9Nodes, edges: s9Edges, height: 320,
   },
   {
-    graphName: "agent_teams",
-    description: "Four Claude Code skill teams are the control plane — 20 SKILL.md files across .claude/skills/: improve-* (5 skills, /improve — self-improvement toward a remote AI role), codefix-* (6 skills, /codefix — code quality with mine → audit → evolve/apply → verify pipeline and hard caps of 3 edits + 2 evolutions per cycle), pipeline-* (6 skills, /agents pipeline — discover → enrich → contacts + qa → outreach with plan-approval gate), research-* (3 skills, /agents research — competing-hypotheses debate). stop_hook.py scores every session on four dimensions via claude-haiku-4-5 and enqueues sub-threshold runs (CC_IMPROVE_THRESHOLD default 0.65) into ~/.claude/state/improvement_queue.json, which the next /improve cycle drains. strategy-enforcer.ts runs seven rules against staged changes (eval-first, grounding-first, taxonomy, multi-model, spec-driven, observability, HITL). Phase labels emerge from real data and vary per team: BUILDING→OPTIMIZING→APPLYING→INTERVIEWING for improve, IMPROVEMENT→SATURATION→COLLAPSE_RISK for codefix, BUILDING→FLOWING→BOTTLENECK→SATURATED→DEGRADED for pipeline.",
-    pattern: "Phase-aware orchestration + emergent alignment",
-    nodes: s10Nodes, edges: s10Edges, height: 400,
+    graphName: "control_plane",
+    description: "Two governance hooks bracket every change. stop_hook.py runs after each Claude Code session, scores it on four dimensions via claude-haiku-4-5, and enqueues sub-threshold runs (CC_IMPROVE_THRESHOLD default 0.65) into ~/.claude/state/improvement_queue.json for later inspection. strategy-enforcer.ts in src/agents/ scans staged changes against seven rules (eval-first, grounding-first, taxonomy, multi-model, spec-driven, observability, HITL) and returns BLOCKING + WARNING violations — Grounding-First fires most, blocking prompts that emit jsonb without a Pydantic/Zod schema.",
+    pattern: "Session-end scoring + pre-commit grounding",
+    nodes: s10Nodes, edges: s10Edges, height: 180,
   },
 ];
 

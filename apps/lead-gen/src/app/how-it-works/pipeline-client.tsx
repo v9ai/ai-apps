@@ -1109,155 +1109,6 @@ function TechFoundations() {
   );
 }
 
-// ── Agent Teams ──────────────────────────────────────────────────────────────
-
-type AgentTeam = {
-  slug: string;
-  name: string;
-  color: "violet" | "cyan" | "green" | "amber";
-  command: string;
-  mission: string;
-  agents: string[];
-  stateFile: string;
-  phases: string[];
-  graph: string;
-};
-
-const agentTeams: AgentTeam[] = [
-  {
-    slug: "pipeline",
-    name: "Pipeline Team",
-    color: "violet",
-    command: "/agents pipeline",
-    mission:
-      "Runs the full B2B batch cycle — discover → enrich → contacts → outreach — coordinated by pipeline-meta with phase-aware throttling.",
-    agents: ["pipeline-meta", "pipeline-discover", "pipeline-enrich", "pipeline-contacts", "pipeline-outreach", "pipeline-qa"],
-    stateFile: "~/.claude/state/pipeline-meta-state.json",
-    phases: ["BUILDING", "FLOWING", "BOTTLENECK", "SATURATED", "DEGRADED"],
-    graph: `T1: discover       (no deps)
-T2: enrich         addBlockedBy: [T1]
-T3: contacts       addBlockedBy: [T2]
-T4: outreach       addBlockedBy: [T3]
-T5: qa-audit       addBlockedBy: [T2]   # parallel`,
-  },
-  {
-    slug: "research",
-    name: "Research Squad",
-    color: "cyan",
-    command: "/agents research {company}",
-    mission:
-      "Per-company investigation using a competing-hypotheses debate protocol — agents challenge each other's claims and synthesize a GO / NO-GO / NEEDS-MORE-INFO verdict.",
-    agents: ["research-analyst", "research-hiring", "research-icp"],
-    stateFile: "~/.claude/state/research-{slug}.json",
-    phases: ["per-target (no phases)"],
-    graph: `research-analyst ──┐
-research-hiring  ──┼→ icp-matcher → debate → verdict
-research-icp     ──┘`,
-  },
-  {
-    slug: "codefix",
-    name: "Codefix Team",
-    color: "green",
-    command: "/agents codefix",
-    mission:
-      "Autonomous codebase self-improvement: mine session logs, audit files, evolve skills, apply safe patches, verify, coordinate.",
-    agents: ["codefix-mine", "codefix-audit", "codefix-evolve", "codefix-apply", "codefix-verify", "codefix-meta"],
-    stateFile: "~/.claude/state/codefix-meta-state.json",
-    phases: ["IMPROVEMENT", "SATURATION", "COLLAPSE_RISK"],
-    graph: `mine → audit → evolve / apply → verify → meta`,
-  },
-  {
-    slug: "improve",
-    name: "Improve Team",
-    color: "amber",
-    command: "/improve",
-    mission:
-      "Job-search self-improvement — tunes classifier + ICP keeping the goal 'get hired for a remote AI engineering role' honest across sessions.",
-    agents: ["improve-mine", "improve-audit", "improve-evolve", "improve-apply", "improve-meta"],
-    stateFile: "~/.claude/state/meta-state.json",
-    phases: ["BUILDING", "OPTIMIZING", "APPLYING", "INTERVIEWING"],
-    graph: `mine → audit → evolve → apply → meta`,
-  },
-];
-
-function AgentTeamsSection() {
-  return (
-    <div>
-      <Flex align="center" gap="2" mb="3">
-        <Users size={16} style={{ color: "var(--violet-9)" }} />
-        <Heading size="5">Agent Teams</Heading>
-      </Flex>
-      <Text size="2" color="gray" as="p" mb="4" style={{ lineHeight: 1.7, maxWidth: 760 }}>
-        Beyond the five-stage data pipeline, lead-gen ships four autonomous agent teams defined as Claude Code skills in <Code size="1">.claude/skills/</Code>. Each team is a dependency graph of specialists coordinated by a <Code size="1">*-meta</Code> brain, dispatched via the unified <Code size="1">/agents</Code> command. Teams write JSON state to <Code size="1">~/.claude/state/</Code> between runs, so cycles are resumable and observable across sessions.
-      </Text>
-
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 12 }}>
-        {agentTeams.map((team) => (
-          <Card key={team.slug} style={{ background: "var(--gray-2)", borderLeft: `3px solid var(--${team.color}-9)` }}>
-            <Flex align="baseline" justify="between" mb="1" gap="2" wrap="wrap">
-              <Heading size="3">{team.name}</Heading>
-              <Badge variant="soft" size="1" color={team.color}>{team.agents.length} agents</Badge>
-            </Flex>
-            <Text size="2" color="gray" as="p" mb="3" style={{ lineHeight: 1.6 }}>{team.mission}</Text>
-            <Flex direction="column" gap="2" mb="3">
-              <Flex align="center" gap="2" wrap="wrap">
-                <Text size="1" color="gray" style={{ textTransform: "uppercase", letterSpacing: "0.06em", minWidth: 60 }}>trigger</Text>
-                <Code size="1">{team.command}</Code>
-              </Flex>
-              <Flex align="center" gap="2" wrap="wrap">
-                <Text size="1" color="gray" style={{ textTransform: "uppercase", letterSpacing: "0.06em", minWidth: 60 }}>state</Text>
-                <Code size="1" style={{ fontSize: 10 }}>{team.stateFile}</Code>
-              </Flex>
-            </Flex>
-            <Flex gap="1" wrap="wrap" mb="3">
-              {team.agents.map((a) => <Code key={a} size="1" style={{ fontSize: 10 }}>{a}</Code>)}
-            </Flex>
-            <pre style={{
-              padding: 10, borderRadius: 4, margin: 0,
-              background: "var(--gray-1)", border: `1px solid var(--${team.color}-a5)`,
-              fontSize: 11, fontFamily: "var(--code-font-family, monospace)",
-              color: `var(--${team.color}-11)`, overflow: "auto", lineHeight: 1.55,
-            }}>{team.graph}</pre>
-            <Flex gap="1" wrap="wrap" mt="3">
-              {team.phases.map((p) => <Badge key={p} variant="outline" size="1">{p}</Badge>)}
-            </Flex>
-          </Card>
-        ))}
-      </div>
-
-      <Card mt="4" style={{ background: "var(--cyan-2)", borderLeft: "3px solid var(--cyan-9)" }}>
-        <Flex align="center" gap="2" mb="2" wrap="wrap">
-          <Badge variant="soft" color="cyan" size="1">Research Squad only</Badge>
-          <Heading size="3">Competing-Hypotheses Debate Protocol</Heading>
-        </Flex>
-        <Text size="2" as="p" mb="3" style={{ lineHeight: 1.7, color: "var(--gray-11)" }}>
-          Squad agents form explicit hypotheses (H1 / H2 / H3), assign confidence 0.0–1.0, and challenge each other via bidirectional messaging. Each agent must actively seek disconfirming evidence and flag data gaps. The orchestrator synthesizes a verdict only after the debate settles or a silence timeout fires. Verdict rules: <Code size="1">icp_match ≥ 0.7 AND no deal-breakers AND confidence ≥ 0.6 → GO</Code>, any deal-breaker → <Code size="1">NO-GO</Code>, <Code size="1">icp_match ≥ 0.5 AND confidence &lt; 0.6 → NEEDS-MORE-INFO</Code>.
-        </Text>
-        <pre style={{
-          padding: 12, borderRadius: 6, margin: 0,
-          background: "var(--gray-1)", border: "1px solid var(--cyan-a5)",
-          fontSize: 11, fontFamily: "var(--code-font-family, monospace)",
-          color: "var(--cyan-11)", overflow: "auto", lineHeight: 1.55,
-        }}>{`{
-  "agent": "icp_matcher",
-  "company": "acme.ai",
-  "weighted_total": 0.78,
-  "deal_breakers": [],
-  "hypotheses": [{
-    "claim": "Company is a good ICP fit",
-    "evidence_for":     ["remote-first careers page", "Series B AI product"],
-    "evidence_against": ["no public roadmap for AI roles"],
-    "confidence": 0.72,
-    "challenged": true,
-    "resolution": "analyst confirmed AI team via engineering blog"
-  }],
-  "verdict": "GO"
-}`}</pre>
-      </Card>
-    </div>
-  );
-}
-
 // ── Backend & Local Inference ────────────────────────────────────────────────
 
 const langgraphGraphs: { name: string; purpose: string }[] = [
@@ -1547,7 +1398,6 @@ if (hasInsertOrUpdate) {
 const tocSections = [
   { id: "pipeline", label: "Pipeline Diagrams", icon: "1–5" },
   { id: "deep-dive", label: "Deep Dive", icon: `${extraSections.length}` },
-  { id: "agent-teams", label: "Agent Teams", icon: `${agentTeams.length}` },
   { id: "backend-inference", label: "Backend & Inference", icon: "2" },
   { id: "technical", label: "Technical Details", icon: `${technicalDetails.length}` },
   { id: "strategy", label: "Strategy & Evaluation", icon: `${metaApproaches.length}` },
@@ -1691,11 +1541,6 @@ export function PipelineClient() {
       <Separator size="4" my="7" />
       <section id="deep-dive">
         <DeepDiveSections />
-      </section>
-
-      <Separator size="4" my="7" />
-      <section id="agent-teams">
-        <AgentTeamsSection />
       </section>
 
       <Separator size="4" my="7" />

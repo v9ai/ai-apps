@@ -18,7 +18,7 @@ import {
   AlertDialog,
   Separator,
 } from "@radix-ui/themes";
-import { ArrowLeftIcon, ExclamationTriangleIcon, Pencil1Icon, TrashIcon } from "@radix-ui/react-icons";
+import { ArrowLeftIcon, ExclamationTriangleIcon, EyeOpenIcon, Pencil1Icon, TrashIcon } from "@radix-ui/react-icons";
 import { useRouter, useParams } from "next/navigation";
 import NextLink from "next/link";
 import dynamic from "next/dynamic";
@@ -71,6 +71,14 @@ function getRelationshipColor(relationship: string | null | undefined) {
   return (RELATIONSHIP_COLORS[relationship?.toLowerCase() ?? ""] ??
     "gray") as any;
 }
+
+const BLOOD_TEST_STATUS_COLOR: Record<string, "gray" | "amber" | "green" | "red"> = {
+  pending: "gray",
+  uploaded: "gray",
+  processing: "amber",
+  completed: "green",
+  failed: "red",
+};
 
 function getStatusColor(status: string) {
   switch (status.toLowerCase()) {
@@ -587,6 +595,89 @@ function FamilyMemberContent() {
 
       {/* Family documents (migrated from agentic-healthcare; hidden when empty) */}
       <FamilyDocumentsSection familyMemberId={memberId} />
+
+      {/* Blood Tests */}
+      <Card>
+        <Flex direction="column" gap="3" p="4">
+          <Flex justify="between" align="center">
+            <Heading size="4">
+              Blood Tests ({(member.bloodTests ?? []).length})
+            </Heading>
+            {isOwner && (
+              <Button variant="soft" size="2" asChild>
+                <NextLink href="/blood-tests">Upload</NextLink>
+              </Button>
+            )}
+          </Flex>
+          <Separator size="4" />
+          {(member.bloodTests ?? []).length === 0 ? (
+            <Text size="2" color="gray">
+              No blood tests linked yet.
+            </Text>
+          ) : (
+            <Flex direction="column" gap="2">
+              {(member.bloodTests ?? []).map((t) => (
+                <Flex
+                  key={t.id}
+                  justify="between"
+                  align="center"
+                  p="2"
+                  style={{
+                    borderRadius: "var(--radius-2)",
+                    background: "var(--gray-a2)",
+                  }}
+                >
+                  <Flex direction="column" gap="1" style={{ minWidth: 0, flex: 1 }}>
+                    <Flex gap="2" align="center" wrap="wrap">
+                      <Text size="2" weight="medium">
+                        {t.fileName}
+                      </Text>
+                      <Badge
+                        color={BLOOD_TEST_STATUS_COLOR[t.status] ?? "gray"}
+                        variant="soft"
+                        size="1"
+                      >
+                        {t.status}
+                      </Badge>
+                      {t.markersCount > 0 && (
+                        <Badge color="blue" variant="soft" size="1">
+                          {t.markersCount} marker
+                          {t.markersCount !== 1 ? "s" : ""}
+                        </Badge>
+                      )}
+                    </Flex>
+                    <Flex gap="3" wrap="wrap">
+                      {t.testDate && (
+                        <Text size="1" color="gray">
+                          Test: {t.testDate}
+                        </Text>
+                      )}
+                      <Text size="1" color="gray">
+                        Uploaded {new Date(t.uploadedAt).toLocaleDateString()}
+                      </Text>
+                    </Flex>
+                  </Flex>
+                  <Button
+                    asChild
+                    variant="ghost"
+                    color="gray"
+                    size="1"
+                    aria-label="View blood test"
+                  >
+                    <a
+                      href={`/api/healthcare/blood-test-file/${t.id}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <EyeOpenIcon />
+                    </a>
+                  </Button>
+                </Flex>
+              ))}
+            </Flex>
+          )}
+        </Flex>
+      </Card>
 
       {/* Goals */}
       <Card>

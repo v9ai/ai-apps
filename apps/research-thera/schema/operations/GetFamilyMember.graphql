@@ -92,5 +92,13 @@ query GetFamilyMember($id: Int, $slug: String) {
         lastName
       }
     }
+    bloodTests {
+      id
+      fileName
+      status
+      testDate
+      uploadedAt
+      markersCount
+    }
   }
 }

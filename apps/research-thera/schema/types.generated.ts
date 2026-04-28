@@ -240,6 +240,7 @@ export type BehaviorObservationType =
 export type BloodTest = {
   __typename?: 'BloodTest';
   errorMessage?: Maybe<Scalars['String']['output']>;
+  familyMemberId?: Maybe<Scalars['Int']['output']>;
   fileName: Scalars['String']['output'];
   filePath: Scalars['String']['output'];
   id: Scalars['ID']['output'];
@@ -1099,6 +1100,7 @@ export type FamilyMember = {
   allergies?: Maybe<Scalars['String']['output']>;
   behaviorObservations: Array<BehaviorObservation>;
   bio?: Maybe<Scalars['String']['output']>;
+  bloodTests: Array<BloodTest>;
   createdAt: Scalars['String']['output'];
   dateOfBirth?: Maybe<Scalars['String']['output']>;
   email?: Maybe<Scalars['String']['output']>;
@@ -4423,6 +4425,7 @@ export type BehaviorObservationTypeResolvers = EnumResolverSignature<{ AVOIDANCE
 
 export type BloodTestResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['BloodTest'] = ResolversParentTypes['BloodTest']> = {
   errorMessage?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  familyMemberId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   fileName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   filePath?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
@@ -5009,6 +5012,7 @@ export type FamilyMemberResolvers<ContextType = GraphQLContext, ParentType exten
   allergies?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   behaviorObservations?: Resolver<Array<ResolversTypes['BehaviorObservation']>, ParentType, ContextType, Partial<FamilyMemberbehaviorObservationsArgs>>;
   bio?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  bloodTests?: Resolver<Array<ResolversTypes['BloodTest']>, ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   dateOfBirth?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   email?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;

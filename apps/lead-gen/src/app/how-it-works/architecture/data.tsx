@@ -161,8 +161,6 @@ export const stats: Stat[] = [
   { number: "<100ms", label: "Title-based authority scoring inside resolvers (no cloud LLM call)" },
   { number: "0", label: "Per-contact DNS records — one MX catch-all on vadim.blog routes all replies" },
   { number: "7", label: "Resend webhook event types handled (sent, delivered, bounced, complained, opened, clicked, received)" },
-  { number: "20", label: "Claude Code team skills: improve-* (5) + codefix-* (6) + pipeline-* (6) + research-* (3)" },
-  { number: "3", label: "Team orchestrator commands: /improve, /codefix, /agents (pipeline | research)" },
   { number: "7", label: "Strategy-enforcer rules (eval, grounding, taxonomy, multi-model, spec, observability, HITL)" },
 ];
 
@@ -183,7 +181,7 @@ export const technicalDetails: TechnicalDetail[] = [
       { label: "7. contacts_ml", value: "NeverBounce verify + BGE-M3 embeddings + LoRA persona tier on pgvector HNSW", metadata: { fast_path: "<100ms", train: "MLX" } },
       { label: "8. outreach_email", value: "Resend outbound + Svix inbound webhook + CPN forwarding alias", metadata: { threading: "In-Reply-To", alias: "{x}@vadim.blog" } },
       { label: "9. langgraph_backend", value: "FastAPI + Uvicorn :7860 + AsyncPostgresSaver on Neon; same code under langgraph dev :8002", metadata: { graphs: "22", endpoint: "/runs/wait", deploy: "Cloudflare Workers" } },
-      { label: "10. agent_teams", value: "4 Claude Code teams (improve / codefix / pipeline / research) + stop_hook scoring + strategy-enforcer gate", metadata: { skills: "20", hook: "stop_hook.py", rules: "7" } },
+      { label: "10. control_plane", value: "stop_hook.py session scoring + strategy-enforcer.ts pre-commit grounding gate", metadata: { hook: "stop_hook.py", rules: "7" } },
     ],
   },
   {
@@ -680,39 +678,7 @@ export const nodeDetails: Record<string, NodeDetail> = {
     color: "violet",
   },
 
-  // Stage 10: agent_teams
-  "at-improve": {
-    description: "Self-improvement team under .claude/skills/improve-*/SKILL.md: improve-mine (Pipeline Monitor — is the pipeline healthy?), improve-audit (Discovery Expander — find more AI-engineering sources), improve-evolve (Classifier Tuner — reduce missed remote-global matches), improve-apply (Skill Optimizer — better AI/ML taxonomy + extraction), improve-meta (Strategy Brain — coordinate toward the goal: get hired). Invoked by /improve [status|discover|classify|skills]; meta reads all sibling state files in ~/.claude/state/ and emits action-plan.json with a phase label.",
-    tech: [{ name: "5 skills" }, { name: "/improve orchestrator" }, { name: "phase-aware" }],
-    dataIn: "jobs pipeline state + session transcripts",
-    dataOut: "~/.claude/state/meta-state.json + action-plan.json",
-    insight: "Phase labels are team-specific: this team uses BUILDING (<5 AI jobs/week) → OPTIMIZING → APPLYING → INTERVIEWING, which is goal-shaped rather than code-shaped. The Strategy Brain reasons in terms of 'does this help Vadim get hired?', not 'is this a clean refactor?'.",
-    color: "violet",
-  },
-  "at-codefix": {
-    description: "Codebase quality team under .claude/skills/codefix-*/SKILL.md: codefix-mine (mine transcripts for patterns), codefix-audit (file:line findings), codefix-evolve (improve SKILL.md + CLAUDE.md), codefix-apply (perf/types/security/dead-code edits), codefix-verify (builds + regressions), codefix-meta (ROMA/DyTopo/CASTER-grounded coordinator). Pipeline: mine → audit → evolve/apply → verify. Hard caps per /codefix cycle: 3 code changes + 2 skill evolutions; verification is mandatory after every apply.",
-    tech: [{ name: "6 skills" }, { name: "/codefix orchestrator" }, { name: "verification gate" }],
-    dataIn: "session transcripts + audit findings",
-    dataOut: "code edits + skill improvements + verification report",
-    insight: "codefix-meta's phase detection is IMPROVEMENT → SATURATION → COLLAPSE_RISK. COLLAPSE_RISK halts the team entirely when recent edits start regressing; self-limiting is the critical property that keeps the loop from grinding the codebase into dust.",
-    color: "amber",
-  },
-  "at-pipeline": {
-    description: "B2B lead-gen pipeline team under .claude/skills/pipeline-*/SKILL.md: pipeline-meta (Coordinator — batch strategy, ICP targeting), pipeline-discover (Discovery Scout), pipeline-enrich (category + AI tier + ATS + stack), pipeline-contacts (email discovery + verification + scoring), pipeline-outreach (drafting + campaigns, plan-approval required), pipeline-qa (dedup + deliverability + score validation). Invoked by /agents pipeline [discover|enrich|outreach|status]; full cycle is discover → enrich → contacts + qa-audit → outreach.",
-    tech: [{ name: "6 skills" }, { name: "/agents pipeline" }, { name: "plan-approval gate" }],
-    dataIn: "ICP + batch strategy",
-    dataOut: "enriched contacts + draft campaigns",
-    insight: "Phase labels here are BUILDING → FLOWING → BOTTLENECK → SATURATED → DEGRADED. Outreach requires explicit plan approval before any email send — the other stages run autonomously, so the human stays in the loop exactly where it matters (anything that hits an inbox).",
-    color: "green",
-  },
-  "at-research": {
-    description: "Ad-hoc research squad under .claude/skills/research-*/SKILL.md: research-analyst (tech stack, funding, AI adoption), research-hiring (open roles, ATS boards, team growth), research-icp (score against ICP: remote? AI? stage? DM access?). Invoked by /agents research {company} for full competing-hypotheses debate, /agents research batch {c1 c2 ...} for parallel squads with comparative summary, or /agents research score {company} for single-agent ICP scoring.",
-    tech: [{ name: "3 skills" }, { name: "/agents research" }, { name: "competing hypotheses" }],
-    dataIn: "company name / slug",
-    dataOut: "GO / NO-GO / NEEDS-MORE-INFO + outreach strategy",
-    insight: "Debate protocol: agents cross-read each other's findings, challenge weak claims, resolve conflicts, update confidence. Letting them agree is cheaper but worse — forcing adversarial challenge is what makes the verdict actionable rather than sycophantic.",
-    color: "blue",
-  },
+  // Stage 10: control_plane
   "at-hook": {
     description: "stop_hook.py runs after every Claude Code session. It parses the transcript, builds a session summary, and scores it on four dimensions (task_completion, tool_efficiency, skill_adherence, routing_accuracy) via claude-haiku-4-5. If any dimension falls below CC_IMPROVE_THRESHOLD (default 0.65), the session is enqueued atomically (fcntl-locked tmp→rename) into ~/.claude/state/improvement_queue.json. When CC_AUTO_IMPROVE=true, improvement_agent.py is spawned as a detached subprocess to drain the queue and write concrete suggestions under ~/.claude/state/improvements/.",
     tech: [{ name: "stop_hook.py" }, { name: "improvement_agent.py" }, { name: "improvement_queue.json" }, { name: "claude-haiku-4-5" }],

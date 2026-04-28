@@ -6,9 +6,8 @@ Given a product row id, produces a structured product-buyer ICP analysis
 scored across 5 weighted dimensions (segment clarity, buyer persona
 specificity, pain-solution fit, distribution/GTM signal, anti-ICP clarity).
 
-Output shape mirrors `.claude/skills/research-icp/SKILL.md` so the UI and
-deepeval tests can share one schema. See also `src/lib/langgraph-client.ts`
-`DeepICPResult` for the TypeScript mirror.
+See `src/lib/langgraph-client.ts` `DeepICPResult` for the TypeScript mirror
+that the UI and deepeval tests share.
 """
 
 from __future__ import annotations

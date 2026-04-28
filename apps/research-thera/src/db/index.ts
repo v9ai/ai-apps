@@ -48,6 +48,7 @@ import {
   createCheckIn as _createCheckIn,
   getHealthcareSummary as _getHealthcareSummary,
   listBloodTests as _listBloodTests,
+  getBloodTestsForFamilyMember as _getBloodTestsForFamilyMember,
   listMedicalLetters as _listMedicalLetters,
   getMedicalLetter as _getMedicalLetter,
   createMedicalLetter as _createMedicalLetter,
@@ -104,6 +105,7 @@ export {
   _createCheckIn as createCheckIn,
   _getHealthcareSummary as getHealthcareSummary,
   _listBloodTests as listBloodTests,
+  _getBloodTestsForFamilyMember as getBloodTestsForFamilyMember,
   _listMedicalLetters as listMedicalLetters,
   _getMedicalLetter as getMedicalLetter,
   _createMedicalLetter as createMedicalLetter,
@@ -4347,6 +4349,7 @@ export const db = {
   getHealthcareSummary: _getHealthcareSummary,
   // Healthcare — Blood tests
   listBloodTests: _listBloodTests,
+  getBloodTestsForFamilyMember: _getBloodTestsForFamilyMember,
   // Healthcare — Medical letters
   listMedicalLetters: _listMedicalLetters,
   getMedicalLetter: _getMedicalLetter,

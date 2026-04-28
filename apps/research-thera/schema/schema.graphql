@@ -1157,6 +1157,7 @@ type FamilyMember {
   issues: [Issue!]!
   relationships: [Relationship!]!
   affirmations: [Affirmation!]!
+  bloodTests: [BloodTest!]!
 }
 
 input CreateFamilyMemberInput {
@@ -2816,6 +2817,7 @@ type HealthcareMarkerTrendHit {
 type BloodTest {
   id: ID!
   userId: String!
+  familyMemberId: Int
   fileName: String!
   filePath: String!
   status: String!
