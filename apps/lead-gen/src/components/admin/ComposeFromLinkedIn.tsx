@@ -140,6 +140,18 @@ export function ComposeFromLinkedIn({
     setStep("edit");
   };
 
+  const handleUseDraft = () => {
+    if (!draftContent) return;
+    setEditSubject(draftContent.subject);
+    setEditBody(draftContent.body);
+  };
+
+  const handleUseRefined = () => {
+    if (!refinedContent) return;
+    setEditSubject(refinedContent.subject);
+    setEditBody(refinedContent.body);
+  };
+
   const handleCopy = () => {
     navigator.clipboard.writeText(`Subject: ${editSubject}\n\n${editBody}`);
     setCopied(true);
@@ -485,6 +497,90 @@ export function ComposeFromLinkedIn({
               onChange={(e) => setRecipientEmail(e.target.value)}
             />
           </Box>
+
+          {(draftContent || refinedContent) && (
+            <Box
+              style={{
+                background: "var(--gray-a2)",
+                border: "1px solid var(--gray-a4)",
+                borderRadius: 6,
+                padding: "var(--space-3)",
+              }}
+            >
+              <Tabs.Root defaultValue="refined">
+                <Flex justify="between" align="center" mb="2">
+                  <Tabs.List>
+                    <Tabs.Trigger value="refined" disabled={!refinedContent}>
+                      Refined
+                    </Tabs.Trigger>
+                    <Tabs.Trigger value="draft" disabled={!draftContent}>
+                      Draft
+                    </Tabs.Trigger>
+                  </Tabs.List>
+                  <Flex gap="2">
+                    {refinedContent && (
+                      <button
+                        className={button({ variant: "ghost", size: "sm" })}
+                        onClick={handleUseRefined}
+                      >
+                        Use refined
+                      </button>
+                    )}
+                    {draftContent && (
+                      <button
+                        className={button({ variant: "ghost", size: "sm" })}
+                        onClick={handleUseDraft}
+                      >
+                        Use draft instead
+                      </button>
+                    )}
+                  </Flex>
+                </Flex>
+
+                {refinedContent && (
+                  <Tabs.Content value="refined">
+                    <Text size="1" color="gray" weight="bold" as="p" mb="1">
+                      SUBJECT ({refinedContent.subject.length} chars)
+                    </Text>
+                    <Text size="2" weight="medium" as="p" mb="2">
+                      {refinedContent.subject}
+                    </Text>
+                    <Text size="1" color="gray" weight="bold" as="p" mb="1">
+                      BODY
+                    </Text>
+                    <Text
+                      size="2"
+                      as="p"
+                      style={{ whiteSpace: "pre-wrap", lineHeight: "1.6" }}
+                    >
+                      {refinedContent.body}
+                    </Text>
+                  </Tabs.Content>
+                )}
+
+                {draftContent && (
+                  <Tabs.Content value="draft">
+                    <Text size="1" color="gray" weight="bold" as="p" mb="1">
+                      SUBJECT ({draftContent.subject.length} chars)
+                    </Text>
+                    <Text size="2" weight="medium" as="p" mb="2">
+                      {draftContent.subject}
+                    </Text>
+                    <Text size="1" color="gray" weight="bold" as="p" mb="1">
+                      BODY
+                    </Text>
+                    <Text
+                      size="2"
+                      as="p"
+                      style={{ whiteSpace: "pre-wrap", lineHeight: "1.6" }}
+                    >
+                      {draftContent.body}
+                    </Text>
+                  </Tabs.Content>
+                )}
+              </Tabs.Root>
+            </Box>
+          )}
 
           <Box>
             <Text size="1" color="gray" weight="medium" mb="1" as="p">
