@@ -1,22 +1,26 @@
 /**
  * Cloudflare Worker GraphQL gateway for lead-gen.
  *
- * Stack:
- *   - Hono router (HTTP + WS routing)
- *   - Apollo Server v5 + @as-integrations/cloudflare-workers (HTTP /graphql, owned ops)
+ * Stack (mirrors cloudflare/workers-graphql-server template):
+ *   - Hono router (HTTP + WS routing, CORS)
+ *   - Apollo Server v5 + @as-integrations/cloudflare-workers (HTTP /graphql)
+ *   - Apollo Sandbox at GET /graphql (browser only)
  *   - JobPubSub Durable Object (graphql-ws subscription transport)
  *
- * Routes:
- *   - GET  /graphql (Upgrade: websocket) → JobPubSub DO
- *   - POST /graphql                       → owned op?  Apollo : proxy to Vercel
- *   - POST /internal/run-finished         → LangGraph completion webhook (HMAC)
- *   - POST /internal/publish              → fan-in helper from any server (HMAC)
- *   - GET  /healthz                       → liveness
+ * Routes (under graphQLOptions.baseEndpoint, default `/graphql`):
+ *   - GET    (Upgrade: websocket) → JobPubSub DO
+ *   - GET    (Accept: text/html)   → Apollo Sandbox embed
+ *   - POST                          → owned op? Apollo : (forward? proxy : 400)
  *
- * Owned ops execute locally against Neon and never reach Vercel. Anything
- * else (queries/mutations from the rest of the app) is proxied verbatim to
- * the Vercel `/api/graphql` so the migration is incremental — clients can
- * point at the gateway today and we expand the owned set over time.
+ * Internal:
+ *   - POST /internal/run-finished  → LangGraph completion webhook (HMAC)
+ *   - POST /internal/publish       → fan-in helper from any server (HMAC)
+ *   - GET  /healthz                → liveness
+ *
+ * Owned operations execute locally against Neon and never reach Vercel.
+ * Anything else is proxied verbatim to `${ORIGIN}/api/graphql` so the
+ * migration is incremental — clients can point at the gateway today and the
+ * owned set expands over time.
  */
 
 import { Hono } from "hono";
@@ -27,34 +31,18 @@ import { JobPubSub } from "./job-pubsub";
 import { verifyHmac } from "./auth";
 import { apolloHandler } from "./graphql/server";
 import { handleRunFinished } from "./webhooks/run-finished";
+import { graphQLOptions, OWNED_OPS } from "./config";
+import { sandboxHtml } from "./sandbox";
 import type { GatewayEnv } from "./graphql/context";
 
 export { JobPubSub };
 
 const SUBSCRIPTION_DO_NAME = "global";
 
-/**
- * Operation field names served locally by Apollo. Anything else proxies to
- * Vercel — keep this list in sync with the SDL in `src/schema.graphql`.
- */
-const OWNED_OPS = new Set<string>([
-  // Queries
-  "productBySlug",
-  "productIntelRun",
-  "productIntelRuns",
-  // Mutations
-  "analyzeProductPricingAsync",
-  "analyzeProductGTMAsync",
-  "runFullProductIntelAsync",
-]);
-
 const app = new Hono<{ Bindings: GatewayEnv }>();
 
-// CORS for cross-origin browser callers (the Vercel-hosted Next.js frontend).
-// Reflects the request origin so credentialed cookies flow when the gateway
-// is on a sibling subdomain or a different host.
 app.use(
-  "/graphql",
+  graphQLOptions.baseEndpoint,
   cors({
     origin: (origin) => origin ?? "*",
     credentials: true,
@@ -68,37 +56,32 @@ app.use(
   }),
 );
 
-app.all("/graphql", async (c) => {
-  const upgrade = c.req.header("upgrade")?.toLowerCase();
-  if (upgrade === "websocket") {
+app.all(graphQLOptions.baseEndpoint, async (c) => {
+  if (c.req.header("upgrade")?.toLowerCase() === "websocket") {
     const id = c.env.JOB_PUBSUB.idFromName(SUBSCRIPTION_DO_NAME);
     const stub = c.env.JOB_PUBSUB.get(id);
     return stub.fetch(c.req.raw);
   }
 
+  if (c.req.method === "GET") {
+    if (graphQLOptions.enableSandbox && wantsHtml(c.req.header("accept"))) {
+      return c.html(sandboxHtml(graphQLOptions.baseEndpoint));
+    }
+    return forwardOrReject(c.req.raw, c.env);
+  }
+
   if (c.req.method !== "POST") {
-    return proxyToOrigin(c.req.raw, c.env.ORIGIN);
+    return forwardOrReject(c.req.raw, c.env);
   }
 
   const body = await c.req.text();
-  let owned = false;
-  try {
-    const json = JSON.parse(body) as {
-      query?: string;
-      operationName?: string | null;
-    };
-    if (typeof json.query === "string") {
-      owned = isOwnedOperation(json.query, json.operationName ?? null);
-    }
-  } catch {
-    // malformed JSON — let the proxy / origin return its own error
-  }
+  const owned = classifyOwned(body);
 
   const rebuilt = rebuildRequest(c.req.raw, body);
   if (owned) {
     return apolloHandler(rebuilt, c.env, c.executionCtx);
   }
-  return proxyToOrigin(rebuilt, c.env.ORIGIN);
+  return forwardOrReject(rebuilt, c.env);
 });
 
 app.post("/internal/run-finished", (c) =>
@@ -132,6 +115,17 @@ export default {
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 
+function classifyOwned(body: string): boolean {
+  let json: { query?: string; operationName?: string | null };
+  try {
+    json = JSON.parse(body) as { query?: string; operationName?: string | null };
+  } catch {
+    return false;
+  }
+  if (typeof json.query !== "string") return false;
+  return isOwnedOperation(json.query, json.operationName ?? null);
+}
+
 function isOwnedOperation(
   query: string,
   operationName: string | null,
@@ -152,6 +146,16 @@ function isOwnedOperation(
     }
   }
   return false;
+}
+
+async function forwardOrReject(
+  req: Request,
+  env: GatewayEnv,
+): Promise<Response> {
+  if (!graphQLOptions.forwardUnmatchedRequestsToOrigin) {
+    return new Response("Not found", { status: 404 });
+  }
+  return proxyToOrigin(req, env.ORIGIN);
 }
 
 async function proxyToOrigin(req: Request, origin: string): Promise<Response> {
@@ -182,4 +186,9 @@ function rebuildRequest(original: Request, body: string): Request {
     headers: original.headers,
     body,
   });
+}
+
+function wantsHtml(accept: string | undefined | null): boolean {
+  if (!accept) return false;
+  return accept.includes("text/html");
 }
