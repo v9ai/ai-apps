@@ -795,6 +795,23 @@ export type CreateReminderInput = {
   remindAt: Scalars['String']['input'];
 };
 
+export type D1OpportunityItem = {
+  __typename: 'D1OpportunityItem';
+  archived: Scalars['Int']['output'];
+  companyKey: Maybe<Scalars['String']['output']>;
+  companyName: Maybe<Scalars['String']['output']>;
+  createdAt: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  location: Maybe<Scalars['String']['output']>;
+  salary: Maybe<Scalars['String']['output']>;
+  source: Maybe<Scalars['String']['output']>;
+  status: Scalars['String']['output'];
+  tags: Maybe<Scalars['String']['output']>;
+  title: Scalars['String']['output'];
+  updatedAt: Scalars['String']['output'];
+  url: Maybe<Scalars['String']['output']>;
+};
+
 export type DailyJobCount = {
   __typename: 'DailyJobCount';
   date: Scalars['String']['output'];
@@ -1301,17 +1318,6 @@ export type IntelRunAccepted = {
   productId: Scalars['Int']['output'];
   runId: Scalars['ID']['output'];
   status: Scalars['String']['output'];
-};
-
-export type IntelRunProgress = {
-  __typename: 'IntelRunProgress';
-  completedStages: Maybe<Array<Scalars['String']['output']>>;
-  elapsedMs: Maybe<Scalars['Int']['output']>;
-  kind: Scalars['String']['output'];
-  productId: Scalars['Int']['output'];
-  runId: Scalars['ID']['output'];
-  stage: Scalars['String']['output'];
-  subgraphNode: Maybe<Scalars['String']['output']>;
 };
 
 export type IntentDashboard = {
@@ -2111,6 +2117,13 @@ export type MutationVerifyContactEmailArgs = {
   contactId: Scalars['Int']['input'];
 };
 
+export type OpportunitiesPagePayload = {
+  __typename: 'OpportunitiesPagePayload';
+  d1Pending: Array<D1OpportunityItem>;
+  evalReport: Maybe<OpportunityEvalReport>;
+  opportunities: Array<OpportunityListItem>;
+};
+
 export type Opportunity = {
   __typename: 'Opportunity';
   applicationNotes: Maybe<Scalars['String']['output']>;
@@ -2136,6 +2149,60 @@ export type Opportunity = {
   title: Scalars['String']['output'];
   updatedAt: Scalars['String']['output'];
   url: Maybe<Scalars['String']['output']>;
+};
+
+export type OpportunityEvalReport = {
+  __typename: 'OpportunityEvalReport';
+  excludedCount: Scalars['Int']['output'];
+  goldenCount: Scalars['Int']['output'];
+  nullScoreCount: Scalars['Int']['output'];
+  scoring: OpportunityScoringMetrics;
+  sourceBreakdown: Array<OpportunitySourceStat>;
+  timestamp: Scalars['String']['output'];
+};
+
+export type OpportunityListItem = {
+  __typename: 'OpportunityListItem';
+  applicationStatus: Maybe<Scalars['String']['output']>;
+  applied: Scalars['Boolean']['output'];
+  appliedAt: Maybe<Scalars['String']['output']>;
+  companyKey: Maybe<Scalars['String']['output']>;
+  companyName: Maybe<Scalars['String']['output']>;
+  contactFirstName: Maybe<Scalars['String']['output']>;
+  contactLastName: Maybe<Scalars['String']['output']>;
+  contactPosition: Maybe<Scalars['String']['output']>;
+  contactSlug: Maybe<Scalars['String']['output']>;
+  createdAt: Scalars['String']['output'];
+  firstSeen: Maybe<Scalars['String']['output']>;
+  id: Scalars['String']['output'];
+  rewardText: Maybe<Scalars['String']['output']>;
+  rewardUsd: Maybe<Scalars['Float']['output']>;
+  score: Maybe<Scalars['Int']['output']>;
+  source: Maybe<Scalars['String']['output']>;
+  status: Scalars['String']['output'];
+  tags: Array<Scalars['String']['output']>;
+  title: Scalars['String']['output'];
+  url: Maybe<Scalars['String']['output']>;
+};
+
+export type OpportunityScoringMetrics = {
+  __typename: 'OpportunityScoringMetrics';
+  accuracy: Scalars['Float']['output'];
+  aucRoc: Scalars['Float']['output'];
+  f1: Scalars['Float']['output'];
+  ndcgAt10: Scalars['Float']['output'];
+  precision: Scalars['Float']['output'];
+  recall: Scalars['Float']['output'];
+};
+
+export type OpportunitySourceStat = {
+  __typename: 'OpportunitySourceStat';
+  avgScore: Scalars['Float']['output'];
+  negative: Scalars['Int']['output'];
+  positive: Scalars['Int']['output'];
+  precision: Scalars['Float']['output'];
+  source: Scalars['String']['output'];
+  total: Scalars['Int']['output'];
 };
 
 export type PreviewEmailInput = {
@@ -2271,6 +2338,7 @@ export type Query = {
   linkedinPosts: Array<LinkedInPost>;
   /** ML model health and stats */
   mlStats: MlStats;
+  opportunitiesPage: OpportunitiesPagePayload;
   opportunityByUrl: Maybe<Opportunity>;
   product: Maybe<Product>;
   productBySlug: Maybe<Product>;
@@ -3529,16 +3597,8 @@ export type SourceType =
 
 export type Subscription = {
   __typename: 'Subscription';
-  /** Per-node streaming progress for a running IntelRun. Pushed by graph nodes via the gateway as each stage starts. */
-  intelRunProgress: IntelRunProgress;
   /** Live status of IntelRuns for a product. Pushed by the lead-gen GraphQL gateway when langgraph webhooks update run state. Replaces 2s polling. */
   intelRunStatus: IntelRun;
-};
-
-
-export type SubscriptionIntelRunProgressArgs = {
-  kind?: InputMaybe<Scalars['String']['input']>;
-  productId: Scalars['Int']['input'];
 };
 
 

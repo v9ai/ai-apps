@@ -726,6 +726,22 @@ input CreateReminderInput {
   remindAt: String!
 }
 
+type D1OpportunityItem {
+  archived: Int!
+  companyKey: String
+  companyName: String
+  createdAt: String!
+  id: String!
+  location: String
+  salary: String
+  source: String
+  status: String!
+  tags: String
+  title: String!
+  updatedAt: String!
+  url: String
+}
+
 type DailyJobCount {
   date: String!
   newJobs24h: Int!
@@ -1199,16 +1215,6 @@ type IntelRunAccepted {
   status: String!
 }
 
-type IntelRunProgress {
-  completedStages: [String!]
-  elapsedMs: Int
-  kind: String!
-  productId: Int!
-  runId: ID!
-  stage: String!
-  subgraphNode: String
-}
-
 type IntentDashboard {
   companiesWithIntent: Int!
   recentSignals: [IntentSignal!]!
@@ -1458,6 +1464,12 @@ type Mutation {
   verifyContactEmail(contactId: Int!): VerifyEmailResult!
 }
 
+type OpportunitiesPagePayload {
+  d1Pending: [D1OpportunityItem!]!
+  evalReport: OpportunityEvalReport
+  opportunities: [OpportunityListItem!]!
+}
+
 type Opportunity {
   applicationNotes: String
   applicationStatus: String
@@ -1482,6 +1494,56 @@ type Opportunity {
   title: String!
   updatedAt: String!
   url: String
+}
+
+type OpportunityEvalReport {
+  excludedCount: Int!
+  goldenCount: Int!
+  nullScoreCount: Int!
+  scoring: OpportunityScoringMetrics!
+  sourceBreakdown: [OpportunitySourceStat!]!
+  timestamp: String!
+}
+
+type OpportunityListItem {
+  applicationStatus: String
+  applied: Boolean!
+  appliedAt: String
+  companyKey: String
+  companyName: String
+  contactFirstName: String
+  contactLastName: String
+  contactPosition: String
+  contactSlug: String
+  createdAt: String!
+  firstSeen: String
+  id: String!
+  rewardText: String
+  rewardUsd: Float
+  score: Int
+  source: String
+  status: String!
+  tags: [String!]!
+  title: String!
+  url: String
+}
+
+type OpportunityScoringMetrics {
+  accuracy: Float!
+  aucRoc: Float!
+  f1: Float!
+  ndcgAt10: Float!
+  precision: Float!
+  recall: Float!
+}
+
+type OpportunitySourceStat {
+  avgScore: Float!
+  negative: Int!
+  positive: Int!
+  precision: Float!
+  source: String!
+  total: Int!
 }
 
 input PreviewEmailInput {
@@ -1615,6 +1677,7 @@ type Query {
   linkedinPosts(companyId: Int, limit: Int, offset: Int, type: LinkedInPostType): [LinkedInPost!]!
   """ML model health and stats"""
   mlStats: MLStats!
+  opportunitiesPage: OpportunitiesPagePayload!
   opportunityByUrl(url: String!): Opportunity
   product(id: Int!): Product
   productBySlug(slug: String!): Product
@@ -2364,10 +2427,6 @@ enum SourceType {
 }
 
 type Subscription {
-  """
-  Per-node streaming progress for a running IntelRun. Pushed by graph nodes via the gateway as each stage starts.
-  """
-  intelRunProgress(kind: String, productId: Int!): IntelRunProgress!
   """
   Live status of IntelRuns for a product. Pushed by the lead-gen GraphQL gateway when langgraph webhooks update run state. Replaces 2s polling.
   """

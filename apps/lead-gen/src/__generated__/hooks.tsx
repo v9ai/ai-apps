@@ -798,6 +798,23 @@ export type CreateReminderInput = {
   remindAt: Scalars['String']['input'];
 };
 
+export type D1OpportunityItem = {
+  __typename?: 'D1OpportunityItem';
+  archived: Scalars['Int']['output'];
+  companyKey: Maybe<Scalars['String']['output']>;
+  companyName: Maybe<Scalars['String']['output']>;
+  createdAt: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  location: Maybe<Scalars['String']['output']>;
+  salary: Maybe<Scalars['String']['output']>;
+  source: Maybe<Scalars['String']['output']>;
+  status: Scalars['String']['output'];
+  tags: Maybe<Scalars['String']['output']>;
+  title: Scalars['String']['output'];
+  updatedAt: Scalars['String']['output'];
+  url: Maybe<Scalars['String']['output']>;
+};
+
 export type DailyJobCount = {
   __typename?: 'DailyJobCount';
   date: Scalars['String']['output'];
@@ -1304,17 +1321,6 @@ export type IntelRunAccepted = {
   productId: Scalars['Int']['output'];
   runId: Scalars['ID']['output'];
   status: Scalars['String']['output'];
-};
-
-export type IntelRunProgress = {
-  __typename?: 'IntelRunProgress';
-  completedStages: Maybe<Array<Scalars['String']['output']>>;
-  elapsedMs: Maybe<Scalars['Int']['output']>;
-  kind: Scalars['String']['output'];
-  productId: Scalars['Int']['output'];
-  runId: Scalars['ID']['output'];
-  stage: Scalars['String']['output'];
-  subgraphNode: Maybe<Scalars['String']['output']>;
 };
 
 export type IntentDashboard = {
@@ -2114,6 +2120,13 @@ export type MutationVerifyContactEmailArgs = {
   contactId: Scalars['Int']['input'];
 };
 
+export type OpportunitiesPagePayload = {
+  __typename?: 'OpportunitiesPagePayload';
+  d1Pending: Array<D1OpportunityItem>;
+  evalReport: Maybe<OpportunityEvalReport>;
+  opportunities: Array<OpportunityListItem>;
+};
+
 export type Opportunity = {
   __typename?: 'Opportunity';
   applicationNotes: Maybe<Scalars['String']['output']>;
@@ -2139,6 +2152,60 @@ export type Opportunity = {
   title: Scalars['String']['output'];
   updatedAt: Scalars['String']['output'];
   url: Maybe<Scalars['String']['output']>;
+};
+
+export type OpportunityEvalReport = {
+  __typename?: 'OpportunityEvalReport';
+  excludedCount: Scalars['Int']['output'];
+  goldenCount: Scalars['Int']['output'];
+  nullScoreCount: Scalars['Int']['output'];
+  scoring: OpportunityScoringMetrics;
+  sourceBreakdown: Array<OpportunitySourceStat>;
+  timestamp: Scalars['String']['output'];
+};
+
+export type OpportunityListItem = {
+  __typename?: 'OpportunityListItem';
+  applicationStatus: Maybe<Scalars['String']['output']>;
+  applied: Scalars['Boolean']['output'];
+  appliedAt: Maybe<Scalars['String']['output']>;
+  companyKey: Maybe<Scalars['String']['output']>;
+  companyName: Maybe<Scalars['String']['output']>;
+  contactFirstName: Maybe<Scalars['String']['output']>;
+  contactLastName: Maybe<Scalars['String']['output']>;
+  contactPosition: Maybe<Scalars['String']['output']>;
+  contactSlug: Maybe<Scalars['String']['output']>;
+  createdAt: Scalars['String']['output'];
+  firstSeen: Maybe<Scalars['String']['output']>;
+  id: Scalars['String']['output'];
+  rewardText: Maybe<Scalars['String']['output']>;
+  rewardUsd: Maybe<Scalars['Float']['output']>;
+  score: Maybe<Scalars['Int']['output']>;
+  source: Maybe<Scalars['String']['output']>;
+  status: Scalars['String']['output'];
+  tags: Array<Scalars['String']['output']>;
+  title: Scalars['String']['output'];
+  url: Maybe<Scalars['String']['output']>;
+};
+
+export type OpportunityScoringMetrics = {
+  __typename?: 'OpportunityScoringMetrics';
+  accuracy: Scalars['Float']['output'];
+  aucRoc: Scalars['Float']['output'];
+  f1: Scalars['Float']['output'];
+  ndcgAt10: Scalars['Float']['output'];
+  precision: Scalars['Float']['output'];
+  recall: Scalars['Float']['output'];
+};
+
+export type OpportunitySourceStat = {
+  __typename?: 'OpportunitySourceStat';
+  avgScore: Scalars['Float']['output'];
+  negative: Scalars['Int']['output'];
+  positive: Scalars['Int']['output'];
+  precision: Scalars['Float']['output'];
+  source: Scalars['String']['output'];
+  total: Scalars['Int']['output'];
 };
 
 export type PreviewEmailInput = {
@@ -2274,6 +2341,7 @@ export type Query = {
   linkedinPosts: Array<LinkedInPost>;
   /** ML model health and stats */
   mlStats: MlStats;
+  opportunitiesPage: OpportunitiesPagePayload;
   opportunityByUrl: Maybe<Opportunity>;
   product: Maybe<Product>;
   productBySlug: Maybe<Product>;
@@ -3532,16 +3600,8 @@ export type SourceType =
 
 export type Subscription = {
   __typename?: 'Subscription';
-  /** Per-node streaming progress for a running IntelRun. Pushed by graph nodes via the gateway as each stage starts. */
-  intelRunProgress: IntelRunProgress;
   /** Live status of IntelRuns for a product. Pushed by the lead-gen GraphQL gateway when langgraph webhooks update run state. Replaces 2s polling. */
   intelRunStatus: IntelRun;
-};
-
-
-export type SubscriptionIntelRunProgressArgs = {
-  kind?: InputMaybe<Scalars['String']['input']>;
-  productId: Scalars['Int']['input'];
 };
 
 
@@ -4562,6 +4622,11 @@ export type AnalyzeLinkedInPostsMutationVariables = Exact<{
 
 export type AnalyzeLinkedInPostsMutation = { __typename?: 'Mutation', analyzeLinkedInPosts: { __typename?: 'AnalyzePostsResult', success: boolean, analyzed: number, failed: number, errors: Array<string> } };
 
+export type OpportunitiesPageQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type OpportunitiesPageQuery = { __typename?: 'Query', opportunitiesPage: { __typename?: 'OpportunitiesPagePayload', opportunities: Array<{ __typename?: 'OpportunityListItem', id: string, title: string, url: string | null, source: string | null, status: string, rewardText: string | null, rewardUsd: number | null, score: number | null, tags: Array<string>, applied: boolean, appliedAt: string | null, applicationStatus: string | null, firstSeen: string | null, createdAt: string, companyName: string | null, companyKey: string | null, contactFirstName: string | null, contactLastName: string | null, contactSlug: string | null, contactPosition: string | null }>, d1Pending: Array<{ __typename?: 'D1OpportunityItem', id: string, title: string, url: string | null, source: string | null, status: string, tags: string | null, location: string | null, salary: string | null, archived: number, createdAt: string, updatedAt: string, companyName: string | null, companyKey: string | null }>, evalReport: { __typename?: 'OpportunityEvalReport', goldenCount: number, excludedCount: number, nullScoreCount: number, timestamp: string, scoring: { __typename?: 'OpportunityScoringMetrics', accuracy: number, precision: number, recall: number, f1: number, aucRoc: number, ndcgAt10: number }, sourceBreakdown: Array<{ __typename?: 'OpportunitySourceStat', source: string, total: number, positive: number, negative: number, precision: number, avgScore: number }> } | null } };
+
 export type ProductCoreFragment = { __typename?: 'Product', id: number, slug: string, name: string, url: string, domain: string | null, description: string | null, highlights: any | null, icpAnalysis: any | null, icpAnalyzedAt: string | null, pricingAnalysis: any | null, pricingAnalyzedAt: string | null, gtmAnalysis: any | null, gtmAnalyzedAt: string | null, intelReport: any | null, intelReportAt: string | null, positioningAnalysis: any | null, publishedAt: string | null, createdBy: string | null, createdAt: string, updatedAt: string };
 
 export type IntelRunCoreFragment = { __typename?: 'IntelRun', id: string, productId: number, kind: string, status: string, startedAt: string, finishedAt: string | null, error: string | null, output: any | null };
@@ -4622,14 +4687,6 @@ export type IntelRunStatusSubscriptionVariables = Exact<{
 
 
 export type IntelRunStatusSubscription = { __typename?: 'Subscription', intelRunStatus: { __typename?: 'IntelRun', id: string, kind: string, status: string, startedAt: string, finishedAt: string | null, error: string | null } };
-
-export type IntelRunProgressSubscriptionVariables = Exact<{
-  productId: Scalars['Int']['input'];
-  kind?: InputMaybe<Scalars['String']['input']>;
-}>;
-
-
-export type IntelRunProgressSubscription = { __typename?: 'Subscription', intelRunProgress: { __typename?: 'IntelRunProgress', runId: string, productId: number, kind: string, stage: string, subgraphNode: string | null, elapsedMs: number | null, completedStages: Array<string> | null } };
 
 export type UpsertProductMutationVariables = Exact<{
   input: ProductInput;
@@ -8812,6 +8869,106 @@ export function useAnalyzeLinkedInPostsMutation(baseOptions?: Apollo.MutationHoo
 export type AnalyzeLinkedInPostsMutationHookResult = ReturnType<typeof useAnalyzeLinkedInPostsMutation>;
 export type AnalyzeLinkedInPostsMutationResult = Apollo.MutationResult<AnalyzeLinkedInPostsMutation>;
 export type AnalyzeLinkedInPostsMutationOptions = Apollo.BaseMutationOptions<AnalyzeLinkedInPostsMutation, AnalyzeLinkedInPostsMutationVariables>;
+export const OpportunitiesPageDocument = gql`
+    query OpportunitiesPage {
+  opportunitiesPage {
+    opportunities {
+      id
+      title
+      url
+      source
+      status
+      rewardText
+      rewardUsd
+      score
+      tags
+      applied
+      appliedAt
+      applicationStatus
+      firstSeen
+      createdAt
+      companyName
+      companyKey
+      contactFirstName
+      contactLastName
+      contactSlug
+      contactPosition
+    }
+    d1Pending {
+      id
+      title
+      url
+      source
+      status
+      tags
+      location
+      salary
+      archived
+      createdAt
+      updatedAt
+      companyName
+      companyKey
+    }
+    evalReport {
+      goldenCount
+      excludedCount
+      nullScoreCount
+      timestamp
+      scoring {
+        accuracy
+        precision
+        recall
+        f1
+        aucRoc
+        ndcgAt10
+      }
+      sourceBreakdown {
+        source
+        total
+        positive
+        negative
+        precision
+        avgScore
+      }
+    }
+  }
+}
+    `;
+
+/**
+ * __useOpportunitiesPageQuery__
+ *
+ * To run a query within a React component, call `useOpportunitiesPageQuery` and pass it any options that fit your needs.
+ * When your component renders, `useOpportunitiesPageQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useOpportunitiesPageQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useOpportunitiesPageQuery(baseOptions?: Apollo.QueryHookOptions<OpportunitiesPageQuery, OpportunitiesPageQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<OpportunitiesPageQuery, OpportunitiesPageQueryVariables>(OpportunitiesPageDocument, options);
+      }
+export function useOpportunitiesPageLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<OpportunitiesPageQuery, OpportunitiesPageQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<OpportunitiesPageQuery, OpportunitiesPageQueryVariables>(OpportunitiesPageDocument, options);
+        }
+// @ts-ignore
+export function useOpportunitiesPageSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<OpportunitiesPageQuery, OpportunitiesPageQueryVariables>): Apollo.UseSuspenseQueryResult<OpportunitiesPageQuery, OpportunitiesPageQueryVariables>;
+export function useOpportunitiesPageSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<OpportunitiesPageQuery, OpportunitiesPageQueryVariables>): Apollo.UseSuspenseQueryResult<OpportunitiesPageQuery | undefined, OpportunitiesPageQueryVariables>;
+export function useOpportunitiesPageSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<OpportunitiesPageQuery, OpportunitiesPageQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<OpportunitiesPageQuery, OpportunitiesPageQueryVariables>(OpportunitiesPageDocument, options);
+        }
+export type OpportunitiesPageQueryHookResult = ReturnType<typeof useOpportunitiesPageQuery>;
+export type OpportunitiesPageLazyQueryHookResult = ReturnType<typeof useOpportunitiesPageLazyQuery>;
+export type OpportunitiesPageSuspenseQueryHookResult = ReturnType<typeof useOpportunitiesPageSuspenseQuery>;
+export type OpportunitiesPageQueryResult = Apollo.QueryResult<OpportunitiesPageQuery, OpportunitiesPageQueryVariables>;
 export const ProductsDocument = gql`
     query Products {
   products {
@@ -9162,43 +9319,6 @@ export function useIntelRunStatusSubscription(baseOptions: Apollo.SubscriptionHo
       }
 export type IntelRunStatusSubscriptionHookResult = ReturnType<typeof useIntelRunStatusSubscription>;
 export type IntelRunStatusSubscriptionResult = Apollo.SubscriptionResult<IntelRunStatusSubscription>;
-export const IntelRunProgressDocument = gql`
-    subscription IntelRunProgress($productId: Int!, $kind: String) {
-  intelRunProgress(productId: $productId, kind: $kind) {
-    runId
-    productId
-    kind
-    stage
-    subgraphNode
-    elapsedMs
-    completedStages
-  }
-}
-    `;
-
-/**
- * __useIntelRunProgressSubscription__
- *
- * To run a query within a React component, call `useIntelRunProgressSubscription` and pass it any options that fit your needs.
- * When your component renders, `useIntelRunProgressSubscription` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useIntelRunProgressSubscription({
- *   variables: {
- *      productId: // value for 'productId'
- *      kind: // value for 'kind'
- *   },
- * });
- */
-export function useIntelRunProgressSubscription(baseOptions: Apollo.SubscriptionHookOptions<IntelRunProgressSubscription, IntelRunProgressSubscriptionVariables> & ({ variables: IntelRunProgressSubscriptionVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useSubscription<IntelRunProgressSubscription, IntelRunProgressSubscriptionVariables>(IntelRunProgressDocument, options);
-      }
-export type IntelRunProgressSubscriptionHookResult = ReturnType<typeof useIntelRunProgressSubscription>;
-export type IntelRunProgressSubscriptionResult = Apollo.SubscriptionResult<IntelRunProgressSubscription>;
 export const UpsertProductDocument = gql`
     mutation UpsertProduct($input: ProductInput!) {
   upsertProduct(input: $input) {

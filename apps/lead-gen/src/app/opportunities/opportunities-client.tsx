@@ -13,30 +13,12 @@ import {
   hideOpportunity,
   hideD1Opportunity,
 } from "./actions";
-import type { D1OpportunityRow } from "@/lib/d1-opportunities";
+import type { OpportunitiesPageQuery } from "@/__generated__/hooks";
 
-type OpportunityRow = {
-  id: string;
-  title: string;
-  url: string | null;
-  source: string | null;
-  status: string;
-  reward_text: string | null;
-  reward_usd: number | null;
-  score: number | null;
-  tags: string | null;
-  applied: boolean;
-  applied_at: string | null;
-  application_status: string | null;
-  first_seen: string | null;
-  created_at: string;
-  company_name: string | null;
-  company_key: string | null;
-  contact_first: string | null;
-  contact_last: string | null;
-  contact_slug: string | null;
-  contact_position: string | null;
-};
+type OpportunitiesPagePayload = OpportunitiesPageQuery["opportunitiesPage"];
+type OpportunityRow = OpportunitiesPagePayload["opportunities"][number];
+type D1Row = OpportunitiesPagePayload["d1Pending"][number];
+type EvalReport = OpportunitiesPagePayload["evalReport"];
 
 const statusColors: Record<string, "green" | "blue" | "orange" | "red" | "gray" | "yellow"> = {
   open: "blue",
@@ -50,9 +32,11 @@ const statusColors: Record<string, "green" | "blue" | "orange" | "red" | "gray" 
 export function OpportunitiesClient({
   opportunities,
   d1Pending,
+  evalReport,
 }: {
   opportunities: OpportunityRow[];
-  d1Pending: D1OpportunityRow[];
+  d1Pending: D1Row[];
+  evalReport: EvalReport;
 }) {
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -61,8 +45,7 @@ export function OpportunitiesClient({
   const filtered = useMemo(() => {
     return opportunities.filter((opp) => {
       if (hidden.has(opp.id)) return false;
-      const parsed: string[] = opp.tags ? JSON.parse(opp.tags) : [];
-      return !parsed.includes("excluded");
+      return !opp.tags.includes("excluded");
     });
   }, [opportunities, hidden]);
 
@@ -77,10 +60,10 @@ export function OpportunitiesClient({
       next.add(clickedId);
       if (companyKey) {
         for (const o of opportunities) {
-          if (o.company_key === companyKey) next.add(o.id);
+          if (o.companyKey === companyKey) next.add(o.id);
         }
         for (const d of d1Pending) {
-          if (d.company_key === companyKey) next.add(d.id);
+          if (d.companyKey === companyKey) next.add(d.id);
         }
       }
       return next;
@@ -172,7 +155,7 @@ export function OpportunitiesClient({
         </Text>
       </Flex>
 
-      <EvalStatsPanel />
+      <EvalStatsPanel report={evalReport} />
 
       {filtered.length === 0 ? (
         <Text color="gray">No opportunities match the current filters.</Text>
@@ -209,23 +192,23 @@ export function OpportunitiesClient({
                     </Flex>
                   </Table.Cell>
                   <Table.Cell>
-                    {opp.company_name ? (
-                      <Link href={`/companies/${opp.company_key}`} style={{ textDecoration: "none" }}>
-                        <Text size="2" color="blue">{opp.company_name}</Text>
+                    {opp.companyName ? (
+                      <Link href={`/companies/${opp.companyKey}`} style={{ textDecoration: "none" }}>
+                        <Text size="2" color="blue">{opp.companyName}</Text>
                       </Link>
                     ) : (
                       <Text size="2" color="gray">-</Text>
                     )}
                   </Table.Cell>
                   <Table.Cell>
-                    {opp.contact_first ? (
+                    {opp.contactFirstName ? (
                       <Flex direction="column">
-                        <Link href={`/contacts/${opp.contact_slug}`} style={{ textDecoration: "none" }}>
-                          <Text size="2" color="blue">{opp.contact_first} {opp.contact_last}</Text>
+                        <Link href={`/contacts/${opp.contactSlug}`} style={{ textDecoration: "none" }}>
+                          <Text size="2" color="blue">{opp.contactFirstName} {opp.contactLastName}</Text>
                         </Link>
-                        {opp.contact_position && (
+                        {opp.contactPosition && (
                           <Text size="1" color="gray" truncate style={{ maxWidth: 180, display: "block" }}>
-                            {opp.contact_position}
+                            {opp.contactPosition}
                           </Text>
                         )}
                       </Flex>
@@ -234,7 +217,7 @@ export function OpportunitiesClient({
                     )}
                   </Table.Cell>
                   <Table.Cell>
-                    <Text size="2">{opp.reward_text ?? "-"}</Text>
+                    <Text size="2">{opp.rewardText ?? "-"}</Text>
                   </Table.Cell>
                   <Table.Cell>
                     {opp.score != null ? (
@@ -250,7 +233,7 @@ export function OpportunitiesClient({
                   </Table.Cell>
                   <Table.Cell>
                     <Text size="1" color="gray">
-                      {new Date(opp.created_at).toLocaleDateString()}
+                      {new Date(opp.createdAt).toLocaleDateString()}
                     </Text>
                   </Table.Cell>
                   <Table.Cell>
@@ -319,8 +302,8 @@ export function OpportunitiesClient({
                     </Flex>
                   </Table.Cell>
                   <Table.Cell>
-                    <Text size="2" color={opp.company_name ? undefined : "gray"}>
-                      {opp.company_name ?? "-"}
+                    <Text size="2" color={opp.companyName ? undefined : "gray"}>
+                      {opp.companyName ?? "-"}
                     </Text>
                   </Table.Cell>
                   <Table.Cell>
@@ -338,7 +321,7 @@ export function OpportunitiesClient({
                   </Table.Cell>
                   <Table.Cell>
                     <Text size="1" color="gray">
-                      {new Date(opp.created_at).toLocaleDateString()}
+                      {new Date(opp.createdAt).toLocaleDateString()}
                     </Text>
                   </Table.Cell>
                   <Table.Cell>
@@ -347,7 +330,7 @@ export function OpportunitiesClient({
                         size="2"
                         variant="ghost"
                         color="gray"
-                        onClick={() => handleArchiveD1(opp.id, opp.company_key, opp.company_name)}
+                        onClick={() => handleArchiveD1(opp.id, opp.companyKey, opp.companyName)}
                         title="Block company (hide all jobs from this company)"
                       >
                         <EyeNoneIcon width={14} height={14} /> Block
