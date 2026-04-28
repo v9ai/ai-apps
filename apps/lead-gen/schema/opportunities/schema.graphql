@@ -39,9 +39,82 @@ input CreateOpportunityInput {
   contactId: Int
 }
 
+type OpportunityListItem {
+  id: String!
+  title: String!
+  url: String
+  source: String
+  status: String!
+  rewardText: String
+  rewardUsd: Float
+  score: Int
+  tags: [String!]!
+  applied: Boolean!
+  appliedAt: String
+  applicationStatus: String
+  firstSeen: String
+  createdAt: String!
+  companyName: String
+  companyKey: String
+  contactFirstName: String
+  contactLastName: String
+  contactSlug: String
+  contactPosition: String
+}
+
+type D1OpportunityItem {
+  id: String!
+  title: String!
+  url: String
+  source: String
+  status: String!
+  tags: String
+  location: String
+  salary: String
+  archived: Int!
+  createdAt: String!
+  updatedAt: String!
+  companyName: String
+  companyKey: String
+}
+
+type OpportunityScoringMetrics {
+  accuracy: Float!
+  precision: Float!
+  recall: Float!
+  f1: Float!
+  aucRoc: Float!
+  ndcgAt10: Float!
+}
+
+type OpportunitySourceStat {
+  source: String!
+  total: Int!
+  positive: Int!
+  negative: Int!
+  precision: Float!
+  avgScore: Float!
+}
+
+type OpportunityEvalReport {
+  scoring: OpportunityScoringMetrics!
+  sourceBreakdown: [OpportunitySourceStat!]!
+  goldenCount: Int!
+  excludedCount: Int!
+  nullScoreCount: Int!
+  timestamp: String!
+}
+
+type OpportunitiesPagePayload {
+  opportunities: [OpportunityListItem!]!
+  d1Pending: [D1OpportunityItem!]!
+  evalReport: OpportunityEvalReport
+}
+
 extend type Query {
   contactOpportunities(contactId: Int!): [Opportunity!]!
   opportunityByUrl(url: String!): Opportunity
+  opportunitiesPage: OpportunitiesPagePayload!
 }
 
 extend type Mutation {
