@@ -3987,7 +3987,7 @@ export type ResolverTypeWrapper<T> = Promise<T> | T;
 export type ResolverWithResolve<TResult, TParent, TContext, TArgs> = {
   resolve: ResolverFn<TResult, TParent, TContext, TArgs>;
 };
-export type Resolver<TResult, TParent = {}, TContext = {}, TArgs = {}> = ResolverFn<TResult, TParent, TContext, TArgs> | ResolverWithResolve<TResult, TParent, TContext, TArgs>;
+export type Resolver<TResult, TParent = Record<PropertyKey, never>, TContext = Record<PropertyKey, never>, TArgs = Record<PropertyKey, never>> = ResolverFn<TResult, TParent, TContext, TArgs> | ResolverWithResolve<TResult, TParent, TContext, TArgs>;
 
 export type ResolverFn<TResult, TParent, TContext, TArgs> = (
   parent: TParent,
@@ -4024,27 +4024,29 @@ export type SubscriptionObject<TResult, TKey extends string, TParent, TContext, 
   | SubscriptionSubscriberObject<TResult, TKey, TParent, TContext, TArgs>
   | SubscriptionResolverObject<TResult, TParent, TContext, TArgs>;
 
-export type SubscriptionResolver<TResult, TKey extends string, TParent = {}, TContext = {}, TArgs = {}> =
+export type SubscriptionResolver<TResult, TKey extends string, TParent = Record<PropertyKey, never>, TContext = Record<PropertyKey, never>, TArgs = Record<PropertyKey, never>> =
   | ((...args: any[]) => SubscriptionObject<TResult, TKey, TParent, TContext, TArgs>)
   | SubscriptionObject<TResult, TKey, TParent, TContext, TArgs>;
 
-export type TypeResolveFn<TTypes, TParent = {}, TContext = {}> = (
+export type TypeResolveFn<TTypes, TParent = Record<PropertyKey, never>, TContext = Record<PropertyKey, never>> = (
   parent: TParent,
   context: TContext,
   info: GraphQLResolveInfo
 ) => Maybe<TTypes> | Promise<Maybe<TTypes>>;
 
-export type IsTypeOfResolverFn<T = {}, TContext = {}> = (obj: T, context: TContext, info: GraphQLResolveInfo) => boolean | Promise<boolean>;
+export type IsTypeOfResolverFn<T = Record<PropertyKey, never>, TContext = Record<PropertyKey, never>> = (obj: T, context: TContext, info: GraphQLResolveInfo) => boolean | Promise<boolean>;
 
 export type NextResolverFn<T> = () => Promise<T>;
 
-export type DirectiveResolverFn<TResult = {}, TParent = {}, TContext = {}, TArgs = {}> = (
+export type DirectiveResolverFn<TResult = Record<PropertyKey, never>, TParent = Record<PropertyKey, never>, TContext = Record<PropertyKey, never>, TArgs = Record<PropertyKey, never>> = (
   next: NextResolverFn<TResult>,
   parent: TParent,
   args: TArgs,
   context: TContext,
   info: GraphQLResolveInfo
 ) => TResult | Promise<TResult>;
+
+
 
 
 
@@ -4183,7 +4185,7 @@ export type ResolversTypes = {
   MarkRepliedResult: ResolverTypeWrapper<Partial<MarkRepliedResult>>;
   MergeCompaniesResult: ResolverTypeWrapper<Partial<MergeCompaniesResult>>;
   MergeDuplicateContactsResult: ResolverTypeWrapper<Partial<MergeDuplicateContactsResult>>;
-  Mutation: ResolverTypeWrapper<{}>;
+  Mutation: ResolverTypeWrapper<Record<PropertyKey, never>>;
   OpportunitiesPagePayload: ResolverTypeWrapper<Partial<OpportunitiesPagePayload>>;
   Opportunity: ResolverTypeWrapper<Partial<Opportunity>>;
   OpportunityEvalReport: ResolverTypeWrapper<Partial<OpportunityEvalReport>>;
@@ -4197,7 +4199,7 @@ export type ResolversTypes = {
   ProductLead: ResolverTypeWrapper<Partial<ProductLead>>;
   ProductLeadsConnection: ResolverTypeWrapper<Partial<ProductLeadsConnection>>;
   QualityGateResult: ResolverTypeWrapper<Partial<QualityGateResult>>;
-  Query: ResolverTypeWrapper<{}>;
+  Query: ResolverTypeWrapper<Record<PropertyKey, never>>;
   RankedContact: ResolverTypeWrapper<Partial<RankedContact>>;
   ReceivedEmail: ResolverTypeWrapper<Partial<ReceivedEmail>>;
   ReceivedEmailsResult: ResolverTypeWrapper<Partial<ReceivedEmailsResult>>;
@@ -4274,7 +4276,7 @@ export type ResolversTypes = {
   SkillsDemandReport: ResolverTypeWrapper<Partial<SkillsDemandReport>>;
   SourceType: ResolverTypeWrapper<Partial<SourceType>>;
   String: ResolverTypeWrapper<Partial<Scalars['String']['output']>>;
-  Subscription: ResolverTypeWrapper<{}>;
+  Subscription: ResolverTypeWrapper<Record<PropertyKey, never>>;
   SyncResendResult: ResolverTypeWrapper<Partial<SyncResendResult>>;
   SyncVoyagerJobsInput: ResolverTypeWrapper<Partial<SyncVoyagerJobsInput>>;
   SyncVoyagerJobsResult: ResolverTypeWrapper<Partial<SyncVoyagerJobsResult>>;
@@ -4439,7 +4441,7 @@ export type ResolversParentTypes = {
   MarkRepliedResult: Partial<MarkRepliedResult>;
   MergeCompaniesResult: Partial<MergeCompaniesResult>;
   MergeDuplicateContactsResult: Partial<MergeDuplicateContactsResult>;
-  Mutation: {};
+  Mutation: Record<PropertyKey, never>;
   OpportunitiesPagePayload: Partial<OpportunitiesPagePayload>;
   Opportunity: Partial<Opportunity>;
   OpportunityEvalReport: Partial<OpportunityEvalReport>;
@@ -4453,7 +4455,7 @@ export type ResolversParentTypes = {
   ProductLead: Partial<ProductLead>;
   ProductLeadsConnection: Partial<ProductLeadsConnection>;
   QualityGateResult: Partial<QualityGateResult>;
-  Query: {};
+  Query: Record<PropertyKey, never>;
   RankedContact: Partial<RankedContact>;
   ReceivedEmail: Partial<ReceivedEmail>;
   ReceivedEmailsResult: Partial<ReceivedEmailsResult>;
@@ -4528,7 +4530,7 @@ export type ResolversParentTypes = {
   SkillMatchResult: Partial<SkillMatchResult>;
   SkillsDemandReport: Partial<SkillsDemandReport>;
   String: Partial<Scalars['String']['output']>;
-  Subscription: {};
+  Subscription: Record<PropertyKey, never>;
   SyncResendResult: Partial<SyncResendResult>;
   SyncVoyagerJobsInput: Partial<SyncVoyagerJobsInput>;
   SyncVoyagerJobsResult: Partial<SyncVoyagerJobsResult>;
@@ -4570,7 +4572,6 @@ export type AnalyzeCompanyResponseResolvers<ContextType = GraphQLContext, Parent
   companyKey?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type AnalyzePostsResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AnalyzePostsResult'] = ResolversParentTypes['AnalyzePostsResult']> = {
@@ -4578,7 +4579,6 @@ export type AnalyzePostsResultResolvers<ContextType = GraphQLContext, ParentType
   errors?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   failed?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type ApplyEmailPatternResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ApplyEmailPatternResult'] = ResolversParentTypes['ApplyEmailPatternResult']> = {
@@ -4587,7 +4587,6 @@ export type ApplyEmailPatternResultResolvers<ContextType = GraphQLContext, Paren
   message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   pattern?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type ArbitrageOpportunityResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ArbitrageOpportunity'] = ResolversParentTypes['ArbitrageOpportunity']> = {
@@ -4602,27 +4601,23 @@ export type ArbitrageOpportunityResolvers<ContextType = GraphQLContext, ParentTy
   salaryMin?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   salaryPercentile?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   salaryPremium?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type ArbitrageRegionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ArbitrageRegion'] = ResolversParentTypes['ArbitrageRegion']> = {
   avgPremium?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   count?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   region?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type ArbitrageReportResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ArbitrageReport'] = ResolversParentTypes['ArbitrageReport']> = {
   byRegion?: Resolver<Array<ResolversTypes['ArbitrageRegion']>, ParentType, ContextType>;
   topOpportunities?: Resolver<Array<ResolversTypes['ArbitrageOpportunity']>, ParentType, ContextType>;
   totalOpportunities?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type ArchiveEmailResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ArchiveEmailResult'] = ResolversParentTypes['ArchiveEmailResult']> = {
   message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type BatchDetectIntentResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['BatchDetectIntentResult'] = ResolversParentTypes['BatchDetectIntentResult']> = {
@@ -4630,20 +4625,17 @@ export type BatchDetectIntentResultResolvers<ContextType = GraphQLContext, Paren
   processed?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   signalsDetected?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type BatchDismissResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['BatchDismissResult'] = ResolversParentTypes['BatchDismissResult']> = {
   dismissed?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type BatchOperationResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['BatchOperationResult'] = ResolversParentTypes['BatchOperationResult']> = {
   affected?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type BatchSendDraftResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['BatchSendDraftResult'] = ResolversParentTypes['BatchSendDraftResult']> = {
@@ -4651,7 +4643,6 @@ export type BatchSendDraftResultResolvers<ContextType = GraphQLContext, ParentTy
   failed?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   sent?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type CancelCompanyEmailsResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CancelCompanyEmailsResult'] = ResolversParentTypes['CancelCompanyEmailsResult']> = {
@@ -4659,26 +4650,22 @@ export type CancelCompanyEmailsResultResolvers<ContextType = GraphQLContext, Par
   failedCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type CancelEmailResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CancelEmailResult'] = ResolversParentTypes['CancelEmailResult']> = {
   error?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type ClassificationCountResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ClassificationCount'] = ResolversParentTypes['ClassificationCount']> = {
   classification?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   count?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type ClassifyBatchResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ClassifyBatchResult'] = ResolversParentTypes['ClassifyBatchResult']> = {
   classified?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type ClassifyEmailResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ClassifyEmailResult'] = ResolversParentTypes['ClassifyEmailResult']> = {
@@ -4686,13 +4673,11 @@ export type ClassifyEmailResultResolvers<ContextType = GraphQLContext, ParentTyp
   confidence?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   matchedContactId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type CompaniesResponseResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CompaniesResponse'] = ResolversParentTypes['CompaniesResponse']> = {
   companies?: Resolver<Array<ResolversTypes['Company']>, ParentType, ContextType>;
   totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type CompanyResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Company'] = ResolversParentTypes['Company']> = {
@@ -4741,7 +4726,6 @@ export type CompanyResolvers<ContextType = GraphQLContext, ParentType extends Re
   tags?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   updated_at?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   website?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type CompanyContactEmailResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CompanyContactEmail'] = ResolversParentTypes['CompanyContactEmail']> = {
@@ -4768,7 +4752,6 @@ export type CompanyContactEmailResolvers<ContextType = GraphQLContext, ParentTyp
   textContent?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   toEmails?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type CompanyFactResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CompanyFact'] = ResolversParentTypes['CompanyFact']> = {
@@ -4781,7 +4764,6 @@ export type CompanyFactResolvers<ContextType = GraphQLContext, ParentType extend
   normalized_value?: Resolver<Maybe<ResolversTypes['JSON']>, ParentType, ContextType>;
   value_json?: Resolver<Maybe<ResolversTypes['JSON']>, ParentType, ContextType>;
   value_text?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type CompanyScrapedPostsResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CompanyScrapedPostsResult'] = ResolversParentTypes['CompanyScrapedPostsResult']> = {
@@ -4792,7 +4774,6 @@ export type CompanyScrapedPostsResultResolvers<ContextType = GraphQLContext, Par
   posts?: Resolver<Array<ResolversTypes['ScrapedPost']>, ParentType, ContextType>;
   postsCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   slug?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type CompanySnapshotResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CompanySnapshot'] = ResolversParentTypes['CompanySnapshot']> = {
@@ -4810,7 +4791,6 @@ export type CompanySnapshotResolvers<ContextType = GraphQLContext, ParentType ex
   mime?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   source_url?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   text_sample?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type CompanyVelocityResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CompanyVelocity'] = ResolversParentTypes['CompanyVelocity']> = {
@@ -4823,7 +4803,6 @@ export type CompanyVelocityResolvers<ContextType = GraphQLContext, ParentType ex
   rollingAvgWeekly?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   velocityDelta?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   velocityTrend?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type CompetitiveReportResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CompetitiveReport'] = ResolversParentTypes['CompetitiveReport']> = {
@@ -4831,7 +4810,6 @@ export type CompetitiveReportResolvers<ContextType = GraphQLContext, ParentType 
   newEntrants?: Resolver<Array<ResolversTypes['CompetitorProfile']>, ParentType, ContextType>;
   period?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   topHirers?: Resolver<Array<ResolversTypes['CompetitorProfile']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type CompetitorResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Competitor'] = ResolversParentTypes['Competitor']> = {
@@ -4852,7 +4830,6 @@ export type CompetitorResolvers<ContextType = GraphQLContext, ParentType extends
   status?: Resolver<ResolversTypes['CompetitorStatus'], ParentType, ContextType>;
   targetAudience?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   url?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type CompetitorAnalysisResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CompetitorAnalysis'] = ResolversParentTypes['CompetitorAnalysis']> = {
@@ -4864,7 +4841,6 @@ export type CompetitorAnalysisResolvers<ContextType = GraphQLContext, ParentType
   product?: Resolver<ResolversTypes['Product'], ParentType, ContextType>;
   status?: Resolver<ResolversTypes['CompetitorAnalysisStatus'], ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type CompetitorFeatureResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CompetitorFeature'] = ResolversParentTypes['CompetitorFeature']> = {
@@ -4872,7 +4848,6 @@ export type CompetitorFeatureResolvers<ContextType = GraphQLContext, ParentType 
   featureText?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   tierName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type CompetitorIntegrationResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CompetitorIntegration'] = ResolversParentTypes['CompetitorIntegration']> = {
@@ -4880,7 +4855,6 @@ export type CompetitorIntegrationResolvers<ContextType = GraphQLContext, ParentT
   id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   integrationName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   integrationUrl?: Resolver<Maybe<ResolversTypes['URL']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type CompetitorProfileResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CompetitorProfile'] = ResolversParentTypes['CompetitorProfile']> = {
@@ -4895,7 +4869,6 @@ export type CompetitorProfileResolvers<ContextType = GraphQLContext, ParentType 
   remotePercent?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   topSkillsSought?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   totalOpenings?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type ComputeNextTouchScoresResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ComputeNextTouchScoresResult'] = ResolversParentTypes['ComputeNextTouchScoresResult']> = {
@@ -4903,7 +4876,6 @@ export type ComputeNextTouchScoresResultResolvers<ContextType = GraphQLContext, 
   message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   topContacts?: Resolver<Array<ResolversTypes['ContactNextTouch']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type ContactResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Contact'] = ResolversParentTypes['Contact']> = {
@@ -4968,7 +4940,6 @@ export type ContactResolvers<ContextType = GraphQLContext, ParentType extends Re
   toBeDeleted?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   userId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type ContactEmailResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ContactEmail'] = ResolversParentTypes['ContactEmail']> = {
@@ -5002,7 +4973,6 @@ export type ContactEmailResolvers<ContextType = GraphQLContext, ParentType exten
   textContent?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   toEmails?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type ContactGitHubRepoResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ContactGitHubRepo'] = ResolversParentTypes['ContactGitHubRepo']> = {
@@ -5010,7 +4980,6 @@ export type ContactGitHubRepoResolvers<ContextType = GraphQLContext, ParentType 
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   stars?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   topics?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type ContactLoraScoreResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ContactLoraScore'] = ResolversParentTypes['ContactLoraScore']> = {
@@ -5018,7 +4987,6 @@ export type ContactLoraScoreResolvers<ContextType = GraphQLContext, ParentType e
   reasons?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   score?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   tier?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type ContactMlScoreResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ContactMLScore'] = ResolversParentTypes['ContactMLScore']> = {
@@ -5028,7 +4996,6 @@ export type ContactMlScoreResolvers<ContextType = GraphQLContext, ParentType ext
   dmReasons?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   isDecisionMaker?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   seniority?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type ContactMessageResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ContactMessage'] = ResolversParentTypes['ContactMessage']> = {
@@ -5047,7 +5014,6 @@ export type ContactMessageResolvers<ContextType = GraphQLContext, ParentType ext
   sentAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   subject?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type ContactNextTouchResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ContactNextTouch'] = ResolversParentTypes['ContactNextTouch']> = {
@@ -5057,7 +5023,6 @@ export type ContactNextTouchResolvers<ContextType = GraphQLContext, ParentType e
   lastName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   nextTouchScore?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   position?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type ContactPaperResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ContactPaper'] = ResolversParentTypes['ContactPaper']> = {
@@ -5069,7 +5034,6 @@ export type ContactPaperResolvers<ContextType = GraphQLContext, ParentType exten
   url?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   venue?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   year?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type ContactProfileResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ContactProfile'] = ResolversParentTypes['ContactProfile']> = {
@@ -5088,13 +5052,11 @@ export type ContactProfileResolvers<ContextType = GraphQLContext, ParentType ext
   synthesisRationale?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   trigger?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   workExperience?: Resolver<Array<ResolversTypes['ContactWorkExperience']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type ContactTagOptionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ContactTagOption'] = ResolversParentTypes['ContactTagOption']> = {
   count?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   tag?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type ContactWorkExperienceResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ContactWorkExperience'] = ResolversParentTypes['ContactWorkExperience']> = {
@@ -5108,20 +5070,17 @@ export type ContactWorkExperienceResolvers<ContextType = GraphQLContext, ParentT
   skills?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   startDate?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type ContactsResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ContactsResult'] = ResolversParentTypes['ContactsResult']> = {
   contacts?: Resolver<Array<ResolversTypes['Contact']>, ParentType, ContextType>;
   totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type CountRemoteVoyagerJobsResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CountRemoteVoyagerJobsResult'] = ResolversParentTypes['CountRemoteVoyagerJobsResult']> = {
   counts?: Resolver<Array<ResolversTypes['VoyagerCompanyJobCount']>, ParentType, ContextType>;
   errors?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type CrawlLogResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CrawlLog'] = ResolversParentTypes['CrawlLog']> = {
@@ -5141,7 +5100,6 @@ export type CrawlLogResolvers<ContextType = GraphQLContext, ParentType extends R
   targets?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   totalRemoteJobs?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   visited?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type D1OpportunityItemResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['D1OpportunityItem'] = ResolversParentTypes['D1OpportunityItem']> = {
@@ -5158,7 +5116,6 @@ export type D1OpportunityItemResolvers<ContextType = GraphQLContext, ParentType 
   title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   url?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type DailyJobCountResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DailyJobCount'] = ResolversParentTypes['DailyJobCount']> = {
@@ -5168,7 +5125,6 @@ export type DailyJobCountResolvers<ContextType = GraphQLContext, ParentType exte
   remoteJobs?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   remoteRatio?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   totalJobs?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type DataQualityScoreResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DataQualityScore'] = ResolversParentTypes['DataQualityScore']> = {
@@ -5177,7 +5133,6 @@ export type DataQualityScoreResolvers<ContextType = GraphQLContext, ParentType e
   freshness?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   missingFields?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   staleFields?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export interface DateTimeScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes['DateTime'], any> {
@@ -5187,32 +5142,27 @@ export interface DateTimeScalarConfig extends GraphQLScalarTypeConfig<ResolversT
 export type DeleteCampaignResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DeleteCampaignResult'] = ResolversParentTypes['DeleteCampaignResult']> = {
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type DeleteCompaniesResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DeleteCompaniesResult'] = ResolversParentTypes['DeleteCompaniesResult']> = {
   deleted?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type DeleteCompanyResponseResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DeleteCompanyResponse'] = ResolversParentTypes['DeleteCompanyResponse']> = {
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type DeleteContactResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DeleteContactResult'] = ResolversParentTypes['DeleteContactResult']> = {
   message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type DeleteEmailTemplateResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DeleteEmailTemplateResult'] = ResolversParentTypes['DeleteEmailTemplateResult']> = {
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type DetectIntentResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DetectIntentResult'] = ResolversParentTypes['DetectIntentResult']> = {
@@ -5220,12 +5170,10 @@ export type DetectIntentResultResolvers<ContextType = GraphQLContext, ParentType
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   signalsDetected?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type DismissDraftResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DismissDraftResult'] = ResolversParentTypes['DismissDraftResult']> = {
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type DraftSummaryResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DraftSummary'] = ResolversParentTypes['DraftSummary']> = {
@@ -5234,7 +5182,6 @@ export type DraftSummaryResolvers<ContextType = GraphQLContext, ParentType exten
   dismissed?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   pending?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   sent?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export interface EmailAddressScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes['EmailAddress'], any> {
@@ -5268,20 +5215,17 @@ export type EmailCampaignResolvers<ContextType = GraphQLContext, ParentType exte
   totalRecipients?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   unsubscribeUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type EmailCampaignsResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['EmailCampaignsResult'] = ResolversParentTypes['EmailCampaignsResult']> = {
   campaigns?: Resolver<Array<ResolversTypes['EmailCampaign']>, ParentType, ContextType>;
   totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type EmailPreviewResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['EmailPreview'] = ResolversParentTypes['EmailPreview']> = {
   drySendResult?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   htmlContent?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   subject?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type EmailStatsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['EmailStats'] = ResolversParentTypes['EmailStats']> = {
@@ -5300,7 +5244,6 @@ export type EmailStatsResolvers<ContextType = GraphQLContext, ParentType extends
   sentThisWeek?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   sentToday?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   totalSent?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type EmailTemplateResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['EmailTemplate'] = ResolversParentTypes['EmailTemplate']> = {
@@ -5317,13 +5260,11 @@ export type EmailTemplateResolvers<ContextType = GraphQLContext, ParentType exte
   updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   userId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   variables?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type EmailTemplatesResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['EmailTemplatesResult'] = ResolversParentTypes['EmailTemplatesResult']> = {
   templates?: Resolver<Array<ResolversTypes['EmailTemplate']>, ParentType, ContextType>;
   totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type EmailThreadResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['EmailThread'] = ResolversParentTypes['EmailThread']> = {
@@ -5348,13 +5289,11 @@ export type EmailThreadResolvers<ContextType = GraphQLContext, ParentType extend
   messages?: Resolver<Array<ResolversTypes['ThreadMessage']>, ParentType, ContextType>;
   priorityScore?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   totalMessages?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type EmailThreadsResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['EmailThreadsResult'] = ResolversParentTypes['EmailThreadsResult']> = {
   threads?: Resolver<Array<ResolversTypes['EmailThread']>, ParentType, ContextType>;
   totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type EmergingRoleResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['EmergingRole'] = ResolversParentTypes['EmergingRole']> = {
@@ -5367,7 +5306,6 @@ export type EmergingRoleResolvers<ContextType = GraphQLContext, ParentType exten
   topCompanies?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   topSkills?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   weekOverWeekGrowth?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type EmergingRolesReportResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['EmergingRolesReport'] = ResolversParentTypes['EmergingRolesReport']> = {
@@ -5375,7 +5313,6 @@ export type EmergingRolesReportResolvers<ContextType = GraphQLContext, ParentTyp
   novelTitles?: Resolver<Array<ResolversTypes['EmergingRole']>, ParentType, ContextType>;
   period?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   surging?: Resolver<Array<ResolversTypes['EmergingRole']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type EnhanceAllContactsResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['EnhanceAllContactsResult'] = ResolversParentTypes['EnhanceAllContactsResult']> = {
@@ -5385,7 +5322,6 @@ export type EnhanceAllContactsResultResolvers<ContextType = GraphQLContext, Pare
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   totalContactsProcessed?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   totalEmailsFound?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type EnhanceCompanyResponseResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['EnhanceCompanyResponse'] = ResolversParentTypes['EnhanceCompanyResponse']> = {
@@ -5393,7 +5329,6 @@ export type EnhanceCompanyResponseResolvers<ContextType = GraphQLContext, Parent
   companyKey?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type EnrichAiContactResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['EnrichAIContactResult'] = ResolversParentTypes['EnrichAIContactResult']> = {
@@ -5401,7 +5336,6 @@ export type EnrichAiContactResultResolvers<ContextType = GraphQLContext, ParentT
   message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   profile?: Resolver<Maybe<ResolversTypes['ContactProfile']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type EnrichAiContactsBulkResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['EnrichAIContactsBulkResult'] = ResolversParentTypes['EnrichAIContactsBulkResult']> = {
@@ -5410,7 +5344,6 @@ export type EnrichAiContactsBulkResultResolvers<ContextType = GraphQLContext, Pa
   message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   skipped?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type EnrichContactPapersResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['EnrichContactPapersResult'] = ResolversParentTypes['EnrichContactPapersResult']> = {
@@ -5429,7 +5362,6 @@ export type EnrichContactPapersResultResolvers<ContextType = GraphQLContext, Par
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   tags?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   tagsAdded?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type EvidenceResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Evidence'] = ResolversParentTypes['Evidence']> = {
@@ -5444,20 +5376,17 @@ export type EvidenceResolvers<ContextType = GraphQLContext, ParentType extends R
   source_type?: Resolver<ResolversTypes['SourceType'], ParentType, ContextType>;
   source_url?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   warc?: Resolver<Maybe<ResolversTypes['WarcPointer']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type ExtractedSkillResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ExtractedSkill'] = ResolversParentTypes['ExtractedSkill']> = {
   confidence?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   label?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   tag?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type FindCompanyResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['FindCompanyResult'] = ResolversParentTypes['FindCompanyResult']> = {
   company?: Resolver<Maybe<ResolversTypes['Company']>, ParentType, ContextType>;
   found?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type FindContactEmailResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['FindContactEmailResult'] = ResolversParentTypes['FindContactEmailResult']> = {
@@ -5467,7 +5396,6 @@ export type FindContactEmailResultResolvers<ContextType = GraphQLContext, Parent
   message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   verified?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type FollowUpBatchResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['FollowUpBatchResult'] = ResolversParentTypes['FollowUpBatchResult']> = {
@@ -5475,7 +5403,6 @@ export type FollowUpBatchResultResolvers<ContextType = GraphQLContext, ParentTyp
   emailIds?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type FollowUpEmailResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['FollowUpEmail'] = ResolversParentTypes['FollowUpEmail']> = {
@@ -5493,13 +5420,11 @@ export type FollowUpEmailResolvers<ContextType = GraphQLContext, ParentType exte
   status?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   subject?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   toEmails?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type FollowUpEmailsResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['FollowUpEmailsResult'] = ResolversParentTypes['FollowUpEmailsResult']> = {
   emails?: Resolver<Array<ResolversTypes['FollowUpEmail']>, ParentType, ContextType>;
   totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type GenerateDraftsBatchResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['GenerateDraftsBatchResult'] = ResolversParentTypes['GenerateDraftsBatchResult']> = {
@@ -5508,14 +5433,12 @@ export type GenerateDraftsBatchResultResolvers<ContextType = GraphQLContext, Par
   message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   skipped?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type GenerateEmailResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['GenerateEmailResult'] = ResolversParentTypes['GenerateEmailResult']> = {
   html?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   subject?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   text?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type GenerateEmbeddingsResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['GenerateEmbeddingsResult'] = ResolversParentTypes['GenerateEmbeddingsResult']> = {
@@ -5523,13 +5446,11 @@ export type GenerateEmbeddingsResultResolvers<ContextType = GraphQLContext, Pare
   failed?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   processed?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type GenerateReplyResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['GenerateReplyResult'] = ResolversParentTypes['GenerateReplyResult']> = {
   body?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   subject?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type GrowthReportResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['GrowthReport'] = ResolversParentTypes['GrowthReport']> = {
@@ -5537,7 +5458,6 @@ export type GrowthReportResolvers<ContextType = GraphQLContext, ParentType exten
   byRegion?: Resolver<Array<ResolversTypes['RegionGrowth']>, ParentType, ContextType>;
   overallGrowthRate?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   period?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type ImportCompaniesResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ImportCompaniesResult'] = ResolversParentTypes['ImportCompaniesResult']> = {
@@ -5545,7 +5465,6 @@ export type ImportCompaniesResultResolvers<ContextType = GraphQLContext, ParentT
   failed?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   imported?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type ImportCompanyResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ImportCompanyResult'] = ResolversParentTypes['ImportCompanyResult']> = {
@@ -5554,7 +5473,6 @@ export type ImportCompanyResultResolvers<ContextType = GraphQLContext, ParentTyp
   contactsSkipped?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   errors?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type ImportContactsResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ImportContactsResult'] = ResolversParentTypes['ImportContactsResult']> = {
@@ -5563,7 +5481,6 @@ export type ImportContactsResultResolvers<ContextType = GraphQLContext, ParentTy
   imported?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   updated?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type ImportResendResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ImportResendResult'] = ResolversParentTypes['ImportResendResult']> = {
@@ -5577,7 +5494,6 @@ export type ImportResendResultResolvers<ContextType = GraphQLContext, ParentType
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   totalFetched?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   updatedCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type IndustryGrowthResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['IndustryGrowth'] = ResolversParentTypes['IndustryGrowth']> = {
@@ -5586,7 +5502,6 @@ export type IndustryGrowthResolvers<ContextType = GraphQLContext, ParentType ext
   industry?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   previousCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   remoteRatio?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type IntelRunResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['IntelRun'] = ResolversParentTypes['IntelRun']> = {
@@ -5600,7 +5515,6 @@ export type IntelRunResolvers<ContextType = GraphQLContext, ParentType extends R
   startedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   status?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   totalCostUsd?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type IntelRunAcceptedResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['IntelRunAccepted'] = ResolversParentTypes['IntelRunAccepted']> = {
@@ -5608,7 +5522,6 @@ export type IntelRunAcceptedResolvers<ContextType = GraphQLContext, ParentType e
   productId?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   runId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   status?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type IntentDashboardResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['IntentDashboard'] = ResolversParentTypes['IntentDashboard']> = {
@@ -5617,7 +5530,6 @@ export type IntentDashboardResolvers<ContextType = GraphQLContext, ParentType ex
   signalsByType?: Resolver<Array<ResolversTypes['SignalTypeCount']>, ParentType, ContextType>;
   topIntentCompanies?: Resolver<Array<ResolversTypes['Company']>, ParentType, ContextType>;
   totalSignals?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type IntentScoreResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['IntentScore'] = ResolversParentTypes['IntentScore']> = {
@@ -5630,7 +5542,6 @@ export type IntentScoreResolvers<ContextType = GraphQLContext, ParentType extend
   signalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   tech?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   updatedAt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type IntentSignalResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['IntentSignal'] = ResolversParentTypes['IntentSignal']> = {
@@ -5651,13 +5562,11 @@ export type IntentSignalResolvers<ContextType = GraphQLContext, ParentType exten
   signalType?: Resolver<ResolversTypes['IntentSignalType'], ParentType, ContextType>;
   sourceType?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   sourceUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type IntentSignalsResponseResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['IntentSignalsResponse'] = ResolversParentTypes['IntentSignalsResponse']> = {
   signals?: Resolver<Array<ResolversTypes['IntentSignal']>, ParentType, ContextType>;
   totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export interface JsonScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes['JSON'], any> {
@@ -5671,7 +5580,6 @@ export type JobCountTrendResolvers<ContextType = GraphQLContext, ParentType exte
   period?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   query?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   trend?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type LinkedInPostResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['LinkedInPost'] = ResolversParentTypes['LinkedInPost']> = {
@@ -5692,7 +5600,6 @@ export type LinkedInPostResolvers<ContextType = GraphQLContext, ParentType exten
   title?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   type?: Resolver<ResolversTypes['LinkedInPostType'], ParentType, ContextType>;
   url?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type LoraTierBreakdownResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['LoraTierBreakdown'] = ResolversParentTypes['LoraTierBreakdown']> = {
@@ -5700,7 +5607,6 @@ export type LoraTierBreakdownResolvers<ContextType = GraphQLContext, ParentType 
   b?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   c?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   d?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type MlStatsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['MLStats'] = ResolversParentTypes['MLStats']> = {
@@ -5708,13 +5614,11 @@ export type MlStatsResolvers<ContextType = GraphQLContext, ParentType extends Re
   lastEmbeddingAt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   modelsAvailable?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   totalCompanies?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type MarkRepliedResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['MarkRepliedResult'] = ResolversParentTypes['MarkRepliedResult']> = {
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type MergeCompaniesResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['MergeCompaniesResult'] = ResolversParentTypes['MergeCompaniesResult']> = {
@@ -5722,7 +5626,6 @@ export type MergeCompaniesResultResolvers<ContextType = GraphQLContext, ParentTy
   merged?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type MergeDuplicateContactsResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['MergeDuplicateContactsResult'] = ResolversParentTypes['MergeDuplicateContactsResult']> = {
@@ -5730,7 +5633,6 @@ export type MergeDuplicateContactsResultResolvers<ContextType = GraphQLContext, 
   message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   removedCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type MutationResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Mutation'] = ResolversParentTypes['Mutation']> = {
@@ -5845,7 +5747,6 @@ export type OpportunitiesPagePayloadResolvers<ContextType = GraphQLContext, Pare
   d1Pending?: Resolver<Array<ResolversTypes['D1OpportunityItem']>, ParentType, ContextType>;
   evalReport?: Resolver<Maybe<ResolversTypes['OpportunityEvalReport']>, ParentType, ContextType>;
   opportunities?: Resolver<Array<ResolversTypes['OpportunityListItem']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type OpportunityResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Opportunity'] = ResolversParentTypes['Opportunity']> = {
@@ -5872,7 +5773,6 @@ export type OpportunityResolvers<ContextType = GraphQLContext, ParentType extend
   title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   url?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type OpportunityEvalReportResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['OpportunityEvalReport'] = ResolversParentTypes['OpportunityEvalReport']> = {
@@ -5882,7 +5782,6 @@ export type OpportunityEvalReportResolvers<ContextType = GraphQLContext, ParentT
   scoring?: Resolver<ResolversTypes['OpportunityScoringMetrics'], ParentType, ContextType>;
   sourceBreakdown?: Resolver<Array<ResolversTypes['OpportunitySourceStat']>, ParentType, ContextType>;
   timestamp?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type OpportunityListItemResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['OpportunityListItem'] = ResolversParentTypes['OpportunityListItem']> = {
@@ -5906,7 +5805,6 @@ export type OpportunityListItemResolvers<ContextType = GraphQLContext, ParentTyp
   tags?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   url?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type OpportunityScoringMetricsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['OpportunityScoringMetrics'] = ResolversParentTypes['OpportunityScoringMetrics']> = {
@@ -5916,7 +5814,6 @@ export type OpportunityScoringMetricsResolvers<ContextType = GraphQLContext, Par
   ndcgAt10?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   precision?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   recall?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type OpportunitySourceStatResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['OpportunitySourceStat'] = ResolversParentTypes['OpportunitySourceStat']> = {
@@ -5926,7 +5823,6 @@ export type OpportunitySourceStatResolvers<ContextType = GraphQLContext, ParentT
   precision?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   source?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   total?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type PricingTierResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['PricingTier'] = ResolversParentTypes['PricingTier']> = {
@@ -5939,7 +5835,6 @@ export type PricingTierResolvers<ContextType = GraphQLContext, ParentType extend
   seatPriceUsd?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   sortOrder?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   tierName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type ProductResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Product'] = ResolversParentTypes['Product']> = {
@@ -5964,7 +5859,6 @@ export type ProductResolvers<ContextType = GraphQLContext, ParentType extends Re
   slug?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   url?: Resolver<ResolversTypes['URL'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type ProductLeadResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProductLead'] = ResolversParentTypes['ProductLead']> = {
@@ -5983,7 +5877,6 @@ export type ProductLeadResolvers<ContextType = GraphQLContext, ParentType extend
   signals?: Resolver<Maybe<ResolversTypes['JSON']>, ParentType, ContextType>;
   tier?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type ProductLeadsConnectionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProductLeadsConnection'] = ResolversParentTypes['ProductLeadsConnection']> = {
@@ -5992,7 +5885,6 @@ export type ProductLeadsConnectionResolvers<ContextType = GraphQLContext, Parent
   leads?: Resolver<Array<ResolversTypes['ProductLead']>, ParentType, ContextType>;
   totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   warmCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type QualityGateResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['QualityGateResult'] = ResolversParentTypes['QualityGateResult']> = {
@@ -6000,7 +5892,6 @@ export type QualityGateResultResolvers<ContextType = GraphQLContext, ParentType 
   flags?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   pass?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   recommendations?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type QueryResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = {
@@ -6095,7 +5986,6 @@ export type RankedContactResolvers<ContextType = GraphQLContext, ParentType exte
   contact?: Resolver<ResolversTypes['Contact'], ParentType, ContextType>;
   rankScore?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   reasons?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type ReceivedEmailResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ReceivedEmail'] = ResolversParentTypes['ReceivedEmail']> = {
@@ -6121,26 +6011,22 @@ export type ReceivedEmailResolvers<ContextType = GraphQLContext, ParentType exte
   textContent?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   toEmails?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type ReceivedEmailsResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ReceivedEmailsResult'] = ResolversParentTypes['ReceivedEmailsResult']> = {
   emails?: Resolver<Array<ResolversTypes['ReceivedEmail']>, ParentType, ContextType>;
   totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type RecommendedCompanyResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['RecommendedCompany'] = ResolversParentTypes['RecommendedCompany']> = {
   company?: Resolver<ResolversTypes['Company'], ParentType, ContextType>;
   reasons?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   score?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type RefreshIntentResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['RefreshIntentResult'] = ResolversParentTypes['RefreshIntentResult']> = {
   companiesUpdated?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type RegionGrowthResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['RegionGrowth'] = ResolversParentTypes['RegionGrowth']> = {
@@ -6149,7 +6035,6 @@ export type RegionGrowthResolvers<ContextType = GraphQLContext, ParentType exten
   location?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   previousCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   remoteCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type ReminderResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Reminder'] = ResolversParentTypes['Reminder']> = {
@@ -6163,13 +6048,11 @@ export type ReminderResolvers<ContextType = GraphQLContext, ParentType extends R
   snoozedUntil?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   status?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type ReminderWithContactResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ReminderWithContact'] = ResolversParentTypes['ReminderWithContact']> = {
   contact?: Resolver<ResolversTypes['Contact'], ParentType, ContextType>;
   reminder?: Resolver<ResolversTypes['Reminder'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type ReplyDraftResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ReplyDraft'] = ResolversParentTypes['ReplyDraft']> = {
@@ -6191,13 +6074,11 @@ export type ReplyDraftResolvers<ContextType = GraphQLContext, ParentType extends
   status?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   subject?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type ReplyDraftsResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ReplyDraftsResult'] = ResolversParentTypes['ReplyDraftsResult']> = {
   drafts?: Resolver<Array<ResolversTypes['ReplyDraft']>, ParentType, ContextType>;
   totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type RepostReportResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['RepostReport'] = ResolversParentTypes['RepostReport']> = {
@@ -6207,7 +6088,6 @@ export type RepostReportResolvers<ContextType = GraphQLContext, ParentType exten
   repostRate?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   repostedJobs?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   totalJobsTracked?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type RepostSignalResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['RepostSignal'] = ResolversParentTypes['RepostSignal']> = {
@@ -6219,7 +6099,6 @@ export type RepostSignalResolvers<ContextType = GraphQLContext, ParentType exten
   jobUrl?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   lastSeenDate?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   repostCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type ResendEmailDetailResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ResendEmailDetail'] = ResolversParentTypes['ResendEmailDetail']> = {
@@ -6234,7 +6113,6 @@ export type ResendEmailDetailResolvers<ContextType = GraphQLContext, ParentType 
   subject?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   text?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   to?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SalaryBandResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalaryBand'] = ResolversParentTypes['SalaryBand']> = {
@@ -6245,19 +6123,16 @@ export type SalaryBandResolvers<ContextType = GraphQLContext, ParentType extends
   p25?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   p75?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   sampleCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SalaryRegionBreakdownResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalaryRegionBreakdown'] = ResolversParentTypes['SalaryRegionBreakdown']> = {
   band?: Resolver<ResolversTypes['SalaryBand'], ParentType, ContextType>;
   region?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SalarySeniorityBreakdownResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalarySeniorityBreakdown'] = ResolversParentTypes['SalarySeniorityBreakdown']> = {
   band?: Resolver<ResolversTypes['SalaryBand'], ParentType, ContextType>;
   level?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SalaryTrendResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalaryTrend'] = ResolversParentTypes['SalaryTrend']> = {
@@ -6269,7 +6144,6 @@ export type SalaryTrendResolvers<ContextType = GraphQLContext, ParentType extend
   previousBand?: Resolver<ResolversTypes['SalaryBand'], ParentType, ContextType>;
   query?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   trend?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SalescueAnalyzeResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueAnalyzeResult'] = ResolversParentTypes['SalescueAnalyzeResult']> = {
@@ -6278,7 +6152,6 @@ export type SalescueAnalyzeResultResolvers<ContextType = GraphQLContext, ParentT
   results?: Resolver<ResolversTypes['JSON'], ParentType, ContextType>;
   timings?: Resolver<ResolversTypes['JSON'], ParentType, ContextType>;
   totalTime?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SalescueAnomalyResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueAnomalyResult'] = ResolversParentTypes['SalescueAnomalyResult']> = {
@@ -6290,7 +6163,6 @@ export type SalescueAnomalyResultResolvers<ContextType = GraphQLContext, ParentT
   textPriorAdjustment?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   typeConfidence?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   zScore?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SalescueBanditAlternativeResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueBanditAlternative'] = ResolversParentTypes['SalescueBanditAlternative']> = {
@@ -6298,14 +6170,12 @@ export type SalescueBanditAlternativeResolvers<ContextType = GraphQLContext, Par
   subjectStyle?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   template?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   timing?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SalescueBanditArmResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueBanditArm'] = ResolversParentTypes['SalescueBanditArm']> = {
   subjectStyle?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   template?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   timing?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SalescueBanditResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueBanditResult'] = ResolversParentTypes['SalescueBanditResult']> = {
@@ -6316,7 +6186,6 @@ export type SalescueBanditResultResolvers<ContextType = GraphQLContext, ParentTy
   explorationTemperature?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   sampledReward?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   totalArms?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SalescueCallResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueCallResult'] = ResolversParentTypes['SalescueCallResult']> = {
@@ -6330,7 +6199,6 @@ export type SalescueCallResultResolvers<ContextType = GraphQLContext, ParentType
   turnScores?: Resolver<Array<ResolversTypes['Float']>, ParentType, ContextType>;
   turnUncertainties?: Resolver<Array<ResolversTypes['Float']>, ParentType, ContextType>;
   turningPoints?: Resolver<Array<ResolversTypes['SalescueTurningPoint']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SalescueCoachingCardResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueCoachingCard'] = ResolversParentTypes['SalescueCoachingCard']> = {
@@ -6338,7 +6206,6 @@ export type SalescueCoachingCardResolvers<ContextType = GraphQLContext, ParentTy
   example?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   framework?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   steps?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SalescueCommitmentResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueCommitment'] = ResolversParentTypes['SalescueCommitment']> = {
@@ -6347,7 +6214,6 @@ export type SalescueCommitmentResolvers<ContextType = GraphQLContext, ParentType
   speaker?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   turn?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   type?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SalescueEmailgenResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueEmailgenResult'] = ResolversParentTypes['SalescueEmailgenResult']> = {
@@ -6357,7 +6223,6 @@ export type SalescueEmailgenResultResolvers<ContextType = GraphQLContext, Parent
   hasCallToAction?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   promptTokens?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   wordCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SalescueEntitiesResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueEntitiesResult'] = ResolversParentTypes['SalescueEntitiesResult']> = {
@@ -6365,7 +6230,6 @@ export type SalescueEntitiesResultResolvers<ContextType = GraphQLContext, Parent
   neuralCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   regexCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   typesFound?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SalescueEntityResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueEntity'] = ResolversParentTypes['SalescueEntity']> = {
@@ -6377,7 +6241,6 @@ export type SalescueEntityResolvers<ContextType = GraphQLContext, ParentType ext
   startChar?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   text?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   type?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SalescueGraphResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueGraphResult'] = ResolversParentTypes['SalescueGraphResult']> = {
@@ -6389,14 +6252,12 @@ export type SalescueGraphResultResolvers<ContextType = GraphQLContext, ParentTyp
   nodeCount?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   note?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   similarCompanies?: Resolver<Array<ResolversTypes['SalescueSimilarCompany']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SalescueGraphSignalResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueGraphSignal'] = ResolversParentTypes['SalescueGraphSignal']> = {
   strength?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   type?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   with?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SalescueHealthResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueHealth'] = ResolversParentTypes['SalescueHealth']> = {
@@ -6405,7 +6266,6 @@ export type SalescueHealthResolvers<ContextType = GraphQLContext, ParentType ext
   modules?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   status?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   version?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SalescueIcpDimensionFitResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueICPDimensionFit'] = ResolversParentTypes['SalescueICPDimensionFit']> = {
@@ -6413,7 +6273,6 @@ export type SalescueIcpDimensionFitResolvers<ContextType = GraphQLContext, Paren
   fit?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   icpSpread?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   status?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SalescueIcpResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueICPResult'] = ResolversParentTypes['SalescueICPResult']> = {
@@ -6422,7 +6281,6 @@ export type SalescueIcpResultResolvers<ContextType = GraphQLContext, ParentType 
   missing?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   qualified?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   score?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SalescueIntentResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueIntentResult'] = ResolversParentTypes['SalescueIntentResult']> = {
@@ -6431,7 +6289,6 @@ export type SalescueIntentResultResolvers<ContextType = GraphQLContext, ParentTy
   distribution?: Resolver<ResolversTypes['JSON'], ParentType, ContextType>;
   stage?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   trajectory?: Resolver<Maybe<ResolversTypes['SalescueIntentTrajectory']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SalescueIntentTrajectoryResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueIntentTrajectory'] = ResolversParentTypes['SalescueIntentTrajectory']> = {
@@ -6440,13 +6297,11 @@ export type SalescueIntentTrajectoryResolvers<ContextType = GraphQLContext, Pare
   daysToPurchase?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   direction?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   velocity?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SalescueModuleErrorResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueModuleError'] = ResolversParentTypes['SalescueModuleError']> = {
   error?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   module?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SalescueObjectionResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueObjectionResult'] = ResolversParentTypes['SalescueObjectionResult']> = {
@@ -6457,13 +6312,11 @@ export type SalescueObjectionResultResolvers<ContextType = GraphQLContext, Paren
   severity?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   topTypes?: Resolver<ResolversTypes['JSON'], ParentType, ContextType>;
   typeConfidence?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SalescueReplyEvidenceResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueReplyEvidence'] = ResolversParentTypes['SalescueReplyEvidence']> = {
   label?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   text?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SalescueReplyResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueReplyResult'] = ResolversParentTypes['SalescueReplyResult']> = {
@@ -6473,7 +6326,6 @@ export type SalescueReplyResultResolvers<ContextType = GraphQLContext, ParentTyp
   evidence?: Resolver<Array<ResolversTypes['SalescueReplyEvidence']>, ParentType, ContextType>;
   primary?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   scores?: Resolver<ResolversTypes['JSON'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SalescueScoreCategoriesResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueScoreCategories'] = ResolversParentTypes['SalescueScoreCategories']> = {
@@ -6483,7 +6335,6 @@ export type SalescueScoreCategoriesResolvers<ContextType = GraphQLContext, Paren
   enrichment?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   intent?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   outreach?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SalescueScoreResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueScoreResult'] = ResolversParentTypes['SalescueScoreResult']> = {
@@ -6493,7 +6344,6 @@ export type SalescueScoreResultResolvers<ContextType = GraphQLContext, ParentTyp
   nSignalsDetected?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   score?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   signals?: Resolver<Array<ResolversTypes['SalescueScoreSignal']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SalescueScoreSignalResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueScoreSignal'] = ResolversParentTypes['SalescueScoreSignal']> = {
@@ -6503,13 +6353,11 @@ export type SalescueScoreSignalResolvers<ContextType = GraphQLContext, ParentTyp
   causalImpact?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   signal?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   strength?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SalescueSentimentEvidenceResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueSentimentEvidence'] = ResolversParentTypes['SalescueSentimentEvidence']> = {
   signal?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   text?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SalescueSentimentResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueSentimentResult'] = ResolversParentTypes['SalescueSentimentResult']> = {
@@ -6521,13 +6369,11 @@ export type SalescueSentimentResultResolvers<ContextType = GraphQLContext, Paren
   interpretation?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   inverted?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   sentiment?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SalescueSimilarCompanyResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueSimilarCompany'] = ResolversParentTypes['SalescueSimilarCompany']> = {
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   similarity?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SalescueSpamResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueSpamResult'] = ResolversParentTypes['SalescueSpamResult']> = {
@@ -6543,21 +6389,18 @@ export type SalescueSpamResultResolvers<ContextType = GraphQLContext, ParentType
   riskLevel?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   spamCategory?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   spamScore?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SalescueSubjectRankingResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueSubjectRanking'] = ResolversParentTypes['SalescueSubjectRanking']> = {
   rank?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   score?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   subject?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SalescueSubjectResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueSubjectResult'] = ResolversParentTypes['SalescueSubjectResult']> = {
   best?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   ranking?: Resolver<Array<ResolversTypes['SalescueSubjectRanking']>, ParentType, ContextType>;
   worst?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SalescueSurvivalResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueSurvivalResult'] = ResolversParentTypes['SalescueSurvivalResult']> = {
@@ -6568,7 +6411,6 @@ export type SalescueSurvivalResultResolvers<ContextType = GraphQLContext, Parent
   riskGroup?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   survivalCurve?: Resolver<ResolversTypes['JSON'], ParentType, ContextType>;
   weibullParams?: Resolver<ResolversTypes['JSON'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SalescueTriggerEventResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueTriggerEvent'] = ResolversParentTypes['SalescueTriggerEvent']> = {
@@ -6580,20 +6422,17 @@ export type SalescueTriggerEventResolvers<ContextType = GraphQLContext, ParentTy
   freshness?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   temporalFeatures?: Resolver<ResolversTypes['SalescueTriggerTemporalFeatures'], ParentType, ContextType>;
   type?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SalescueTriggerTemporalFeaturesResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueTriggerTemporalFeatures'] = ResolversParentTypes['SalescueTriggerTemporalFeatures']> = {
   pastSignal?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   recentSignal?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   todaySignal?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SalescueTriggersResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueTriggersResult'] = ResolversParentTypes['SalescueTriggersResult']> = {
   events?: Resolver<Array<ResolversTypes['SalescueTriggerEvent']>, ParentType, ContextType>;
   primary?: Resolver<Maybe<ResolversTypes['SalescueTriggerEvent']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SalescueTurningPointResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SalescueTurningPoint'] = ResolversParentTypes['SalescueTurningPoint']> = {
@@ -6603,14 +6442,12 @@ export type SalescueTurningPointResolvers<ContextType = GraphQLContext, ParentTy
   speaker?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   turn?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   uncertainty?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SaveCrawlLogResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SaveCrawlLogResult'] = ResolversParentTypes['SaveCrawlLogResult']> = {
   crawlLogId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   error?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type ScheduleBatchResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ScheduleBatchResult'] = ResolversParentTypes['ScheduleBatchResult']> = {
@@ -6621,7 +6458,6 @@ export type ScheduleBatchResultResolvers<ContextType = GraphQLContext, ParentTyp
   scheduled?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   schedulingPlan?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type ScoreContactsLoraResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ScoreContactsLoraResult'] = ResolversParentTypes['ScoreContactsLoraResult']> = {
@@ -6630,7 +6466,6 @@ export type ScoreContactsLoraResultResolvers<ContextType = GraphQLContext, Paren
   results?: Resolver<Array<ResolversTypes['ContactLoraScore']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   tierBreakdown?: Resolver<ResolversTypes['LoraTierBreakdown'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type ScoreContactsMlResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ScoreContactsMLResult'] = ResolversParentTypes['ScoreContactsMLResult']> = {
@@ -6639,7 +6474,6 @@ export type ScoreContactsMlResultResolvers<ContextType = GraphQLContext, ParentT
   message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   results?: Resolver<Array<ResolversTypes['ContactMLScore']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type ScrapedPostResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ScrapedPost'] = ResolversParentTypes['ScrapedPost']> = {
@@ -6658,28 +6492,24 @@ export type ScrapedPostResolvers<ContextType = GraphQLContext, ParentType extend
   reactionsCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   repostsCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   scrapedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SendDraftResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SendDraftResult'] = ResolversParentTypes['SendDraftResult']> = {
   error?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   resendId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SendEmailResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SendEmailResult'] = ResolversParentTypes['SendEmailResult']> = {
   error?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   id?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SendNowResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SendNowResult'] = ResolversParentTypes['SendNowResult']> = {
   error?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   resendId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SendOutreachEmailResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SendOutreachEmailResult'] = ResolversParentTypes['SendOutreachEmailResult']> = {
@@ -6687,7 +6517,6 @@ export type SendOutreachEmailResultResolvers<ContextType = GraphQLContext, Paren
   error?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   subject?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SentReplyResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SentReply'] = ResolversParentTypes['SentReply']> = {
@@ -6701,25 +6530,21 @@ export type SentReplyResolvers<ContextType = GraphQLContext, ParentType extends 
   subject?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   textContent?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   toEmails?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SignalTypeCountResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SignalTypeCount'] = ResolversParentTypes['SignalTypeCount']> = {
   count?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   signalType?: Resolver<ResolversTypes['IntentSignalType'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SimilarCompanyResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SimilarCompanyResult'] = ResolversParentTypes['SimilarCompanyResult']> = {
   company?: Resolver<ResolversTypes['Company'], ParentType, ContextType>;
   similarity?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SimilarPostResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SimilarPost'] = ResolversParentTypes['SimilarPost']> = {
   post?: Resolver<ResolversTypes['LinkedInPost'], ParentType, ContextType>;
   similarity?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SkillDemandResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SkillDemand'] = ResolversParentTypes['SkillDemand']> = {
@@ -6730,14 +6555,12 @@ export type SkillDemandResolvers<ContextType = GraphQLContext, ParentType extend
   skill?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   trend?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   weeksInTop20?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SkillMatchResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SkillMatchResult'] = ResolversParentTypes['SkillMatchResult']> = {
   claimedSkills?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   githubLanguages?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   matched?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SkillsDemandReportResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SkillsDemandReport'] = ResolversParentTypes['SkillsDemandReport']> = {
@@ -6747,7 +6570,6 @@ export type SkillsDemandReportResolvers<ContextType = GraphQLContext, ParentType
   query?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   topSkills?: Resolver<Array<ResolversTypes['SkillDemand']>, ParentType, ContextType>;
   totalJobsAnalyzed?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SubscriptionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Subscription'] = ResolversParentTypes['Subscription']> = {
@@ -6760,7 +6582,6 @@ export type SyncResendResultResolvers<ContextType = GraphQLContext, ParentType e
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   updatedCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SyncVoyagerJobsResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SyncVoyagerJobsResult'] = ResolversParentTypes['SyncVoyagerJobsResult']> = {
@@ -6769,7 +6590,6 @@ export type SyncVoyagerJobsResultResolvers<ContextType = GraphQLContext, ParentT
   intentSignalsCreated?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   upserted?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type ThreadMessageResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ThreadMessage'] = ResolversParentTypes['ThreadMessage']> = {
@@ -6786,7 +6606,6 @@ export type ThreadMessageResolvers<ContextType = GraphQLContext, ParentType exte
   subject?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   textContent?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   toEmails?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type TimeToFillEstimateResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['TimeToFillEstimate'] = ResolversParentTypes['TimeToFillEstimate']> = {
@@ -6794,19 +6613,16 @@ export type TimeToFillEstimateResolvers<ContextType = GraphQLContext, ParentType
   medianDays?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   p90Days?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   sampleSize?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type TimeToFillIndustryResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['TimeToFillIndustry'] = ResolversParentTypes['TimeToFillIndustry']> = {
   estimate?: Resolver<ResolversTypes['TimeToFillEstimate'], ParentType, ContextType>;
   industry?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type TimeToFillRemoteComparisonResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['TimeToFillRemoteComparison'] = ResolversParentTypes['TimeToFillRemoteComparison']> = {
   onsite?: Resolver<ResolversTypes['TimeToFillEstimate'], ParentType, ContextType>;
   remote?: Resolver<ResolversTypes['TimeToFillEstimate'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type TimeToFillReportResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['TimeToFillReport'] = ResolversParentTypes['TimeToFillReport']> = {
@@ -6814,13 +6630,11 @@ export type TimeToFillReportResolvers<ContextType = GraphQLContext, ParentType e
   byRemoteVsOnsite?: Resolver<ResolversTypes['TimeToFillRemoteComparison'], ParentType, ContextType>;
   bySeniority?: Resolver<Array<ResolversTypes['TimeToFillSeniority']>, ParentType, ContextType>;
   overall?: Resolver<ResolversTypes['TimeToFillEstimate'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type TimeToFillSeniorityResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['TimeToFillSeniority'] = ResolversParentTypes['TimeToFillSeniority']> = {
   estimate?: Resolver<ResolversTypes['TimeToFillEstimate'], ParentType, ContextType>;
   level?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export interface UrlScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes['URL'], any> {
@@ -6830,7 +6644,6 @@ export interface UrlScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes[
 export type UnverifyContactsResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['UnverifyContactsResult'] = ResolversParentTypes['UnverifyContactsResult']> = {
   count?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export interface UploadScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes['Upload'], any> {
@@ -6842,7 +6655,6 @@ export type UpsertLinkedInPostsResultResolvers<ContextType = GraphQLContext, Par
   inserted?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   updated?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type UserSettingsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['UserSettings'] = ResolversParentTypes['UserSettings']> = {
@@ -6854,7 +6666,6 @@ export type UserSettingsResolvers<ContextType = GraphQLContext, ParentType exten
   id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   updated_at?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   user_id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type VerifyAuthenticityResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['VerifyAuthenticityResult'] = ResolversParentTypes['VerifyAuthenticityResult']> = {
@@ -6865,7 +6676,6 @@ export type VerifyAuthenticityResultResolvers<ContextType = GraphQLContext, Pare
   skillMatch?: Resolver<Maybe<ResolversTypes['SkillMatchResult']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   verdict?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type VerifyCompanyContactsResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['VerifyCompanyContactsResult'] = ResolversParentTypes['VerifyCompanyContactsResult']> = {
@@ -6875,7 +6685,6 @@ export type VerifyCompanyContactsResultResolvers<ContextType = GraphQLContext, P
   suspicious?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   totalChecked?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   verified?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type VerifyEmailResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['VerifyEmailResult'] = ResolversParentTypes['VerifyEmailResult']> = {
@@ -6885,7 +6694,6 @@ export type VerifyEmailResultResolvers<ContextType = GraphQLContext, ParentType 
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   suggestedCorrection?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   verified?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type VoyagerAnalyticsDashboardResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['VoyagerAnalyticsDashboard'] = ResolversParentTypes['VoyagerAnalyticsDashboard']> = {
@@ -6901,7 +6709,6 @@ export type VoyagerAnalyticsDashboardResolvers<ContextType = GraphQLContext, Par
   salaryTrends?: Resolver<ResolversTypes['SalaryTrend'], ParentType, ContextType>;
   skillsDemand?: Resolver<ResolversTypes['SkillsDemandReport'], ParentType, ContextType>;
   timeToFill?: Resolver<ResolversTypes['TimeToFillReport'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type VoyagerCompanyJobCountResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['VoyagerCompanyJobCount'] = ResolversParentTypes['VoyagerCompanyJobCount']> = {
@@ -6911,7 +6718,6 @@ export type VoyagerCompanyJobCountResolvers<ContextType = GraphQLContext, Parent
   fetchedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   remoteJobCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   status?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type VoyagerJobCardResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['VoyagerJobCard'] = ResolversParentTypes['VoyagerJobCard']> = {
@@ -6925,14 +6731,12 @@ export type VoyagerJobCardResolvers<ContextType = GraphQLContext, ParentType ext
   url?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   urn?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   workplaceType?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type VoyagerJobSearchResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['VoyagerJobSearchResult'] = ResolversParentTypes['VoyagerJobSearchResult']> = {
   hasMore?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   jobs?: Resolver<Array<ResolversTypes['VoyagerJobCard']>, ParentType, ContextType>;
   totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type VoyagerRemoteMetricsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['VoyagerRemoteMetrics'] = ResolversParentTypes['VoyagerRemoteMetrics']> = {
@@ -6941,7 +6745,6 @@ export type VoyagerRemoteMetricsResolvers<ContextType = GraphQLContext, ParentTy
   computedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   topCompanies?: Resolver<Array<ResolversTypes['VoyagerCompanyJobCount']>, ParentType, ContextType>;
   totalRemoteJobs?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type WarcPointerResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WarcPointer'] = ResolversParentTypes['WarcPointer']> = {
@@ -6949,7 +6752,6 @@ export type WarcPointerResolvers<ContextType = GraphQLContext, ParentType extend
   filename?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   length?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   offset?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type WebhookEventResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WebhookEvent'] = ResolversParentTypes['WebhookEvent']> = {
@@ -6963,13 +6765,11 @@ export type WebhookEventResolvers<ContextType = GraphQLContext, ParentType exten
   payload?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   subject?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   toEmails?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type WebhookEventsResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WebhookEventsResult'] = ResolversParentTypes['WebhookEventsResult']> = {
   events?: Resolver<Array<ResolversTypes['WebhookEvent']>, ParentType, ContextType>;
   totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type Resolvers<ContextType = GraphQLContext> = {
