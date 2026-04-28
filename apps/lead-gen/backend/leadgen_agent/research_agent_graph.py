@@ -18,9 +18,9 @@ Dropped from the Rust crate (D1/SQLite dependent, irrelevant after the port):
 - ``app_context`` / ``research_context`` JSON round-trips
 
 The graph is a small ReAct-style loop modelled after ``admin_chat_graph.py``:
-the LLM emits ``{"tool": …, "args": …}`` or ``{"answer": …}`` JSON (the local
-``mlx_lm.server`` target has no native tool-calling), and tool nodes dispatch
-to Semantic Scholar. Each task in a mode is a separate agent loop run in
+the LLM emits ``{"tool": …, "args": …}`` or ``{"answer": …}`` JSON (the
+prompt-driven router pattern is portable across providers), and tool nodes
+dispatch to Semantic Scholar. Each task in a mode is a separate agent loop run in
 sequence; the final node concatenates per-task findings and asks the LLM for a
 synthesis (matching the Rust ``TeamLead::run`` + synthesis step).
 """

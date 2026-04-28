@@ -1,30 +1,14 @@
 /**
  * Opportunity classifier — structured extraction + fit scoring from raw_context.
  *
- * Speaks OpenAI-compatible chat completions over `LLM_BASE_URL`. Two supported
- * backends:
- *
- *   1. Cloudflare Workers AI via the `lead-gen-opportunity-llm` Worker
- *      (Mistral-7B-Instruct-v0.2 + LoRA trained on opportunity gold labels).
- *      Used in production / Vercel.
- *
- *   2. Local mlx_lm.server (Qwen2.5-3B + LoRA at mlx-training/models/opportunity-score).
- *      Optional dev shortcut. Start with:
- *        mlx_lm.server \
- *          --model mlx-community/Qwen2.5-3B-Instruct-4bit \
- *          --adapter-path mlx-training/models/opportunity-score \
- *          --port 8080
- *
- * The teacher labeling pipeline (mlx-training/export_opportunity_labels.py)
- * stays local-only by design — only the student inference moved to CF.
+ * Speaks OpenAI-compatible chat completions over `LLM_BASE_URL`. Production
+ * target is the `lead-gen-opportunity-llm` Cloudflare Worker
+ * (Mistral-7B-Instruct-v0.2 + LoRA trained on opportunity gold labels).
  *
  * Env:
  *   LLM_BASE_URL           — e.g. https://lead-gen-opportunity-llm.<sub>.workers.dev/v1
- *                            or http://localhost:8080/v1 for local dev
- *   LLM_API_KEY            — bearer token (matches OPPORTUNITY_LLM_SHARED_SECRET on the Worker;
- *                            ignored by local mlx_lm.server)
- *   LLM_MODEL_OPPORTUNITY  — override model name (defaults to mistral-opportunity-lora when
- *                            unset on CF, base Qwen2.5-3B locally)
+ *   LLM_API_KEY            — bearer token (matches OPPORTUNITY_LLM_SHARED_SECRET on the Worker)
+ *   LLM_MODEL_OPPORTUNITY  — override model name (defaults to mistral-opportunity-lora)
  */
 
 import OpenAI from "openai";
@@ -99,7 +83,7 @@ export async function classifyOpportunityLLM(input: {
   const model =
     process.env.LLM_MODEL_OPPORTUNITY ??
     process.env.LLM_MODEL ??
-    "mlx-community/Qwen2.5-3B-Instruct-4bit";
+    "mistral-opportunity-lora";
 
   const userMsg = [
     `Title: ${input.title}`,

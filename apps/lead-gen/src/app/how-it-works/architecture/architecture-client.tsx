@@ -275,7 +275,7 @@ const s7Nodes: Node[] = [
   { id: "cm-verify",    type: "agent",     position: { x: 0,   y: 90  }, data: { label: "neverbounce verify", sublabel: "+ local dns/smtp fallback",     icon: Filter,    color: "var(--green-9)" } },
   { id: "cm-authority", type: "agent",     position: { x: 320, y: 0   }, data: { label: "title classifier",   sublabel: "sync · <100 ms · no cloud",     icon: Tag,       color: "var(--indigo-9)" } },
   { id: "cm-engage",    type: "agent",     position: { x: 320, y: 90  }, data: { label: "engagement stumps",  sublabel: "12 features · sub-ms",          icon: BarChart3, color: "var(--amber-9)" } },
-  { id: "cm-lora",      type: "agent",     position: { x: 640, y: 0   }, data: { label: "lora persona rank",  sublabel: "mlx train · gated by logreg",   icon: Brain,     color: "var(--amber-9)" } },
+  { id: "cm-lora",      type: "agent",     position: { x: 640, y: 0   }, data: { label: "lora persona rank",  sublabel: "llama-cpp gguf · gated by logreg", icon: Brain,     color: "var(--amber-9)" } },
   { id: "cm-vector",    type: "dataStore", position: { x: 640, y: 90  }, data: { label: "pgvector hnsw",      sublabel: "bge-m3 · 1024-dim",             icon: Database,  color: "var(--cyan-9)" } },
 ];
 const s7Edges: Edge[] = [

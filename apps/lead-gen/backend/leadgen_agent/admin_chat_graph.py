@@ -2,12 +2,12 @@
 
 Input: {prompt, system}. Output: {response}.
 
-Why not `create_react_agent`: local `mlx_lm.server` (default target per
-`project_mlx_local_inference.md`) lacks vLLM's `--tool-call-parser hermes`
-equivalent, so native tool calls degrade to plain text. Instead, each step
-asks the LLM to emit `{"tool": ..., "args": ...}` or `{"answer": ...}` JSON,
-which `ainvoke_json()` parses reliably even when the model wraps output in
-code fences or `<think>` tags.
+Why not `create_react_agent`: this graph predates DeepSeek-as-default and was
+written when local Qwen models without reliable native tool-call deltas were
+common; the prompt-driven JSON-router pattern is robust across providers.
+Each step asks the LLM to emit `{"tool": ..., "args": ...}` or
+`{"answer": ...}` JSON, which `ainvoke_json()` parses reliably even when
+the model wraps output in code fences or `<think>` tags.
 
 Tools (all read-only): count_rows(table), inspect_schema(table), query_db(sql).
 """

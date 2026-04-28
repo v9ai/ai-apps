@@ -26,7 +26,7 @@ function generateOpportunityId(): string {
 
 const CLASSIFY_TIMEOUT_MS = 8_000;
 
-// Bounded race so a slow or down mlx_lm.server never blocks the save path.
+// Bounded race so a slow or down classifier upstream never blocks the save path.
 async function tryClassify(input: {
   title: string;
   rawContext: string;

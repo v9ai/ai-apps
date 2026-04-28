@@ -15,12 +15,12 @@ The tool hierarchy is intentionally cost-aware:
     grep  — lightweight, file:line matches (caps at 200)
     read  — heavy, full file with line numbers (caps at 300 lines)
 
-Why a custom loop instead of ``create_react_agent`` / ``ToolNode``: the default
-target is local ``mlx_lm.server`` which does not reliably emit OpenAI
-tool-call deltas. We force JSON output and parse ``{"tool","args"}`` /
-``{"answer"}`` via :func:`ainvoke_json`, which is robust to markdown fences and
-``<think>`` blocks. When ``provider="deepseek"`` is used, DeepSeek's native
-tool-calling is used via ``llm.bind_tools(...)``.
+Why a custom loop instead of ``create_react_agent`` / ``ToolNode``: the
+prompt-driven JSON-router pattern is portable across providers and predates
+DeepSeek-as-default. We force JSON output and parse ``{"tool","args"}`` /
+``{"answer"}`` via :func:`ainvoke_json`, which is robust to markdown fences
+and ``<think>`` blocks. When ``provider="deepseek"`` is used explicitly,
+DeepSeek's native tool-calling is used via ``llm.bind_tools(...)``.
 
 CLI:
     python -m leadgen_agent.agentic_search_graph search "<query>" [--root PATH] [--workers 3] [--max-turns 8]
@@ -439,10 +439,9 @@ async def _tool_loop(
 ) -> str:
     """Run a DeepSeek tool-calling loop. Returns the final text answer.
 
-    Uses the JSON protocol documented in :data:`STEP_INSTRUCTION` so it works
-    against both DeepSeek (which supports native tool calls) and local MLX
-    (which does not). On the last turn, tool calls are suppressed — the model
-    is forced to emit ``{"answer": ...}``.
+    Uses the JSON protocol documented in :data:`STEP_INSTRUCTION` for
+    portability across providers. On the last turn, tool calls are
+    suppressed — the model is forced to emit ``{"answer": ...}``.
     """
     llm = make_llm(provider=provider)
     transcript: list[str] = [f"Task: {user}"]

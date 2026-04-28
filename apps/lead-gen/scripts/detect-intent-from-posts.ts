@@ -2,9 +2,9 @@
  * Posts-first intent signal detector.
  *
  * Pulls LinkedIn posts for a company from the Cloudflare D1 `posts` table
- * (via the edge worker), batches them through the local Qwen model, and
- * writes detected signals to Neon `intent_signals` with one row per signal,
- * each linking back to its source post via `source_url`.
+ * (via the edge worker), batches them through DeepSeek, and writes detected
+ * signals to Neon `intent_signals` with one row per signal, each linking
+ * back to its source post via `source_url`.
  *
  * Usage:
  *   pnpm tsx scripts/detect-intent-from-posts.ts --company durlston-partners
@@ -13,8 +13,7 @@
  * Env (read from .env.local):
  *   LEAD_GEN_EDGE_URL  e.g. https://agenticleadgen-edge.eeeew.workers.dev
  *   JOBS_D1_TOKEN      bearer token for the edge worker
- *   LLM_BASE_URL       (optional) default http://localhost:8080/v1
- *   LLM_MODEL          (optional) default mlx-community/Qwen2.5-3B-Instruct-4bit
+ *   DEEPSEEK_API_KEY   DeepSeek API credential
  */
 
 import { db } from "@/db";

@@ -5,10 +5,9 @@ Used by scripts/classify-paper-contacts.ts to verify that papers attributed to
 `tag:papers` contacts (imported from the 2025–2026 sales/lead-gen corpus) are
 actually on-topic — the seed queries pulled in some off-topic co-author papers.
 
-Uses the shared `make_llm()` + `ainvoke_json()` helpers (local mlx_lm server by
-default; external provider via LLM_BASE_URL). On any parse/network failure,
-returns a conservative off-topic verdict with an error reason, following the
-defensive pattern in score_contact_graph.py.
+Uses the shared `make_llm()` + `ainvoke_json()` helpers (DeepSeek by default).
+On any parse/network failure, returns a conservative off-topic verdict with
+an error reason, following the defensive pattern in score_contact_graph.py.
 """
 
 from __future__ import annotations

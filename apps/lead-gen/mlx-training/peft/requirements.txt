@@ -1,7 +1,0 @@
-# Requires Python >= 3.10 (scripts use PEP 604 union syntax + PEP 585 generics).
-# macOS system Python is 3.9 — use `brew install python@3.11` or pyenv.
-transformers>=4.44
-safetensors>=0.4
-torch>=2.4
-numpy>=1.26
-sentencepiece>=0.2

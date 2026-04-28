@@ -2,7 +2,7 @@
  * Company vertical and AI tier classifier.
  *
  * Three paths:
- * 1. LLM: fine-tuned Qwen via local mlx_lm.server (classifyCompanyLLM)
+ * 1. LLM: OpenAI-compatible chat endpoint via LLM_BASE_URL (classifyCompanyLLM)
  * 2. Fast: Aho-Corasick automaton for single-pass matching (classifyCompanyFast)
  * 3. Legacy: sequential String.includes() scans (classifyCompany)
  *
@@ -458,7 +458,7 @@ export function classifyBatch(
   });
 }
 
-// ── LLM-based classification (fine-tuned Qwen via mlx_lm.server) ────────
+// ── LLM-based classification (OpenAI-compatible chat endpoint) ──────────
 
 const COMPANY_SYSTEM_PROMPT = `You classify B2B companies by vertical and AI tier.
 
@@ -489,7 +489,7 @@ export async function classifyCompanyLLM(
   if (!url) throw new Error("LLM_BASE_URL not set");
 
   const client = new OpenAI({ apiKey: "local", baseURL: url });
-  const model = process.env.LLM_MODEL_COMPANY ?? process.env.LLM_MODEL ?? "mlx-community/Qwen2.5-3B-Instruct-4bit";
+  const model = process.env.LLM_MODEL_COMPANY ?? process.env.LLM_MODEL ?? "deepseek-v4-flash";
 
   const userMsg = [
     "Classify this company:",

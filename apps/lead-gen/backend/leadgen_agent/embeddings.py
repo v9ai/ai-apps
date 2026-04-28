@@ -3,7 +3,7 @@
 Thin async wrapper over the Rust/Candle ``icp-embed`` HTTP server
 (``crates/icp-embed``, serves BAAI/bge-m3, 1024-dim). All embedding calls
 funnel through this module so swapping the backend to a different local
-model (MLX, ONNX, other Candle binary) is a one-file change.
+model (ONNX, other Candle binary) is a one-file change.
 
 No external API calls. Server URL defaults to ``http://127.0.0.1:7799``;
 override via ``ICP_EMBED_URL``.

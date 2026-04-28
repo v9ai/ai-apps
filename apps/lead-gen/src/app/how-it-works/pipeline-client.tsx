@@ -1127,13 +1127,13 @@ const langgraphGraphs: { name: string; purpose: string }[] = [
   { name: "deep_scrape", purpose: "Targeted site scrape with structured extraction" },
 ];
 
-const mlxClassifiers: { name: string; model: string; throughput: string }[] = [
+const inlineClassifiers: { name: string; model: string; throughput: string }[] = [
   { name: "classifyCompanyFast", model: "Aho-Corasick automaton", throughput: "O(n+m+z), single linear pass" },
-  { name: "classifyContactML", model: "12-feature logistic ranker", throughput: "4,618 contacts/sec on M1" },
-  { name: "classifyCompanyLLM", model: "Qwen2.5-3B-Instruct-4bit", throughput: "local; 10s timeout → AC fallback" },
-  { name: "classifyContactLLM", model: "Qwen2.5-1.5B-Instruct-4bit", throughput: "local JSON output" },
-  { name: "classifyOpportunityLLM", model: "Qwen2.5-3B + LoRA adapter", throughput: "local, no fallback" },
-  { name: "email composer drafts", model: "Qwen2.5-3B via mlx_lm.server", throughput: "local, OpenAI-compatible" },
+  { name: "classifyContactML", model: "12-feature logistic ranker", throughput: "sub-millisecond per contact" },
+  { name: "classifyCompanyLLM", model: "DeepSeek v4-flash", throughput: "10s timeout → Aho-Corasick fallback" },
+  { name: "classifyContactLLM", model: "DeepSeek v4-flash", throughput: "JSON-mode response_format" },
+  { name: "classifyOpportunityLLM", model: "Mistral-7B-Instruct + LoRA (Workers AI)", throughput: "lead-gen-opportunity-llm worker" },
+  { name: "score_contact (LoRA)", model: "Qwen2.5-1.5B Q4_K_M GGUF (lora-serve)", throughput: "llama-cpp on HF Space CPU tier" },
 ];
 
 function BackendInferenceSection() {
@@ -1144,7 +1144,7 @@ function BackendInferenceSection() {
         <Heading size="5">Backend &amp; Local Inference</Heading>
       </Flex>
       <Text size="2" color="gray" as="p" mb="4" style={{ lineHeight: 1.7, maxWidth: 760 }}>
-        Two runtimes carry work off the user&apos;s machine. <strong>LangGraph</strong> runs stateful multi-turn agents (admin chat, ICP research, text-to-SQL, email composition) with Postgres-checkpointed threads. <strong>MLX</strong> runs high-volume per-row classification on Apple Silicon via an OpenAI-compatible local server — zero cloud cost for contact, company, and opportunity scoring.
+        Two runtimes carry work off Vercel. <strong>LangGraph</strong> runs stateful multi-turn agents (admin chat, ICP research, text-to-SQL, email composition) with Postgres-checkpointed threads. <strong>Inline classifiers</strong> handle high-volume per-row scoring — Aho-Corasick + a 12-feature logistic ranker for the fast path, DeepSeek v4-flash for harder cases, and a llama-cpp GGUF on HF Spaces (lora-serve) for the contact-tier LoRA.
       </Text>
 
       <Flex gap="4" wrap="wrap" style={{ alignItems: "stretch" }}>
@@ -1191,11 +1191,11 @@ return builder.compile(checkpointer=checkpointer)`}</pre>
 
         <Card style={{ flex: "1 1 480px", background: "var(--gray-2)", borderLeft: "3px solid var(--green-9)" }}>
           <Flex align="baseline" gap="2" mb="2" wrap="wrap">
-            <Heading size="3">MLX local inference</Heading>
-            <Badge variant="soft" color="green" size="1" style={{ fontVariantNumeric: "tabular-nums" }}>zero API cost</Badge>
+            <Heading size="3">Inline classifiers</Heading>
+            <Badge variant="soft" color="green" size="1" style={{ fontVariantNumeric: "tabular-nums" }}>cheap-first routing</Badge>
           </Flex>
           <Text size="2" color="gray" as="p" mb="3" style={{ lineHeight: 1.6 }}>
-            Six classifiers run through <Code size="1">mlx_lm.server</Code> exposing an OpenAI-compatible endpoint at <Code size="1">http://localhost:8080/v1</Code>. Contact scoring is the fast path — a 12-feature logistic ranker hits <strong>4,618 contacts/sec on M1</strong>. Harder classification routes to quantized Qwen checkpoints (1.5B / 3B, 4-bit) with LoRA adapters for fine-grained labels.
+            Six classifiers serve scoring at request time. Aho-Corasick is the fast path for company tiering (single linear pass over a pattern dictionary). The 12-feature logistic ranker handles contacts. Harder classification escalates to DeepSeek v4-flash with <Code size="1">response_format: {"{type: \"json_object\"}"}</Code>; the contact-tier LoRA (Qwen2.5-1.5B Q4_K_M GGUF) is served by llama-cpp on a free HF Space.
           </Text>
           <div style={{ overflowX: "auto", marginBottom: 12 }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
@@ -1207,7 +1207,7 @@ return builder.compile(checkpointer=checkpointer)`}</pre>
                 </tr>
               </thead>
               <tbody>
-                {mlxClassifiers.map((c) => (
+                {inlineClassifiers.map((c) => (
                   <tr key={c.name}>
                     <td style={{ padding: "5px 8px", borderBottom: "1px solid var(--gray-a3)", fontFamily: "var(--code-font-family, monospace)", color: "var(--green-11)", fontSize: 11 }}>{c.name}</td>
                     <td style={{ padding: "5px 8px", borderBottom: "1px solid var(--gray-a3)", color: "var(--gray-11)", fontSize: 11 }}>{c.model}</td>
@@ -1223,10 +1223,10 @@ return builder.compile(checkpointer=checkpointer)`}</pre>
             fontSize: 11, fontFamily: "var(--code-font-family, monospace)",
             color: "var(--green-11)", overflow: "auto", lineHeight: 1.55,
           }}>{`// src/ml/opportunity-classifier.ts:83
-const url = process.env.LLM_BASE_URL;      // http://localhost:8080/v1
-const client = new OpenAI({ apiKey: "local", baseURL: url });
+const url = process.env.LLM_BASE_URL;      // CF Worker /v1 endpoint
+const client = new OpenAI({ apiKey: process.env.LLM_API_KEY, baseURL: url });
 const model = process.env.LLM_MODEL_OPPORTUNITY
-  ?? "mlx-community/Qwen2.5-3B-Instruct-4bit";
+  ?? "mistral-opportunity-lora";
 
 const res = await client.chat.completions.create({
   model,

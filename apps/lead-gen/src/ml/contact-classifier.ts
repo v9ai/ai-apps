@@ -2,7 +2,7 @@
  * ML contact title classifier.
  *
  * Two paths:
- * 1. LLM: fine-tuned Qwen via local mlx_lm.server (classifyContactLLM)
+ * 1. LLM: OpenAI-compatible chat endpoint via LLM_BASE_URL (classifyContactLLM)
  * 2. Heuristic: weighted keyword scoring (classifyContactML)
  *
  * classifyContactHybrid() tries LLM first, falls back to heuristic.
@@ -197,7 +197,7 @@ export function classifyContactML(
   };
 }
 
-// ── LLM-based classification (fine-tuned Qwen via mlx_lm.server) ────────
+// ── LLM-based classification (OpenAI-compatible chat endpoint) ──────────
 
 const CONTACT_SYSTEM_PROMPT = `You classify B2B contact job titles into seniority level and department.
 
@@ -219,7 +219,7 @@ export async function classifyContactLLM(
   if (!url) throw new Error("LLM_BASE_URL not set");
 
   const client = new OpenAI({ apiKey: "local", baseURL: url });
-  const model = process.env.LLM_MODEL_CONTACT ?? process.env.LLM_MODEL ?? "mlx-community/Qwen2.5-1.5B-Instruct-4bit";
+  const model = process.env.LLM_MODEL_CONTACT ?? process.env.LLM_MODEL ?? "deepseek-v4-flash";
 
   const res = await client.chat.completions.create({
     model,

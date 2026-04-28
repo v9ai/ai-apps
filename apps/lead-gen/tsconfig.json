@@ -39,7 +39,6 @@
     "migrations/schema.ts",
     "chrome-extension",
     "backend",
-    "mlx-training",
     "crates",
     "consultancies",
     "edge",

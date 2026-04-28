@@ -1,9 +1,8 @@
 /**
  * Batch intent signal detection for companies.
  *
- * Queries company data from Neon, sends through local Qwen model
- * (mlx_lm.server on port 8080 with intent-signal adapter), and
- * stores detected signals in the intent_signals table.
+ * Queries company data from Neon, sends through DeepSeek, and stores
+ * detected signals in the intent_signals table.
  *
  * Usage:
  *   pnpm tsx scripts/detect-intent-signals.ts              # detect all

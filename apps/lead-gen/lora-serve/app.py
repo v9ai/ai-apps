@@ -6,8 +6,8 @@ JSON tier/score/reasons. GGUF is pulled from ``v9ai/contact-score-qwen-1.5b-gguf
 at cold start via huggingface_hub.
 
 Called by ``apps/lead-gen/backend/leadgen_agent/score_contact_graph.py``.
-The rubric here **must** match ``mlx-training/label_contact_score.py`` exactly
-— the LoRA was trained with this system prompt.
+The rubric below is frozen — the merged GGUF was trained against this exact
+system prompt; do not edit without retraining the adapter.
 
 Latency budget: cold start ~30-60s, warm request ~2-10s at ~5-10 tok/s.
 """
@@ -23,7 +23,7 @@ from huggingface_hub import hf_hub_download
 from llama_cpp import Llama
 from pydantic import BaseModel
 
-# Rubric — keep in sync with mlx-training/label_contact_score.py SCORE_SYSTEM.
+# Rubric — frozen, must match the prompt the GGUF was fine-tuned against.
 SCORE_SYSTEM = """You rate B2B sales contacts on fit for outreach. Output strict JSON only, no prose.
 Schema: {"tier": "A"|"B"|"C"|"D", "score": number in [0,1], "reasons": string[] (1-3 items)}
 Tier rubric:

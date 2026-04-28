@@ -182,13 +182,10 @@ def _domain_to_key(domain: str) -> str:
 
 
 async def _parse_nl(query: str) -> dict[str, Any]:
-    provider = os.environ.get("LLM_PROVIDER", "").strip().lower() or None
-    llm = make_llm(temperature=0.1, provider=provider)
+    llm = make_llm(temperature=0.1)
     prompt = _NL_PROMPT.format(user_query=query)
     try:
-        data = await ainvoke_json(
-            llm, [{"role": "user", "content": prompt}], provider=provider,
-        )
+        data = await ainvoke_json(llm, [{"role": "user", "content": prompt}])
     except (httpx.HTTPError, ValueError, RuntimeError) as e:
         log.warning("[nl_search] LLM error: %s", e)
         data = None

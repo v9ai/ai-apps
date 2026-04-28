@@ -112,8 +112,7 @@ Four hubs own DeepSeek wiring. Edit at the hub, not at call sites.
 |---|---|
 | `src/lib/deepseek/client.ts` | TS runtime: `getDeepSeekClient()`, `getDeepSeekModel(tier)`, `DEEPSEEK_REASONING_DEFAULTS`. Used by API routes, resolvers, email/contact-enrichment libs. |
 | `src/lib/deepseek/constants.ts` | TS UI catalog: `DEEPSEEK_MODELS` + `formatDeepSeekPrice()` for marketing/architecture pages. |
-| `backend/leadgen_agent/llm.py` | Python runtime: `make_llm(provider="deepseek", tier="deep" \| "standard")`, `deepseek_model_name(tier)`, `MODEL_PRICING`. Used by every LangGraph graph. |
-| `mlx-training/_deepseek.py` | MLX synthetic-data scripts: `deepseek_chat_url()` / `deepseek_auth_headers()` / `deepseek_chat_payload()`. |
+| `backend/leadgen_agent/llm.py` | Python runtime: `make_llm(provider="deepseek", tier="deep" \| "standard")`, `deepseek_model_name(tier)`, `MODEL_PRICING`. Used by every LangGraph graph. `make_llm()` defaults to DeepSeek; pass `provider="email_llm"` to opt into the Cloudflare Workers AI proxy used by the email graphs. |
 
 Adding a new model: bump `DEEPSEEK_MODELS` in **both** `constants.ts` and `llm.py` (they mirror each other). Pricing flows from there into `MODEL_PRICING`. Override per-environment via `DEEPSEEK_MODEL` / `DEEPSEEK_MODEL_DEEP` env vars; both default to `deepseek-v4-pro`.
 
