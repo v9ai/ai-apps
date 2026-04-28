@@ -1831,20 +1831,38 @@ function clickSalaryMetadata() {
 function extractCompaniesFromJobCards(): Array<{ name: string; linkedin_url: string }> {
   const companyMap = new Map<string, { name: string; linkedin_url: string }>();
 
-  document.querySelectorAll(".job-card-container").forEach((card) => {
-    const subtitleEl = card.querySelector(".artdeco-entity-lockup__subtitle");
-    if (!subtitleEl) return;
+  const cardRoots = new Set<Element>();
+  document
+    .querySelectorAll(
+      ".job-card-container, [data-occludable-job-id], li[data-job-id], div[data-job-id]",
+    )
+    .forEach((el) => {
+      const root =
+        el.closest(".job-card-container") ||
+        el.closest("[data-occludable-job-id]") ||
+        el.closest("[data-job-id]") ||
+        el;
+      cardRoots.add(root);
+    });
 
-    const raw = subtitleEl.textContent?.trim() ?? "";
+  cardRoots.forEach((card) => {
+    const subtitleEl = card.querySelector(
+      ".artdeco-entity-lockup__subtitle, .job-card-container__primary-description, .artdeco-entity-lockup__caption, .job-card-container__company-name",
+    );
+    // Fall back to any /company/ anchor anywhere in the card so we still
+    // capture the company even when subtitle classes drift.
+    const companyLink =
+      (subtitleEl?.querySelector('a[href*="/company/"]') as HTMLAnchorElement | null) ||
+      (card.querySelector('a[href*="/company/"]') as HTMLAnchorElement | null);
+
+    const raw = subtitleEl?.textContent?.trim() ?? companyLink?.textContent?.trim() ?? "";
     const name = raw.split(/\s*·\s*/)[0].trim();
     if (!name) return;
 
-    const companyLink = subtitleEl.querySelector('a[href*="/company/"]') as HTMLAnchorElement | null;
     let linkedin_url = "";
-
     if (companyLink) {
       try {
-        const url = new URL(companyLink.href);
+        const url = new URL(companyLink.href, window.location.origin);
         const match = url.pathname.match(/^\/company\/([^/]+)/);
         if (match) {
           linkedin_url = `https://www.linkedin.com/company/${match[1]}/`;
@@ -2061,19 +2079,70 @@ async function extractLinkedInJobDetailPage() {
 
 // Extract LinkedIn job data
 function extractLinkedInJobData() {
-  const jobCards = document.querySelectorAll(".job-card-container");
-  const jobs: any[] = [];
+  // LinkedIn rotates class names; pin to stable hooks (`data-job-id` /
+  // `data-occludable-job-id`) and the `/jobs/view/` URL pattern, with
+  // class-based selectors as fast paths.
+  const cardRoots = new Set<Element>();
+  document
+    .querySelectorAll(
+      ".job-card-container, [data-occludable-job-id], li[data-job-id], div[data-job-id]",
+    )
+    .forEach((el) => {
+      const root =
+        el.closest(".job-card-container") ||
+        el.closest("[data-occludable-job-id]") ||
+        el.closest("[data-job-id]") ||
+        el;
+      cardRoots.add(root);
+    });
 
-  jobCards.forEach((jobCard) => {
-    const titleElement = jobCard.querySelector(".job-card-list__title--link");
-    const companyElement = jobCard.querySelector(
-      ".artdeco-entity-lockup__subtitle",
+  const jobs: any[] = [];
+  let skippedNoTitle = 0;
+  let skippedNoUrl = 0;
+
+  cardRoots.forEach((jobCard) => {
+    const titleAnchor = jobCard.querySelector<HTMLAnchorElement>(
+      'a.job-card-list__title--link, a.job-card-container__link, a[href*="/jobs/view/"]',
     );
+    if (!titleAnchor) {
+      skippedNoTitle++;
+      return;
+    }
+
+    const title =
+      titleAnchor
+        .querySelector("span[aria-hidden='true']")
+        ?.textContent?.trim() ||
+      titleAnchor.textContent?.trim() ||
+      titleAnchor.getAttribute("aria-label")?.trim() ||
+      "";
+    if (!title) {
+      skippedNoTitle++;
+      return;
+    }
+
+    let url = "";
+    try {
+      const u = new URL(titleAnchor.href, window.location.origin);
+      url = u.origin + u.pathname; // drop query/fragment so dedup works
+    } catch {
+      url = titleAnchor.href || "";
+    }
+    if (!url) {
+      skippedNoUrl++;
+      return;
+    }
+
+    const companyEl = jobCard.querySelector(
+      ".artdeco-entity-lockup__subtitle, .job-card-container__primary-description, .artdeco-entity-lockup__caption, .job-card-container__company-name",
+    );
+    const companyRaw = companyEl?.textContent?.trim() ?? "";
+    const company = companyRaw.split(/\s*·\s*/)[0].trim();
+
     const metadataUls = jobCard.querySelectorAll(
       "ul.job-card-container__metadata-wrapper",
     );
 
-    // Check if job is closed/archived (indicated by specific classes or text)
     const isArchived =
       jobCard.querySelector(".job-card-container__footer-item--closed") !==
         null ||
@@ -2082,26 +2151,20 @@ function extractLinkedInJobData() {
       jobCard.classList.contains("job-card-container--closed");
 
     const jobData: any = {
-      title: titleElement?.textContent?.trim(),
-      company: companyElement?.textContent?.trim(),
-      url: (titleElement as HTMLAnchorElement)?.href,
+      title,
+      company,
+      url,
       archived: isArchived,
     };
+    if (metadataUls[0]) jobData.location = metadataUls[0].textContent?.trim();
+    if (metadataUls[1]) jobData.salary = metadataUls[1].textContent?.trim();
 
-    // First UL - location
-    if (metadataUls[0]) {
-      jobData.location = metadataUls[0].textContent?.trim();
-    }
-
-    // Second UL - salary
-    if (metadataUls[1]) {
-      jobData.salary = metadataUls[1].textContent?.trim();
-    }
-
-    if (jobData.title) {
-      jobs.push(jobData);
-    }
+    jobs.push(jobData);
   });
+
+  console.log(
+    `[CS] extractLinkedInJobData: ${jobs.length} extracted, ${skippedNoTitle} skipped (no title), ${skippedNoUrl} skipped (no url) — total cards seen: ${cardRoots.size}`,
+  );
   return jobs;
 }
 

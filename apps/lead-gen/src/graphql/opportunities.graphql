@@ -1,0 +1,63 @@
+query OpportunitiesPage {
+  opportunitiesPage {
+    opportunities {
+      id
+      title
+      url
+      source
+      status
+      rewardText
+      rewardUsd
+      score
+      tags
+      applied
+      appliedAt
+      applicationStatus
+      firstSeen
+      createdAt
+      companyName
+      companyKey
+      contactFirstName
+      contactLastName
+      contactSlug
+      contactPosition
+    }
+    d1Pending {
+      id
+      title
+      url
+      source
+      status
+      tags
+      location
+      salary
+      archived
+      createdAt
+      updatedAt
+      companyName
+      companyKey
+    }
+    evalReport {
+      goldenCount
+      excludedCount
+      nullScoreCount
+      timestamp
+      scoring {
+        accuracy
+        precision
+        recall
+        f1
+        aucRoc
+        ndcgAt10
+      }
+      sourceBreakdown {
+        source
+        total
+        positive
+        negative
+        precision
+        avgScore
+      }
+    }
+  }
+}
