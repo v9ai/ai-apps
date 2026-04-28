@@ -9,8 +9,7 @@ Two routing nodes (selected by ``state.node``):
 1. **brave** (default). Pull UNKNOWN companies (optionally restricted to those
    discovered via the ``BRAVE_SEARCH`` provenance tag), scrape a small set of
    high-signal pages with ``httpx`` + BeautifulSoup, classify with the shared
-   ``make_llm()`` factory (``mlx_lm.server`` locally, DeepSeek when
-   ``LLM_PROVIDER=deepseek``), compute the enrichment score, then upsert
+   ``make_llm()`` factory (DeepSeek), compute the enrichment score, then upsert
    columns + ``company_facts`` rows into Neon.
 
 2. **hf_hub**. Load companies that haven't been HF-enriched yet, resolve each
@@ -25,8 +24,7 @@ Chromium out of the LangGraph container image.
 
 Environment:
     NEON_DATABASE_URL / DATABASE_URL  Neon connection string (required for writes).
-    LLM_BASE_URL / LLM_API_KEY / LLM_MODEL  Picked up by ``make_llm()``.
-    LLM_PROVIDER                     Optional ``"deepseek"`` to pin DeepSeek.
+    DEEPSEEK_API_KEY / DEEPSEEK_BASE_URL  Picked up by ``make_llm()``.
 """
 
 from __future__ import annotations
@@ -302,17 +300,14 @@ _CLASSIFY_PROMPT = (
 async def _classify_record(rec: _Record) -> _Record:
     if not rec.page_text or len(rec.page_text) < 100:
         return rec
-    provider = os.environ.get("LLM_PROVIDER", "").strip().lower() or None
-    llm = make_llm(temperature=0.1, provider=provider)
+    llm = make_llm(temperature=0.1)
     prompt = _CLASSIFY_PROMPT.format(
         name=rec.name,
         domain=rec.canonical_domain or rec.website,
         text=rec.page_text[:3000],
     )
     try:
-        data = await ainvoke_json(
-            llm, [{"role": "user", "content": prompt}], provider=provider,
-        )
+        data = await ainvoke_json(llm, [{"role": "user", "content": prompt}])
     except (httpx.HTTPError, ValueError, RuntimeError) as e:
         log.warning("[classify] %s — error: %s", rec.name, e)
         return rec

@@ -18,8 +18,7 @@ Persistence:
 
 Environment:
     NEON_DATABASE_URL / DATABASE_URL  Neon connection string.
-    LLM_BASE_URL / LLM_API_KEY / LLM_MODEL  Picked up by ``make_llm()``.
-    LLM_PROVIDER                     Optional ``"deepseek"`` to pin DeepSeek.
+    DEEPSEEK_API_KEY / DEEPSEEK_BASE_URL  Picked up by ``make_llm()``.
 """
 
 from __future__ import annotations
@@ -309,17 +308,14 @@ def _normalize_features(raw: Any) -> dict[str, Any]:
 async def _extract_record(rec: _Record) -> _Record:
     if not rec.page_text or len(rec.page_text) < 100:
         return rec
-    provider = os.environ.get("LLM_PROVIDER", "").strip().lower() or None
-    llm = make_llm(temperature=0.1, provider=provider)
+    llm = make_llm(temperature=0.1)
     prompt = _FEATURES_PROMPT.format(
         name=rec.name,
         domain=rec.canonical_domain or rec.website,
         text=rec.page_text,
     )
     try:
-        data = await ainvoke_json(
-            llm, [{"role": "user", "content": prompt}], provider=provider,
-        )
+        data = await ainvoke_json(llm, [{"role": "user", "content": prompt}])
     except (httpx.HTTPError, ValueError, RuntimeError) as e:
         log.warning("[features] %s — error: %s", rec.name, e)
         return rec

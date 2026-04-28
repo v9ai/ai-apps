@@ -23,7 +23,7 @@ workflow.
 Environment:
     NEON_DATABASE_URL / DATABASE_URL  Neon connection string (required).
     BRAVE_SEARCH_API_KEY              Required only for search_and_discover.
-    LLM_BASE_URL / LLM_API_KEY / LLM_MODEL  Picked up by ``make_llm()``.
+    DEEPSEEK_API_KEY / DEEPSEEK_BASE_URL  Picked up by ``make_llm()``.
 """
 
 from __future__ import annotations

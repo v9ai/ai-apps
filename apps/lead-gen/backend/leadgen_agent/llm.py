@@ -1,10 +1,11 @@
 """Shared LLM factory + JSON helpers.
 
-`make_llm()` reads LLM_BASE_URL / LLM_API_KEY / LLM_MODEL from env and returns a
-ChatOpenAI client. Defaults point at local `mlx_lm.server` on :8080, which is
-OpenAI-compatible but does NOT support the `response_format={"type": "json_object"}`
-parameter — so we prompt-enforce JSON instead of using structured output when
-the base URL is localhost.
+`make_llm()` returns a ChatOpenAI client pointed at DeepSeek by default
+(``DEEPSEEK_BASE_URL`` / ``DEEPSEEK_API_KEY`` / ``DEEPSEEK_MODEL``). Pass
+``provider="email_llm"`` to opt into the Cloudflare Workers AI proxy used by
+the email graphs. The legacy local mlx_lm.server fallback was removed
+2026-04 when MLX support was dropped — set ``DEEPSEEK_API_KEY`` in
+``backend/.env`` for any code path that needs to invoke an LLM.
 
 Cost + latency telemetry
 ------------------------
@@ -119,17 +120,12 @@ def _load_env_once() -> None:
 _load_env_once()
 
 
-def _is_local(base_url: str) -> bool:
-    return "localhost" in base_url or "127.0.0.1" in base_url
-
-
 def deepseek_api_key() -> str:
     """Return DEEPSEEK_API_KEY, raising RuntimeError if unset.
 
     Use at the top of routes/scripts that genuinely require DeepSeek so the
     failure mode is a clear configuration error instead of a downstream
-    "Bearer  " 401 from the API. Mirrors ``mlx-training/_deepseek.py``'s
-    ``deepseek_api_key()`` so the two Python entry points share one shape.
+    "Bearer  " 401 from the API.
     """
     key = os.environ.get("DEEPSEEK_API_KEY", "")
     if not key:
@@ -141,26 +137,19 @@ def deepseek_api_key() -> str:
 
 
 def is_deepseek_configured() -> bool:
-    """Non-raising form for code paths with a non-DeepSeek fallback (e.g.
-    local-Qwen-first paths in the email graphs / classifier)."""
+    """Non-raising form for code paths that branch on whether DeepSeek
+    credentials are available."""
     return bool(os.environ.get("DEEPSEEK_API_KEY"))
 
 
 def deepseek_base_url() -> str:
     """Return DEEPSEEK_BASE_URL with the conventional default. Trailing
-    slash stripped so callers can append ``/chat/completions`` cleanly.
-
-    Mirrors ``mlx-training/_deepseek.py``'s ``deepseek_base_url()``."""
+    slash stripped so callers can append ``/chat/completions`` cleanly."""
     return os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1").rstrip("/")
 
 
 def _deepseek_cfg(tier: str | None) -> tuple[str, str, str]:
-    """Resolve (base_url, api_key, model) for the DeepSeek provider.
-
-    Used by the new product-intel graphs (pricing / gtm / product_intel) which
-    pin to DeepSeek without disturbing existing graphs that still default to
-    local Qwen via LLM_BASE_URL.
-    """
+    """Resolve (base_url, api_key, model) for the DeepSeek provider."""
     # Note: api_key is read non-strictly here so the LRU cache still builds
     # the client — _make_llm_cached's downstream openai SDK call surfaces
     # the missing-key error consistently with how legacy callers expected.
@@ -208,21 +197,15 @@ def _make_llm_cached(
     """
     _load_env_once()
     extra_kwargs: dict[str, Any] = {}
-    if provider == "deepseek":
-        base_url, api_key, model = _deepseek_cfg(tier)
-        # Thinking mode silently ignores temperature / top_p / penalties.
-        extra_kwargs["reasoning_effort"] = "high"
-        extra_kwargs["model_kwargs"] = {"extra_body": {"thinking": {"type": "enabled"}}}
-    elif provider == "email_llm":
+    if provider == "email_llm":
         base_url, api_key, model = _email_llm_cfg()
     else:
-        base_url = os.environ.get("LLM_BASE_URL", "http://localhost:8080/v1")
-        api_key = (
-            os.environ.get("DEEPSEEK_API_KEY")
-            or os.environ.get("LLM_API_KEY")
-            or "local"
-        )
-        model = os.environ.get("LLM_MODEL", "default_model")
+        # Default + provider="deepseek" both resolve to DeepSeek. The "deep"
+        # tier opts into thinking mode; "standard" stays on the chat endpoint.
+        base_url, api_key, model = _deepseek_cfg(tier)
+        if tier == "deep":
+            extra_kwargs["reasoning_effort"] = "high"
+            extra_kwargs["model_kwargs"] = {"extra_body": {"thinking": {"type": "enabled"}}}
 
     timeout = _llm_http_timeout()
     return ChatOpenAI(
@@ -248,14 +231,13 @@ def make_llm(
 ) -> ChatOpenAI:
     """Build a ChatOpenAI client.
 
-    Default (``provider=None``) reads ``LLM_BASE_URL`` / ``LLM_API_KEY`` /
-    ``LLM_MODEL`` — the existing path, points at local Qwen for legacy graphs.
-
-    ``provider="deepseek"`` pins to DeepSeek's public API (or the proxy set via
-    ``DEEPSEEK_BASE_URL``). Both tiers default to ``deepseek-v4-pro`` (the
-    latest v4 model). ``tier="deep"`` reads ``DEEPSEEK_MODEL_DEEP`` so deployed
-    environments can override deep-reasoning nodes to a different model
-    independently of the standard ``DEEPSEEK_MODEL`` knob.
+    Default (``provider=None``) and ``provider="deepseek"`` both resolve to
+    DeepSeek's public API (or the proxy set via ``DEEPSEEK_BASE_URL``). Both
+    tiers default to ``deepseek-v4-pro``; ``tier="deep"`` reads
+    ``DEEPSEEK_MODEL_DEEP`` and enables thinking mode +
+    ``reasoning_effort=high``, while ``tier="standard"`` stays on the regular
+    chat endpoint. ``provider="email_llm"`` opts into the Cloudflare Workers
+    AI proxy used by the email graphs.
     """
     _load_env_once()
     if temperature is None:
@@ -290,15 +272,13 @@ def make_deepseek_flash(temperature: float | None = None) -> ChatOpenAI:
 
 
 def supports_json_mode(*, provider: str | None = None) -> bool:
-    if provider == "deepseek":
-        return True
     if provider == "email_llm":
         # Mistral-7B-Instruct-v0.2 on Workers AI does not honor OpenAI-style
         # response_format={"type":"json_object"}. Fall through to the regex /
         # json_repair path in _parse_json().
         return False
-    base_url = os.environ.get("LLM_BASE_URL", "http://localhost:8080/v1")
-    return not _is_local(base_url)
+    # Default + "deepseek" — DeepSeek supports JSON mode natively.
+    return True
 
 
 async def ainvoke_json(
@@ -311,11 +291,7 @@ async def ainvoke_json(
 
     Uses `response_format={"type": "json_object"}` when the provider supports it,
     otherwise falls back to regex-extracting JSON from the reply (robust to
-    markdown code fences that Qwen tends to emit).
-
-    Pass ``provider="deepseek"`` when the llm was built via
-    ``make_llm(provider="deepseek")`` so JSON mode is enabled regardless of the
-    legacy ``LLM_BASE_URL`` env.
+    markdown code fences in non-JSON-mode replies).
     """
     parsed, _telemetry = await ainvoke_json_with_telemetry(
         llm, messages, provider=provider
@@ -327,7 +303,7 @@ async def ainvoke_json(
 #
 # Per-1M-token list pricing (USD). DeepSeek v4 entries are derived from the
 # DEEPSEEK_MODELS catalog above so a price bump only needs to land in one
-# place. Other providers (CF Workers, local Qwen) are listed as literals.
+# place. Other providers (CF Workers email-llm) are listed as literals.
 # Verified 2026-04 from the DeepSeek pricing docs:
 #   https://api-docs.deepseek.com/quick_start/pricing
 # (Cache-hit / off-peak discounts are NOT factored in — this is the pessimistic
@@ -352,11 +328,6 @@ MODEL_PRICING: dict[str, dict[str, float]] = {
     # output → $0.110 / $0.190 per 1M tokens. v0.2-lora isn't in the table
     # yet; assume parity with v0.1 until CF publishes updated numbers.
     "mistral-email-lora": {"input_per_1m": 0.11, "output_per_1m": 0.19},
-    # Placeholders for the local Qwen/MLX mode — zero cost, but we still want
-    # token counts to flow through the same pipeline for "which prompt balloons
-    # output tokens" diagnostics.
-    "qwen2.5-3b":        {"input_per_1m": 0.0, "output_per_1m": 0.0},
-    "default_model":     {"input_per_1m": 0.0, "output_per_1m": 0.0},
 }
 
 
@@ -678,7 +649,7 @@ def _parse_json(text: str) -> Any:
     Ladder of fallbacks, each more forgiving than the last:
       1. Strip ```json``` fences, try ``json.loads`` on the whole blob.
       2. Extract the outermost balanced ``{...}`` or ``[...]`` span — handles
-         DeepSeek/Qwen preamble ("Here's the JSON: ...") and trailing commentary.
+         LLM preamble ("Here's the JSON: ...") and trailing commentary.
       3. ``json_repair`` — heals unescaped quotes, trailing commas, truncated
          output. Only called when earlier passes have something parseable.
 
@@ -709,7 +680,7 @@ def _parse_json(text: str) -> Any:
         except json.JSONDecodeError:
             text = block
     # Fallback 2: json-repair handles unescaped quotes, trailing commas,
-    # truncated output, and similar Qwen/MLX quirks.
+    # truncated output, and similar LLM quirks.
     from json_repair import repair_json  # lazy import
 
     repaired = repair_json(text, return_objects=True)
