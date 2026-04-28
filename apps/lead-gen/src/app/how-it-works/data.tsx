@@ -249,127 +249,148 @@ export const story =
 export const extraSections: ExtraSection[] = [
   {
     heading: "Aho-Corasick Company Classification",
-    content: "Company AI-tier classification uses a production-grade Aho-Corasick automaton for single-pass multi-pattern matching — O(n + m + z) vs O(n × k) naive regex. The automaton processes all pattern dictionaries against full company descriptions in milliseconds, replacing LLM calls for deterministic classification. Failure links are computed via BFS after all patterns are inserted, enabling the automaton to backtrack efficiently when a partial match fails.",
-    codeBlock: `class AhoCorasickAutomaton {
-  private root: TrieNode = new TrieNode();
-
-  addPattern(pattern: string, label: string): void {
-    let node = this.root;
-    for (const ch of pattern) {
-      let child = node.children.get(ch);
-      if (!child) { child = new TrieNode(); node.children.set(ch, child); }
-      node = child;
-    }
-    node.output.push({ label, patternId: this.nextPatternId++ });
+    content: "A single Aho-Corasick automaton is built once at module load with all keyword groups (AI core, AI feature, consulting, staffing, agency, SaaS, devtools), then runs in one linear pass over each company description and returns a Map of label → distinct-pattern count. Failure links are computed via BFS so partial matches backtrack to the longest proper suffix that is also a prefix in the trie. Why: O(n + m + z) replaces O(n × k) sequential String.includes scans and removes an LLM call from the hot path.",
+    codeBlock: `// src/ml/company-classifier.ts:88
+build(): void {
+  const queue: TrieNode[] = [];
+  // Depth-1 nodes fail to root
+  for (const child of this.root.children.values()) {
+    child.fail = this.root;
+    queue.push(child);
   }
-
-  build(): void {
-    // BFS to compute failure links for all trie nodes
-    const queue: TrieNode[] = [];
-    for (const child of this.root.children.values()) {
-      child.fail = this.root;
+  // BFS to compute failure links for deeper nodes
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    for (const [ch, child] of current.children) {
       queue.push(child);
+      let failNode = current.fail;
+      while (failNode !== null && !failNode.children.has(ch)) {
+        failNode = failNode.fail;
+      }
+      child.fail = failNode ? failNode.children.get(ch)! : this.root;
+      if (child.fail === child) child.fail = this.root;
+      // Merge dictionary suffix-link outputs
+      if (child.fail.output.length > 0) {
+        child.output = child.output.concat(child.fail.output);
+      }
     }
-    // ... failure link computation via parent fail pointers
   }
+  this.built = true;
 }`,
   },
   {
     heading: "Weighted Intent Scoring",
-    content: "Intent scoring uses a weighted max-per-type aggregation model. Six signal types (hiring_intent, tech_adoption, growth_signal, budget_cycle, leadership_change, product_launch) are weighted by pipeline impact. For each type, only the strongest active signal is used — its confidence is multiplied by a freshness decay factor that degrades over time. This prevents stale signals from inflating scores while still recognizing companies with multiple active intent indicators.",
-    codeBlock: `const INTENT_WEIGHTS: Record<string, number> = {
-  hiring_intent: 30,      // Hiring job posts (heaviest)
-  tech_adoption: 20,      // Using your stack
-  growth_signal: 25,      // Revenue/headcount growth
-  budget_cycle: 15,       // Financial activity
-  leadership_change: 5,   // New CTOs, VPs
-  product_launch: 5,      // New product launches
+    content: "For each of seven signal types (hiring_intent, tech_adoption, growth_signal, budget_cycle, leadership_change, product_launch, competitor_mention), the scorer keeps only the strongest signal — its confidence multiplied by an exp(-ln2/decay_days × daysSince) half-life freshness factor. Type weights (30/20/25/15/5/5/40) form a denominator so the final score is a weighted average rescaled to [0, 100]. Why: max-per-type prevents stale or duplicate signals from inflating the score while preserving sensitivity to the strongest active intent.",
+    codeBlock: `// src/lib/intent/detector.ts:18
+export const INTENT_WEIGHTS: Record<string, number> = {
+  hiring_intent: 30,
+  tech_adoption: 20,
+  growth_signal: 25,
+  budget_cycle: 15,
+  leadership_change: 5,
+  product_launch: 5,
+  competitor_mention: 40,
 };
 
-// For each signal type, find strongest active signal
-for (const [signalType, weight] of Object.entries(INTENT_WEIGHTS)) {
-  const best = signals
-    .filter((s) => s.signal_type === signalType)
-    .reduce((max, s) => {
-      const f = computeFreshness(s.detected_at, s.decay_days);
-      return Math.max(max, s.confidence * f);
-    }, 0);
-  weightedSum += best * weight;
-  totalWeight += weight;
+export function computeFreshness(detectedAt: string, decayDays: number): number {
+  const daysSince = (Date.now() - new Date(detectedAt).getTime()) / 86_400_000;
+  if (decayDays <= 0) return 0;
+  const k = 0.693 / decayDays;
+  return Math.exp(-k * daysSince);
 }
-const score = (weightedSum / totalWeight) * 100; // [0, 100]`,
+
+export function computeIntentScore(signals: ScoreableSignal[]): number {
+  let weightedSum = 0, totalWeight = 0;
+  for (const [signalType, weight] of Object.entries(INTENT_WEIGHTS)) {
+    const best = signals
+      .filter((s) => s.signal_type === signalType)
+      .reduce((max, s) => Math.max(max, s.confidence * computeFreshness(s.detected_at, s.decay_days)), 0);
+    weightedSum += best * weight;
+    totalWeight += weight;
+  }
+  return totalWeight > 0 ? (weightedSum / totalWeight) * 100 : 0;
+}`,
   },
   {
-    heading: "Two-Pass Email Composition",
-    content: "Email drafts go through a two-pass pipeline: Phase 1 generates content at temperature 0.7 for natural variation, with explicit instructions to include one specific technical observation about the target company. Phase 2 runs a targeted refine pass that strips AI-marker phrases ('I hope this finds you well'), enforces a 3-sentence opening max, and tightens subject lines under 50 characters. The refine pass outperforms simply lowering temperature, which would also reduce the technical specificity of the body.",
-    codeBlock: `function buildBatchPrompt(input: GenerateBatchEmailRequest): string {
+    heading: "Single-Pass Email Composition with Anti-Pattern Rules",
+    content: "Cold-outreach drafts are generated by a single DeepSeek call at temperature 0.7, with the prompt assembled by buildBatchPrompt from the user-supplied instructions, target company, and a fixed sender background. The prompt body interleaves an interpretation guide, anti-pattern rules forbidding verbatim instruction echoes and fabricated experience, and few-shot examples in JSON. Why: the structure pushes the model toward a JSON {subject, body} response without needing a second refine pass.",
+    codeBlock: `// src/lib/email/prompt-builder.ts:26
+export function buildBatchPrompt(input: GenerateBatchEmailRequest): string {
   const parts: string[] = [];
-
-  // PRIMARY GOAL — instructions drive everything
   if (input.instructions) {
     parts.push(
-      "PRIMARY GOAL (most important):",
+      "PRIMARY GOAL (most important — the entire email must serve this):",
       input.instructions, "",
       "INTERPRETATION GUIDE:",
-      "- 'applied', 'no response', 'follow up' → FOLLOW-UP email",
-      "- Cold outreach → introduction email.", "",
+      "- If the goal mentions 'applied', 'application', 'no response', 'follow up' → write a FOLLOW-UP email…",
+      "- If the goal is cold outreach → write an introduction email.", "",
     );
   }
-
-  // ANTI-PATTERN RULES (violations will be rejected)
+  if (input.companyName) parts.push(\`TARGET COMPANY: \${input.companyName}\`, "");
   parts.push(
-    "ANTI-PATTERN RULES:",
-    "- NEVER echo raw text from instructions verbatim — interpret and rephrase.",
-    "- NEVER list skills that don't match job requirements.",
-    "- NEVER fabricate recipient details or experience.", "",
+    "ANTI-PATTERN RULES (violations will be rejected):",
+    "- NEVER echo raw text from the instructions field verbatim — interpret and rephrase.",
+    "- NEVER list skills that don't match the job requirements.",
+    "- NEVER fabricate recipient details, certifications, or experience the sender doesn't have.",
+    "",
   );
   return parts.join("\\n");
 }`,
   },
   {
     heading: "DataLoader Batch Scheduling",
-    content: "GraphQL field resolvers use DataLoaders with a custom 2ms batch scheduler instead of the default process.nextTick. This trades imperceptible latency for 5–10x fewer DB round-trips on list views — when 50 companies each resolve facts + snapshots, the 2ms delay collects all 50 IDs into a single IN query rather than firing 50 individual queries. Batch sizes are tuned per entity: 250 for companies, 100 for contacts, 10 for users.",
-    codeBlock: `const BATCH_COMPANY = 250;
+    content: "GraphQL field resolvers run through DataLoaders with a 2 ms setTimeout scheduler instead of the default process.nextTick — the small delay collects more keys per batch when parallel resolvers fire on list pages. Each loader has its own maxBatchSize (250 for companies, 100 for per-company children, 100 for contacts, 10 for user settings). Why: a single IN query for N companies' facts beats N round-trips when a list view resolves 50 rows in parallel.",
+    codeBlock: `// src/apollo/loaders.ts:42
+const BATCH_COMPANY = 250;
 const BATCH_PER_COMPANY = 100;
 const BATCH_CONTACT = 100;
+const BATCH_USER = 10;
 
-// 2ms delay collects more keys per batch when parallel
-// field resolvers execute — fewer DB round-trips on list pages
+// Default DataLoader uses process.nextTick which fires before any I/O.
+// A small 2ms delay collects more keys per batch when parallel field
+// resolvers are executing, trading negligible latency for fewer DB
+// round-trips on list pages (e.g. 50 companies × facts + snapshots).
 const batchSchedule = (cb: () => void) => setTimeout(cb, 2);
 
 export function createLoaders(db: DbInstance) {
   return {
     company: new DataLoader<number, Company | null>(
       async (companyIds) => {
-        const rows = await db.select().from(companies)
+        const rows = await db
+          .select()
+          .from(companies)
           .where(inArray(companies.id, [...companyIds]));
         const byId = new Map(rows.map((r) => [r.id, r]));
         return companyIds.map((id) => byId.get(id) ?? null);
       },
       { maxBatchSize: BATCH_COMPANY, batchScheduleFn: batchSchedule },
     ),
-    // ... 10+ loaders for contacts, facts, snapshots
+    // ... contacts, facts, snapshots loaders
   };
 }`,
   },
   {
     heading: "Webhook Signature Verification",
-    content: "Resend webhooks use HMAC-SHA256 signature verification with constant-time comparison to prevent timing attacks. The handler checks timestamp freshness (5-minute window) before verifying the signature, and correlates inbound replies via In-Reply-To headers rather than From addresses — contacts often reply from a different address, so From-based matching produces ~15% false negatives. Failed DB writes retry with exponential backoff (base 1s, max 30s, 3 retries).",
-    codeBlock: `function verifySignature(
-  payload: string, signature: string,
-  secret: string, timestamp: string, webhookId: string,
+    content: "Resend webhooks are verified with HMAC-SHA256 over the canonical {webhookId}.{timestamp}.{payload} string and a base64-decoded secret, then compared in constant time to defeat timing attacks. The handler also rejects timestamps more than 300 seconds from now to block replay. Why: a naive string compare on the signature leaks bytes of the expected MAC through early-exit timing.",
+    codeBlock: `// src/app/api/webhooks/resend/route.ts:64
+function verifySignature(
+  payload: string,
+  signature: string,
+  secret: string,
+  timestamp: string,
+  webhookId: string,
 ): boolean {
   // Check timestamp freshness (5 minutes)
   const now = Math.floor(Date.now() / 1000);
   if (Math.abs(now - parseInt(timestamp, 10)) > 300) return false;
 
-  // HMAC-SHA256 signature
+  // Svix uses base64-encoded secret prefixed with whsec_
   const secretBytes = Buffer.from(secret.replace("whsec_", ""), "base64");
   const hmac = createHmac("sha256", secretBytes);
   hmac.update(\`\${webhookId}.\${timestamp}.\${payload}\`);
   const expected = \`v1,\${hmac.digest("base64")}\`;
 
-  // Constant-time comparison — prevents timing attacks
+  // Constant-time comparison
   const a = Buffer.from(signature);
   const b = Buffer.from(expected);
   if (a.length !== b.length) return false;
@@ -380,38 +401,40 @@ export function createLoaders(db: DbInstance) {
   },
   {
     heading: "ICP Feature Extraction",
-    content: "Lead scoring extracts 18 numeric features per company into a fixed-dimension vector. Dimensions include AI tier (ordinal 0–2), tech stack overlap with ICP target (Jaccard coefficient), GitHub AI adoption score, HuggingFace Hub presence, intent score, and decision-maker contact count. All continuous features are z-score normalized within-batch rather than globally — this prevents distribution shift from stale reference statistics when the ICP evolves.",
-    codeBlock: `interface ICPFeatures {
-  hasDescription: number;
-  descriptionLengthNorm: number;
-  hasWebsite: number;
-  hasLinkedin: number;
-  emailCount: number;
-  tagCount: number;
-  serviceCount: number;
-  aiTier: number;            // 0..2 (not_ai, ai_first, ai_native)
-  isConsultancy: number;
-  factsCount: number;
-  githubAiScore: number;     // 0..1 adoption
-  hfPresenceScore: number;   // 0..100
-  intentScore: number;       // 0..100
-  dmContactsCount: number;   // decision-maker contacts
-}
-
-function extractICPFeatures(company, contactsCount, dmCount, factsCount) {
+    content: "Each company is reduced to a 19-dimension feature vector covering presence flags (description, website, LinkedIn, email, GitHub, job board), counts (emails, tags, services, contacts, decision-makers, facts), and pre-computed scores (ai_tier 0–2, github_ai_score, hf_presence_score, intent_score). Continuous fields are clamped to [0, 1] inline (description length / 500, scores / 100) rather than z-scored — the same vector then feeds both a hand-tuned linear scorer and a quantized INT8 path. Why: a stable feature ordering and fixed normalization let weights be loaded from JSON and reused across batches without retraining-set drift.",
+    codeBlock: `// src/ml/icp-scorer.ts:54
+export function extractICPFeatures(
+  company: any, contactsCount = 0, dmCount = 0, factsCount = 0,
+): ICPFeatures {
+  const desc = company.description ?? "";
+  const emailsArr = parseJsonArrayLen(company.emails);
   return {
+    hasDescription: desc.length > 0 ? 1 : 0,
+    descriptionLengthNorm: Math.min(desc.length / 500, 1),
+    hasWebsite: company.website ? 1 : 0,
+    hasLinkedin: company.linkedin_url ? 1 : 0,
+    hasEmail: company.email ? 1 : 0,
+    emailCount: (company.email ? 1 : 0) + emailsArr,
+    tagCount: parseJsonArrayLen(company.tags),
+    serviceCount: parseJsonArrayLen(company.services),
     aiTier: company.ai_tier ?? 0,
+    isConsultancy: company.category === "CONSULTANCY" ? 1 : 0,
+    isProduct: company.category !== "CONSULTANCY" && company.category !== "UNKNOWN" ? 1 : 0,
+    factsCount,
+    hasGithub: company.github_url ? 1 : 0,
     githubAiScore: company.github_ai_score ?? 0,
+    hfPresenceScore: (company.hf_presence_score ?? 0) / 100,
     intentScore: (company.intent_score ?? 0) / 100,
-    dmContactsCount: dmCount,
-    // ... 14 more features, all normalized to [0, 1]
+    contactsCount, dmContactsCount: dmCount,
+    hasJobBoard: company.job_board_url ? 1 : 0,
   };
 }`,
   },
   {
     heading: "Business-Day Scheduling",
-    content: "Email sends are scheduled with business-day awareness — weekends are skipped, sends default to 8am UTC, and offset calculations use addBusinessDays for deterministic scheduling. The follow-up scheduler queries only contacts where next_send_at <= NOW() via a Drizzle partial index scan, and enforces same-company staggering (minimum 48h between touches to different contacts at the same company).",
-    codeBlock: `function getNextBusinessDay(
+    content: "getNextBusinessDay(offset) walks forward day-by-day skipping Saturdays and Sundays (getUTCDay() === 0 || 6), then applies addBusinessDays from date-fns to add the requested offset, and pins the result to 8:00 UTC by default. Why: the helper underpins follow-up cutoffs and any user-facing 'send X business days from now' inputs without depending on the host timezone.",
+    codeBlock: `// src/lib/business-days.ts:17
+export function getNextBusinessDay(
   offset: number,
   options: GetNextBusinessDayOptions = {},
 ): Date {
@@ -433,13 +456,25 @@ function extractICPFeatures(company, contactsCount, dmCount, factsCount) {
   },
   {
     heading: "Auto-Draft Reply Generation",
-    content: "When an inbound email is classified as 'interested' or 'info_request', the system auto-generates a contextual reply draft by first retrieving the full conversation thread — both outbound sends and inbound replies, sorted chronologically. Quoted text is stripped from inbound bodies to prevent recursive context bloat. Drafts are stored in reply_drafts and require human approval before sending, closing the loop between automation and human judgment.",
-    codeBlock: `async function getThreadContext(contactId: number): Promise<ThreadMessage[]> {
+    content: "When an inbound email is classified as 'interested' or 'info_request', generateReplyDraft fetches the full thread by joining contactEmails (outbound) and receivedEmails (inbound) for the contact, sorts chronologically, and runs stripQuotedText on inbound bodies to drop quoted history. The DeepSeek call writes a {subject, body} JSON pair into reply_drafts with status 'pending'. Why: sending stays manual — the row is a draft, not a queued send, so a human is always in the loop before automation hits an external inbox.",
+    codeBlock: `// src/lib/email/auto-draft.ts:26
+async function getThreadContext(contactId: number): Promise<ThreadMessage[]> {
   const [outbound, inbound] = await Promise.all([
-    db.select().from(contactEmails)
-      .where(eq(contactEmails.contact_id, contactId)),
-    db.select().from(receivedEmails)
-      .where(eq(receivedEmails.matched_contact_id, contactId)),
+    db.select({
+        subject: contactEmails.subject,
+        text_content: contactEmails.text_content,
+        sent_at: contactEmails.sent_at,
+        tags: contactEmails.tags,
+      }).from(contactEmails)
+      .where(eq(contactEmails.contact_id, contactId))
+      .orderBy(desc(contactEmails.sent_at)),
+    db.select({
+        subject: receivedEmails.subject,
+        text_content: receivedEmails.text_content,
+        received_at: receivedEmails.received_at,
+      }).from(receivedEmails)
+      .where(eq(receivedEmails.matched_contact_id, contactId))
+      .orderBy(desc(receivedEmails.received_at)),
   ]);
 
   const messages: ThreadMessage[] = [];
@@ -450,176 +485,163 @@ function extractICPFeatures(company, contactsCount, dmCount, factsCount) {
     messages.push({ direction: "inbound", subject: e.subject || "",
       body: stripQuotedText(e.text_content || ""), sentAt: e.received_at || "" });
 
-  return messages.sort((a, b) =>
-    new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime());
+  messages.sort((a, b) => new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime());
+  return messages;
 }`,
   },
   {
     heading: "Decision-Maker Classification",
-    content: "Contact seniority and decision-maker status are computed deterministically via keyword-pattern matching against job titles — no LLM overhead for a classification that maps cleanly to a fixed taxonomy. C-level patterns, founder/president, VP, director, and manager tiers each receive a calibrated authority score (0.10–1.0). A contact is flagged as a decision-maker if authority ≥ 0.75, or ≥ 0.60 in an AI/ML department — reflecting that domain-relevant managers carry more pipeline weight than generic executives.",
-    codeBlock: `function classifyContact(position: string | null | undefined): ContactClassification {
-  const t = (position?.trim() ?? "").toLowerCase();
-  if (!t) return { seniority: "IC", authorityScore: 0.10, isDecisionMaker: false };
+    content: "The job title is lowercased and matched against tiered substring lists — C-level patterns and CEO/CTO/CFO/COO/CPO/CRO/CMO regex first, then Founder, Partner, VP, Director, Manager, Senior — each tier assigning a fixed authorityScore (1.0 down to 0.25). Department is then matched the same way; HR/Recruiting hits trigger a 0.4× gatekeeper penalty on the score before it is rounded and compared to the 0.70 decision-maker threshold. Why: deterministic regex over a small taxonomy is faster and more auditable than an LLM call, and the gatekeeper penalty stops a 'VP of People Operations' from being scored as a budget holder.",
+    codeBlock: `// src/apollo/resolvers/contacts/classification.ts:42
+const C_LEVEL_PATTERNS = [
+  "chief executive", "chief technology", "chief product",
+  "chief operating", "chief data", "chief ai", /* ...12 more */
+];
+const isCLevel =
+  C_LEVEL_PATTERNS.some(p => t.includes(p)) ||
+  /\\bceo\\b/.test(t) || /\\bcto\\b/.test(t) || /\\bcfo\\b/.test(t) ||
+  /\\bcoo\\b/.test(t) || /\\bcpo\\b/.test(t) || /\\bcro\\b/.test(t) || /\\bcmo\\b/.test(t);
 
-  let seniority = "IC";
-  let authorityScore = 0.10;
+if (isCLevel) { seniority = "C-level"; authorityScore = 1.0; }
+else if (["founder", "co-founder", "president"].some(p => t.includes(p)))
+  { seniority = "Founder"; authorityScore = 0.95; }
+else if (["vice president", "vp of"].some(p => t.includes(p)) || t.startsWith("vp "))
+  { seniority = "VP"; authorityScore = 0.85; }
+// ... Director=0.75, Manager=0.50, Senior=0.25
 
-  const C_LEVEL = ["chief executive", "chief technology", "chief product",
-    "chief operating", "chief data", "chief ai"];
-  const isCLevel = C_LEVEL.some(p => t.includes(p))
-    || /\\bceo\\b/.test(t) || /\\bcto\\b/.test(t) || /\\bcfo\\b/.test(t);
+// Gatekeeper penalty applied AFTER seniority is set
+let effectiveScore = authorityScore;
+if (department === "HR/Recruiting") effectiveScore = authorityScore * 0.4;
 
-  if (isCLevel) { seniority = "C-level"; authorityScore = 1.0; }
-  else if (["founder", "co-founder", "president"].some(p => t.includes(p)))
-    { seniority = "Founder"; authorityScore = 0.95; }
-  else if (["vice president", "vp of"].some(p => t.includes(p)) || t.startsWith("vp "))
-    { seniority = "VP"; authorityScore = 0.85; }
-
-  // AI/ML department detection
-  const AI_ML = ["artificial intelligence", " ai ", "machine learning",
-    "deep learning", "nlp", "data science", "mlops", "llm"];
-  const department = AI_ML.some(p => t.includes(p)) ? "AI/ML" : "Other";
-
-  const isDecisionMaker = authorityScore >= 0.75
-    || (authorityScore >= 0.60 && department === "AI/ML");
-  return { seniority, department, authorityScore, isDecisionMaker, dmReasons: [] };
-}`,
+const isDecisionMaker = effectiveScore >= 0.70;`,
   },
   {
     heading: "Campaign State Machine",
-    content: "Email campaigns follow a strict state machine: draft → pending → running → completed/failed/stopped. The launch mutation iterates recipients × sequence steps, computing per-step delays via business-day arithmetic. Same-company staggering is enforced at creation time. Resend API calls are synchronous per-message to preserve reply-to threading — batch endpoints would merge threads. Sent/scheduled/failed counters are updated atomically after the loop completes.",
-    codeBlock: `async launchEmailCampaign(_parent, args, context) {
+    content: "The email_campaigns table pins status to a six-value enum (draft, pending, running, completed, failed, stopped); launchEmailCampaign accepts only draft or pending rows, then iterates recipients × sequence steps, calling Resend per message with a scheduledAt ISO string when delay_days[stepIdx-1] > 0. Each result increments one of sent/scheduled/failed, then a single UPDATE writes all three counters plus the new status. Why: one Resend call per message is intentional — Resend's batch endpoints don't preserve the per-recipient replyTo threading the campaign relies on.",
+    codeBlock: `// src/apollo/resolvers/email-campaigns.ts:382
+async launchEmailCampaign(_parent, args, context) {
+  if (!context.userId || !isAdminEmail(context.userEmail)) throw new Error("Forbidden");
+  const rows = await context.db.select().from(emailCampaigns)
+    .where(eq(emailCampaigns.id, args.id)).limit(1);
   const campaign = rows[0];
   if (campaign.status !== "draft" && campaign.status !== "pending")
     throw new Error(\`Campaign is already \${campaign.status}\`);
 
   const recipients = parseJsonArray(campaign.recipient_emails);
-  const sequence = JSON.parse(campaign.sequence ?? "[]");
-  const delayDays = JSON.parse(campaign.delay_days ?? "[]");
+  const sequence = campaign.sequence ? JSON.parse(campaign.sequence) : [];
+  const delayDays = campaign.delay_days ? JSON.parse(campaign.delay_days) : [];
   let sent = 0, scheduled = 0, failed = 0;
 
   for (const recipientEmail of recipients) {
     for (let stepIdx = 0; stepIdx < sequence.length; stepIdx++) {
       const step = sequence[stepIdx];
       const delay = stepIdx > 0 ? (delayDays[stepIdx - 1] ?? stepIdx) : 0;
-
       let scheduledAt: string | undefined;
       if (delay > 0) {
         const sendDate = new Date();
         sendDate.setDate(sendDate.getDate() + delay);
         scheduledAt = sendDate.toISOString();
       }
-
       const result = await resend.instance.send({
-        to: recipientEmail, subject: step.subject,
-        html: step.html, from: campaign.from_email ?? undefined,
-        scheduledAt,
+        to: recipientEmail, subject: step.subject, html: step.html,
+        from: campaign.from_email ?? undefined,
+        replyTo: campaign.reply_to ?? undefined, scheduledAt,
       });
       if (result.error) failed++; else if (scheduledAt) scheduled++; else sent++;
     }
   }
-
   await context.db.update(emailCampaigns).set({
     status: failed === recipients.length * sequence.length ? "failed" : "running",
     emails_sent: sent, emails_scheduled: scheduled, emails_failed: failed,
-    start_at: new Date().toISOString(),
   }).where(eq(emailCampaigns.id, args.id));
 }`,
   },
   {
     heading: "Multi-Factor Deletion Scoring",
-    content: "Contacts accumulate a deletion score (0–1) across 6 weighted factors: invalid email/bounce history (0.25), blocked company association (0.17), staleness — 180+ days since last contact with no reply (0.15), data incompleteness — no email, LinkedIn, or GitHub (0.10), low-relevance department with low authority (0.10), and explicit do-not-contact flag (0.08). Contacts above the threshold are flagged for batch review rather than auto-deleted — the system optimizes for human confirmation at the boundary.",
-    codeBlock: `// Factor 3 — staleness (0.15)
-const daysSinceContacted = lastContactedMs
-  ? Math.floor((now - lastContactedMs) / msPerDay) : 0;
-if (lastContactedMs && daysSinceContacted > 180 && !anyReply) {
-  score += 0.15;
-  reasons.push(\`Last contacted \${daysSinceContacted} days ago with no reply\`);
-} else if (!lastContactedMs && daysSinceCreated > 365) {
-  score += 0.10;
-  reasons.push(\`Never contacted, created \${daysSinceCreated} days ago\`);
+    content: "Ten weighted factors accumulate into a 0–1 deletion score: NeverBounce status invalid/disposable (0.25), bounce-list hit or nb_result=fail (0.20), staleness (0.15 for >180d no-reply or 0.10 for never-contacted >365d), no-reachability (0.10 if no email/LinkedIn/GitHub), low-relevance dept × authority < 0.30 (0.10), do-not-contact flag (0.08), outreach exhaustion >3 sends no reply (0.07), authority < 0.15 (0.03), missing position (0.01), and stale tags (0.01). Why: weights are tuned so a single hard signal (bounce, DNC) plus one soft signal (staleness, exhaustion) crosses the purge threshold without requiring any factor to dominate.",
+    codeBlock: `// src/apollo/resolvers/contacts/classification.ts:188
+// Factor 1 -- email invalidity (0.25)
+const INVALID_NB_STATUSES = new Set(["invalid", "disposable", "unknown", "catchall"]);
+if (!contact.email) { score += 0.25; reasons.push("No email address"); }
+else if (contact.nb_status && INVALID_NB_STATUSES.has(contact.nb_status)) {
+  score += 0.25; reasons.push(\`NeverBounce status: \${contact.nb_status}\`);
 }
 
-// Factor 4 — data incompleteness (0.10)
-if (!contact.email && !contact.linkedin_url && !contact.github_handle) {
-  score += 0.10;
-  reasons.push("No email, LinkedIn URL, or GitHub handle");
-}
+// Factor 2 -- email bounce (0.20)
+const emailBounced = contact.email && bouncedList.includes(contact.email);
+const nbFail = contact.nb_result === "failed" || contact.nb_result === "fail";
+if (emailBounced || nbFail) { score += 0.20; reasons.push(/* ... */); }
 
-// Factor 5 — low relevance (0.10)
-const LOW_RELEVANCE_DEPTS = new Set(["HR/Recruiting", "Other"]);
-if (LOW_RELEVANCE_DEPTS.has(contact.department ?? "")
-    && (contact.authority_score ?? 0) < 0.30) {
-  score += 0.10;
-  reasons.push(\`Low-relevance dept with authority \${authorityScore.toFixed(2)}\`);
-}
+// Factor 3 -- staleness (0.15 / 0.10)
+if (lastContactedMs && daysSinceContacted > 180 && !anyReply) score += 0.15;
+else if (!lastContactedMs && daysSinceCreated > 365) score += 0.10;
 
-// Factor 6 — DNC flag (0.08)
-if (contact.do_not_contact) {
-  score += 0.08;
-  reasons.push("Marked do-not-contact");
-}`,
+// Factor 7 -- outreach exhaustion (0.07)
+if (outboundEmailCount > 3 && !anyReply) score += 0.07;
+
+return { score: Math.min(Math.round(score * 100) / 100, 1.0), reasons };`,
   },
   {
     heading: "Discovery Pipeline Signal Detection",
-    content: "The CPN (Claude Partner Network) discovery pipeline parses CSV partner data and generates personalized outreach signals per row. A signal function cascades through three tiers: company association (strongest — 'Saw {company} is working with Claude'), archetype match ('Your {archetype} work on GitHub caught my eye'), and generic fallback. Each signal feeds directly into the email subject and opening line, ensuring every outreach email has a concrete, verifiable reason for contact.",
-    codeBlock: `const CPN_TAG = '["cpn-outreach"]';
-const FROM = "Vadim Nicolai <contact@vadim.blog>";
-
-interface PartnerRow {
-  rank: string; login: string; name: string;
-  email: string; company: string; score: string;
-  archetypes: string; github_url: string;
-}
-
+    content: "The CPN (Claude Partner Network) outreach script reads a partner CSV and generates a per-row signal string with three fallback tiers: company match ('Saw {company} is working with Claude'), archetype match ('Your {archetype} work on GitHub caught my eye'), then a generic SDK-ecosystem line. The signal is interpolated into both the subject prefix and the opening sentence of every outreach email. Why: a concrete, row-specific reason for contact keeps every send grounded in observable evidence rather than a generic blast.",
+    codeBlock: `// scripts/cpn.ts:197
 function signal(row: PartnerRow): string {
   const company = row.company?.trim().replace(/^@/, "");
   if (company) return \`Saw \${company} is working with Claude\`;
-
   const archetypes = row.archetypes?.trim();
   if (archetypes) {
-    const first = archetypes.split(",")[0].trim();
+    const first = archetypes.split(",")[0].trim().replace(/-/g, " ");
     return \`Your \${first} work on GitHub caught my eye\`;
   }
-
   return "Noticed you're active in the Claude SDK ecosystem";
+}
+
+function buildOutreach(row: PartnerRow) {
+  const first = firstName(row);
+  const sig = signal(row);
+  const subject = \`Claude Partner Network — \${first}\`;
+  const text = \`Hi \${first},
+
+\${sig} — you'd be a strong fit for this.\`;
 }`,
   },
   {
     heading: "Drizzle Schema with Indexes",
-    content: "The contacts and email_campaigns tables demonstrate Drizzle ORM's composable schema pattern: column definitions inline, index definitions in a trailing function. Contacts carry ML-derived deletion scoring fields (to_be_deleted, deletion_score, deletion_reasons) alongside conversation lifecycle state. Email campaigns use a status enum column with a dedicated index for queue-scan queries. Foreign keys cascade on delete to prevent orphaned records.",
-    codeBlock: `export const contacts = pgTable("contacts", {
-  id: serial("id").primaryKey(),
-  first_name: text("first_name").notNull(),
-  last_name: text("last_name").notNull(),
-  company_id: integer("company_id")
-    .references(() => companies.id, { onDelete: "set null" }),
-
-  // ML-derived fields
-  seniority: text("seniority"),
-  is_decision_maker: boolean("is_decision_maker").default(false),
-  authority_score: real("authority_score").default(0.0),
-  dm_reasons: text("dm_reasons"),              // JSON array
-
-  // ML deletion scoring
-  to_be_deleted: boolean("to_be_deleted").notNull().default(false),
-  deletion_score: real("deletion_score"),
-  deletion_reasons: text("deletion_reasons"),   // JSON array
-
-  // Conversation lifecycle
-  conversation_stage: text("conversation_stage"),
-  // initial_sent | follow_up_1..3 | replied_interested
-  // | meeting_scheduled | converted | closed
-}, (table) => ({
-  emailIdx: uniqueIndex("idx_contacts_email").on(table.email),
-  companyIdIdx: index("idx_contacts_company_id").on(table.company_id),
-  linkedinUrlIdx: index("idx_contacts_linkedin_url").on(table.linkedin_url),
-}));`,
+    content: "The shared contacts table demonstrates Drizzle's pattern of inline column definitions plus a trailing index function. Contacts carry ML-derived fields — authority_score / is_decision_maker for buyer-tier scoring and to_be_deleted / deletion_score / deletion_reasons for cleanup — alongside conversation_stage for lifecycle state. Why: keeping indexes co-located with the schema means migrations and queries always reference the same source of truth.",
+    codeBlock: `// packages/company-intel/src/schema.ts:159
+export const contacts = pgTable(
+  "contacts",
+  {
+    id: serial("id").primaryKey(),
+    tenant_id: tenantIdColumn(),
+    first_name: text("first_name").notNull(),
+    last_name: text("last_name").notNull(),
+    company_id: integer("company_id").references(() => companies.id, {
+      onDelete: "set null",
+    }),
+    // ML-derived fields
+    seniority: text("seniority"),
+    is_decision_maker: boolean("is_decision_maker").default(false),
+    authority_score: real("authority_score").default(0.0),
+    dm_reasons: text("dm_reasons"),
+    // ML deletion scoring
+    to_be_deleted: boolean("to_be_deleted").notNull().default(false),
+    deletion_score: real("deletion_score"),
+    deletion_reasons: text("deletion_reasons"),
+    conversation_stage: text("conversation_stage"),
+  },
+  (table) => ({
+    emailIdx: uniqueIndex("idx_contacts_email").on(table.email),
+    companyIdIdx: index("idx_contacts_company_id").on(table.company_id),
+    linkedinUrlIdx: index("idx_contacts_linkedin_url").on(table.linkedin_url),
+  }),
+);`,
   },
   {
     heading: "AI Contact Enrichment with Zod Validation",
-    content: "Contact enrichment uses DeepSeek with JSON response format constrained by a Zod schema — SynthesisOutputSchema defines the exact shape of enrichment output (specialization, skills, research areas, experience level, confidence score). The raw JSON is parsed and validated via safeParse; malformed responses return null rather than corrupting the contact record. Temperature 0.1 ensures reproducible classification across identical inputs.",
-    codeBlock: `const SynthesisOutputSchema = z.object({
+    content: "DeepSeek is called with response_format: { type: 'json_object' } and temperature 0.1, then the raw string is parsed and run through a Zod schema (SynthesisOutputSchema) defining specialization, skills, research_areas, experience_level enum, confidence (0–1), and rationale. safeParse returns null on any shape mismatch — the caller treats null as 'skip enrichment' rather than writing a malformed record. Why: schema validation is the firewall between an LLM and the contacts table; without it, a single hallucinated experience_level would pollute downstream filters.",
+    codeBlock: `// src/lib/ai-contact-enrichment.ts:353
+const SynthesisOutputSchema = z.object({
   specialization: z.string().nullable(),
   skills: z.array(z.string()),
   research_areas: z.array(z.string()),
@@ -629,29 +651,33 @@ function signal(row: PartnerRow): string {
 });
 
 const response = await client.chat.completions.create({
-  model: process.env.DEEPSEEK_MODEL ?? "deepseek-v4-pro",
+  model: getDeepSeekModel(),
   messages: [
     { role: "system", content: systemPrompt },
     { role: "user", content: \`Profile:\\n\${contextLines}\` },
   ],
-  response_format: { type: "json_object" },
+  response_format: { type: "json_object" } as any,
   temperature: 0.1,
   max_tokens: 512,
 });
 
+const raw = response.choices?.[0]?.message?.content ?? "{}";
 const parsed = SynthesisOutputSchema.safeParse(JSON.parse(raw));
 return parsed.success ? parsed.data : null;`,
   },
   {
     heading: "Strategy Enforcer — Grounding-First",
-    content: "The strategy enforcer is a static analysis agent that scans changed files for LLM calls without schema constraints. It pattern-matches on generate()/chat() calls and checks for structuredOutput or response_format nearby. Violations are severity-tagged as BLOCKING — the enforcer won't approve a PR where an LLM call returns unstructured text that feeds into database writes. Exempt paths (test files, scripts) are skipped. This catches the #1 source of runtime type errors in AI pipelines: unvalidated LLM output.",
-    codeBlock: `function checkGroundingFirst(
+    content: "The strategy enforcer runs static checks over changed files: it strips comments, then regex-scans for LLM call sites (LLM_CALL_PATTERNS) and structured-output anchors (response_format, structuredOutput). A call without a matching anchor emits a BLOCKING violation tagged 'Rule 2: Grounding-First' with a concrete fix string. Why: every database write that flows from an LLM response must come through a Zod / response_format gate, or downstream rows silently drift off-schema.",
+    codeBlock: `// src/agents/strategy-enforcer.ts:119
+function checkGroundingFirst(
   _changedFiles: string[],
   fileContents: Map<string, string>,
 ): Violation[] {
   const violations: Violation[] = [];
+
   for (const [file, content] of fileContents) {
     if (GROUNDING_EXEMPT_PATHS.some((p) => file.includes(p))) continue;
+
     const codeContent = stripCommentLines(content);
 
     const hasLLMCall = LLM_CALL_PATTERNS.some((p) => p.test(codeContent));
@@ -661,11 +687,13 @@ return parsed.success ? parsed.data : null;`,
 
     if (hasLLMCall && !hasStructuredOutput) {
       violations.push({
-        rule: "Grounding-First — LLM outputs must be schema-constrained",
+        rule: "Rule 2: Grounding-First — LLM outputs must be schema-constrained",
         severity: "BLOCKING",
+        metaApproach: "Grounding-First",
         file,
-        message: "LLM call found without structuredOutput or response_format",
-        fix: "Add structuredOutput: { schema: yourZodSchema } to the call",
+        message:
+          "LLM .generate()/.chat() call found without structuredOutput or response_format. All LLM outputs must be schema-constrained.",
+        fix: "Add \`structuredOutput: { schema: yourZodSchema }\` to the generate call, or \`response_format: { type: 'json_object' }\` for Python.",
       });
     }
   }
@@ -674,164 +702,124 @@ return parsed.success ? parsed.data : null;`,
   },
   {
     heading: "LinkedIn Post Analysis Pipeline",
-    content: "Post analysis orchestrates two parallel inference calls: SalesCue (DeBERTa-based) for semantic skill extraction, and a local JobBERT-v3 embedder served from the `jobbert` Rust crate (XLMRoberta → mean-pool → Dense 768→1024 Tanh → L2, 1024-dim, 64-token max). Both run concurrently via Promise.all — the skill tags feed intent classification while the dense vectors land in LanceDB for similarity search. Batch processing analyzes up to 200 un-analyzed posts per mutation call, writing embeddings and skills back to the linkedin_posts table. The dual-model approach gives both structured tags (filterable) and dense vectors (searchable).",
-    codeBlock: `interface PostAnalysis {
+    content: "The post analyzer in src/ml/post-analyzer.ts fans two inference services out in parallel via Promise.all: SalesCue (Python, DeBERTa) for skill tag extraction, and Candle (Rust, Metal) for JobBERT-v2 dense embeddings. analyzePostBatch then batches the embed call across all posts while still running per-post skill extraction. Why: tags give filterable structure and the dense vector enables similarity search — two complementary indexes from a single content pass. (The GraphQL analyzeLinkedInPosts mutation that wires this into Neon is currently a deferred no-op while the posts-d1 pipeline is rebuilt.)",
+    codeBlock: `// src/ml/post-analyzer.ts:1
+import * as candle from "@/lib/candle/client";
+import { skills as extractSkillsHttp } from "@/lib/salescue/client";
+
+export interface ExtractedSkill {
+  tag: string;
+  label: string;
+  confidence: number;
+}
+
+export interface PostAnalysis {
   skills: ExtractedSkill[];
   jobEmbedding: number[];
   analyzedAt: string;
 }
 
-async function analyzePost(content: string): Promise<PostAnalysis> {
+export async function analyzePost(content: string): Promise<PostAnalysis> {
   const [skillsResult, jobEmbedding] = await Promise.all([
-    extractSkillsHttp(content),   // SalesCue: semantic skill tags
-    candle.embedPost(content),    // JobBERT-v3: dense vector embedding (HF API)
+    extractSkillsHttp(content),
+    candle.embedPost(content),
   ]);
+
   return {
     skills: skillsResult.result.skills,
     jobEmbedding,
     analyzedAt: new Date().toISOString(),
   };
-}
-
-// Batch mutation — analyze up to 200 un-analyzed posts
-async analyzeLinkedInPosts(_parent, args, context) {
-  const targetPosts = await context.db.select().from(linkedinPosts)
-    .where(isNull(linkedinPosts.analyzed_at))
-    .limit(Math.min(args.limit ?? 50, 200));
-
-  const results = await analyzePostBatch(
-    targetPosts.map((p) => ({ id: p.id, content: p.content! })),
-  );
-  // Update DB with embeddings + skills per post
 }`,
   },
   {
     heading: "Auto-Draft Prompt Engineering",
-    content: "Auto-draft replies use classification-specific prompt templates injected into a multi-turn thread context. The thread is serialized as [OUTBOUND]/[INBOUND] labeled messages, limited to the last 6 exchanges to stay within token budget. Each reply classification (interested, info_request, not_interested) has tailored instructions — 'interested' replies suggest specific next actions, 'info_request' replies provide truthful answers without overselling. Generated drafts include auto-prepended greetings and are stored with generation_model and thread_context for auditability.",
-    codeBlock: `function buildDraftPrompt(
+    content: "buildDraftPrompt serializes the full thread as [OUTBOUND]/[INBOUND] blocks separated by ---, then injects classification-specific instructions — 'interested' asks for an enthusiastic 80–150 word reply with a concrete next step, 'info_request' asks for a 100–200 word answer to specific questions (anything else falls back to 'interested'). Why: the resulting row in reply_drafts carries generation_model plus the last six thread messages as thread_context for after-the-fact auditing.",
+    codeBlock: `// src/lib/email/auto-draft.ts:95
+function buildDraftPrompt(
   classification: ReplyClass,
   thread: ThreadMessage[],
   contactName: string,
+  isCpn: boolean,
 ): string {
   const threadText = thread
     .map((m) => \`[\${m.direction.toUpperCase()}] \${m.subject}\\n\${m.body}\`)
     .join("\\n\\n---\\n\\n");
 
   const classInstructions: Record<string, string> = {
-    interested: \`Write an enthusiastic reply that:
+    interested: \`The contact expressed interest. Write an enthusiastic, helpful reply that:
 - Thanks them for their interest
-- Provides next concrete step
-- Keeps momentum — suggest specific action
+- Provides the next concrete step (share details, schedule a call, send a link)
+- Keeps momentum — suggest a specific action
 - Is warm but professional, 80-150 words\`,
-    info_request: \`Write a reply addressing their questions
-with specific, truthful answers...\`,
+    info_request: \`The contact asked specific questions. Write a reply that:
+- Directly addresses their questions with specific, truthful answers
+- Provides enough detail to move them toward a decision
+- Ends with a clear next step
+- Is informative but concise, 100-200 words\`,
   };
 
-  return \`You are Vadim Nicolai, writing a reply to \${contactName}...
-\${classInstructions[classification]}
+  return \`You are Vadim Nicolai, writing a reply to \${contactName}…
+\${classInstructions[classification] || classInstructions.interested}
 FULL CONVERSATION THREAD:
 \${threadText}
 Respond with ONLY valid JSON: {"subject": "Re: ...", "body": "..."}\`;
-}
-
-// Store draft with audit trail
-await db.insert(replyDrafts).values({
-  received_email_id: receivedEmailId,
-  status: "pending",        // requires human approval
-  generation_model: model,
-  thread_context: JSON.stringify(thread.slice(-6)),
-});`,
-  },
-  {
-    heading: "Dual-Runtime Skill Extraction",
-    content: "Skill extraction runs in two runtimes against a canonical 157-skill ESCO taxonomy. The Rust implementation (crates/metal) pre-computes 768-dim ConTeXT embeddings for all skill labels into a flat row-major array, then runs cosine similarity against incoming text embeddings — batch inference at Metal-accelerated speeds. The Python implementation (SalesCue) lazy-loads DeBERTa embeddings with mean pooling over token dimensions, caching after first call. Both use the same threshold (0.35) and top-K (10) parameters, producing identical skill tag outputs across runtimes.",
-    codeBlock: `// Rust — crates/metal/src/kernel/skill_extraction.rs
-pub struct SkillTaxonomy {
-    labels: Vec<String>,
-    embeddings: Vec<f32>,  // flat row-major: [n_skills x 768]
-    dim: usize,
-}
-
-impl SkillTaxonomy {
-    pub fn match_embedding(
-        &self, text_embedding: &[f32], top_k: usize, threshold: f32,
-    ) -> Vec<ExtractedSkill> {
-        let mut scores: Vec<(usize, f32)> = Vec::with_capacity(self.labels.len());
-        for i in 0..self.labels.len() {
-            let sim = cosine_similarity(text_embedding, self.get_embedding(i));
-            if sim >= threshold { scores.push((i, sim)); }
-        }
-        scores.sort_unstable_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
-        scores.truncate(top_k);
-        scores.iter().map(|(i, s)| ExtractedSkill {
-            label: self.labels[*i].clone(), confidence: *s,
-        }).collect()
-    }
-}
-
-# Python — salescue/modules/skills.py
-class SkillExtractor(BaseModule):
-    def _ensure_skill_embeds(self) -> torch.Tensor:
-        """Pre-compute DeBERTa embeddings. Cached after first call."""
-        mask = encoded["attention_mask"].unsqueeze(-1).float()
-        summed = (last_hidden * mask).sum(dim=1)
-        pooled = summed / mask.sum(dim=1).clamp(min=1e-9)
-        self._skill_embeds = F.normalize(pooled, p=2, dim=1)
-        return self._skill_embeds`,
-  },
-  {
-    heading: "NEON SIMD cosine similarity — ~10 ns per 384-dim vector",
-    content: "The workhorse Rust crate `metal` compiles its similarity kernel down to ARM NEON intrinsics on aarch64. `cosine_sim_int8_neon` reads 16 INT8 bytes per iteration, widens u8→u16→u32→f32 via `vmovl` lanes, dequantizes through fused multiply-add (`vfmaq_f32`), and accumulates dot + norm in a single pass. Four float32x4 accumulators give instruction-level parallelism on the M1's wide decode. Source comments claim ~30 cycles / ~10 ns at 3.2 GHz — a single cosine over 384 dimensions. This is the primitive under every INT8-quantized recall path: skill matching, post similarity, ICP centroid distance.",
-    codeBlock: `// crates/metal/src/similarity/simd.rs:412
-// For 384 dims: 24 iterations × 4 FMA = 96 FMAs ≈ 30 cycles ≈ 10 ns @ 3.2 GHz
-#[cfg(target_arch = "aarch64")]
-unsafe fn cosine_sim_int8_neon(
-    query: &[f32], quant_data: &[u8],
-    scale: f32, bias: f32, query_norm: f32, dim: usize,
-) -> f32 {
-    use core::arch::aarch64::*;
-    let scale_v = vdupq_n_f32(scale);
-    let bias_v  = vdupq_n_f32(bias);
-    let mut dot_acc    = vdupq_n_f32(0.0);
-    let mut norm_c_acc = vdupq_n_f32(0.0);
-    let mut i = 0;
-    while i + 16 <= dim {                              // 16 INT8 per iter
-        let raw  = vld1q_u8(quant_data.as_ptr().add(i));
-        let lo16 = vmovl_u8(vget_low_u8(raw));         // u8 → u16
-        let f0   = vcvtq_f32_u32(vmovl_u16(vget_low_u16(lo16)));
-        let c0   = vfmaq_f32(bias_v, f0, scale_v);     // dequantize via FMA
-        let q0   = vld1q_f32(query.as_ptr().add(i));
-        dot_acc    = vfmaq_f32(dot_acc, q0, c0);       // dot  += q * c
-        norm_c_acc = vfmaq_f32(norm_c_acc, c0, c0);    // norm += c * c
-        i += 16;
-    }
-    vaddvq_f32(dot_acc) / (query_norm * vaddvq_f32(norm_c_acc).sqrt() + 1e-10)
 }`,
   },
   {
+    heading: "Semantic Skill Extraction (DeBERTa Cosine)",
+    content: "SkillExtractor lazy-encodes the 116-entry canonical skill taxonomy through the shared DeBERTa-v3 backbone, mean-pools over the attention mask, L2-normalizes, and caches the resulting (116, hidden) matrix on first call. At inference time the post embedding is normalized the same way and a single matmul against the cached matrix produces cosine similarities; entries above threshold=0.35 are sorted descending and truncated to top_k=10. Why: the cache amortizes the taxonomy encode across all subsequent posts in the worker.",
+    codeBlock: `# salescue/modules/skills.py:45
+def _ensure_skill_embeds(self) -> torch.Tensor:
+    """Pre-compute DeBERTa embeddings for all skill labels. Cached after first call."""
+    if self._skill_embeds is not None:
+        return self._skill_embeds
+
+    device = get_device()
+    encoded = SharedEncoder.encode_batch(self._labels, max_length=32)
+    output = encoded["encoder_output"]
+
+    mask = encoded["attention_mask"]
+    last_hidden = output.last_hidden_state
+    mask_expanded = mask.unsqueeze(-1).float()
+    summed = (last_hidden * mask_expanded).sum(dim=1)
+    counts = mask_expanded.sum(dim=1).clamp(min=1e-9)
+    pooled = summed / counts
+
+    if "_original_order" in encoded:
+        inv = encoded["_original_order"]
+        pooled = pooled[inv]
+
+    self._skill_embeds = F.normalize(pooled, p=2, dim=1).to(device)
+    return self._skill_embeds`,
+  },
+  {
     heading: "Follow-Up Scheduler Cron",
-    content: "A Vercel cron endpoint runs the multi-stage follow-up scheduler. Three timing windows (3 days after initial, 5 days after follow-up 1, 7 days after follow-up 2) drive the drip cadence. The scheduler respects conversation-stage gates — contacts who replied, converted, or scheduled meetings are immediately excluded. Before generating each draft, it checks for existing pending drafts to prevent duplicates. Generated drafts require human approval before sending, preserving the human-in-the-loop principle.",
-    codeBlock: `const DAYS_AFTER_INITIAL = 3;
+    content: "The GET /api/cron/followup-scheduler route subtracts 3, 5, and 7 days from Date.now() to derive cutoffs for sequence numbers 0/1/2, then filters contactEmails whose sent_at falls before the matching cutoff. Conversation-stage gates short-circuit the loop — anything starting with replied_, plus closed, converted, meeting_scheduled, is skipped. Why: before generating it checks for an existing pending draft of draft_type follow_up to prevent duplicate generations on overlapping cron runs.",
+    codeBlock: `// src/app/api/cron/followup-scheduler/route.ts:18
+const DAYS_AFTER_INITIAL = 3;
 const DAYS_AFTER_FOLLOWUP_1 = 5;
 const DAYS_AFTER_FOLLOWUP_2 = 7;
 
-const needsFollowUp = eligibleEmails.filter((e) => {
-  const seqNum = parseInt(e.sequence_number || "0", 10);
-  const stage = e.conversation_stage;
+const cutoffInitial = new Date(Date.now() - DAYS_AFTER_INITIAL * 86400000).toISOString();
+const cutoffF1     = new Date(Date.now() - DAYS_AFTER_FOLLOWUP_1 * 86400000).toISOString();
+const cutoffF2     = new Date(Date.now() - DAYS_AFTER_FOLLOWUP_2 * 86400000).toISOString();
 
-  // Respect conversation-stage gates
+const needsFollowUp = eligibleEmails.filter((e) => {
+  const sentAt = e.sent_at || "";
+  const seqNum = parseInt(e.sequence_number || "0", 10);
+  const stage  = e.conversation_stage;
+
   if (stage && stage.startsWith("replied_")) return false;
-  if (stage === "closed" || stage === "converted") return false;
-  if (stage === "meeting_scheduled") return false;
+  if (stage === "closed" || stage === "converted" || stage === "meeting_scheduled") return false;
 
   if (seqNum === 0 && sentAt < cutoffInitial) return true;
-  if (seqNum === 1 && sentAt < cutoffF1) return true;
-  if (seqNum === 2 && sentAt < cutoffF2) return true;
+  if (seqNum === 1 && sentAt < cutoffF1)      return true;
+  if (seqNum === 2 && sentAt < cutoffF2)      return true;
   return false;
 });
 
 for (const email of needsFollowUp) {
-  // Prevent duplicate drafts
   const [existingDraft] = await db.select({ id: replyDrafts.id })
     .from(replyDrafts)
     .where(and(
@@ -839,59 +827,224 @@ for (const email of needsFollowUp) {
       eq(replyDrafts.draft_type, "follow_up"),
       eq(replyDrafts.status, "pending"),
     )).limit(1);
-
   if (existingDraft) { skipped++; continue; }
-
-  // Generate follow-up via DeepSeek
-  const instructions = buildFollowUpInstructions(
-    (seqNum + 1).toString(), daysSince, email.subject,
-  );
-  // ... DeepSeek call with response_format: json_object
-  await db.insert(replyDrafts).values({
-    contact_id: email.contact_id,
-    status: "pending",  // requires human approval
-    draft_type: "follow_up",
-  });
 }`,
   },
   {
     heading: "Admin Agent — LangGraph Bridge",
-    content: "The admin assistant is a typed HTTP bridge from TypeScript to a Python LangGraph server running on port 8002. The TypeScript layer handles error coercion into a discriminated union (either { text: string } or { text: null, error: string }) — callers never see raw exceptions. The Python side hosts an ops-grade agent for internal debugging, evidence inspection, and batch reprocessing. This architecture separates the LLM orchestration runtime (Python/LangGraph) from the serving runtime (TypeScript/Next.js), letting each use its optimal toolchain.",
-    codeBlock: `// src/agents/admin-assistant.ts
+    content: "adminAssistantAgent is a thin TypeScript wrapper that calls adminChat() in src/lib/langgraph-client.ts and coerces all errors into a discriminated union ({ text } | { text: null, error }) so callers never see raw exceptions. adminChat funnels through runGraph(), which POSTs to LANGGRAPH_URL/runs/wait with assistant_id 'admin_chat' and an optional bearer token. Why: the LLM orchestration runtime (Python LangGraph) and the serving runtime (Next.js) stay decoupled — the same client signature works against langgraph dev locally or a tunneled HF Space.",
+    codeBlock: `// src/agents/admin-assistant.ts:10
 export const adminAssistantAgent = {
-  async generate(prompt: string):
-    Promise<{ text: string } | { text: null; error: string }> {
+  async generate(
+    prompt: string,
+  ): Promise<{ text: string; error?: never } | { text: null; error: string }> {
     try {
       const result = await adminChat(prompt);
       return { text: result.response };
     } catch (err) {
-      const message = err instanceof Error
-        ? err.message : "Unknown error from admin agent";
+      const message = err instanceof Error ? err.message : "Unknown error from admin agent";
+      console.error("[adminAssistantAgent] generate failed:", message);
       return { text: null, error: message };
     }
   },
 };
 
-// src/lib/langgraph-client.ts — typed HTTP bridge
+// src/lib/langgraph-client.ts:247 — typed wrapper over runGraph()
 export function adminChat(
-  prompt: string, system?: string,
+  prompt: string,
+  system?: string,
 ): Promise<AdminChatResult> {
-  return callLangGraph<AdminChatResult>("/admin-chat", {
+  return runGraph<AdminChatResult>("admin_chat", {
     prompt,
     system: system ?? "",
   });
+}`,
+  },
+  {
+    heading: "Hawkes Self-Exciting Lead Temperature",
+    content: "Each engagement event (open=0.4, click=0.7, reply=1.0, meeting=1.5) adds a kernel that decays exponentially. The naive λ(t) = μ + Σ α·w_i·exp(-β·Δt) is O(n²) per lead; the recursive form S_n = w_{n-1} + exp(-β·Δt)·S_{n-1} carries a running weighted sum forward across sorted timestamps, dropping batch scoring to O(n). Why: nightly recompute over thousands of leads stays linear, and the 1024-entry Float32Array exp-decay LUT replaces every Math.exp() call in the hot path.",
+    codeBlock: `// src/lib/ml/lead-temperature.ts:176
+let S = 0;
+let intensityAtThreeDaysAgo = mu;
+let capturedThreeDaysAgo = false;
+
+let prevTimestamp = sortedEvents[0].timestamp;
+
+for (let i = 0; i < n; i++) {
+  const ev = sortedEvents[i];
+  if (ev.timestamp >= t) break;
+
+  const dt = (ev.timestamp - prevTimestamp) / MS_PER_DAY;
+  if (i > 0) {
+    // Propagate the running sum forward by the time gap
+    S = S * expDecayLUT(beta * dt);
+  }
+
+  // Add this event's weight to the running sum
+  const w = EVENT_WEIGHTS[ev.type] ?? 0.1;
+  S += w;
+  prevTimestamp = ev.timestamp;
 }
 
-async function callLangGraph<T>(path: string, body: unknown): Promise<T> {
-  const base = process.env.LANGGRAPH_URL ?? "http://localhost:8002";
-  const res = await fetch(\`\${base}\${path}\`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) throw new Error(\`LangGraph \${res.status}\`);
-  return res.json() as Promise<T>;
+// Decay S from last event to evaluation time t
+const dtFinal = (t - prevTimestamp) / MS_PER_DAY;
+const intensityAtT = mu + alpha * S * expDecayLUT(beta * dtFinal);`,
+  },
+  {
+    heading: "Thompson-Sampling Send-Time Optimizer",
+    content: "Each (day-of-week, hour) slot maintains a Beta(α, β) posterior on open probability, stored as 168 pairs in a single Float64Array. To pick a send time we draw one sample per eligible slot via hand-rolled Marsaglia-Tsang gamma + Box-Muller normal samplers and take the argmax. Why: a 168-byte BUSINESS_HOUR_MASK and a 24×27 LOCAL_HOUR_TABLE turn business-hour eligibility and timezone-to-local-hour conversion into branchless table lookups, so a 10k-recipient batch grouped by (tz, seniority) reuses one sample sweep per group.",
+    codeBlock: `// src/lib/ml/send-time-optimizer.ts:296
+for (let dow = dowStart; dow < dowEnd; dow++) {
+  for (let utcHour = 0; utcHour < 24; utcHour++) {
+    // Look up local hour from pre-computed table
+    const localHour = LOCAL_HOUR_TABLE[utcHour * TZ_OFFSET_COUNT + tzIdx];
+
+    // Check business-hour eligibility from mask
+    if (!BUSINESS_HOUR_MASK[dow * 24 + localHour]) continue;
+
+    const slotIdx = dow * 24 + utcHour;
+    const alpha = stats.alphaBeta[slotIdx * 2];
+    let beta = stats.alphaBeta[slotIdx * 2 + 1];
+
+    // C-suite narrowing: penalize outside 9am-12pm local
+    if (senBucket >= 3 && (localHour < 9 || localHour > 12)) {
+      beta += stats.seniorityModifier || 2;
+    }
+
+    const sample = betaSample(alpha, beta);
+    if (sample > bestSample) {
+      bestSample = sample;
+      bestHour = utcHour;
+    }
+  }
 }`,
+  },
+  {
+    heading: "Kaplan-Meier Survival Curves for Outreach Cadence",
+    content: "Historical reply times are right-censored (most contacts never reply). The product-limit estimator walks unique reply days in order, decrementing the at-risk set as observations are censored, and updates S *= 1 − events/atRisk only on actual reply events. Why: the optimal next follow-up is then the day in [2, 14] that maximizes baseReplyProb + boost·hazard − annoyance·(1 + sent), so the recommender stops automatically once incremental hazard no longer beats the annoyance penalty.",
+    codeBlock: `// src/lib/ml/outreach-cadence.ts:75
+for (const t of eventTimes) {
+  // Count censored before this time
+  while (sortIdx < n && sorted[sortIdx].days < t) {
+    if (!sorted[sortIdx].replied) {
+      atRisk--;
+    }
+    sortIdx++;
+  }
+
+  // Count events at this time
+  let events = 0;
+  let censoredAtT = 0;
+  while (sortIdx < n && sorted[sortIdx].days === t) {
+    if (sorted[sortIdx].replied) {
+      events++;
+    } else {
+      censoredAtT++;
+    }
+    sortIdx++;
+  }
+
+  if (atRisk > 0 && events > 0) {
+    S *= 1 - events / atRisk;
+  }
+
+  times.push(t);
+  survival.push(Math.max(0, S));
+
+  atRisk -= events + censoredAtT;
+  if (atRisk <= 0) break;
+}`,
+  },
+  {
+    heading: "Gradient-Boosted Decision Stumps for Engagement",
+    content: "A 12-feature vector (authority, days-since-last, open/reply rate, intent, lead-temperature, hour sin/cos, AI tier, verified) feeds a hand-rolled GBM of depth-1 stumps. Each boosting round fits residuals y − sigmoid(F) by enumerating ~20 quantile-bucketed thresholds per feature and picking the split with lowest MSE. Why: the same ensemble drives both the open and reply heads (reply log-odds = open · 0.6), and a 2048-entry sigmoid LUT plus a 4-way unrolled stump loop over a packed Float64Array feature matrix lets predictBatch score thousands of leads per call.",
+    codeBlock: `// src/lib/ml/engagement-predictor.ts:175
+for (let f = 0; f < featureCount; f++) {
+  // Collect unique thresholds (quantile-based for efficiency)
+  const vals = samples.map((s) => s.features[f]);
+  const sorted = Array.from(new Set(vals)).sort((a, b) => a - b);
+  // Use up to 20 candidate splits
+  const step = Math.max(1, Math.floor(sorted.length / 20));
+  const candidates: number[] = [];
+  for (let i = 0; i < sorted.length; i += step) {
+    candidates.push(sorted[i]);
+  }
+
+  for (const thr of candidates) {
+    let leftSum = 0;
+    let leftCount = 0;
+    let rightSum = 0;
+    let rightCount = 0;
+
+    for (let i = 0; i < samples.length; i++) {
+      if (samples[i].features[f] <= thr) {
+        leftSum += residuals[i];
+        leftCount++;
+      } else {
+        rightSum += residuals[i];
+        rightCount++;
+      }
+    }
+    // ... best-split selection by MSE reduction
+  }
+}`,
+  },
+  {
+    heading: "LinkedIn Voyager Rate Limiter",
+    content: "Every Voyager call passes through a 3-state circuit breaker (closed → open after 3 consecutive 429s → half-open after 5 min, allowing 2 probes), a per-endpoint token-bucket map covering 12 endpoints (profile_view: 12/min·400/day, messaging_send: 3/min·80/day, inmail: 2/min·20/day), and an AWS-style full-jitter exponential backoff randRange(0, base · 2^attempt). Why: each granted permit is delayed by a Box-Muller-shaped log-normal 'human delay' centered on the configured range, so request spacing matches a real browser instead of a uniform-rate bot fingerprint.",
+    codeBlock: `// src/lib/linkedin/rate-limiter.ts:236
+/** Exponential backoff with full jitter (AWS-style). */
+function expBackoffJitter(base: number, attempt: number, cap: number): number {
+  const exp = Math.min(cap, base * Math.pow(2, attempt));
+  return randRange(0, exp);
+}
+
+/** Human-like delay: log-normal distribution centered on midpoint of range. */
+function humanDelay(range: [number, number]): number {
+  const [min, max] = range;
+  // Box-Muller transform for normal distribution, then shift to range
+  const u1 = Math.random();
+  const u2 = Math.random();
+  const normal = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+  const mid = (min + max) / 2;
+  const spread = (max - min) / 4; // ~95% within range
+  const delay = mid + normal * spread;
+  return Math.max(min, Math.min(max, delay));
+}`,
+  },
+  {
+    heading: "SMTP RCPT-TO Email Verification",
+    content: "verify_email runs a real RFC 5321 conversation: format check → typo-map correction → disposable-domain block → MX DNS lookup → connect to the lowest-preference MX on port 25 → EHLO with HELO graceful fallback → empty MAIL FROM:<> reverse-path → RCPT TO:<addr>. The response code is classified deterministically — 250 means the mailbox exists, 550–559 means it does not, anything else (timeout, refused, port 25 blocked) collapses to 'unknown'. Why: a catch-all canary xkzqpqxzqpq9zzz@{domain} is probed first, so domains that 250 every recipient are flagged as 'catchall' instead of falsely passing verification.",
+    codeBlock: `# backend/leadgen_agent/email_verifier.py:441
+try:
+    # EHLO -> HELO fallback
+    try:
+        await client.ehlo("verify.local")
+    except aiosmtplib.SMTPException:
+        try:
+            await client.helo("verify.local")
+        except aiosmtplib.SMTPException as exc:
+            return "unknown"
+
+    # MAIL FROM:<>  (empty reverse-path, RFC 5321 s4.5.5 -- standard for probing)
+    try:
+        code, _msg = await client.mail("")
+    except aiosmtplib.SMTPException as exc:
+        return "unknown"
+    if code != 250:
+        return "unknown"
+
+    # RCPT TO -- the key check
+    try:
+        code, _msg = await client.rcpt(email)
+    except aiosmtplib.SMTPResponseException as exc:
+        code = exc.code
+
+    if code == 250:
+        return "valid"
+    if 550 <= code <= 559:
+        return "invalid"
+    return "unknown"`,
   },
 ];
 
@@ -1208,7 +1361,7 @@ export function isAdminEmail(email: string | null | undefined): boolean {
   {
     type: "card-grid",
     heading: "Rust crate inventory (crates/)",
-    description: "Sixteen working Rust crates handle every non-LLM workload: crawling, embedding, classification, ICP scoring, email verification, storage. All compile for M1 aarch64 with NEON SIMD in hot paths; ML crates use Candle with the Metal feature. The `candle` crate is a resolution stub only — real inference lives in `metal`, `icp-embed`, and `jobbert`.",
+    description: "Fifteen working Rust crates handle every non-LLM workload: crawling, embedding, classification, ICP scoring, email verification, storage. All compile for M1 aarch64 with NEON SIMD in hot paths; ML crates use Candle with the Metal feature. The `candle` crate is a resolution stub only — real inference lives in `metal`, `icp-embed`, and `jobbert`. The consultancies discovery / enrichment workload moved to LangGraph (six `consultancies_*` Python graphs in `backend/leadgen_agent/`).",
     items: [
       { label: "agentic-search", value: "Parallel codebase search — DeepSeek decomposes a query, spawns N tokio workers, each runs a Glob → Grep → Read tool loop, synthesizes.", metadata: { runtime: "bin", deps: "deepseek + tokio" } },
       { label: "ats", value: "Greenhouse job-board API consumer with parallel fetch.", metadata: { runtime: "lib + bin", deps: "reqwest" } },
@@ -1216,7 +1369,6 @@ export function isAdminEmail(email: string | null | undefined): boolean {
       { label: "common-crawl", value: "Seed discovery: CDX lookup → WARC fetch → HTML scrape → Neon upsert.", metadata: { runtime: "bin", deps: "flate2 + scraper + sqlx" } },
       { label: "companies-verify", value: "Candle BGE embeddings + LanceDB kNN to verify UK recruitment companies.", metadata: { runtime: "bin", deps: "candle + lancedb" } },
       { label: "company-cleanup", value: "Same stack as companies-verify, inverted — purges crypto/blockchain companies.", metadata: { runtime: "bin", deps: "candle + lancedb" } },
-      { label: "consultancies", value: "Discover top-tier AI/ML consultancies worldwide and upsert to Neon.", metadata: { runtime: "2 bins", deps: "reqwest + scraper" } },
       { label: "email-verifier", value: "Local DNS MX + SMTP RCPT-TO + catch-all canary — free NeverBounce alternative available as a library.", metadata: { runtime: "lib + bin", deps: "hickory-resolver" } },
       { label: "gh", value: "GitHub API client for AI tier, tech-stack, and hiring-signal extraction.", metadata: { runtime: "lib + 5 bins", deps: "octocrab + feature flags" } },
       { label: "icp", value: "Pure ICP scoring — 64-byte-aligned ContactBatch SoA for 256 contacts, logistic + isotonic calibration.", metadata: { runtime: "lib", deps: "serde only" } },

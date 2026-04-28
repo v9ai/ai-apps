@@ -32,6 +32,12 @@
     "vertical_discovery": "leadgen_agent.vertical_discovery_graph:graph",
     "pipeline": "leadgen_agent.pipeline_graph:graph",
     "consultancies_discovery": "leadgen_agent.consultancies_discovery_graph:graph",
+    "consultancies_brave_discovery": "leadgen_agent.consultancies_brave_discovery_graph:graph",
+    "consultancies_enrich": "leadgen_agent.consultancies_enrich_graph:graph",
+    "consultancies_features": "leadgen_agent.consultancies_features_graph:graph",
+    "consultancies_forecasting": "leadgen_agent.consultancies_forecasting_graph:graph",
+    "consultancies_learning": "leadgen_agent.consultancies_learning_graph:graph",
+    "consultancies_nl_search": "leadgen_agent.consultancies_nl_search_graph:graph",
     "companies_verify": "leadgen_agent.companies_verify_graph:graph",
     "company_cleanup": "leadgen_agent.company_cleanup_graph:graph"
   },

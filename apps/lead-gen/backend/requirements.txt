@@ -17,3 +17,6 @@ lxml>=5.3
 playwright>=1.48
 unstructured[html]>=0.16
 rapidfuzz>=3.14
+numpy>=2.0
+scipy>=1.13
+huggingface_hub>=0.26

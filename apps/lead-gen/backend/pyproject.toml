@@ -27,6 +27,8 @@ dependencies = [
     "dnspython>=2.8.0",
     "numpy>=2.4.4",
     "warcio>=1.8.1",
+    "scipy>=1.13",
+    "huggingface_hub>=0.26",
 ]
 
 [project.optional-dependencies]
