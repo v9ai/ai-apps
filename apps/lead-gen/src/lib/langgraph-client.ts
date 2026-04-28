@@ -71,8 +71,20 @@ export interface AdminChatResult {
 }
 
 export interface EmailComposeResult {
+  // Final (refined) output. Falls back to the draft on a second-pass failure.
   subject: string;
   body: string;
+  // Pass-1 outputs preserved for the UI's "Use draft instead" toggle and for
+  // bookkeeping in contact_emails (migration 0078).
+  draft_subject?: string;
+  draft_body?: string;
+  // Bookkeeping surfaced for DB persistence.
+  prompt_version?: string;
+  model?: string;
+  prompt_tokens?: number;
+  completion_tokens?: number;
+  // Per-node telemetry — { telemetry: {draft: {...}, refine: {...}}, refine_status }.
+  graph_meta?: Record<string, unknown>;
 }
 
 export interface EmailOutreachResult {

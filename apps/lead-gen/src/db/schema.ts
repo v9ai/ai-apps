@@ -202,6 +202,15 @@ export const contactEmails = pgTable(
     // Link to the received email this outbound is replying to
     in_reply_to_received_id: integer("in_reply_to_received_id")
       .references((): AnyPgColumn => receivedEmails.id, { onDelete: "set null" }),
+    // Two-pass composition bookkeeping (migration 0078).
+    // draft_body = pass 1 output, refined_body = pass 2 output.
+    // text_content mirrors refined_body for back-compat with existing send paths.
+    draft_body: text("draft_body"),
+    refined_body: text("refined_body"),
+    prompt_version: text("prompt_version"),
+    model: text("model"),
+    prompt_tokens: integer("prompt_tokens"),
+    completion_tokens: integer("completion_tokens"),
     created_at: text("created_at")
       .notNull()
       .default(sql`now()::text`),

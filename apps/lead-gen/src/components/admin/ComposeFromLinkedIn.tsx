@@ -9,6 +9,7 @@ import {
   Code,
   Flex,
   Separator,
+  Tabs,
   Text,
   TextArea,
   TextField,
@@ -74,6 +75,8 @@ export function ComposeFromLinkedIn({
 
   const {
     content,
+    draftContent,
+    refinedContent,
     partialContent,
     isStreaming,
     error: streamError,

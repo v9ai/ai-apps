@@ -19,27 +19,58 @@ export { ApolloProvider };
 
 let apolloClient: ApolloClient<any> | undefined;
 
-const GATEWAY_HTTP =
-  process.env.NEXT_PUBLIC_GATEWAY_URL ?? "/api/graphql";
+const GATEWAY_HTTP_URL =
+  "https://agenticleadgen-gateway.eeeew.workers.dev/graphql";
 const GATEWAY_WS = process.env.NEXT_PUBLIC_GATEWAY_WS_URL ?? "";
 
+// Anonymous read queries served by the Cloudflare gateway against Neon
+// directly. Must match the gateway's OWNED_OPS in
+// apps/lead-gen/gateway/src/config.ts. Mutations and auth-gated queries stay
+// on Vercel where Better Auth cookies flow same-origin.
+const OWNED_GATEWAY_FIELDS = new Set([
+  "productBySlug",
+  "productIntelRun",
+  "productIntelRuns",
+]);
+
 function createIsomorphLink(): ApolloLink {
-  const httpLink = new HttpLink({
-    uri:
-      typeof window === "undefined"
-        ? process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api/graphql"
-        : GATEWAY_HTTP,
-    // `include` so Better Auth cookies flow when the gateway is on a sibling
-    // subdomain (e.g. gateway.agenticleadgen.xyz). Same-origin requests still
-    // send cookies normally.
+  // SSR: always direct to Vercel; no routing logic needed.
+  if (typeof window === "undefined") {
+    return new HttpLink({
+      uri:
+        process.env.NEXT_PUBLIC_API_URL ||
+        "http://localhost:3000/api/graphql",
+      credentials: "include",
+    });
+  }
+
+  const vercelHttpLink = new HttpLink({
+    uri: "/api/graphql",
     credentials: "include",
   });
+  const gatewayHttpLink = new HttpLink({
+    uri: GATEWAY_HTTP_URL,
+    // No `credentials` — cross-origin cookies wouldn't flow to *.workers.dev
+    // anyway, and these reads are anonymous (public_read RLS in Neon).
+  });
 
-  // Subscriptions only run in the browser. On the server, return the HTTP
-  // link unchanged — server-rendered components do not subscribe.
-  if (typeof window === "undefined" || !GATEWAY_WS) {
-    return httpLink;
-  }
+  const httpLink = split(
+    ({ query }) => {
+      const def = getMainDefinition(query);
+      if (def.kind !== "OperationDefinition") return false;
+      if (def.operation !== "query") return false;
+      const first = def.selectionSet.selections.find(
+        (s) => s.kind === "Field",
+      );
+      return (
+        first?.kind === "Field" && OWNED_GATEWAY_FIELDS.has(first.name.value)
+      );
+    },
+    gatewayHttpLink,
+    vercelHttpLink,
+  );
+
+  if (!GATEWAY_WS) return httpLink;
 
   const wsLink = new GraphQLWsLink(
     createClient({

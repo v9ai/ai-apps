@@ -13,6 +13,11 @@ interface GenerateEmailInput {
 
 interface UseStreamingEmailResult {
   content: EmailContent | null;
+  // Pass-1 (draft) + pass-2 (refined) outputs from the LangGraph compose flow.
+  // refinedContent mirrors content; draftContent powers the "Use draft instead"
+  // toggle in the ComposeFromLinkedIn UI.
+  draftContent: EmailContent | null;
+  refinedContent: EmailContent | null;
   partialContent: string;
   isStreaming: boolean;
   error: string | null;
@@ -23,6 +28,8 @@ interface UseStreamingEmailResult {
 
 export function useStreamingEmail(): UseStreamingEmailResult {
   const [content, setContent] = useState<EmailContent | null>(null);
+  const [draftContent, setDraftContent] = useState<EmailContent | null>(null);
+  const [refinedContent, setRefinedContent] = useState<EmailContent | null>(null);
   const [partialContent, setPartialContent] = useState<string>("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,6 +39,8 @@ export function useStreamingEmail(): UseStreamingEmailResult {
     setIsStreaming(true);
     setError(null);
     setContent(null);
+    setDraftContent(null);
+    setRefinedContent(null);
     setPartialContent("");
 
     abortControllerRef.current = new AbortController();
@@ -72,9 +81,21 @@ export function useStreamingEmail(): UseStreamingEmailResult {
 
               if (data.type === "chunk") {
                 setPartialContent(data.accumulated);
+              } else if (data.type === "draft") {
+                const validated = emailSchema.parse(data.data);
+                setDraftContent(validated);
+              } else if (data.type === "refined") {
+                const validated = emailSchema.parse(data.data);
+                setRefinedContent(validated);
+                setContent(validated);
+                setPartialContent("");
               } else if (data.type === "complete") {
                 const validated = emailSchema.parse(data.data);
+                // The "complete" event carries the same final {subject, body}
+                // as "refined" plus bookkeeping; ensure content is set even if
+                // the "refined" event was missed (older server, fallback path).
                 setContent(validated);
+                setRefinedContent((prev) => prev ?? validated);
                 setPartialContent("");
               } else if (data.type === "error") {
                 setError(data.error);
@@ -102,10 +123,22 @@ export function useStreamingEmail(): UseStreamingEmailResult {
 
   const reset = useCallback(() => {
     setContent(null);
+    setDraftContent(null);
+    setRefinedContent(null);
     setPartialContent("");
     setError(null);
     setIsStreaming(false);
   }, []);
 
-  return { content, partialContent, isStreaming, error, generate, stop, reset };
+  return {
+    content,
+    draftContent,
+    refinedContent,
+    partialContent,
+    isStreaming,
+    error,
+    generate,
+    stop,
+    reset,
+  };
 }

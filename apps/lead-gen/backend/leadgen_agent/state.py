@@ -61,9 +61,21 @@ class EmailComposeState(TypedDict, total=False):
     # internal
     context_summary: str
     draft: str
-    # output
+    # pass-1 output (preserved for DB persistence + UI "Use draft instead")
+    draft_subject: str
+    draft_body: str
+    # refine retry counter — drives retry-once + fallback-to-draft policy
+    refine_attempts: int
+    # bookkeeping surfaced to the API route for DB persistence
+    prompt_version: str
+    model: str
+    prompt_tokens: int
+    completion_tokens: int
+    # output (refined / pass-2 wins; falls back to draft on second parse failure)
     subject: str
     body: str
+    # per-node telemetry — same reducer as pricing/gtm/product_intel states
+    graph_meta: Annotated[dict[str, Any], _merge_graph_meta]
 
 
 class EmailReplyState(TypedDict, total=False):
