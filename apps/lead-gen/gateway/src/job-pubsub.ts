@@ -71,13 +71,31 @@ export class JobPubSub {
     }
 
     if (req.headers.get("Upgrade")?.toLowerCase() === "websocket") {
+      // graphql-ws clients send `Sec-WebSocket-Protocol: graphql-transport-ws`
+      // and require the server to echo a matching subprotocol in the 101
+      // response. Workers does NOT do this automatically — we must set the
+      // response header ourselves.
+      const requestedProtocols = (req.headers.get("Sec-WebSocket-Protocol") ?? "")
+        .split(",")
+        .map((p) => p.trim())
+        .filter(Boolean);
+      const accepted = requestedProtocols.find(
+        (p) => p === "graphql-transport-ws" || p === "graphql-ws",
+      );
+
       const pair = new WebSocketPair();
       const client = pair[0];
       const server = pair[1];
-      this.state.acceptWebSocket(server);
+      this.state.acceptWebSocket(server, accepted ? [accepted] : undefined);
       const init: ConnAttachment = { subs: {}, acked: false };
       server.serializeAttachment(init);
-      return new Response(null, { status: 101, webSocket: client });
+      const responseHeaders = new Headers();
+      if (accepted) responseHeaders.set("Sec-WebSocket-Protocol", accepted);
+      return new Response(null, {
+        status: 101,
+        webSocket: client,
+        headers: responseHeaders,
+      });
     }
 
     return new Response("Not found", { status: 404 });
