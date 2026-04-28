@@ -22,8 +22,8 @@ graph TD
     end
 
     subgraph Next.js["Next.js App on Vercel (Port 3006 dev)"]
-        Pages["Pages\n/[slug]\n/aws\n/aws/[slug]\n/courses\n/coursework\n/coursework/[slug]\n/coursework/[slug]/slovenia\n/coursework/[slug]/slovenia/ideas\n/anthropic"]
-        API["API Routes\n/api/chat (proxy)\n/api/applications/[id]/prep (proxy)\n/api/applications/[id]/memorize/generate (proxy)\n/api/research\n/api/course-review/[id]\n/api/learners\n/api/coursework"]
+        Pages["Pages\n/[slug]\n/aws\n/aws/[slug]\n/courses\n/coursework\n/coursework/[slug]\n/coursework/[slug]/slovenia\n/coursework/[slug]/slovenia/ideas\n/anthropic\n/problems\n/problems/[slug]"]
+        API["API Routes\n/api/chat (proxy)\n/api/applications/[id]/prep (proxy)\n/api/applications/[id]/memorize/generate (proxy)\n/api/research\n/api/course-review/[id]\n/api/learners\n/api/coursework\n/api/problems/[slug]/submit"]
         Client["src/lib/langgraph-client.ts\nPOST /runs/wait"]
         SA["Server Actions\nsearch · analytics"]
         MW["Middleware\nURL redirects"]
@@ -79,6 +79,7 @@ erDiagram
     lessons ||--o{ knowledge_states : subject_of
     lessons ||--o{ user_lesson_interactions : interacted_in
     learners ||--o{ coursework : has
+    problems ||--o{ problem_submissions : attempted_in
 
     categories {
         uuid id PK
@@ -124,6 +125,30 @@ erDiagram
         float transit_prob
         float slip_prob
         float guess_prob
+    }
+
+    problems {
+        uuid id PK
+        text slug
+        text title
+        text difficulty
+        text prompt
+        text starter_js
+        text starter_ts
+        jsonb test_cases
+        text entrypoint
+    }
+
+    problem_submissions {
+        uuid id PK
+        uuid problem_id FK
+        text user_id
+        text language
+        text code
+        text status
+        int passed_count
+        int total_count
+        float runtime_ms
     }
 ```
 

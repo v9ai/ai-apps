@@ -718,3 +718,91 @@ export const courseworkRelations = relations(coursework, ({ one }) => ({
     references: [learners.id],
   }),
 }));
+
+// ── Coding Problems (LeetCode-style) ───────────────────────────────
+
+export const problemDifficultyEnum = pgEnum("problem_difficulty", [
+  "easy",
+  "medium",
+  "hard",
+]);
+
+export const submissionStatusEnum = pgEnum("submission_status", [
+  "passed",
+  "failed",
+  "error",
+  "timeout",
+]);
+
+export const problems = pgTable(
+  "problems",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    slug: text("slug").unique().notNull(),
+    title: text("title").notNull(),
+    difficulty: problemDifficultyEnum("difficulty").notNull().default("easy"),
+    prompt: text("prompt").notNull(), // markdown
+    starterJs: text("starter_js").notNull(),
+    starterTs: text("starter_ts").notNull(),
+    // Each test: { name, args: any[], expected: any }
+    testCases: jsonb("test_cases").notNull().default([]),
+    // Function name the runner should invoke (e.g. "twoSum")
+    entrypoint: text("entrypoint").notNull(),
+    tags: jsonb("tags").notNull().default([]),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("problems_difficulty_idx").on(table.difficulty),
+    index("problems_sort_idx").on(table.sortOrder),
+  ],
+);
+
+export const problemSubmissions = pgTable(
+  "problem_submissions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    problemId: uuid("problem_id")
+      .references(() => problems.id, { onDelete: "cascade" })
+      .notNull(),
+    userId: text("user_id").notNull(),
+    language: text("language").notNull(), // "js" | "ts"
+    code: text("code").notNull(),
+    status: submissionStatusEnum("status").notNull(),
+    passedCount: integer("passed_count").notNull().default(0),
+    totalCount: integer("total_count").notNull().default(0),
+    runtimeMs: real("runtime_ms"),
+    errorMessage: text("error_message"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("problem_submissions_user_idx").on(table.userId, table.createdAt),
+    index("problem_submissions_problem_idx").on(table.problemId, table.createdAt),
+    index("problem_submissions_user_problem_idx").on(
+      table.userId,
+      table.problemId,
+      table.status,
+    ),
+  ],
+);
+
+export const problemsRelations = relations(problems, ({ many }) => ({
+  submissions: many(problemSubmissions),
+}));
+
+export const problemSubmissionsRelations = relations(
+  problemSubmissions,
+  ({ one }) => ({
+    problem: one(problems, {
+      fields: [problemSubmissions.problemId],
+      references: [problems.id],
+    }),
+  }),
+);
