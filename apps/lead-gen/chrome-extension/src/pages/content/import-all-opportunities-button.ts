@@ -20,8 +20,6 @@ const BTN_ATTR = "data-lg-import-all-btn";
 
 let importAllBtn: HTMLButtonElement | null = null;
 let lastUrl = "";
-let lastAutoImportedUrl = "";
-let autoImportTimer: ReturnType<typeof setTimeout> | null = null;
 
 function isOnJobsSearchPage(): boolean {
   if (!window.location.hostname.includes("linkedin.com")) return false;
@@ -121,7 +119,6 @@ function installProgressListener() {
     if (!btn || !document.body.contains(btn)) return;
 
     if (msg.error) {
-      lastAutoImportedUrl = "";
       btn.textContent = String(msg.error).slice(0, 80);
       btn.style.backgroundColor = COLOR_ERROR;
       setTimeout(() => resetIdle(btn), 5000);
