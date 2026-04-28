@@ -121,7 +121,9 @@ export interface CompanyDiscoveryResult {
     scored_count: number;
     inserted_count: number;
     inserted_ids: number[];
+    existing_ids?: number[];
     skipped_existing: number;
+    skipped_blocked?: number;
     graph_meta?: Record<string, unknown>;
   };
   _error?: string;
