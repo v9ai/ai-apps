@@ -516,11 +516,11 @@ const stages = [
   {
     title: "enrichment",
     graphName: "enrichment",
-    description: "Live website fetch → layered signal extraction → Zod validation gate → parallel DeepSeek calls for AI tier classification (not-AI / AI-first / AI-native, per-tier confidence thresholds) and deep analysis → confidence gate filters low-confidence results → enriched fields written back to companies table; snapshots archived for drift detection.",
+    description: "Load row → freshness skip when prior ai_classification_confidence ≥ 0.6 and age < 30 days → live homepage + careers fetch (httpx, 10 s timeout, 4 careers-path candidates) → single DeepSeek v4-pro classification call (thinking mode, temp 0.2) returns category + ai_tier (0/1/2) + industry + remote_policy + has_open_roles + confidence in one JSON object → if confidence < 0.4 or the call fails, fall back to a deterministic keyword heuristic at confidence 0.5 → linear score blends category, tier, remote policy, and open-roles signals, scaled by 0.6 + 0.4 × confidence → enriched fields written to companies (category, ai_tier, score, ai_classification_confidence) with provenance rows in company_facts; raw HTML captures land in company_snapshots for replay (drift comparison not yet implemented).",
     pattern: "LLM-assisted classification",
     nodes: enrichmentNodes,
     edges: enrichmentEdges,
-    height: 340,
+    height: 360,
   },
   {
     title: "lead_scoring",
