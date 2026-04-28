@@ -9,7 +9,8 @@
     "codegen": "graphql-codegen",
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "deploy:dry": "wrangler deploy --dry-run"
+    "deploy:dry": "wrangler deploy --dry-run",
+    "test:e2e": "node --test tests/e2e.test.mjs"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260401.0",
