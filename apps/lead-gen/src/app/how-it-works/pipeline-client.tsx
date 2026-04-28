@@ -429,25 +429,24 @@ const discoveryEdges: Edge[] = [
 // ── Stage 2: Enrichment ──────────────────────────────────────────────────────
 
 const enrichmentNodes: Node[] = [
-  { id: "fetch-site", type: "agent", position: { x: 0, y: 40 }, data: { label: "fetch_website", sublabel: "Live HTML extraction", icon: Globe, color: "var(--blue-9)" } },
-  { id: "extract-signals", type: "agent", position: { x: 250, y: 40 }, data: { label: "extract_signals", sublabel: "Services / tech / industry", icon: Zap, color: "var(--amber-9)" } },
-  { id: "schema-constrain", type: "condition", position: { x: 490, y: 40 }, data: { label: "schema_constrain (Zod)", color: "var(--cyan-9)" } },
-  { id: "ai-classify", type: "agent", position: { x: 700, y: 0 }, data: { label: "ai_tier_classify", sublabel: "DeepSeek — not-AI / AI-first / AI-native", icon: Brain, color: "var(--purple-9)" } },
-  { id: "deep-analysis", type: "agent", position: { x: 700, y: 90 }, data: { label: "deep_analysis", sublabel: "DeepSeek structured report", icon: Brain, color: "var(--purple-9)" } },
-  { id: "confidence-gate", type: "condition", position: { x: 960, y: 40 }, data: { label: "confidence_gate (≥ 0.72)", color: "var(--orange-9)" } },
-  { id: "snapshot-archive", type: "dataStore", position: { x: 960, y: 130 }, data: { label: "company_snapshots", sublabel: "Drift archive", icon: BarChart3, color: "var(--teal-9)" } },
-  { id: "neon-enriched", type: "dataStore", position: { x: 1190, y: 40 }, data: { label: "companies (enriched)", sublabel: "Neon PostgreSQL", icon: Database, color: "var(--green-9)" } },
+  { id: "load", type: "agent", position: { x: 0, y: 60 }, data: { label: "load", sublabel: "Row + freshness gate", icon: Database, color: "var(--blue-9)" } },
+  { id: "fetch-site", type: "agent", position: { x: 240, y: 60 }, data: { label: "fetch_pages", sublabel: "Homepage + 4 careers paths (httpx)", icon: Globe, color: "var(--blue-9)" } },
+  { id: "ai-classify", type: "agent", position: { x: 510, y: 0 }, data: { label: "classify", sublabel: "DeepSeek v4-pro · 1 call", icon: Brain, color: "var(--purple-9)" } },
+  { id: "heuristic-fallback", type: "agent", position: { x: 510, y: 110 }, data: { label: "heuristic", sublabel: "Keyword fallback (conf < 0.4)", icon: Filter, color: "var(--gray-9)" } },
+  { id: "score-blend", type: "agent", position: { x: 790, y: 55 }, data: { label: "score", sublabel: "Linear blend × confidence", icon: BarChart3, color: "var(--amber-9)" } },
+  { id: "neon-enriched", type: "dataStore", position: { x: 1040, y: 0 }, data: { label: "companies + company_facts", sublabel: "Neon PostgreSQL", icon: Database, color: "var(--green-9)" } },
+  { id: "snapshot-archive", type: "dataStore", position: { x: 1040, y: 130 }, data: { label: "company_snapshots", sublabel: "Replay archive (no drift yet)", icon: BarChart3, color: "var(--teal-9)" } },
 ];
 
 const enrichmentEdges: Edge[] = [
-  { id: "e-fs-ex", source: "fetch-site", target: "extract-signals", ...edgeDefaults, label: "raw HTML", style: { ...edgeDefaults.style, stroke: "var(--blue-8)" } },
-  { id: "e-ex-sc", source: "extract-signals", target: "schema-constrain", ...edgeDefaults, label: "raw JSON", style: { ...edgeDefaults.style, stroke: "var(--amber-8)" } },
-  { id: "e-sc-cls", source: "schema-constrain", target: "ai-classify", ...edgeDefaults, animated: true, style: { ...edgeDefaults.style, stroke: "var(--cyan-8)" } },
-  { id: "e-sc-da", source: "schema-constrain", target: "deep-analysis", ...edgeDefaults, animated: true, style: { ...edgeDefaults.style, stroke: "var(--cyan-8)" } },
-  { id: "e-cls-cg", source: "ai-classify", target: "confidence-gate", ...edgeDefaults, style: { ...edgeDefaults.style, stroke: "var(--purple-8)" } },
-  { id: "e-da-cg", source: "deep-analysis", target: "confidence-gate", ...edgeDefaults, style: { ...edgeDefaults.style, stroke: "var(--purple-8)" } },
-  { id: "e-cls-snap", source: "ai-classify", target: "snapshot-archive", ...edgeDefaults, label: "always", style: { ...edgeDefaults.style, stroke: "var(--purple-8)", strokeDasharray: "4 3" } },
-  { id: "e-cg-neon", source: "confidence-gate", target: "neon-enriched", ...edgeDefaults, label: "pass", style: { ...edgeDefaults.style, stroke: "var(--orange-8)" } },
+  { id: "e-load-fetch", source: "load", target: "fetch-site", ...edgeDefaults, label: "miss", style: { ...edgeDefaults.style, stroke: "var(--blue-8)" } },
+  { id: "e-load-neon", source: "load", target: "neon-enriched", ...edgeDefaults, label: "fresh skip", style: { ...edgeDefaults.style, stroke: "var(--blue-8)", strokeDasharray: "4 3" } },
+  { id: "e-fetch-cls", source: "fetch-site", target: "ai-classify", ...edgeDefaults, animated: true, label: "markdown", style: { ...edgeDefaults.style, stroke: "var(--blue-8)" } },
+  { id: "e-fetch-snap", source: "fetch-site", target: "snapshot-archive", ...edgeDefaults, label: "raw HTML", style: { ...edgeDefaults.style, stroke: "var(--blue-8)", strokeDasharray: "4 3" } },
+  { id: "e-cls-score", source: "ai-classify", target: "score-blend", ...edgeDefaults, label: "conf ≥ 0.4", style: { ...edgeDefaults.style, stroke: "var(--purple-8)" } },
+  { id: "e-cls-heur", source: "ai-classify", target: "heuristic-fallback", ...edgeDefaults, label: "conf < 0.4 / error", style: { ...edgeDefaults.style, stroke: "var(--gray-8)", strokeDasharray: "4 3" } },
+  { id: "e-heur-score", source: "heuristic-fallback", target: "score-blend", ...edgeDefaults, style: { ...edgeDefaults.style, stroke: "var(--gray-8)" } },
+  { id: "e-score-neon", source: "score-blend", target: "neon-enriched", ...edgeDefaults, label: "UPDATE", style: { ...edgeDefaults.style, stroke: "var(--amber-8)" } },
 ];
 
 // ── Stage 3: Lead Scoring ────────────────────────────────────────────────────
