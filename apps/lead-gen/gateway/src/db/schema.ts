@@ -69,7 +69,6 @@ export const productIntelRuns = pgTable("product_intel_runs", {
   error: text("error"),
   output: jsonb("output"),
   created_by: text("created_by"),
-  schema_version: text("schema_version"),
 });
 
 export const productIntelRunSecrets = pgTable("product_intel_run_secrets", {

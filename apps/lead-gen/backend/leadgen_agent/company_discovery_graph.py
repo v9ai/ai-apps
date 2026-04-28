@@ -17,6 +17,7 @@ from typing import Any
 import psycopg
 from langgraph.graph import END, START, StateGraph
 
+from . import blocklist
 from .deep_icp_graph import _dsn
 from .llm import (
     ainvoke_json_with_telemetry,
@@ -32,15 +33,6 @@ from .state import CompanyDiscoveryState
 # ── Helpers ──────────────────────────────────────────────────────────────
 
 _SLUG_RE = re.compile(r"[^a-z0-9]+")
-
-
-def _canonicalize_domain(raw: str) -> str:
-    """Strip scheme, www, path, query from a domain-ish string."""
-    d = str(raw or "").strip().lower()
-    d = re.sub(r"^https?://", "", d)
-    d = re.sub(r"^www\.", "", d)
-    d = d.split("/")[0].split("?")[0].strip(".")
-    return d
 
 
 def _slugify(s: str) -> str:
@@ -155,7 +147,7 @@ async def brainstorm(state: CompanyDiscoveryState) -> dict:
         if not isinstance(c, dict):
             continue
         name = str(c.get("name") or "").strip()
-        domain = _canonicalize_domain(str(c.get("domain") or ""))
+        domain = blocklist.canonicalize_domain(str(c.get("domain") or ""))
         why = str(c.get("why") or "").strip()[:300]
         if not name or not domain or "." not in domain:
             continue
@@ -239,54 +231,76 @@ async def persist(state: CompanyDiscoveryState) -> dict:
     vertical = state.get("vertical") or None
     geography = state.get("geography") or None
 
+    # Drop blocklisted domains before INSERT — the LLM brainstorm path
+    # bypasses the blocklist that pipeline_graph.run_discover applies on
+    # the explicit-domains path.
+    blocked_skipped = 0
+    try:
+        blocked = {b.domain for b in blocklist.list_all()}
+    except (psycopg.Error, RuntimeError):
+        blocked = set()
+    if blocked:
+        before = len(scored)
+        scored = [c for c in scored if c["domain"] not in blocked]
+        blocked_skipped = before - len(scored)
+
     inserted_ids: list[int] = []
+    existing_ids: list[int] = []
 
     if scored:
-        rows: list[tuple[Any, ...]] = []
-        for c in scored:
-            tags_list: list[str] = ["discovery-candidate"]
-            if vertical:
-                tags_list.append(vertical)
-            if geography:
-                tags_list.append(geography)
-            key = f"vadim:discovery-{_slugify(c['domain'])}"[:200]
-            rows.append(
-                (
-                    "vadim",
-                    key,
-                    c["name"],
-                    c["domain"],
-                    f"https://{c['domain']}",
-                    "UNKNOWN",
-                    0,
-                    json.dumps(tags_list),
-                    c["pre_score"],
-                    json.dumps([c["why"]]),
-                )
-            )
-
         try:
             with psycopg.connect(_dsn(), autocommit=True, connect_timeout=10) as conn:
                 with conn.cursor() as cur:
-                    cur.executemany(
-                        """
-                        INSERT INTO companies
-                          (tenant_id, key, name, canonical_domain, website,
-                           category, ai_tier, tags, score, score_reasons,
-                           created_at, updated_at)
-                        VALUES
-                          (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                           now()::text, now()::text)
-                        ON CONFLICT (key) DO NOTHING
-                        """,
-                        rows,
-                    )
-                    keys = [r[1] for r in rows]
-                    cur.execute(
-                        "SELECT id FROM companies WHERE key = ANY(%s)",
-                        (keys,),
-                    )
-                    inserted_ids = [int(r[0]) for r in cur.fetchall()]
+                    for c in scored:
+                        tags_list: list[str] = ["discovery-candidate"]
+                        if vertical:
+                            tags_list.append(vertical)
+                        if geography:
+                            tags_list.append(geography)
+                        key = f"vadim:discovery-{_slugify(c['domain'])}"[:200]
+                        cur.execute(
+                            """
+                            INSERT INTO companies
+                              (tenant_id, key, name, canonical_domain, website,
+                               category, ai_tier, tags, score, score_reasons,
+                               created_at, updated_at)
+                            VALUES
+                              (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                               now()::text, now()::text)
+                            ON CONFLICT (key) DO NOTHING
+                            RETURNING id, (xmax = 0) AS inserted
+                            """,
+                            (
+                                "vadim",
+                                key,
+                                c["name"],
+                                c["domain"],
+                                f"https://{c['domain']}",
+                                "UNKNOWN",
+                                0,
+                                json.dumps(tags_list),
+                                c["pre_score"],
+                                json.dumps([c["why"]]),
+                            ),
+                        )
+                        row = cur.fetchone()
+                        if row is None:
+                            # ON CONFLICT DO NOTHING with no RETURNING row means
+                            # an existing row collided on key — look it up so the
+                            # summary still reports the id.
+                            cur.execute(
+                                "SELECT id FROM companies WHERE key = %s",
+                                (key,),
+                            )
+                            existing = cur.fetchone()
+                            if existing:
+                                existing_ids.append(int(existing[0]))
+                            continue
+                        company_id, was_inserted = int(row[0]), bool(row[1])
+                        if was_inserted:
+                            inserted_ids.append(company_id)
+                        else:
+                            existing_ids.append(company_id)
         except psycopg.Error as e:
             return {"_error": f"persist: {e}"}
 
@@ -311,7 +325,9 @@ async def persist(state: CompanyDiscoveryState) -> dict:
         "scored_count": len(scored),
         "inserted_count": len(inserted_ids),
         "inserted_ids": inserted_ids,
+        "existing_ids": existing_ids,
         "skipped_existing": state.get("skipped_existing") or 0,
+        "skipped_blocked": blocked_skipped,
         "graph_meta": meta,
     }
 

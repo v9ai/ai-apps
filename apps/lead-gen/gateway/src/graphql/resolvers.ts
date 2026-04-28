@@ -17,8 +17,6 @@ import {
 import { publishToPubSub } from "./pubsub-publish";
 import type { GatewayContext } from "./context";
 
-const PRODUCT_INTEL_VERSION = "v1";
-
 function requireAdmin(ctx: GatewayContext): void {
   if (!ctx.user) {
     throw new GraphQLError("Authentication required", {
@@ -80,7 +78,6 @@ async function kickoff(
     status: "running",
     webhook_secret: webhookSecret,
     created_by: ctx.user!.userEmail,
-    schema_version: PRODUCT_INTEL_VERSION,
   });
 
   await ctx.db.insert(productIntelRunSecrets).values({

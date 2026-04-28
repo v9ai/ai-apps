@@ -846,6 +846,9 @@ export const bloodTests = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     userId: text("user_id").notNull(),
+    familyMemberId: integer("family_member_id").references(() => familyMembers.id, {
+      onDelete: "set null",
+    }),
     fileName: text("file_name").notNull(),
     filePath: text("file_path").notNull(),
     status: text("status").notNull().default("pending"),
@@ -856,6 +859,7 @@ export const bloodTests = pgTable(
   (table) => [
     index("blood_tests_user_idx").on(table.userId),
     index("blood_tests_uploaded_idx").on(table.uploadedAt),
+    index("blood_tests_family_idx").on(table.familyMemberId),
   ],
 );
 

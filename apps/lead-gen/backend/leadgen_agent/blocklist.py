@@ -49,13 +49,17 @@ def _dsn() -> str:
     return dsn
 
 
-_DOMAIN_CLEAN = re.compile(r"^https?://|^www\.")
+# Single anchored pass strips both scheme and www. — the previous
+# `^https?://|^www\.` regex only matched one alternative because `^`
+# is evaluated against the original string, not the post-replacement
+# offset, so `https://www.foo` became `www.foo` instead of `foo`.
+_DOMAIN_CLEAN = re.compile(r"^(?:https?://)?(?:www\.)?")
 
 
 def canonicalize_domain(raw: str) -> str:
     """Strip scheme / www / trailing path, lowercase."""
     d = (raw or "").strip().lower()
-    d = _DOMAIN_CLEAN.sub("", d)
+    d = _DOMAIN_CLEAN.sub("", d, count=1)
     d = d.split("/")[0].split("?")[0].strip(".")
     return d
 
