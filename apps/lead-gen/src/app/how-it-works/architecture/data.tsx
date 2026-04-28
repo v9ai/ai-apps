@@ -83,7 +83,7 @@ export const papers: Paper[] = [
     readingTimeMin: 3,
     authors: "LangChain",
     year: 2025,
-    finding: "22 graphs declared in backend/langgraph.json. Same Python runs under `langgraph dev` (local, in-memory) and inside the HF/Cloudflare container (FastAPI + AsyncPostgresSaver on Neon).",
+    finding: "22 graphs declared in backend/langgraph.json. Same Python runs under `langgraph dev` (local, in-memory) and inside the Cloudflare Workers container (FastAPI + AsyncPostgresSaver on Neon).",
     relevance: "Every LLM call in the product goes through a graph. Five core graphs (email_compose, email_reply, email_outreach, admin_chat, text_to_sql) + 17 specialized agents.",
     url: "https://langchain-ai.github.io/langgraph/",
     categoryColor: "var(--violet-9)",

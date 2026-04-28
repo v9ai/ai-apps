@@ -46,17 +46,17 @@ export const papers: Paper[] = [
     categoryColor: "var(--purple-9)",
   },
   {
-    slug: "openai-gpt",
+    slug: "deepseek-v4",
     number: 4,
-    title: "OpenAI GPT",
+    title: "DeepSeek v4 (chat + reasoner)",
     category: "AI/LLM",
     wordCount: 0,
     readingTimeMin: 2,
-    authors: "OpenAI",
-    year: 2024,
-    finding: "Large language model for natural language understanding and generation",
-    relevance: "Used in contact enrichment via src/lib/ai-contact-enrichment.ts and intent detection via analyzeLinkedInPosts mutation",
-    url: "https://platform.openai.com/docs",
+    authors: "DeepSeek",
+    year: 2025,
+    finding: "deepseek-v4-flash for summary nodes; deepseek-v4-pro with thinking mode + reasoning_effort=high for enrichment, classification, and email generation. Schema-constrained via Zod (TS) / Pydantic (Python).",
+    relevance: "Canonical LLM hub at src/lib/deepseek/client.ts. Powers contact enrichment (src/lib/ai-contact-enrichment.ts), intent detection (analyzeLinkedInPosts), and every LangGraph node in backend/leadgen_agent/llm.py.",
+    url: "https://api-docs.deepseek.com",
     categoryColor: "var(--amber-9)",
   },
   {
@@ -102,22 +102,8 @@ export const papers: Paper[] = [
     categoryColor: "var(--orange-9)",
   },
   {
-    slug: "inngest",
-    number: 8,
-    title: "Inngest",
-    category: "Infrastructure",
-    wordCount: 0,
-    readingTimeMin: 2,
-    authors: "Inngest",
-    year: 2024,
-    finding: "Background job processing with event-driven scheduling and retries",
-    relevance: "Orchestrates pipeline tasks like data ingestion and email sending, triggered by events from scripts and mutations",
-    url: "https://www.inngest.com/docs",
-    categoryColor: "var(--red-9)",
-  },
-  {
     slug: "resend",
-    number: 9,
+    number: 8,
     title: "Resend",
     category: "API",
     wordCount: 0,
@@ -131,7 +117,7 @@ export const papers: Paper[] = [
   },
   {
     slug: "jobbert-v3",
-    number: 10,
+    number: 9,
     title: "JobBERT-v3",
     category: "AI/LLM",
     wordCount: 0,
@@ -145,7 +131,7 @@ export const papers: Paper[] = [
   },
   {
     slug: "radix-ui",
-    number: 11,
+    number: 10,
     title: "Radix UI",
     category: "Frontend",
     wordCount: 0,
@@ -159,7 +145,7 @@ export const papers: Paper[] = [
   },
   {
     slug: "pandacss",
-    number: 12,
+    number: 11,
     title: "PandaCSS + Radix Themes",
     category: "Frontend",
     wordCount: 0,
@@ -232,7 +218,7 @@ export const pipelineAgents: PipelineAgent[] = [
   },
   {
     name: "AI Embedding Generation",
-    description: "The HuggingFace Inference API generates JobBERT-v3 embeddings (768-dim, multilingual) for company descriptions and posts. Embeddings are computed via batch processing, often triggered by Inngest jobs, and stored for semantic search. The embeddings enable similarity queries (useGetSimilarPostsLazyQuery) and contribute to lead scoring based on cosine distance.",
+    description: "JobBERT-v3 embeddings (768-dim, multilingual) are generated for company descriptions and LinkedIn posts. The crates/jobbert Rust crate runs the canonical embedder (XLMRoberta → mean-pool → Dense 768→1024 Tanh → L2-norm) over Candle/Metal; the HuggingFace Inference API is used as a managed fallback. Batches of up to 200 un-analyzed posts are processed by the analyzeLinkedInPosts GraphQL mutation, which writes embeddings + extracted skill tags back to the linkedin_posts table. The embeddings enable similarity queries (useGetSimilarPostsLazyQuery) and contribute to lead scoring based on cosine distance.",
     researchBasis: "TechWolf/JobBERT-v3, HuggingFace Inference API",
     codeSnippet: "await hfEmbed(texts, { normalize: true })",
     dataFlow: "Text data \u2192 HF Inference API \u2192 vector embeddings",
@@ -256,7 +242,7 @@ export const pipelineAgents: PipelineAgent[] = [
 // ─── Narrative ─────────────────────────────────────────────────────
 
 export const story =
-  "The system starts by discovering tech companies via a Rust-based web crawler (crates/agentic-search) that outputs to discovery.json. TypeScript scripts (scripts/scrape-linkedin-people.ts) then enrich LinkedIn profiles, while a Candle embedding server generates JobBERT-v2 embeddings for semantic analysis. Enriched data is stored in PostgreSQL via Drizzle ORM, scored using an ensemble of AI tier, intent, and GitHub signals, and finally delivered as personalized email campaigns via Resend, scheduled with business-day logic from src/lib/business-days.ts.";
+  "The system starts by discovering tech companies via a Rust-based web crawler (crates/agentic-search) that outputs to discovery.json. TypeScript scripts (scripts/scrape-linkedin-people.ts) then enrich LinkedIn profiles, while a Candle embedding server generates JobBERT-v3 embeddings for semantic analysis. Enriched data is stored in PostgreSQL via Drizzle ORM, scored using an ensemble of AI tier, intent, and GitHub signals, and finally delivered as personalized email campaigns via Resend, scheduled with business-day logic from src/lib/business-days.ts.";
 
 // ─── Deep-Dive Sections ────────────────────────────────────────────
 
@@ -1230,7 +1216,7 @@ export function isAdminEmail(email: string | null | undefined): boolean {
       { label: "common-crawl", value: "Seed discovery: CDX lookup → WARC fetch → HTML scrape → Neon upsert.", metadata: { runtime: "bin", deps: "flate2 + scraper + sqlx" } },
       { label: "companies-verify", value: "Candle BGE embeddings + LanceDB kNN to verify UK recruitment companies.", metadata: { runtime: "bin", deps: "candle + lancedb" } },
       { label: "company-cleanup", value: "Same stack as companies-verify, inverted — purges crypto/blockchain companies.", metadata: { runtime: "bin", deps: "candle + lancedb" } },
-      { label: "consultancies", value: "Discover top-tier AI/ML consultancies across EU/UK/US and upsert to Neon.", metadata: { runtime: "2 bins", deps: "reqwest + scraper" } },
+      { label: "consultancies", value: "Discover top-tier AI/ML consultancies worldwide and upsert to Neon.", metadata: { runtime: "2 bins", deps: "reqwest + scraper" } },
       { label: "email-verifier", value: "Local DNS MX + SMTP RCPT-TO + catch-all canary — free NeverBounce alternative available as a library.", metadata: { runtime: "lib + bin", deps: "hickory-resolver" } },
       { label: "gh", value: "GitHub API client for AI tier, tech-stack, and hiring-signal extraction.", metadata: { runtime: "lib + 5 bins", deps: "octocrab + feature flags" } },
       { label: "icp", value: "Pure ICP scoring — 64-byte-aligned ContactBatch SoA for 256 contacts, logistic + isotonic calibration.", metadata: { runtime: "lib", deps: "serde only" } },
