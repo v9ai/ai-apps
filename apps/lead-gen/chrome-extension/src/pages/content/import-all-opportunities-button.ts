@@ -103,12 +103,24 @@ function createButton(): HTMLButtonElement {
     );
   });
 
+  return btn;
+}
+
+// ── Single, module-level progress listener ─────────────────────────
+// Registered once in init() so a leaking listener-per-button is impossible.
+let progressListenerInstalled = false;
+function installProgressListener() {
+  if (progressListenerInstalled) return;
+  progressListenerInstalled = true;
+
   chrome.runtime.onMessage.addListener((msg) => {
     if (msg?.action !== "importAllProgress") return;
-    if (!document.body.contains(btn)) return;
+    console.log("[CS] importAllProgress", msg);
+
+    const btn = importAllBtn;
+    if (!btn || !document.body.contains(btn)) return;
 
     if (msg.error) {
-      // Reset URL gate so the next page nav retries.
       lastAutoImportedUrl = "";
       btn.textContent = String(msg.error).slice(0, 80);
       btn.style.backgroundColor = COLOR_ERROR;
@@ -127,8 +139,6 @@ function createButton(): HTMLButtonElement {
       btn.textContent = String(msg.status).slice(0, 80);
     }
   });
-
-  return btn;
 }
 
 // ── Sync / lifecycle ───────────────────────────────────────────────
@@ -255,6 +265,7 @@ function init() {
 
   lastUrl = window.location.href;
   installHistoryPatch();
+  installProgressListener();
 
   if (!document.body) {
     document.addEventListener("DOMContentLoaded", () => init(), { once: true });

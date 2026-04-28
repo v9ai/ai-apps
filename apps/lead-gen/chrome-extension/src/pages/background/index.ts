@@ -974,6 +974,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   //     scrape current page and POST once.
   if (message.action === "importAllOpportunitiesFromJobsSearch") {
     const tabId = sender.tab?.id;
+    console.log(
+      "[BG] importAllOpportunitiesFromJobsSearch from tab",
+      tabId,
+      "url=",
+      sender.tab?.url,
+    );
     if (!tabId) {
       sendResponse({ success: false, error: "No tab ID" });
       return true;
@@ -985,7 +991,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     const notifyTab = async (data: Record<string, unknown>) => {
       try {
         await chrome.tabs.sendMessage(tabId, { action: "importAllProgress", ...data });
-      } catch { /* tab closed */ }
+      } catch (err) {
+        console.warn(`[BG] notifyTab(${tabId}) failed:`, err, "data=", data);
+      }
     };
 
     // Running totals for multi-page mode. Reported in the final `done` msg.
