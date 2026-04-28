@@ -118,8 +118,21 @@ export const resolvers: Resolvers = {
     },
 
     async productIntelRun(_p, args, ctx) {
+      // Explicit columns — avoids touching RLS-sensitive `webhook_secret`
+      // and keeps the SELECT stable across schema additions.
       const [run] = await ctx.db
-        .select()
+        .select({
+          id: productIntelRuns.id,
+          lg_run_id: productIntelRuns.lg_run_id,
+          lg_thread_id: productIntelRuns.lg_thread_id,
+          product_id: productIntelRuns.product_id,
+          kind: productIntelRuns.kind,
+          status: productIntelRuns.status,
+          started_at: productIntelRuns.started_at,
+          finished_at: productIntelRuns.finished_at,
+          error: productIntelRuns.error,
+          output: productIntelRuns.output,
+        })
         .from(productIntelRuns)
         .where(eq(productIntelRuns.id, String(args.id)))
         .limit(1);
@@ -150,14 +163,32 @@ export const resolvers: Resolvers = {
       const conds = [eq(productIntelRuns.product_id, args.productId)];
       if (args.kind) conds.push(eq(productIntelRuns.kind, args.kind));
 
-      const rows = await ctx.db
-        .select()
-        .from(productIntelRuns)
-        .where(and(...conds))
-        .orderBy(desc(productIntelRuns.started_at))
-        .limit(50);
+      try {
+        const rows = await ctx.db
+          .select({
+            id: productIntelRuns.id,
+            lg_run_id: productIntelRuns.lg_run_id,
+            lg_thread_id: productIntelRuns.lg_thread_id,
+            product_id: productIntelRuns.product_id,
+            kind: productIntelRuns.kind,
+            status: productIntelRuns.status,
+            started_at: productIntelRuns.started_at,
+            finished_at: productIntelRuns.finished_at,
+            error: productIntelRuns.error,
+            output: productIntelRuns.output,
+          })
+          .from(productIntelRuns)
+          .where(and(...conds))
+          .orderBy(desc(productIntelRuns.started_at))
+          .limit(50);
 
-      return rows.map(mapIntelRun);
+        return rows.map(mapIntelRun);
+      } catch (err) {
+        // Surface the underlying neon-http error to wrangler tail so we can
+        // diagnose RLS / schema-drift issues without redeploying for logs.
+        console.error("productIntelRuns failed:", err);
+        throw err;
+      }
     },
   },
 
@@ -195,7 +226,22 @@ export const resolvers: Resolvers = {
 };
 
 type ProductRow = typeof products.$inferSelect;
-type IntelRunRow = typeof productIntelRuns.$inferSelect;
+
+// The narrowed shape returned by the explicit field-selection in the query
+// resolvers. Excludes RLS-sensitive `webhook_secret` and the columns the
+// gateway never needs (`created_by`, `schema_version`).
+interface IntelRunRow {
+  id: string;
+  lg_run_id: string | null;
+  lg_thread_id: string | null;
+  product_id: number;
+  kind: string;
+  status: string;
+  started_at: Date;
+  finished_at: Date | null;
+  error: string | null;
+  output: unknown;
+}
 
 function mapProduct(p: ProductRow) {
   return {
