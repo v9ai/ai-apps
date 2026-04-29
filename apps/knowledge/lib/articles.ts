@@ -144,6 +144,8 @@ const LESSON_SLUGS = [
   "acid-properties",
   "postgresql-joins",
   "foreign-keys",
+  // Communication Skills (93)
+  "public-speaking",
 ];
 
 export const LESSON_NUMBER: Record<string, number> = Object.fromEntries(
@@ -165,6 +167,7 @@ export const CATEGORIES: [number, number, string][] = [
   [72, 76, "Cloud Platforms"],
   [77, 85, "AWS Deep Dives"],
   [86, 92, "Software Engineering"],
+  [93, 93, "Communication Skills"],
 ];
 
 export const CATEGORY_META: Record<string, CategoryMeta> = {
@@ -265,6 +268,13 @@ export const CATEGORY_META: Record<string, CategoryMeta> = {
     description: "Timeless engineering principles — SOLID design, ACID guarantees, and production architecture",
     gradient: ["var(--slate-9)", "var(--slate-11)"],
     outcomes: ["Apply SOLID principles to real codebases", "Understand ACID transaction guarantees", "Design microservices and CI/CD pipelines"],
+  },
+  "Communication Skills": {
+    slug: "communication-skills",
+    icon: "🎤",
+    description: "Speak with structure, presence, and confidence — public speaking and audience engagement for engineers",
+    gradient: ["var(--ruby-9)", "var(--ruby-11)"],
+    outcomes: ["Structure talks that hold attention", "Manage stage fright with rehearsal techniques", "Engage audiences through stories and pacing"],
   },
 };
 

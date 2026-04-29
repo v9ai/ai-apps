@@ -35,6 +35,7 @@ from knowledge_agent.app_prep_graph import build_graph as build_app_prep
 from knowledge_agent.article_generate_graph import build_graph as build_article_generate
 from knowledge_agent.chat_graph import build_graph as build_chat
 from knowledge_agent.course_review_graph import build_graph as build_course_review
+from knowledge_agent.fetch_courses_graph import build_graph as build_fetch_courses
 from knowledge_agent.memorize_generate_graph import build_graph as build_memorize_generate
 
 log = logging.getLogger("knowledge_agent")
@@ -77,6 +78,7 @@ async def _prod_lifespan(app: FastAPI):
             "memorize_generate": build_memorize_generate(checkpointer),
             "article_generate": build_article_generate(checkpointer),
             "course_review": build_course_review(checkpointer),
+            "fetch_courses": build_fetch_courses(checkpointer),
         }
         log.info("Graphs compiled: %s", list(app.state.graphs))
         yield

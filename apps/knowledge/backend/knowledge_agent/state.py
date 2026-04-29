@@ -66,6 +66,23 @@ class ArticleGenerateState(TypedDict, total=False):
     revisions: int
 
 
+class RankedCourse(TypedDict, total=False):
+    url: str
+    relevance: float                       # 0.0 – 1.0
+    why: str                               # one-line rationale
+
+
+class FetchCoursesState(TypedDict, total=False):
+    # input
+    courses: list[dict[str, Any]]          # pre-scraped ScrapedCourse JSON from TS lib
+    topic_name: str                        # e.g. "Public Speaking"
+    count: int                             # top N to return (default 10)
+    topic_group: str                       # category bucket, e.g. "Communication Skills"
+    # output
+    ranked: list[RankedCourse]             # top `count` ranked by LLM
+    summary: str                           # short intro paragraph for lesson page
+
+
 class ExpertScore(TypedDict, total=False):
     score: int
     reasoning: str

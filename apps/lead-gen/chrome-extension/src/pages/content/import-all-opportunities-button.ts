@@ -161,6 +161,29 @@ function removeButton() {
   importAllBtn = null;
 }
 
+function reposition() {
+  if (!importAllBtn) return;
+  importAllBtn.style.bottom = `${computeBottomOffset()}px`;
+}
+
+// Track the lower "Import Opportunity" button so we reposition the instant
+// its size or presence changes — `sync()`'s 800ms cooldown is too coarse to
+// catch state transitions ("Checking…" → "Import Opportunity" → "View: …").
+let observedLower: HTMLElement | null = null;
+const lowerResizeObserver =
+  typeof ResizeObserver !== "undefined" ? new ResizeObserver(reposition) : null;
+
+function trackLowerButton() {
+  const lower = document.querySelector<HTMLElement>(
+    "[data-lg-import-opportunity-btn]",
+  );
+  if (lower === observedLower) return;
+  if (observedLower && lowerResizeObserver) lowerResizeObserver.unobserve(observedLower);
+  observedLower = lower;
+  if (lower && lowerResizeObserver) lowerResizeObserver.observe(lower);
+  reposition();
+}
+
 function sync() {
   if (!document.body) return;
 
@@ -168,19 +191,20 @@ function sync() {
     if (importAllBtn || document.querySelector(`[${BTN_ATTR}]`)) {
       removeButton();
     }
+    trackLowerButton();
     return;
   }
 
   if (document.querySelector(`[${BTN_ATTR}]`)) {
     importAllBtn = document.querySelector<HTMLButtonElement>(`[${BTN_ATTR}]`);
-    if (importAllBtn) importAllBtn.style.bottom = `${computeBottomOffset()}px`;
+    trackLowerButton();
     return;
   }
 
   const btn = createButton();
   document.body.appendChild(btn);
   importAllBtn = btn;
-  importAllBtn.style.bottom = `${computeBottomOffset()}px`;
+  trackLowerButton();
   console.log(`[ImportAllOpportunitiesBtn] injected on ${window.location.pathname}`);
 }
 
@@ -223,6 +247,9 @@ function makeLeadingEdgeObserver() {
   let cooldownUntil = 0;
   return new MutationObserver(() => {
     if (teardownIfDead()) return;
+    // Always re-track the lower button so a freshly-mounted "Import Opportunity"
+    // is observed before sync's cooldown elapses.
+    trackLowerButton();
     const now = Date.now();
     if (now < cooldownUntil) return;
     cooldownUntil = now + 800;
@@ -260,7 +287,7 @@ function init() {
 
   window.addEventListener("resize", () => {
     if (teardownIfDead()) return;
-    if (importAllBtn) importAllBtn.style.bottom = `${computeBottomOffset()}px`;
+    reposition();
   });
 
   const urlPoll = setInterval(() => {
