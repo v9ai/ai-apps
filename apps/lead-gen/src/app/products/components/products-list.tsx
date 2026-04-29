@@ -27,7 +27,7 @@ import {
 } from "@/__generated__/hooks";
 import { useAuth } from "@/lib/auth-hooks";
 import { ADMIN_EMAIL } from "@/lib/constants";
-import { LoadingShell, SignInGate } from "./view-chrome";
+import { LoadingShell } from "./view-chrome";
 import { ProductsEmptyState } from "./products-empty-state";
 import { ProductsSkeleton } from "./products-skeleton";
 import { ProductCard, DeleteProductDialog } from "./product-card";
@@ -40,12 +40,11 @@ const UNDO_WINDOW_MS = 5000;
 export function ProductsList() {
   const router = useRouter();
   const client = useApolloClient();
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
   const isAdmin = user?.email === ADMIN_EMAIL;
 
   const { data, loading, error, refetch } = useProductsQuery({
     fetchPolicy: "cache-and-network",
-    skip: !user,
   });
 
   const [deleteProduct] = useDeleteProductMutation();
@@ -220,9 +219,6 @@ export function ProductsList() {
       timers.clear();
     };
   }, []);
-
-  if (authLoading) return <LoadingShell size="3" />;
-  if (!user) return <SignInGate message="Please sign in to view products." />;
 
   const rows = data?.products ?? [];
   const showSkeleton = loading && rows.length === 0;

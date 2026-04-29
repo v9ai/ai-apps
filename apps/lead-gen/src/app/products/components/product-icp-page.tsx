@@ -14,7 +14,6 @@ import { IcpAnalysisView, type IcpAnalysis } from "./icp-analysis-view";
 import {
   LoadingShell,
   ErrorShell,
-  SignInGate,
   ProductNotFound,
   SubpageBreadcrumb,
   SubpageHero,
@@ -22,19 +21,16 @@ import {
 } from "./view-chrome";
 
 export function ProductIcpPage({ slug }: { slug: string }) {
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
   const isAdmin = user?.email === ADMIN_EMAIL;
 
   const { data, loading, error, refetch } = useProductBySlugQuery({
     variables: { slug },
     fetchPolicy: "cache-and-network",
-    skip: !user,
   });
 
   const [analyzeIcp, analyzeState] = useAnalyzeProductIcpMutation();
 
-  if (authLoading) return <LoadingShell />;
-  if (!user) return <SignInGate />;
   if (loading && !data) return <LoadingShell />;
   if (error) return <ErrorShell message={error.message} />;
 

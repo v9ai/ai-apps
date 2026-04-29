@@ -37,13 +37,15 @@ apps/bricks/*.gguf
 node_modules
 .turbo
 *.log
-apps/agentic-healthcare/.next
-apps/knowledge/.next
+# All apps' Next build/cache output — Vercel rebuilds from source
+apps/*/.next
+# Python tooling caches in any app
+apps/*/.mypy_cache
+apps/*/.ruff_cache
+apps/*/.pytest_cache
 apps/knowledge/evals
 apps/knowledge/backend
-apps/bricks/.next
 apps/bricks/backend
-apps/research-thera/.next
 apps/research-thera/backend
 apps/research-thera/research-output
 apps/research-thera/evals

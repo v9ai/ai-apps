@@ -50,10 +50,12 @@ export const products = pgTable("products", {
   gtm_analyzed_at: text("gtm_analyzed_at"),
   intel_report: jsonb("intel_report"),
   intel_report_at: text("intel_report_at"),
+  positioning_analysis: jsonb("positioning_analysis"),
   slug: text("slug"),
   published_at: timestamp("published_at", { withTimezone: true }),
-  created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  updated_at: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  created_by: text("created_by"),
+  created_at: text("created_at").notNull(),
+  updated_at: text("updated_at").notNull(),
 });
 
 export const productIntelRuns = pgTable("product_intel_runs", {

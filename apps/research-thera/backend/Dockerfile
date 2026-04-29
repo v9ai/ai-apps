@@ -50,6 +50,7 @@ COPY app.py ./
 COPY research_agent ./research_agent
 COPY deepseek_client ./deepseek_client
 COPY research_client ./research_client
+COPY healthcare ./healthcare
 
 EXPOSE 8080
 
