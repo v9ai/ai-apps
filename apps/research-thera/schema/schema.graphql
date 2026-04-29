@@ -320,6 +320,10 @@ type Query {
   # Vehicles (merged from apps/my-car)
   vehicles: [Vehicle!]!
   vehicle(id: ID, slug: String): Vehicle
+
+  # Calming plans (Bogdan-only — server-side guard rejects others)
+  calmingPlans(familyMemberId: Int!): [CalmingPlan!]!
+  calmingPlan(id: Int!): CalmingPlan
 }
 
 # (chat mutation lives under Mutation type below)
@@ -354,6 +358,7 @@ type Mutation {
     minutes: Int
   ): GenerateLongFormTextResult!
   generateParentAdvice(goalId: Int!, language: String): GenerateParentAdviceResult!
+  generateCalmingPlan(familyMemberId: Int!, language: String): GenerateCalmingPlanResult!
   generateAudio(
     goalId: Int!
     storyId: Int
