@@ -318,6 +318,18 @@ export type BuildClaimCardsResult = {
   cards: Array<ClaimCard>;
 };
 
+export type CalmingPlan = {
+  __typename?: 'CalmingPlan';
+  familyMemberId: Scalars['Int']['output'];
+  generatedAt: Scalars['String']['output'];
+  id: Scalars['Int']['output'];
+  language: Scalars['String']['output'];
+  planJson: Scalars['String']['output'];
+  planMarkdown: Scalars['String']['output'];
+  safetyNotes?: Maybe<Scalars['String']['output']>;
+  sourcesJson: Scalars['String']['output'];
+};
+
 export type CheckNoteClaimsInput = {
   evidenceTopK?: InputMaybe<Scalars['Int']['input']>;
   maxClaims?: InputMaybe<Scalars['Int']['input']>;
@@ -1315,6 +1327,13 @@ export type GenerateBogdanDiscussionResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type GenerateCalmingPlanResult = {
+  __typename?: 'GenerateCalmingPlanResult';
+  message?: Maybe<Scalars['String']['output']>;
+  plan?: Maybe<CalmingPlan>;
+  success: Scalars['Boolean']['output'];
+};
+
 export type GenerateDeepAnalysisResult = {
   __typename?: 'GenerateDeepAnalysisResult';
   jobId?: Maybe<Scalars['String']['output']>;
@@ -1998,6 +2017,7 @@ export type Mutation = {
   generateAffirmationsForFamilyMember: GenerateAffirmationsResult;
   generateAudio: GenerateAudioResult;
   generateBogdanDiscussion: GenerateBogdanDiscussionResult;
+  generateCalmingPlan: GenerateCalmingPlanResult;
   generateConditionDeepResearch: GenerateResearchResult;
   generateDeepAnalysis: GenerateDeepAnalysisResult;
   generateDeepIssueAnalysis: GenerateDeepAnalysisResult;
@@ -2470,6 +2490,12 @@ export type MutationGenerateAudioArgs = {
   storyId?: InputMaybe<Scalars['Int']['input']>;
   text?: InputMaybe<Scalars['String']['input']>;
   voice?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type MutationGenerateCalmingPlanArgs = {
+  familyMemberId: Scalars['Int']['input'];
+  language?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -3087,6 +3113,8 @@ export type Query = {
   behaviorObservations: Array<BehaviorObservation>;
   bloodTests: Array<BloodTest>;
   bogdanDiscussions: Array<BogdanDiscussionGuide>;
+  calmingPlan?: Maybe<CalmingPlan>;
+  calmingPlans: Array<CalmingPlan>;
   claimCard?: Maybe<ClaimCard>;
   claimCardsForNote: Array<ClaimCard>;
   condition?: Maybe<Condition>;
@@ -3191,6 +3219,16 @@ export type QueryBehaviorObservationArgs = {
 export type QueryBehaviorObservationsArgs = {
   familyMemberId: Scalars['Int']['input'];
   goalId?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryCalmingPlanArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type QueryCalmingPlansArgs = {
+  familyMemberId: Scalars['Int']['input'];
 };
 
 
@@ -4258,6 +4296,20 @@ export type BogdanDiscussionsQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type BogdanDiscussionsQuery = { __typename?: 'Query', bogdanDiscussions: Array<{ __typename?: 'BogdanDiscussionGuide', id: number, familyMemberId: number, childAge?: number | null, behaviorSummary: string, createdAt: string }> };
 
+export type CalmingPlanQueryVariables = Exact<{
+  id: Scalars['Int']['input'];
+}>;
+
+
+export type CalmingPlanQuery = { __typename?: 'Query', calmingPlan?: { __typename?: 'CalmingPlan', id: number, familyMemberId: number, language: string, planJson: string, planMarkdown: string, sourcesJson: string, safetyNotes?: string | null, generatedAt: string } | null };
+
+export type CalmingPlansQueryVariables = Exact<{
+  familyMemberId: Scalars['Int']['input'];
+}>;
+
+
+export type CalmingPlansQuery = { __typename?: 'Query', calmingPlans: Array<{ __typename?: 'CalmingPlan', id: number, familyMemberId: number, language: string, planMarkdown: string, safetyNotes?: string | null, generatedAt: string }> };
+
 export type CheckNoteClaimsMutationVariables = Exact<{
   input: CheckNoteClaimsInput;
 }>;
@@ -4788,6 +4840,14 @@ export type GenerateBogdanDiscussionMutationVariables = Exact<{ [key: string]: n
 
 
 export type GenerateBogdanDiscussionMutation = { __typename?: 'Mutation', generateBogdanDiscussion: { __typename?: 'GenerateBogdanDiscussionResult', success: boolean, message?: string | null, jobId?: string | null } };
+
+export type GenerateCalmingPlanMutationVariables = Exact<{
+  familyMemberId: Scalars['Int']['input'];
+  language?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type GenerateCalmingPlanMutation = { __typename?: 'Mutation', generateCalmingPlan: { __typename?: 'GenerateCalmingPlanResult', success: boolean, message?: string | null, plan?: { __typename?: 'CalmingPlan', id: number, familyMemberId: number, language: string, planMarkdown: string, safetyNotes?: string | null, generatedAt: string } | null } };
 
 export type GenerateConditionDeepResearchMutationVariables = Exact<{
   slug: Scalars['String']['input'];
@@ -6470,6 +6530,104 @@ export type BogdanDiscussionsQueryHookResult = ReturnType<typeof useBogdanDiscus
 export type BogdanDiscussionsLazyQueryHookResult = ReturnType<typeof useBogdanDiscussionsLazyQuery>;
 export type BogdanDiscussionsSuspenseQueryHookResult = ReturnType<typeof useBogdanDiscussionsSuspenseQuery>;
 export type BogdanDiscussionsQueryResult = Apollo.QueryResult<BogdanDiscussionsQuery, BogdanDiscussionsQueryVariables>;
+export const CalmingPlanDocument = gql`
+    query CalmingPlan($id: Int!) {
+  calmingPlan(id: $id) {
+    id
+    familyMemberId
+    language
+    planJson
+    planMarkdown
+    sourcesJson
+    safetyNotes
+    generatedAt
+  }
+}
+    `;
+
+/**
+ * __useCalmingPlanQuery__
+ *
+ * To run a query within a React component, call `useCalmingPlanQuery` and pass it any options that fit your needs.
+ * When your component renders, `useCalmingPlanQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useCalmingPlanQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useCalmingPlanQuery(baseOptions: Apollo.QueryHookOptions<CalmingPlanQuery, CalmingPlanQueryVariables> & ({ variables: CalmingPlanQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<CalmingPlanQuery, CalmingPlanQueryVariables>(CalmingPlanDocument, options);
+      }
+export function useCalmingPlanLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<CalmingPlanQuery, CalmingPlanQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<CalmingPlanQuery, CalmingPlanQueryVariables>(CalmingPlanDocument, options);
+        }
+// @ts-ignore
+export function useCalmingPlanSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<CalmingPlanQuery, CalmingPlanQueryVariables>): Apollo.UseSuspenseQueryResult<CalmingPlanQuery, CalmingPlanQueryVariables>;
+export function useCalmingPlanSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<CalmingPlanQuery, CalmingPlanQueryVariables>): Apollo.UseSuspenseQueryResult<CalmingPlanQuery | undefined, CalmingPlanQueryVariables>;
+export function useCalmingPlanSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<CalmingPlanQuery, CalmingPlanQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<CalmingPlanQuery, CalmingPlanQueryVariables>(CalmingPlanDocument, options);
+        }
+export type CalmingPlanQueryHookResult = ReturnType<typeof useCalmingPlanQuery>;
+export type CalmingPlanLazyQueryHookResult = ReturnType<typeof useCalmingPlanLazyQuery>;
+export type CalmingPlanSuspenseQueryHookResult = ReturnType<typeof useCalmingPlanSuspenseQuery>;
+export type CalmingPlanQueryResult = Apollo.QueryResult<CalmingPlanQuery, CalmingPlanQueryVariables>;
+export const CalmingPlansDocument = gql`
+    query CalmingPlans($familyMemberId: Int!) {
+  calmingPlans(familyMemberId: $familyMemberId) {
+    id
+    familyMemberId
+    language
+    planMarkdown
+    safetyNotes
+    generatedAt
+  }
+}
+    `;
+
+/**
+ * __useCalmingPlansQuery__
+ *
+ * To run a query within a React component, call `useCalmingPlansQuery` and pass it any options that fit your needs.
+ * When your component renders, `useCalmingPlansQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useCalmingPlansQuery({
+ *   variables: {
+ *      familyMemberId: // value for 'familyMemberId'
+ *   },
+ * });
+ */
+export function useCalmingPlansQuery(baseOptions: Apollo.QueryHookOptions<CalmingPlansQuery, CalmingPlansQueryVariables> & ({ variables: CalmingPlansQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<CalmingPlansQuery, CalmingPlansQueryVariables>(CalmingPlansDocument, options);
+      }
+export function useCalmingPlansLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<CalmingPlansQuery, CalmingPlansQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<CalmingPlansQuery, CalmingPlansQueryVariables>(CalmingPlansDocument, options);
+        }
+// @ts-ignore
+export function useCalmingPlansSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<CalmingPlansQuery, CalmingPlansQueryVariables>): Apollo.UseSuspenseQueryResult<CalmingPlansQuery, CalmingPlansQueryVariables>;
+export function useCalmingPlansSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<CalmingPlansQuery, CalmingPlansQueryVariables>): Apollo.UseSuspenseQueryResult<CalmingPlansQuery | undefined, CalmingPlansQueryVariables>;
+export function useCalmingPlansSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<CalmingPlansQuery, CalmingPlansQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<CalmingPlansQuery, CalmingPlansQueryVariables>(CalmingPlansDocument, options);
+        }
+export type CalmingPlansQueryHookResult = ReturnType<typeof useCalmingPlansQuery>;
+export type CalmingPlansLazyQueryHookResult = ReturnType<typeof useCalmingPlansLazyQuery>;
+export type CalmingPlansSuspenseQueryHookResult = ReturnType<typeof useCalmingPlansSuspenseQuery>;
+export type CalmingPlansQueryResult = Apollo.QueryResult<CalmingPlansQuery, CalmingPlansQueryVariables>;
 export const CheckNoteClaimsDocument = gql`
     mutation CheckNoteClaims($input: CheckNoteClaimsInput!) {
   checkNoteClaims(input: $input) {
@@ -9576,6 +9734,49 @@ export function useGenerateBogdanDiscussionMutation(baseOptions?: Apollo.Mutatio
 export type GenerateBogdanDiscussionMutationHookResult = ReturnType<typeof useGenerateBogdanDiscussionMutation>;
 export type GenerateBogdanDiscussionMutationResult = Apollo.MutationResult<GenerateBogdanDiscussionMutation>;
 export type GenerateBogdanDiscussionMutationOptions = Apollo.BaseMutationOptions<GenerateBogdanDiscussionMutation, GenerateBogdanDiscussionMutationVariables>;
+export const GenerateCalmingPlanDocument = gql`
+    mutation GenerateCalmingPlan($familyMemberId: Int!, $language: String) {
+  generateCalmingPlan(familyMemberId: $familyMemberId, language: $language) {
+    success
+    message
+    plan {
+      id
+      familyMemberId
+      language
+      planMarkdown
+      safetyNotes
+      generatedAt
+    }
+  }
+}
+    `;
+export type GenerateCalmingPlanMutationFn = Apollo.MutationFunction<GenerateCalmingPlanMutation, GenerateCalmingPlanMutationVariables>;
+
+/**
+ * __useGenerateCalmingPlanMutation__
+ *
+ * To run a mutation, you first call `useGenerateCalmingPlanMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useGenerateCalmingPlanMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [generateCalmingPlanMutation, { data, loading, error }] = useGenerateCalmingPlanMutation({
+ *   variables: {
+ *      familyMemberId: // value for 'familyMemberId'
+ *      language: // value for 'language'
+ *   },
+ * });
+ */
+export function useGenerateCalmingPlanMutation(baseOptions?: Apollo.MutationHookOptions<GenerateCalmingPlanMutation, GenerateCalmingPlanMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<GenerateCalmingPlanMutation, GenerateCalmingPlanMutationVariables>(GenerateCalmingPlanDocument, options);
+      }
+export type GenerateCalmingPlanMutationHookResult = ReturnType<typeof useGenerateCalmingPlanMutation>;
+export type GenerateCalmingPlanMutationResult = Apollo.MutationResult<GenerateCalmingPlanMutation>;
+export type GenerateCalmingPlanMutationOptions = Apollo.BaseMutationOptions<GenerateCalmingPlanMutation, GenerateCalmingPlanMutationVariables>;
 export const GenerateConditionDeepResearchDocument = gql`
     mutation GenerateConditionDeepResearch($slug: String!, $memberSlug: String!, $language: String) {
   generateConditionDeepResearch(

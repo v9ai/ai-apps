@@ -317,6 +317,18 @@ export type BuildClaimCardsResult = {
   cards: Array<ClaimCard>;
 };
 
+export type CalmingPlan = {
+  __typename?: 'CalmingPlan';
+  familyMemberId: Scalars['Int']['output'];
+  generatedAt: Scalars['String']['output'];
+  id: Scalars['Int']['output'];
+  language: Scalars['String']['output'];
+  planJson: Scalars['String']['output'];
+  planMarkdown: Scalars['String']['output'];
+  safetyNotes?: Maybe<Scalars['String']['output']>;
+  sourcesJson: Scalars['String']['output'];
+};
+
 export type CheckNoteClaimsInput = {
   evidenceTopK?: InputMaybe<Scalars['Int']['input']>;
   maxClaims?: InputMaybe<Scalars['Int']['input']>;
@@ -1304,6 +1316,13 @@ export type GenerateBogdanDiscussionResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type GenerateCalmingPlanResult = {
+  __typename?: 'GenerateCalmingPlanResult';
+  message?: Maybe<Scalars['String']['output']>;
+  plan?: Maybe<CalmingPlan>;
+  success: Scalars['Boolean']['output'];
+};
+
 export type GenerateDeepAnalysisResult = {
   __typename?: 'GenerateDeepAnalysisResult';
   jobId?: Maybe<Scalars['String']['output']>;
@@ -1983,6 +2002,7 @@ export type Mutation = {
   generateAffirmationsForFamilyMember: GenerateAffirmationsResult;
   generateAudio: GenerateAudioResult;
   generateBogdanDiscussion: GenerateBogdanDiscussionResult;
+  generateCalmingPlan: GenerateCalmingPlanResult;
   generateConditionDeepResearch: GenerateResearchResult;
   generateDeepAnalysis: GenerateDeepAnalysisResult;
   generateDeepIssueAnalysis: GenerateDeepAnalysisResult;
@@ -2455,6 +2475,12 @@ export type MutationgenerateAudioArgs = {
   storyId?: InputMaybe<Scalars['Int']['input']>;
   text?: InputMaybe<Scalars['String']['input']>;
   voice?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type MutationgenerateCalmingPlanArgs = {
+  familyMemberId: Scalars['Int']['input'];
+  language?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -3065,6 +3091,8 @@ export type Query = {
   behaviorObservations: Array<BehaviorObservation>;
   bloodTests: Array<BloodTest>;
   bogdanDiscussions: Array<BogdanDiscussionGuide>;
+  calmingPlan?: Maybe<CalmingPlan>;
+  calmingPlans: Array<CalmingPlan>;
   claimCard?: Maybe<ClaimCard>;
   claimCardsForNote: Array<ClaimCard>;
   condition?: Maybe<Condition>;
@@ -3169,6 +3197,16 @@ export type QuerybehaviorObservationArgs = {
 export type QuerybehaviorObservationsArgs = {
   familyMemberId: Scalars['Int']['input'];
   goalId?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QuerycalmingPlanArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type QuerycalmingPlansArgs = {
+  familyMemberId: Scalars['Int']['input'];
 };
 
 
@@ -4237,6 +4275,7 @@ export type ResolversTypes = {
   BogdanDiscussionGuide: ResolverTypeWrapper<BogdanDiscussionGuide>;
   BuildClaimCardsInput: BuildClaimCardsInput;
   BuildClaimCardsResult: ResolverTypeWrapper<Omit<BuildClaimCardsResult, 'cards'> & { cards: Array<ResolversTypes['ClaimCard']> }>;
+  CalmingPlan: ResolverTypeWrapper<CalmingPlan>;
   CheckNoteClaimsInput: CheckNoteClaimsInput;
   CheckNoteClaimsResult: ResolverTypeWrapper<Omit<CheckNoteClaimsResult, 'cards'> & { cards: Array<ResolversTypes['ClaimCard']> }>;
   Citation: ResolverTypeWrapper<Citation>;
@@ -4351,6 +4390,7 @@ export type ResolversTypes = {
   GenerateAffirmationsResult: ResolverTypeWrapper<Omit<GenerateAffirmationsResult, 'affirmations'> & { affirmations: Array<ResolversTypes['Affirmation']> }>;
   GenerateAudioResult: ResolverTypeWrapper<GenerateAudioResult>;
   GenerateBogdanDiscussionResult: ResolverTypeWrapper<GenerateBogdanDiscussionResult>;
+  GenerateCalmingPlanResult: ResolverTypeWrapper<GenerateCalmingPlanResult>;
   GenerateDeepAnalysisResult: ResolverTypeWrapper<GenerateDeepAnalysisResult>;
   GenerateDiscussionGuideResult: ResolverTypeWrapper<GenerateDiscussionGuideResult>;
   GenerateGameInput: GenerateGameInput;
@@ -4527,6 +4567,7 @@ export type ResolversParentTypes = {
   BogdanDiscussionGuide: BogdanDiscussionGuide;
   BuildClaimCardsInput: BuildClaimCardsInput;
   BuildClaimCardsResult: Omit<BuildClaimCardsResult, 'cards'> & { cards: Array<ResolversParentTypes['ClaimCard']> };
+  CalmingPlan: CalmingPlan;
   CheckNoteClaimsInput: CheckNoteClaimsInput;
   CheckNoteClaimsResult: Omit<CheckNoteClaimsResult, 'cards'> & { cards: Array<ResolversParentTypes['ClaimCard']> };
   Citation: Citation;
@@ -4631,6 +4672,7 @@ export type ResolversParentTypes = {
   GenerateAffirmationsResult: Omit<GenerateAffirmationsResult, 'affirmations'> & { affirmations: Array<ResolversParentTypes['Affirmation']> };
   GenerateAudioResult: GenerateAudioResult;
   GenerateBogdanDiscussionResult: GenerateBogdanDiscussionResult;
+  GenerateCalmingPlanResult: GenerateCalmingPlanResult;
   GenerateDeepAnalysisResult: GenerateDeepAnalysisResult;
   GenerateDiscussionGuideResult: GenerateDiscussionGuideResult;
   GenerateGameInput: GenerateGameInput;
@@ -4908,6 +4950,17 @@ export type BogdanDiscussionGuideResolvers<ContextType = GraphQLContext, ParentT
 
 export type BuildClaimCardsResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['BuildClaimCardsResult'] = ResolversParentTypes['BuildClaimCardsResult']> = {
   cards?: Resolver<Array<ResolversTypes['ClaimCard']>, ParentType, ContextType>;
+};
+
+export type CalmingPlanResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CalmingPlan'] = ResolversParentTypes['CalmingPlan']> = {
+  familyMemberId?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  generatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  language?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  planJson?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  planMarkdown?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  safetyNotes?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  sourcesJson?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 };
 
 export type CheckNoteClaimsResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CheckNoteClaimsResult'] = ResolversParentTypes['CheckNoteClaimsResult']> = {
@@ -5591,6 +5644,12 @@ export type GenerateBogdanDiscussionResultResolvers<ContextType = GraphQLContext
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
 };
 
+export type GenerateCalmingPlanResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['GenerateCalmingPlanResult'] = ResolversParentTypes['GenerateCalmingPlanResult']> = {
+  message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  plan?: Resolver<Maybe<ResolversTypes['CalmingPlan']>, ParentType, ContextType>;
+  success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+};
+
 export type GenerateDeepAnalysisResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['GenerateDeepAnalysisResult'] = ResolversParentTypes['GenerateDeepAnalysisResult']> = {
   jobId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -6171,6 +6230,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   generateAffirmationsForFamilyMember?: Resolver<ResolversTypes['GenerateAffirmationsResult'], ParentType, ContextType, RequireFields<MutationgenerateAffirmationsForFamilyMemberArgs, 'familyMemberId'>>;
   generateAudio?: Resolver<ResolversTypes['GenerateAudioResult'], ParentType, ContextType, RequireFields<MutationgenerateAudioArgs, 'goalId'>>;
   generateBogdanDiscussion?: Resolver<ResolversTypes['GenerateBogdanDiscussionResult'], ParentType, ContextType>;
+  generateCalmingPlan?: Resolver<ResolversTypes['GenerateCalmingPlanResult'], ParentType, ContextType, RequireFields<MutationgenerateCalmingPlanArgs, 'familyMemberId'>>;
   generateConditionDeepResearch?: Resolver<ResolversTypes['GenerateResearchResult'], ParentType, ContextType, RequireFields<MutationgenerateConditionDeepResearchArgs, 'memberSlug' | 'slug'>>;
   generateDeepAnalysis?: Resolver<ResolversTypes['GenerateDeepAnalysisResult'], ParentType, ContextType, RequireFields<MutationgenerateDeepAnalysisArgs, 'subjectId' | 'subjectType'>>;
   generateDeepIssueAnalysis?: Resolver<ResolversTypes['GenerateDeepAnalysisResult'], ParentType, ContextType, RequireFields<MutationgenerateDeepIssueAnalysisArgs, 'familyMemberId'>>;
@@ -6413,6 +6473,8 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   behaviorObservations?: Resolver<Array<ResolversTypes['BehaviorObservation']>, ParentType, ContextType, RequireFields<QuerybehaviorObservationsArgs, 'familyMemberId'>>;
   bloodTests?: Resolver<Array<ResolversTypes['BloodTest']>, ParentType, ContextType>;
   bogdanDiscussions?: Resolver<Array<ResolversTypes['BogdanDiscussionGuide']>, ParentType, ContextType>;
+  calmingPlan?: Resolver<Maybe<ResolversTypes['CalmingPlan']>, ParentType, ContextType, RequireFields<QuerycalmingPlanArgs, 'id'>>;
+  calmingPlans?: Resolver<Array<ResolversTypes['CalmingPlan']>, ParentType, ContextType, RequireFields<QuerycalmingPlansArgs, 'familyMemberId'>>;
   claimCard?: Resolver<Maybe<ResolversTypes['ClaimCard']>, ParentType, ContextType, RequireFields<QueryclaimCardArgs, 'id'>>;
   claimCardsForNote?: Resolver<Array<ResolversTypes['ClaimCard']>, ParentType, ContextType, RequireFields<QueryclaimCardsForNoteArgs, 'noteId'>>;
   condition?: Resolver<Maybe<ResolversTypes['Condition']>, ParentType, ContextType, RequireFields<QueryconditionArgs, 'id'>>;
@@ -6921,6 +6983,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   BloodTest?: BloodTestResolvers<ContextType>;
   BogdanDiscussionGuide?: BogdanDiscussionGuideResolvers<ContextType>;
   BuildClaimCardsResult?: BuildClaimCardsResultResolvers<ContextType>;
+  CalmingPlan?: CalmingPlanResolvers<ContextType>;
   CheckNoteClaimsResult?: CheckNoteClaimsResultResolvers<ContextType>;
   Citation?: CitationResolvers<ContextType>;
   ClaimCard?: ClaimCardResolvers<ContextType>;
@@ -7016,6 +7079,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   GenerateAffirmationsResult?: GenerateAffirmationsResultResolvers<ContextType>;
   GenerateAudioResult?: GenerateAudioResultResolvers<ContextType>;
   GenerateBogdanDiscussionResult?: GenerateBogdanDiscussionResultResolvers<ContextType>;
+  GenerateCalmingPlanResult?: GenerateCalmingPlanResultResolvers<ContextType>;
   GenerateDeepAnalysisResult?: GenerateDeepAnalysisResultResolvers<ContextType>;
   GenerateDiscussionGuideResult?: GenerateDiscussionGuideResultResolvers<ContextType>;
   GenerateHabitsResult?: GenerateHabitsResultResolvers<ContextType>;

@@ -285,6 +285,17 @@ type BuildClaimCardsResult {
   cards: [ClaimCard!]!
 }
 
+type CalmingPlan {
+  familyMemberId: Int!
+  generatedAt: String!
+  id: Int!
+  language: String!
+  planJson: String!
+  planMarkdown: String!
+  safetyNotes: String
+  sourcesJson: String!
+}
+
 input CheckNoteClaimsInput {
   evidenceTopK: Int
   maxClaims: Int
@@ -1192,6 +1203,12 @@ type GenerateBogdanDiscussionResult {
   success: Boolean!
 }
 
+type GenerateCalmingPlanResult {
+  message: String
+  plan: CalmingPlan
+  success: Boolean!
+}
+
 type GenerateDeepAnalysisResult {
   jobId: String
   message: String
@@ -1829,6 +1846,7 @@ type Mutation {
   generateAffirmationsForFamilyMember(categoryFocus: AffirmationCategory, count: Int, familyMemberId: Int!, language: String): GenerateAffirmationsResult!
   generateAudio(goalId: Int!, language: String, storyId: Int, text: String, voice: String): GenerateAudioResult!
   generateBogdanDiscussion: GenerateBogdanDiscussionResult!
+  generateCalmingPlan(familyMemberId: Int!, language: String): GenerateCalmingPlanResult!
   generateConditionDeepResearch(language: String, memberSlug: String!, slug: String!): GenerateResearchResult!
   generateDeepAnalysis(subjectId: Int!, subjectType: DeepAnalysisSubjectType!, triggerId: Int, triggerType: DeepAnalysisTriggerType): GenerateDeepAnalysisResult!
   generateDeepIssueAnalysis(familyMemberId: Int!, triggerIssueId: Int): GenerateDeepAnalysisResult!
@@ -2115,6 +2133,8 @@ type Query {
   behaviorObservations(familyMemberId: Int!, goalId: Int): [BehaviorObservation!]!
   bloodTests: [BloodTest!]!
   bogdanDiscussions: [BogdanDiscussionGuide!]!
+  calmingPlan(id: Int!): CalmingPlan
+  calmingPlans(familyMemberId: Int!): [CalmingPlan!]!
   claimCard(id: ID!): ClaimCard
   claimCardsForNote(noteId: Int!): [ClaimCard!]!
   condition(id: ID!): Condition
