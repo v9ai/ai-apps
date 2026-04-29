@@ -189,13 +189,8 @@ Vadim`;
       });
       const json = (await res.json()) as { success: boolean; error?: string; scheduled?: boolean };
       if (json.success) {
-        if (json.scheduled) {
-          const when = new Date(scheduledAt!).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-          setSendResult({ type: "success", message: `Scheduled for ${when}` });
-        } else {
-          setSendResult({ type: "success", message: `Sent to ${to}` });
-        }
         onSent?.();
+        setOpen(false);
       } else {
         setSendResult({ type: "error", message: json.error ?? "Send failed" });
       }

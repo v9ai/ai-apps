@@ -521,100 +521,258 @@ async def search_research(state: CalmingPlanState) -> dict:
     return {"_research": deduped}
 
 
+
+_TRUNCATION_HINTS = ("Unterminated", "Expecting value", "Invalid \\escape", "delimiter")
+
+
+async def _llm_with_brevity_retry(prompt: str, brevity: str, *, temp: float, max_tokens: int = 8192) -> dict:
+    """Run a DeepSeek JSON call; retry once with a brevity addendum if truncation was detected."""
+    try:
+        return await _deepseek_json(prompt, max_tokens=max_tokens, temperature=temp)
+    except Exception as exc:
+        msg = str(exc)
+        if not any(h in msg for h in _TRUNCATION_HINTS):
+            raise
+        return await _deepseek_json(prompt + brevity, max_tokens=max_tokens, temperature=max(0.2, temp - 0.1))
+
+
 # ---------------------------------------------------------------------------
-# Node: generate_plan
+# Node: generate_bundles
+#
+# For each cluster, generate a focused intervention bundle in parallel. Each
+# bundle is small (< 2000 tokens output) so we never hit the 8192 ceiling that
+# burned the flat one-shot generator. Bundles contain mechanism reasoning,
+# interventions, trigger→response cards, and 1/4/12-week KPIs — the substance
+# of the "deep" plan.
 # ---------------------------------------------------------------------------
-def _build_plan_prompt(state: CalmingPlanState) -> str:
+def _build_bundle_prompt(state: CalmingPlanState, cluster: dict) -> str:
     member = state.get("_member") or {}
     issues = state.get("_issues") or []
     allergies = state.get("_allergies") or []
-    characteristics = state.get("_characteristics") or []
-    deep = state.get("_deep_analysis") or {}
     research = state.get("_research") or []
     language = state.get("language", "ro")
-
     age = _resolve_age(member.get("age_years"), member.get("date_of_birth"))
-    age_str = f"{age} years" if age is not None else "unspecified age"
     name = member.get("first_name") or "the family member"
 
-    member_block = [
-        f"Name: {name}",
-        f"Age: {age_str}",
-        f"Date of birth: {member.get('date_of_birth') or 'unknown'}",
-        f"Relationship: {member.get('relationship') or 'unknown'}",
-        "Currently on medications: NO (caller confirmed)",
-    ]
+    cluster_name = cluster.get("name", "cluster")
+    cluster_axis = cluster.get("axis", "emotional_dysregulation")
+    cluster_mechanism = cluster.get("hypothesized_mechanism") or ""
+    dominant_titles = cluster.get("dominant_issues") or []
 
-    # Allergy block — combine structured rows + free-text column. This block
-    # is repeated in the safety_review pass so the model can't lose track of it.
+    # Issues for THIS cluster.
+    cluster_issues = [i for i in issues if i.get("title") in set(dominant_titles)]
+    if not cluster_issues:
+        cluster_issues = issues[:6]
+    issues_block = "\n".join(
+        f"- [{(i.get('severity') or '').upper()}] {i.get('title')} ({i.get('category')}): "
+        f"{(i.get('description') or '')[:160]}"
+        for i in cluster_issues[:8]
+    )
+
+    # Allergies block — same hard rules apply.
     allergy_lines: list[str] = []
     for a in allergies:
         sev = (a.get("severity") or "").upper()
-        kind = a.get("kind") or "allergy"
-        line = f"- [{sev}] {kind}: {a.get('name', '')}"
+        line = f"- [{sev}] {a.get('kind') or 'allergy'}: {a.get('name', '')}"
         if a.get("notes"):
             line += f" — {a['notes']}"
         allergy_lines.append(line)
     if member.get("allergies_text"):
-        allergy_lines.append(f"- (free-text from profile) {member['allergies_text']}")
-    allergies_block = "\n".join(allergy_lines) or "(no allergies recorded — still apply standard pediatric caution)"
+        allergy_lines.append(f"- (free-text) {member['allergies_text']}")
+    allergies_block = "\n".join(allergy_lines) or "(none recorded — apply standard pediatric caution)"
 
-    # Cap to top-12 most severe issues to keep prompt + output within DeepSeek's
-    # 8192-token output ceiling. Severity ordering already applied in load_context.
-    issues_block = "\n".join(
-        f"- [{(i.get('severity') or '').upper()}] {i.get('title')} ({i.get('category')}): "
-        f"{(i.get('description') or '')[:180]}"
-        for i in issues[:12]
-    ) or "(no issues recorded)"
-
-    characteristics_block = "\n".join(
-        f"- [{(c.get('risk_tier') or 'NONE').upper()}] {c.get('title')} ({c.get('category')}): "
-        f"{(c.get('description') or '')[:180]}"
-        + (f" | impairment: {c['impairment_domains']}" if c.get('impairment_domains') else "")
-        for c in characteristics
-    ) or "(no characteristics recorded)"
-
-    deep_block = ""
-    if deep.get("summary"):
-        deep_block = f"### Deep analysis summary\n{deep['summary']}\n"
-        recs = deep.get("priority_recommendations") or []
-        if recs:
-            deep_block += "### Priority recommendations\n" + "\n".join(
-                f"- {r.get('issueTitle', 'general')}: {r.get('rationale', '')}"
-                for r in recs[:5]
-            ) + "\n"
-        clusters = deep.get("pattern_clusters") or []
-        if clusters:
-            deep_block += "### Behavioral patterns\n" + "\n".join(
-                f"- {c.get('name', '')}: {c.get('description', '')}"
-                for c in clusters[:5]
-            ) + "\n"
+    # Research subset — prefer papers tagged with this cluster, fallback to base.
+    matched = [p for p in research if p.get("cluster_tag") == cluster_name]
+    if len(matched) < 4:
+        matched = matched + [p for p in research if p.get("cluster_tag") not in (cluster_name,)][: 8 - len(matched)]
+    matched = matched[:8]
 
     research_lines = []
-    for idx, p in enumerate(research, start=1):
+    for idx, p in enumerate(matched, start=1):
         line = [
-            f"[{idx}] {p.get('title', 'Untitled')} ({p.get('year', '?')})",
-            f"  Authors: {', '.join(p.get('authors', []) or [])[:200]}",
+            f"[{idx}] {p.get('title', 'Untitled')} ({p.get('year', '?')}) [tag={p.get('cluster_tag', '')}]",
+            f"  Authors: {', '.join(p.get('authors') or [])[:160]}",
         ]
-        abstract = (p.get("abstract") or "")[:280]
+        abstract = (p.get("abstract") or "")[:240]
         if abstract:
             line.append(f"  Abstract: {abstract}")
         if p.get("doi"):
             line.append(f"  DOI: {p['doi']}")
         research_lines.append("\n".join(line))
-    research_block = "\n\n".join(research_lines) or "(no papers retrieved — rely on conservative, well-established practice)"
+    research_block = "\n\n".join(research_lines) or "(no papers retrieved — rely on conservative practice)"
+
+    schema = """{
+  "cluster_name": "string (echo back)",
+  "axis": "string (echo back)",
+  "summary": "string (1-2 sentence framing of why this cluster matters for this child)",
+  "mechanism_explanation": "string (3-4 sentences linking the dominant issues to the hypothesized mechanism, citing paper indexes [1], [2] when relevant)",
+  "interventions": [
+    {
+      "type": "lifestyle | food | movement | sensory | supplement | co_regulation",
+      "title": "string",
+      "specifics": "string (concrete what-to-do)",
+      "why_it_works": "string (1 sentence; cite paper indexes when grounded)",
+      "respects_allergies": "string",
+      "cited_paper_indexes": [1, 2]
+    }
+  ],
+  "trigger_response_pairs": [
+    {"trigger": "string (specific scenario the parent will recognize)", "in_the_moment_response": "string (concrete words/actions)", "after_response": "string (de-escalation step)"}
+  ],
+  "kpis": {
+    "week_1": "string (something the parent should observe within 7 days if this is working)",
+    "week_4": "string",
+    "week_12": "string"
+  },
+  "escalation_signals": ["string (a sign that escalates to professional support)"]
+}"""
 
     lang_instruction = (
-        "IMPORTANT: write every human-readable string in fluent Romanian. "
-        "Keep supplement names in their conventional English/Latin form (e.g. "
-        "'L-theanine', 'magnesium glycinate', 'Melissa officinalis'). Keep enum "
-        "values, paper titles, and DOIs verbatim."
+        "IMPORTANT: write all human-readable strings (summary, mechanism_explanation, "
+        "interventions[*].title, .specifics, .why_it_works, trigger_response_pairs, kpis, "
+        "escalation_signals) in fluent Romanian. Keep paper titles, DOIs, supplement "
+        "Latin/English names, axis enum, and intervention type enum verbatim."
         if language == "ro"
-        else "Write all human-readable strings in clear English."
+        else "All human-readable strings in clear English."
     )
+
+    return "\n".join(
+        [
+            f"You are a pediatric integrative-medicine expert. Generate a FOCUSED intervention bundle "
+            f"for ONE behavioral cluster ('{cluster_name}', axis: {cluster_axis}) for {name} "
+            f"(age {age if age is not None else 'unspecified'}, currently on NO medications). "
+            f"This bundle is one of several — do not try to address every issue, only this cluster.",
+            "",
+            "## Cluster",
+            f"Name: {cluster_name}",
+            f"Axis: {cluster_axis}",
+            f"Hypothesized mechanism: {cluster_mechanism}",
+            "",
+            "## Cluster's dominant issues",
+            issues_block or "(none assigned to this cluster)",
+            "",
+            "## ALLERGIES (HARD)",
+            allergies_block,
+            "",
+            "## Research (filtered to this cluster + nearby)",
+            research_block,
+            "",
+            "## Hard rules",
+            "- ONE bundle for this cluster only. Don't drift to other patterns.",
+            "- 4-7 interventions covering at least 3 of: lifestyle, food, movement, sensory, supplement, co_regulation.",
+            "- 3-5 trigger_response_pairs — each pair must name a CONCRETE situation the parent will recognize, "
+            "not a generic 'when child is upset'. Use the dominant issues for grounding.",
+            "- KPIs at 1/4/12 weeks must be OBSERVABLE by a parent without instruments.",
+            "- Allergies override everything (apply cross-reactivity: ragweed↔chamomile, mint↔lemon balm/lavender ingestion, "
+            "birch↔raw fruit, latex↔banana/avocado/kiwi, dairy/tree-nut/salicylate/soy/egg). Each intervention's "
+            "`respects_allergies` field must state what was cross-checked.",
+            "- Cite paper indexes from the ## Research section when grounding interventions; do not invent citations.",
+            "- Keep every string concise: title<=80 chars, specifics<=220, why_it_works<=180.",
+            "",
+            f"## Language\n{lang_instruction}",
+            "",
+            "## Output schema (JSON only, exactly this shape, no extra keys)",
+            schema,
+        ]
+    )
+
+
+async def generate_bundles(state: CalmingPlanState) -> dict:
+    if state.get("error"):
+        return {}
+    clusters = state.get("_clusters") or []
+    if not clusters:
+        return {"error": "generate_bundles: no clusters from analyze_patterns"}
+
+    brevity = (
+        "\n\n## Brevity (HARD)\nKeep every string under 160 characters. "
+        "Limit lists: interventions<=5, trigger_response_pairs<=4, escalation_signals<=4."
+    )
+
+    async def _one(c: dict) -> dict:
+        prompt = _build_bundle_prompt(state, c)
+        try:
+            bundle = await _llm_with_brevity_retry(prompt, brevity, temp=0.4, max_tokens=4096)
+            # Force-echo the cluster name/axis on the bundle so synthesize can join cleanly.
+            if isinstance(bundle, dict):
+                bundle.setdefault("cluster_name", c.get("name"))
+                bundle.setdefault("axis", c.get("axis"))
+            return bundle
+        except Exception as exc:
+            return {
+                "cluster_name": c.get("name"),
+                "axis": c.get("axis"),
+                "error": f"bundle generation failed: {exc}",
+            }
+
+    bundles = await asyncio.gather(*[_one(c) for c in clusters])
+    # Drop any bundles that errored — synthesize will work with what's left.
+    good = [b for b in bundles if isinstance(b, dict) and not b.get("error")]
+    if not good:
+        first_err = next((b.get("error") for b in bundles if isinstance(b, dict) and b.get("error")), "all bundles failed")
+        return {"error": f"generate_bundles: {first_err}"}
+    return {"_cluster_bundles": good}
+
+
+# ---------------------------------------------------------------------------
+# Node: synthesize_plan
+#
+# Take the per-cluster bundles and assemble the unified day-shaped plan with
+# global routines (morning/evening), food/movement/sensory pulled across
+# bundles, stepped tiers, weekly check-ins, and red flags. The bundles ARE
+# the plan content for the cluster sections — synthesize doesn't rewrite them.
+# ---------------------------------------------------------------------------
+def _build_synthesize_prompt(state: CalmingPlanState) -> str:
+    member = state.get("_member") or {}
+    issues = state.get("_issues") or []
+    allergies = state.get("_allergies") or []
+    research = state.get("_research") or []
+    bundles = state.get("_cluster_bundles") or []
+    clusters = state.get("_clusters") or []
+    language = state.get("language", "ro")
+    age = _resolve_age(member.get("age_years"), member.get("date_of_birth"))
+    name = member.get("first_name") or "the family member"
+
+    bundles_block = json.dumps(bundles, ensure_ascii=False)[:12000]
+    clusters_block = "\n".join(
+        f"- {c.get('name')} (axis: {c.get('axis')}): {(c.get('hypothesized_mechanism') or '')[:160]}"
+        for c in clusters
+    )
+
+    issues_block = "\n".join(
+        f"- {i.get('title')} ({i.get('category')}, {i.get('severity')})"
+        for i in issues[:20]
+    )
+
+    allergy_summary = "; ".join(
+        f"{a.get('name')} ({a.get('severity') or 'unknown'})" for a in allergies
+    ) or "none"
+
+    sources_count = len(research)
 
     schema = """{
   "headline": "string",
+  "executive_summary": "string (3-5 sentences naming clusters and the overall approach)",
+  "stepped_tiers": [
+    {
+      "tier": 1,
+      "name": "Foundation (always-on)",
+      "items": ["string", "..."],
+      "review_after_days": 14
+    },
+    {
+      "tier": 2,
+      "name": "Add after foundation is steady",
+      "items": ["string", "..."],
+      "review_after_days": 28
+    },
+    {
+      "tier": 3,
+      "name": "Escalation — when to seek professional support",
+      "items": ["string", "..."],
+      "review_after_days": null
+    }
+  ],
   "morning_routine": [{"step": "string", "minutes": number, "rationale": "string"}],
   "food_and_drinks": {
     "encourage": [{"item": "string", "why": "string", "frequency": "string"}],
@@ -635,100 +793,85 @@ def _build_plan_prompt(state: CalmingPlanState) -> str:
       "cited_paper_indexes": [1, 2]
     }
   ],
-  "issue_coverage": [
-    {"issue_title": "string", "addressed_by": ["section name", "..."]}
-  ],
   "sensory_and_environment": [{"tip": "string", "why": "string"}],
   "weekly_check_ins": [{"question": "string", "look_for": "string"}],
-  "red_flags": [{"sign": "string", "action": "string"}]
+  "red_flags": [{"sign": "string", "action": "string"}],
+  "issue_coverage": [{"issue_title": "string", "addressed_by": ["section name", "..."]}],
+  "cluster_bundles": "VERBATIM the bundles array provided in ## Cluster bundles below — do NOT modify them, just include them at this key"
 }"""
+
+    lang_instruction = (
+        "IMPORTANT: write every human-readable string in fluent Romanian. "
+        "Supplement names in conventional English/Latin form. Cluster bundles must be "
+        "echoed VERBATIM (already in target language)."
+        if language == "ro"
+        else "All human-readable strings in clear English."
+    )
 
     return "\n".join(
         [
-            "You are a pediatric integrative-medicine and behavior-support expert. "
-            "Generate a SAFE, plant-based, non-pharmacologic calming and behavior plan "
-            "for the family member below, grounded in the cited research and the deep "
-            "analysis findings. The plan must address every issue and characteristic "
-            "listed below — do not silently drop categories.",
+            f"You are a pediatric integrative-medicine plan synthesizer. The per-cluster intervention "
+            f"bundles below have already been generated. Your job is to: (a) extract a unified daily routine "
+            f"and food/movement/supplement layer that combines bundles without contradiction, (b) build "
+            f"3-tier stepped care, (c) draft weekly check-ins and red flags, (d) map each known issue to "
+            f"a section of the plan, and (e) include the bundles VERBATIM under `cluster_bundles`.",
             "",
-            "## Family member",
-            *member_block,
+            f"## Member\nName: {name}\nAge: {age if age is not None else 'unspecified'}\n"
+            f"Currently on medications: NO\nLanguage: {language}",
             "",
-            "## ALLERGIES (HARD CONSTRAINTS — must respect)",
-            allergies_block,
+            "## Allergies (HARD CONSTRAINT — already respected by bundles)",
+            allergy_summary,
             "",
-            "## All known issues",
-            issues_block,
+            "## All known issues (for issue_coverage mapping)",
+            issues_block or "(none)",
             "",
-            "## Family-member characteristics",
-            characteristics_block,
+            "## Cluster identification (axes)",
+            clusters_block or "(none)",
             "",
-            "## Deep analysis (if any)",
-            deep_block or "(none)",
+            "## Cluster bundles (echo VERBATIM at key `cluster_bundles`)",
+            bundles_block,
             "",
-            "## Research evidence",
-            research_block,
+            f"## Source paper count\n{sources_count}",
             "",
             "## Hard rules",
-            "- The member is NOT on any medication right now. Do not recommend stopping or starting prescription drugs.",
-            "- Recommend ONLY non-prescription, plant-based, nutritional, lifestyle, or sensory interventions.",
-            "- ALLERGIES OVERRIDE EVERYTHING. Do not recommend any food, herb, supplement, or scent that the member is allergic to or that cross-reacts with their allergies. Apply these cross-reactivity rules:",
-            "  • Ragweed / Asteraceae / Compositae allergy → exclude chamomile, echinacea, calendula, marigold-derived ingredients, feverfew.",
-            "  • Mint family (Lamiaceae) allergy → exclude lemon balm (Melissa officinalis), peppermint, spearmint, lavender oil ingestion.",
-            "  • Birch / oral-allergy syndrome → exclude raw apples, peaches, hazelnuts, almonds; cooked is usually OK.",
-            "  • Latex-fruit syndrome → exclude bananas, avocado, kiwi, chestnut.",
-            "  • Salicylate sensitivity → reduce berries, tomatoes, citrus, honey; flag aspirin-related warnings.",
-            "  • Tree-nut / peanut allergy → exclude almond milk, walnut/flax oils labeled with cross-contact, peanut butter.",
-            "  • Dairy → exclude warm-milk rituals; suggest oat or rice milk alternatives.",
-            "  • Egg / soy → exclude as supplement carriers (gelcaps, lecithin) when severity is moderate or severe.",
-            "  • Pollen-food syndrome generally → prefer cooked over raw plant ingredients.",
-            "- Each supplement entry MUST include a `respects_allergies` field stating which listed allergies you cross-checked it against (or 'none recorded' if no allergies).",
-            "- Address every issue category from ## All known issues with at least one corresponding intervention; if an issue has no matching intervention, name it in the headline so the parent knows it's open.",
-            "- Every supplement must include an age-appropriate typical dose and a cautions string.",
-            "- Tag each supplement with cited_paper_indexes drawn from the numbered ## Research evidence list above. If no listed paper supports it, omit the supplement.",
-            "- Match all dosing and timing to the member's actual age band; never copy adult doses to a child.",
-            "- Avoid St. John's Wort, valerian for daytime use, and any herb with strong sedative-interaction profile when age < 12.",
-            "- Keep the plan realistic for a household: <= 6 morning steps, <= 6 evening steps, <= 5 supplements.",
+            "- Echo the bundles VERBATIM under `cluster_bundles`. Do NOT rewrite, summarise, or translate.",
+            "- Stepped tiers: Tier 1 = lowest-friction lifestyle/sensory items. Tier 2 = nutrition+supplements. Tier 3 = escalation flags + when to consult.",
+            "- Morning/evening/movement/food sections combine across bundles — keep each list <= 5 items.",
+            "- Supplements section deduplicates supplements that appear in multiple bundles; <= 5 entries.",
+            "- issue_coverage must map every input issue title to at least one section name (pattern bundle name OR routine section name).",
+            "- Allergies were already respected by bundles — propagate that respect.",
             "",
             f"## Language\n{lang_instruction}",
             "",
-            "## Output schema",
-            "Return a single JSON object EXACTLY matching this shape (no extra keys):",
+            "## Output schema (JSON only)",
             schema,
         ]
     )
 
 
-_TRUNCATION_HINTS = ("Unterminated", "Expecting value", "Invalid \\escape", "delimiter")
-
-
-async def generate_plan(state: CalmingPlanState) -> dict:
+async def synthesize_plan(state: CalmingPlanState) -> dict:
     if state.get("error"):
         return {}
-    prompt = _build_plan_prompt(state)
-    brevity_addendum = (
-        "\n\n## Brevity (HARD)\nKeep every rationale/cautions/notes/why string under 140 characters. "
-        "Limit lists strictly: morning_routine<=5, evening_wind_down<=5, supplements<=4, "
-        "food.encourage<=5, food.avoid_or_reduce<=5, food.teas<=3, movement<=3, "
-        "sensory_and_environment<=4, weekly_check_ins<=3, red_flags<=4. "
-        "Output budget is tight — favor short, high-signal lines over completeness."
+    if not state.get("_cluster_bundles"):
+        return {"error": "synthesize_plan: no bundles to synthesize"}
+
+    prompt = _build_synthesize_prompt(state)
+    brevity = (
+        "\n\n## Brevity (HARD)\nKeep every string under 160 chars. "
+        "Limit lists strictly: morning_routine<=5, evening_wind_down<=5, supplements<=5, "
+        "food.encourage<=5, food.avoid_or_reduce<=5, food.teas<=3, movement<=4, "
+        "sensory_and_environment<=5, weekly_check_ins<=4, red_flags<=5. "
+        "Tier 1 items<=6, Tier 2 items<=5, Tier 3 items<=5."
     )
 
-    async def _attempt(p: str, *, temp: float) -> dict:
-        return await _deepseek_json(p, max_tokens=8192, temperature=temp)
-
     try:
-        return {"_plan_draft": await _attempt(prompt, temp=0.4)}
+        plan = await _llm_with_brevity_retry(prompt, brevity, temp=0.3, max_tokens=8192)
+        # Defensive: if the model dropped cluster_bundles, splice them in.
+        if isinstance(plan, dict) and not plan.get("cluster_bundles"):
+            plan["cluster_bundles"] = state.get("_cluster_bundles") or []
+        return {"_plan_draft": plan}
     except Exception as exc:
-        msg = str(exc)
-        truncated = any(h in msg for h in _TRUNCATION_HINTS)
-        if not truncated:
-            return {"error": f"generate_plan failed: {exc}"}
-        # Truncation retry — re-issue with explicit brevity instruction.
-        try:
-            return {"_plan_draft": await _attempt(prompt + brevity_addendum, temp=0.3)}
-        except Exception as exc2:
-            return {"error": f"generate_plan failed after brevity retry: {exc2}; original: {exc}"}
+        return {"error": f"synthesize_plan failed: {exc}"}
 
 
 # ---------------------------------------------------------------------------
@@ -823,6 +966,14 @@ def _render_markdown(plan: dict, *, name: str, language: str) -> str:
     is_ro = language == "ro"
     h = {
         "headline": plan.get("headline") or ("Plan de calmare" if is_ro else "Calming plan"),
+        "summary": "Sumar executiv" if is_ro else "Executive summary",
+        "tiers": "Trepte de îngrijire" if is_ro else "Stepped care",
+        "patterns": "Tipare comportamentale (clustere)" if is_ro else "Behavioral patterns (clusters)",
+        "mechanism": "Mecanism" if is_ro else "Mechanism",
+        "interventions": "Intervenții" if is_ro else "Interventions",
+        "triggers": "Trigger → Răspuns" if is_ro else "Trigger → Response",
+        "kpis": "Indicatori de progres" if is_ro else "KPIs",
+        "escalation": "Semnale de escaladare" if is_ro else "Escalation signals",
         "morning": "Rutina de dimineață" if is_ro else "Morning routine",
         "food": "Alimentație și băuturi" if is_ro else "Food and drinks",
         "encourage": "De încurajat" if is_ro else "Encourage",
@@ -837,6 +988,71 @@ def _render_markdown(plan: dict, *, name: str, language: str) -> str:
     }
 
     lines: list[str] = [f"# {h['headline']} — {name}", ""]
+
+    # Executive summary
+    if plan.get("executive_summary"):
+        lines.append(f"## {h['summary']}")
+        lines.append(str(plan["executive_summary"]).strip())
+        lines.append("")
+
+    # Stepped tiers
+    tiers = plan.get("stepped_tiers") or []
+    if tiers:
+        lines.append(f"## {h['tiers']}")
+        for t in tiers:
+            tier_no = t.get("tier", "?")
+            tier_name = t.get("name", "")
+            review = t.get("review_after_days")
+            review_str = f" _(revizuire după {review} zile)_" if (is_ro and review) else (f" _(review after {review} days)_" if review else "")
+            lines.append(f"### Tier {tier_no} — {tier_name}{review_str}")
+            for it in t.get("items") or []:
+                lines.append(f"- {it}")
+        lines.append("")
+
+    # Per-cluster bundles (the heart of the deep plan)
+    bundles = plan.get("cluster_bundles") or []
+    if bundles:
+        lines.append(f"## {h['patterns']}")
+        for b in bundles:
+            cname = b.get("cluster_name", "")
+            axis = b.get("axis", "")
+            lines.append(f"### {cname} — _{axis}_")
+            if b.get("summary"):
+                lines.append(b["summary"])
+            if b.get("mechanism_explanation"):
+                lines.append(f"**{h['mechanism']}:** {b['mechanism_explanation']}")
+            interventions = b.get("interventions") or []
+            if interventions:
+                lines.append(f"#### {h['interventions']}")
+                for iv in interventions:
+                    cited = ", ".join(str(x) for x in (iv.get("cited_paper_indexes") or []))
+                    lines.append(
+                        f"- **{iv.get('title', '')}** _(`{iv.get('type', '')}`)_ — {iv.get('specifics', '')}\n"
+                        f"  - {iv.get('why_it_works', '')}\n"
+                        f"  - Alergeni verificați: {iv.get('respects_allergies', '—')}\n"
+                        f"  - Surse: {cited or '—'}"
+                    )
+            triggers = b.get("trigger_response_pairs") or []
+            if triggers:
+                lines.append(f"#### {h['triggers']}")
+                for tr in triggers:
+                    lines.append(
+                        f"- **Trigger:** {tr.get('trigger', '')}\n"
+                        f"  - **În moment:** {tr.get('in_the_moment_response', '')}\n"
+                        f"  - **După:** {tr.get('after_response', '')}"
+                    )
+            kpis = b.get("kpis") or {}
+            if kpis:
+                lines.append(f"#### {h['kpis']}")
+                for label, key in (("1 săpt." if is_ro else "1 wk", "week_1"), ("4 săpt." if is_ro else "4 wk", "week_4"), ("12 săpt." if is_ro else "12 wk", "week_12")):
+                    if kpis.get(key):
+                        lines.append(f"- **{label}:** {kpis[key]}")
+            esc = b.get("escalation_signals") or []
+            if esc:
+                lines.append(f"#### {h['escalation']}")
+                for s in esc:
+                    lines.append(f"- {s}")
+            lines.append("")
 
     def _section(title: str, items: list, render):
         if not items:
@@ -984,15 +1200,19 @@ _FETCH_RETRY = RetryPolicy(max_attempts=3, initial_interval=1.0, backoff_factor=
 def create_calming_plan_graph(checkpointer=None):
     builder = StateGraph(CalmingPlanState)
     builder.add_node("load_context", load_context)
+    builder.add_node("analyze_patterns", analyze_patterns, retry=_LLM_RETRY)
     builder.add_node("search_research", search_research, retry=_FETCH_RETRY)
-    builder.add_node("generate_plan", generate_plan, retry=_LLM_RETRY)
+    builder.add_node("generate_bundles", generate_bundles, retry=_LLM_RETRY)
+    builder.add_node("synthesize_plan", synthesize_plan, retry=_LLM_RETRY)
     builder.add_node("safety_review", safety_review, retry=_LLM_RETRY)
     builder.add_node("persist_plan", persist_plan)
 
     builder.add_edge(START, "load_context")
-    builder.add_edge("load_context", "search_research")
-    builder.add_edge("search_research", "generate_plan")
-    builder.add_edge("generate_plan", "safety_review")
+    builder.add_edge("load_context", "analyze_patterns")
+    builder.add_edge("analyze_patterns", "search_research")
+    builder.add_edge("search_research", "generate_bundles")
+    builder.add_edge("generate_bundles", "synthesize_plan")
+    builder.add_edge("synthesize_plan", "safety_review")
     builder.add_edge("safety_review", "persist_plan")
     builder.add_edge("persist_plan", END)
 

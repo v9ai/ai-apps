@@ -18,7 +18,7 @@ function LsfContent() {
 
 export default function LsfPage() {
   return (
-    <AuthGate>
+    <AuthGate pageName="LSF" description="Sign in to view LSF research.">
       <LsfContent />
     </AuthGate>
   );
