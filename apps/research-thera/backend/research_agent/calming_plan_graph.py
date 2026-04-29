@@ -379,7 +379,7 @@ async def analyze_patterns(state: CalmingPlanState) -> dict:
             deep_summary or "(none)",
             "",
             "## Output rules",
-            "- 3 to 5 clusters. No more, no fewer unless input is sparse.",
+            "- EXACTLY 3 clusters. Pick the 3 most therapeutically actionable patterns.",
             "- Each cluster name must be snake_case and unique.",
             "- `dominant_issues` must list issue titles VERBATIM from the input — do not invent.",
             "- `axis` must be one of the enumerated values exactly.",
@@ -424,9 +424,10 @@ async def analyze_patterns(state: CalmingPlanState) -> dict:
             ]
         }
 
-    # Normalize: clip count, force valid axis, ensure search_query exists.
+    # Normalize: clip count to 3 to keep runtime within CF's response window
+    # (each cluster spawns one parallel bundle LLM call ~30-60s).
     cleaned: list[dict] = []
-    for c in clusters[:5]:
+    for c in clusters[:3]:
         if not isinstance(c, dict):
             continue
         axis = c.get("axis") or "emotional_dysregulation"
@@ -921,10 +922,30 @@ async def safety_review(state: CalmingPlanState) -> dict:
         f"{c.get('title')} ({c.get('risk_tier') or 'NONE'})" for c in characteristics
     ) or "none"
 
+    # Send a COMPACT plan summary (not the full plan) to reduce input + output
+    # tokens. Bundles already underwent allergy checks during their generation
+    # node — safety_review here only audits the SYNTHESIZED layer (stepped tiers,
+    # global routines, supplements) and emits notes; it does NOT rewrite the plan.
+    plan_compact = {
+        "headline": plan.get("headline"),
+        "executive_summary": plan.get("executive_summary"),
+        "stepped_tiers": plan.get("stepped_tiers"),
+        "morning_routine": plan.get("morning_routine"),
+        "food_and_drinks": plan.get("food_and_drinks"),
+        "movement": plan.get("movement"),
+        "evening_wind_down": plan.get("evening_wind_down"),
+        "supplements": plan.get("supplements"),
+        "sensory_and_environment": plan.get("sensory_and_environment"),
+        "weekly_check_ins": plan.get("weekly_check_ins"),
+        "red_flags": plan.get("red_flags"),
+    }
+
     prompt = "\n".join(
         [
-            "You are a pediatric safety reviewer. The draft plan below was generated for a "
-            f"{age if age is not None else 'unspecified-age'}-year-old who is currently on NO medications.",
+            "You are a pediatric safety reviewer. Audit the synthesized plan below "
+            f"for a {age if age is not None else 'unspecified-age'}-year-old on NO medications. "
+            "Per-cluster bundles already passed their own allergy/age checks; you are "
+            "auditing the GLOBAL layer only (stepped tiers, routines, supplements, food).",
             "",
             "## Allergies (HARD)",
             allergies_summary,
@@ -933,44 +954,35 @@ async def safety_review(state: CalmingPlanState) -> dict:
             "",
             f"## Characteristics\n{characteristics_summary}",
             "",
-            "Audit the plan for, in this priority order:",
-            "1. ALLERGY VIOLATIONS — any food, tea, herb, supplement excipient, or scent that conflicts "
-            "with the listed allergies (apply cross-reactivity: ragweed↔chamomile, mint family↔lemon balm/lavender ingestion, "
-            "birch↔raw fruit, latex↔banana/avocado/kiwi, dairy in warm-milk rituals, tree-nut in almond milk, etc.). "
-            "Remove violators; substitute when an alternative exists.",
-            "2. Age-inappropriate doses or adult-only herbs.",
-            "3. Sedative herbs misused for daytime.",
-            "4. Interaction risks between listed supplements.",
-            "5. Coverage gaps: every issue category should have at least one mapped intervention. "
-            "If a gap remains, list it in `notes`.",
-            "6. Any recommendation that crosses into prescription territory.",
+            "Audit checklist (in priority order):",
+            "1. Allergy violations in `food_and_drinks`, `supplements`, `morning_routine`, `evening_wind_down`. "
+            "Apply cross-reactivity: ragweed↔chamomile, mint↔lemon balm, birch↔raw fruit, latex↔banana/avocado/kiwi, "
+            "dairy in warm-milk rituals, tree-nut in almond milk, salicylate, soy/egg in supplement excipients.",
+            "2. Age-inappropriate supplement doses or adult-only herbs.",
+            "3. Sedative herbs in morning routine; daytime sedation risk.",
+            "4. Supplement-supplement interactions.",
+            "5. Anything that crosses into prescription territory.",
             "",
-            "Return a JSON object with exactly two keys:",
-            '  "plan": <the corrected plan, same shape as the draft, with risky items removed or replaced, '
-            'each supplement entry updated with a `respects_allergies` string explaining the cross-check, '
-            "and dose strings tightened>,",
-            '  "notes": "<short paragraph (<=250 words) describing what you changed and why, including any '
-            "uncovered issues; in "
-            + ("Romanian" if language == "ro" else "English")
-            + '>"',
+            "Return a JSON object with exactly ONE key:",
+            f'  "notes": "<300-word audit summary in {"Romanian" if language == "ro" else "English"}, listing concrete '
+            "concerns to fix and any items the parent should specifically discuss with a clinician. "
+            'If clean, say so explicitly>"',
+            "Do NOT return the plan — output `notes` only.",
             "",
-            "## Draft plan",
-            json.dumps(plan, ensure_ascii=False),
+            "## Plan (compact)",
+            json.dumps(plan_compact, ensure_ascii=False),
         ]
     )
 
     try:
-        result = await _deepseek_json(prompt, max_tokens=6000, temperature=0.2)
+        result = await _deepseek_json(prompt, max_tokens=2000, temperature=0.2)
     except Exception as exc:
         # Safety pass should not gate persistence — keep draft, log note.
         return {"_safety_notes": f"safety_review failed: {exc}"}
 
-    corrected = result.get("plan") if isinstance(result, dict) else None
     notes = result.get("notes") if isinstance(result, dict) else None
 
     out: dict = {}
-    if isinstance(corrected, dict) and corrected:
-        out["_plan_draft"] = corrected
     if isinstance(notes, str) and notes.strip():
         out["_safety_notes"] = notes.strip()
     return out
