@@ -323,9 +323,9 @@ async def search_research(state: CalmingPlanState) -> dict:
                 continue
             seen_keys.add(key)
             deduped.append(p)
-            if len(deduped) >= 18:
+            if len(deduped) >= 10:
                 break
-        if len(deduped) >= 18:
+        if len(deduped) >= 10:
             break
 
     return {"_research": deduped}
@@ -369,10 +369,12 @@ def _build_plan_prompt(state: CalmingPlanState) -> str:
         allergy_lines.append(f"- (free-text from profile) {member['allergies_text']}")
     allergies_block = "\n".join(allergy_lines) or "(no allergies recorded — still apply standard pediatric caution)"
 
+    # Cap to top-12 most severe issues to keep prompt + output within DeepSeek's
+    # 8192-token output ceiling. Severity ordering already applied in load_context.
     issues_block = "\n".join(
         f"- [{(i.get('severity') or '').upper()}] {i.get('title')} ({i.get('category')}): "
         f"{(i.get('description') or '')[:180]}"
-        for i in issues
+        for i in issues[:12]
     ) or "(no issues recorded)"
 
     characteristics_block = "\n".join(
@@ -507,33 +509,36 @@ def _build_plan_prompt(state: CalmingPlanState) -> str:
     )
 
 
+_TRUNCATION_HINTS = ("Unterminated", "Expecting value", "Invalid \\escape", "delimiter")
+
+
 async def generate_plan(state: CalmingPlanState) -> dict:
     if state.get("error"):
         return {}
     prompt = _build_plan_prompt(state)
-    # First attempt at 8192 (max for deepseek-chat). On JSONDecodeError caused by
-    # truncation, retry once with a brevity instruction so the model targets a
-    # tighter envelope rather than getting cut off again.
+    brevity_addendum = (
+        "\n\n## Brevity (HARD)\nKeep every rationale/cautions/notes/why string under 140 characters. "
+        "Limit lists strictly: morning_routine<=5, evening_wind_down<=5, supplements<=4, "
+        "food.encourage<=5, food.avoid_or_reduce<=5, food.teas<=3, movement<=3, "
+        "sensory_and_environment<=4, weekly_check_ins<=3, red_flags<=4. "
+        "Output budget is tight — favor short, high-signal lines over completeness."
+    )
+
+    async def _attempt(p: str, *, temp: float) -> dict:
+        return await _deepseek_json(p, max_tokens=8192, temperature=temp)
+
     try:
-        plan = await _deepseek_json(prompt, max_tokens=8192, temperature=0.4)
-        return {"_plan_draft": plan}
-    except json.JSONDecodeError as exc:
-        try:
-            tight = (
-                prompt
-                + "\n\n## Brevity\nThe previous attempt was truncated. Keep every "
-                "rationale, cautions, and notes string under 180 characters. "
-                "Limit lists to: morning_routine 5, evening_wind_down 5, "
-                "supplements 4, food_and_drinks.encourage 5, food_and_drinks.avoid_or_reduce 5, "
-                "food_and_drinks.teas 3, movement 3, sensory_and_environment 4, "
-                "weekly_check_ins 3, red_flags 4."
-            )
-            plan = await _deepseek_json(tight, max_tokens=8192, temperature=0.3)
-            return {"_plan_draft": plan}
-        except Exception as exc2:
-            return {"error": f"generate_plan failed (retry): {exc2}; original: {exc}"}
+        return {"_plan_draft": await _attempt(prompt, temp=0.4)}
     except Exception as exc:
-        return {"error": f"generate_plan failed: {exc}"}
+        msg = str(exc)
+        truncated = any(h in msg for h in _TRUNCATION_HINTS)
+        if not truncated:
+            return {"error": f"generate_plan failed: {exc}"}
+        # Truncation retry — re-issue with explicit brevity instruction.
+        try:
+            return {"_plan_draft": await _attempt(prompt + brevity_addendum, temp=0.3)}
+        except Exception as exc2:
+            return {"error": f"generate_plan failed after brevity retry: {exc2}; original: {exc}"}
 
 
 # ---------------------------------------------------------------------------
