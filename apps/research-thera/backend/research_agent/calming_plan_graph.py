@@ -371,13 +371,13 @@ def _build_plan_prompt(state: CalmingPlanState) -> str:
 
     issues_block = "\n".join(
         f"- [{(i.get('severity') or '').upper()}] {i.get('title')} ({i.get('category')}): "
-        f"{(i.get('description') or '')[:240]}"
+        f"{(i.get('description') or '')[:180]}"
         for i in issues
     ) or "(no issues recorded)"
 
     characteristics_block = "\n".join(
         f"- [{(c.get('risk_tier') or 'NONE').upper()}] {c.get('title')} ({c.get('category')}): "
-        f"{(c.get('description') or '')[:240]}"
+        f"{(c.get('description') or '')[:180]}"
         + (f" | impairment: {c['impairment_domains']}" if c.get('impairment_domains') else "")
         for c in characteristics
     ) or "(no characteristics recorded)"
@@ -404,7 +404,7 @@ def _build_plan_prompt(state: CalmingPlanState) -> str:
             f"[{idx}] {p.get('title', 'Untitled')} ({p.get('year', '?')})",
             f"  Authors: {', '.join(p.get('authors', []) or [])[:200]}",
         ]
-        abstract = (p.get("abstract") or "")[:500]
+        abstract = (p.get("abstract") or "")[:280]
         if abstract:
             line.append(f"  Abstract: {abstract}")
         if p.get("doi"):
@@ -510,10 +510,28 @@ def _build_plan_prompt(state: CalmingPlanState) -> str:
 async def generate_plan(state: CalmingPlanState) -> dict:
     if state.get("error"):
         return {}
+    prompt = _build_plan_prompt(state)
+    # First attempt at 8192 (max for deepseek-chat). On JSONDecodeError caused by
+    # truncation, retry once with a brevity instruction so the model targets a
+    # tighter envelope rather than getting cut off again.
     try:
-        prompt = _build_plan_prompt(state)
-        plan = await _deepseek_json(prompt, max_tokens=6000, temperature=0.4)
+        plan = await _deepseek_json(prompt, max_tokens=8192, temperature=0.4)
         return {"_plan_draft": plan}
+    except json.JSONDecodeError as exc:
+        try:
+            tight = (
+                prompt
+                + "\n\n## Brevity\nThe previous attempt was truncated. Keep every "
+                "rationale, cautions, and notes string under 180 characters. "
+                "Limit lists to: morning_routine 5, evening_wind_down 5, "
+                "supplements 4, food_and_drinks.encourage 5, food_and_drinks.avoid_or_reduce 5, "
+                "food_and_drinks.teas 3, movement 3, sensory_and_environment 4, "
+                "weekly_check_ins 3, red_flags 4."
+            )
+            plan = await _deepseek_json(tight, max_tokens=8192, temperature=0.3)
+            return {"_plan_draft": plan}
+        except Exception as exc2:
+            return {"error": f"generate_plan failed (retry): {exc2}; original: {exc}"}
     except Exception as exc:
         return {"error": f"generate_plan failed: {exc}"}
 
