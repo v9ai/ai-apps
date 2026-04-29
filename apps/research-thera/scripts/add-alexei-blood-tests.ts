@@ -76,6 +76,7 @@ async function uploadAndInsert(familyMemberId: number, filename: string) {
     key,
     body: bytes,
     contentType: "image/jpeg",
+    bucket: "research-thera",
   });
   console.log(`  r2: uploaded ${key} (${result.sizeBytes} bytes)`);
 
