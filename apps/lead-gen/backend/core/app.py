@@ -141,6 +141,16 @@ def _build_optional_graphs(checkpointer: Any) -> dict[str, Any]:
         ("company_cleanup", "leadgen_agent.company_cleanup_graph", "build_graph"),
         ("score_recruiter_fit", "leadgen_agent.score_recruiter_fit_graph", "build_graph"),
         ("classify_recruitment", "leadgen_agent.classify_recruitment_graph", "build_graph"),
+        (
+            "classify_recruitment_bulk",
+            "leadgen_agent.classify_recruitment_bulk_graph",
+            "build_graph",
+        ),
+        (
+            "apply_recruitment_verdicts",
+            "leadgen_agent.apply_recruitment_verdicts_graph",
+            "build_graph",
+        ),
         ("classify_ai_intent", "leadgen_agent.classify_ai_intent_graph", "build_graph"),
     ]
     for assistant_id, module_path, attr in optional_specs:
