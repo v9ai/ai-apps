@@ -51,6 +51,7 @@ export function Header() {
 
   const renderLeafButton = (link: NavLeaf, indent = false) => {
     const isActive = isPathActive(link.href);
+    const Icon = link.icon;
     return (
       <Button
         key={link.href}
@@ -69,7 +70,16 @@ export function Header() {
           }),
         }}
       >
-        <Link href={link.href}>{link.label}</Link>
+        <Link href={link.href}>
+          {Icon ? (
+            <Flex as="span" align="center" gap="2">
+              <Icon width="14" height="14" />
+              <span>{link.label}</span>
+            </Flex>
+          ) : (
+            link.label
+          )}
+        </Link>
       </Button>
     );
   };
@@ -243,13 +253,21 @@ export function Header() {
                   {NAV_ITEMS.map((item) => {
                     if (item.kind === "link") {
                       const isActive = isPathActive(item.href);
+                      const Icon = item.icon;
                       return (
                         <DropdownMenu.Item
                           key={item.href}
                           color={isActive ? "indigo" : undefined}
                           onClick={() => router.push(item.href)}
                         >
-                          {item.label}
+                          {Icon ? (
+                            <Flex align="center" gap="2">
+                              <Icon width="14" height="14" />
+                              {item.label}
+                            </Flex>
+                          ) : (
+                            item.label
+                          )}
                         </DropdownMenu.Item>
                       );
                     }

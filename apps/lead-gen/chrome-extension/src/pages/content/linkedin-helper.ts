@@ -15,6 +15,16 @@ function clickDismiss(el: HTMLElement) {
   el.click();
 }
 
+// Strip LinkedIn's "Verified job" badge text that bleeds into scraped
+// titles via textContent / aria-label fallbacks. Anchored to end-of-string
+// so legitimate title words like "Verified Voice ..." are preserved.
+function stripVerifiedBadge(s: string): string {
+  return s
+    .replace(/\s*\(\s*Verified(?:\s+job(?:\s+posting)?)?\s*\)\s*$/i, "")
+    .replace(/\s+(?:with\s+verification|Verified\s+job(?:\s+posting)?|Verified)\s*$/i, "")
+    .trim();
+}
+
 function findDismissButton(card: Element): HTMLButtonElement | null {
   // Primary: aria-label based (most reliable)
   const byLabel = card.querySelector(
@@ -66,7 +76,7 @@ function getCardLocationText(card: Element): string {
   const titleEl = card.querySelector(
     ".job-card-list__title--link, .base-search-card__title",
   );
-  if (titleEl) parts.push(titleEl.textContent?.trim() || "");
+  if (titleEl) parts.push(stripVerifiedBadge(titleEl.textContent?.trim() || ""));
 
   return parts.join(" ");
 }
@@ -2219,7 +2229,7 @@ function extractOpportunityFromDOM(): {
         if (/^application status$/i.test(txt)) continue;
         if (/^about the (job|company)$/i.test(txt)) continue;
         if (outerA.contains(p)) continue;
-        title = txt;
+        title = stripVerifiedBadge(txt);
         break;
       }
       cursor = cursor.nextElementSibling ?? cursor.parentElement;
@@ -2233,7 +2243,7 @@ function extractOpportunityFromDOM(): {
     if (companyName && t.endsWith(` - ${companyName}`)) {
       t = t.slice(0, -(` - ${companyName}`).length).trim();
     }
-    title = t;
+    title = stripVerifiedBadge(t);
   }
   if (!title && jobId) title = `LinkedIn job ${jobId}`;
 
@@ -2846,13 +2856,14 @@ function extractLinkedInJobData() {
       return;
     }
 
-    const title =
+    const rawTitle =
       titleAnchor
         .querySelector("span[aria-hidden='true']")
         ?.textContent?.trim() ||
       titleAnchor.textContent?.trim() ||
       titleAnchor.getAttribute("aria-label")?.trim() ||
       "";
+    const title = stripVerifiedBadge(rawTitle);
     if (!title) {
       skippedNoTitle++;
       return;

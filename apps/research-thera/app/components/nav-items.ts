@@ -1,4 +1,11 @@
-export type NavLeaf = { href: string; label: string };
+import type { ComponentType, SVGProps } from "react";
+import { HomeIcon } from "@radix-ui/react-icons";
+
+export type NavIcon = ComponentType<
+  SVGProps<SVGSVGElement> & { width?: string | number; height?: string | number }
+>;
+
+export type NavLeaf = { href: string; label: string; icon?: NavIcon };
 
 export type NavItem =
   | ({ kind: "link" } & NavLeaf)
@@ -6,6 +13,7 @@ export type NavItem =
 
 export const NAV_ITEMS: NavItem[] = [
   { kind: "link", href: "/family", label: "Family" },
+  { kind: "link", href: "/house", label: "House", icon: HomeIcon },
   { kind: "link", href: "/dashboard", label: "Dashboard" },
   { kind: "link", href: "/chat", label: "Chat" },
   { kind: "link", href: "/search", label: "Search" },
