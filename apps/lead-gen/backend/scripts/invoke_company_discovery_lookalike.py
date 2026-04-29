@@ -286,6 +286,42 @@ async def _run_graph(payload: dict) -> dict:
     return await graph.ainvoke(payload)
 
 
+_CF_DEFAULT_URL = "https://lead-gen-langgraph.eeeew.workers.dev"
+
+
+def _run_remote(payload: dict, base_url: str) -> dict:
+    import urllib.error
+    import urllib.request
+
+    body = json.dumps({
+        "assistant_id": "company_discovery",
+        "input": payload,
+    }).encode("utf-8")
+    headers = {
+        "content-type": "application/json",
+        "user-agent": "leadgen-lookalike-script/1.0 (+python-urllib)",
+        "accept": "application/json",
+    }
+    token = os.environ.get("LANGGRAPH_AUTH_TOKEN", "").strip()
+    if token:
+        headers["authorization"] = f"Bearer {token}"
+
+    url = base_url.rstrip("/") + "/runs/wait"
+    req = urllib.request.Request(url, data=body, headers=headers, method="POST")
+    try:
+        with urllib.request.urlopen(req, timeout=180) as resp:
+            raw = resp.read().decode("utf-8")
+    except urllib.error.HTTPError as e:
+        return {"_error": f"HTTP {e.code}: {e.read().decode('utf-8', errors='replace')[:500]}"}
+    except urllib.error.URLError as e:
+        return {"_error": f"URLError: {e.reason}"}
+
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError:
+        return {"_error": f"non-JSON response: {raw[:500]}"}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Discover companies similar to an existing companies row.",
@@ -294,6 +330,14 @@ def main() -> int:
     parser.add_argument("--dry-run", action="store_true", help="Build payload, print, do NOT invoke graph")
     parser.add_argument("--crawl", action="store_true", help="Augment keywords via crawl4ai over the source site")
     parser.add_argument("--json", action="store_true", help="Emit full graph result as JSON")
+    parser.add_argument(
+        "--cf",
+        nargs="?",
+        const=_CF_DEFAULT_URL,
+        default=None,
+        metavar="URL",
+        help=f"POST to remote LangGraph worker (default {_CF_DEFAULT_URL})",
+    )
     args = parser.parse_args()
 
     company = _fetch_company(args.key)
@@ -321,7 +365,11 @@ def main() -> int:
         print(json.dumps(payload, indent=2, ensure_ascii=False))
         return 0
 
-    result = asyncio.run(_run_graph(payload))
+    if args.cf:
+        print(f"invoking remote: {args.cf}")
+        result = _run_remote(payload, args.cf)
+    else:
+        result = asyncio.run(_run_graph(payload))
 
     if args.json:
         print(json.dumps(result, indent=2, ensure_ascii=False, default=str))
