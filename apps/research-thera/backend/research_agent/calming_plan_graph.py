@@ -735,7 +735,21 @@ def _build_synthesize_prompt(state: CalmingPlanState) -> str:
     age = _resolve_age(member.get("age_years"), member.get("date_of_birth"))
     name = member.get("first_name") or "the family member"
 
-    bundles_block = json.dumps(bundles, ensure_ascii=False)[:12000]
+    # Pass a COMPACT summary of bundles to the synthesizer — just enough for
+    # cross-bundle dedup and stepped-tier reasoning. Full bundles are spliced
+    # back into the plan AFTER the LLM call (saves ~3000-5000 output tokens).
+    bundles_summary_lines = []
+    for b in bundles:
+        cname = b.get("cluster_name", "")
+        axis = b.get("axis", "")
+        summary = (b.get("summary") or "")[:160]
+        intervention_titles = "; ".join(
+            (iv.get("title") or "") for iv in (b.get("interventions") or [])[:6]
+        )
+        bundles_summary_lines.append(
+            f"- {cname} (axis: {axis}): {summary} | interventions: {intervention_titles}"
+        )
+    bundles_block = "\n".join(bundles_summary_lines) or "(no bundles)"
     clusters_block = "\n".join(
         f"- {c.get('name')} (axis: {c.get('axis')}): {(c.get('hypothesized_mechanism') or '')[:160]}"
         for c in clusters
@@ -798,8 +812,7 @@ def _build_synthesize_prompt(state: CalmingPlanState) -> str:
   "sensory_and_environment": [{"tip": "string", "why": "string"}],
   "weekly_check_ins": [{"question": "string", "look_for": "string"}],
   "red_flags": [{"sign": "string", "action": "string"}],
-  "issue_coverage": [{"issue_title": "string", "addressed_by": ["section name", "..."]}],
-  "cluster_bundles": "VERBATIM the bundles array provided in ## Cluster bundles below — do NOT modify them, just include them at this key"
+  "issue_coverage": [{"issue_title": "string", "addressed_by": ["section name or cluster name", "..."]}]
 }"""
 
     lang_instruction = (
@@ -830,13 +843,13 @@ def _build_synthesize_prompt(state: CalmingPlanState) -> str:
             "## Cluster identification (axes)",
             clusters_block or "(none)",
             "",
-            "## Cluster bundles (echo VERBATIM at key `cluster_bundles`)",
+            "## Cluster bundles (compact summary — full bundles will be re-attached after generation, do NOT echo them)",
             bundles_block,
             "",
             f"## Source paper count\n{sources_count}",
             "",
             "## Hard rules",
-            "- Echo the bundles VERBATIM under `cluster_bundles`. Do NOT rewrite, summarise, or translate.",
+            "- DO NOT include cluster_bundles in your output — they will be re-attached programmatically.",
             "- Stepped tiers: Tier 1 = lowest-friction lifestyle/sensory items. Tier 2 = nutrition+supplements. Tier 3 = escalation flags + when to consult.",
             "- Morning/evening/movement/food sections combine across bundles — keep each list <= 5 items.",
             "- Supplements section deduplicates supplements that appear in multiple bundles; <= 5 entries.",
@@ -869,8 +882,9 @@ async def synthesize_plan(state: CalmingPlanState) -> dict:
 
     try:
         plan = await _llm_with_brevity_retry(prompt, brevity, temp=0.3, max_tokens=8192)
-        # Defensive: if the model dropped cluster_bundles, splice them in.
-        if isinstance(plan, dict) and not plan.get("cluster_bundles"):
+        # Always splice in the full per-cluster bundles AFTER LLM call. We don't
+        # ask the model to echo them — saves 3000-5000 output tokens.
+        if isinstance(plan, dict):
             plan["cluster_bundles"] = state.get("_cluster_bundles") or []
         return {"_plan_draft": plan}
     except Exception as exc:
