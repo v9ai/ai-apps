@@ -438,8 +438,12 @@ def _build_plan_prompt(state: CalmingPlanState) -> str:
       "timing": "string",
       "evidence_level": "strong | moderate | preliminary",
       "cautions": "string",
+      "respects_allergies": "string",
       "cited_paper_indexes": [1, 2]
     }
+  ],
+  "issue_coverage": [
+    {"issue_title": "string", "addressed_by": ["section name", "..."]}
   ],
   "sensory_and_environment": [{"tip": "string", "why": "string"}],
   "weekly_check_ins": [{"question": "string", "look_for": "string"}],
@@ -451,13 +455,20 @@ def _build_plan_prompt(state: CalmingPlanState) -> str:
             "You are a pediatric integrative-medicine and behavior-support expert. "
             "Generate a SAFE, plant-based, non-pharmacologic calming and behavior plan "
             "for the family member below, grounded in the cited research and the deep "
-            "analysis findings.",
+            "analysis findings. The plan must address every issue and characteristic "
+            "listed below — do not silently drop categories.",
             "",
             "## Family member",
             *member_block,
             "",
-            "## Known issues",
+            "## ALLERGIES (HARD CONSTRAINTS — must respect)",
+            allergies_block,
+            "",
+            "## All known issues",
             issues_block,
+            "",
+            "## Family-member characteristics",
+            characteristics_block,
             "",
             "## Deep analysis (if any)",
             deep_block or "(none)",
@@ -468,6 +479,18 @@ def _build_plan_prompt(state: CalmingPlanState) -> str:
             "## Hard rules",
             "- The member is NOT on any medication right now. Do not recommend stopping or starting prescription drugs.",
             "- Recommend ONLY non-prescription, plant-based, nutritional, lifestyle, or sensory interventions.",
+            "- ALLERGIES OVERRIDE EVERYTHING. Do not recommend any food, herb, supplement, or scent that the member is allergic to or that cross-reacts with their allergies. Apply these cross-reactivity rules:",
+            "  • Ragweed / Asteraceae / Compositae allergy → exclude chamomile, echinacea, calendula, marigold-derived ingredients, feverfew.",
+            "  • Mint family (Lamiaceae) allergy → exclude lemon balm (Melissa officinalis), peppermint, spearmint, lavender oil ingestion.",
+            "  • Birch / oral-allergy syndrome → exclude raw apples, peaches, hazelnuts, almonds; cooked is usually OK.",
+            "  • Latex-fruit syndrome → exclude bananas, avocado, kiwi, chestnut.",
+            "  • Salicylate sensitivity → reduce berries, tomatoes, citrus, honey; flag aspirin-related warnings.",
+            "  • Tree-nut / peanut allergy → exclude almond milk, walnut/flax oils labeled with cross-contact, peanut butter.",
+            "  • Dairy → exclude warm-milk rituals; suggest oat or rice milk alternatives.",
+            "  • Egg / soy → exclude as supplement carriers (gelcaps, lecithin) when severity is moderate or severe.",
+            "  • Pollen-food syndrome generally → prefer cooked over raw plant ingredients.",
+            "- Each supplement entry MUST include a `respects_allergies` field stating which listed allergies you cross-checked it against (or 'none recorded' if no allergies).",
+            "- Address every issue category from ## All known issues with at least one corresponding intervention; if an issue has no matching intervention, name it in the headline so the parent knows it's open.",
             "- Every supplement must include an age-appropriate typical dose and a cautions string.",
             "- Tag each supplement with cited_paper_indexes drawn from the numbered ## Research evidence list above. If no listed paper supports it, omit the supplement.",
             "- Match all dosing and timing to the member's actual age band; never copy adult doses to a child.",
@@ -504,24 +527,56 @@ async def safety_review(state: CalmingPlanState) -> dict:
     member = state.get("_member") or {}
     age = _resolve_age(member.get("age_years"), member.get("date_of_birth"))
     issues = state.get("_issues") or []
+    allergies = state.get("_allergies") or []
+    characteristics = state.get("_characteristics") or []
     language = state.get("language", "ro")
     plan = state["_plan_draft"]
 
     issues_summary = "; ".join(f"{i.get('title')} ({i.get('category')})" for i in issues) or "none"
 
+    allergy_summary_lines = [
+        f"- [{(a.get('severity') or '').upper()}] {a.get('kind') or 'allergy'}: {a.get('name', '')}"
+        + (f" — {a['notes']}" if a.get("notes") else "")
+        for a in allergies
+    ]
+    if member.get("allergies_text"):
+        allergy_summary_lines.append(f"- (free-text) {member['allergies_text']}")
+    allergies_summary = "\n".join(allergy_summary_lines) or "none recorded"
+
+    characteristics_summary = "; ".join(
+        f"{c.get('title')} ({c.get('risk_tier') or 'NONE'})" for c in characteristics
+    ) or "none"
+
     prompt = "\n".join(
         [
             "You are a pediatric safety reviewer. The draft plan below was generated for a "
-            f"{age if age is not None else 'unspecified-age'}-year-old who is currently on NO medications. "
-            f"Known issues: {issues_summary}.",
+            f"{age if age is not None else 'unspecified-age'}-year-old who is currently on NO medications.",
             "",
-            "Audit the plan for: age-inappropriate doses, sedative herbs misused for daytime, "
-            "interaction risks between listed supplements, allergens implied by 'food_and_drinks', "
-            "and any recommendation that crosses into prescription territory.",
+            "## Allergies (HARD)",
+            allergies_summary,
+            "",
+            f"## Issues\n{issues_summary}",
+            "",
+            f"## Characteristics\n{characteristics_summary}",
+            "",
+            "Audit the plan for, in this priority order:",
+            "1. ALLERGY VIOLATIONS — any food, tea, herb, supplement excipient, or scent that conflicts "
+            "with the listed allergies (apply cross-reactivity: ragweed↔chamomile, mint family↔lemon balm/lavender ingestion, "
+            "birch↔raw fruit, latex↔banana/avocado/kiwi, dairy in warm-milk rituals, tree-nut in almond milk, etc.). "
+            "Remove violators; substitute when an alternative exists.",
+            "2. Age-inappropriate doses or adult-only herbs.",
+            "3. Sedative herbs misused for daytime.",
+            "4. Interaction risks between listed supplements.",
+            "5. Coverage gaps: every issue category should have at least one mapped intervention. "
+            "If a gap remains, list it in `notes`.",
+            "6. Any recommendation that crosses into prescription territory.",
             "",
             "Return a JSON object with exactly two keys:",
-            '  "plan": <the corrected plan, same shape as the draft, with risky items removed or replaced and dose strings tightened>,',
-            '  "notes": "<short paragraph (<=200 words) describing what you changed and why; in '
+            '  "plan": <the corrected plan, same shape as the draft, with risky items removed or replaced, '
+            'each supplement entry updated with a `respects_allergies` string explaining the cross-check, '
+            "and dose strings tightened>,",
+            '  "notes": "<short paragraph (<=250 words) describing what you changed and why, including any '
+            "uncovered issues; in "
             + ("Romanian" if language == "ro" else "English")
             + '>"',
             "",
