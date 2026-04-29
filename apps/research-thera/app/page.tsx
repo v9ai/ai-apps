@@ -49,19 +49,23 @@ export default function Home() {
           <Badge size="2" variant="soft" color="indigo">
             Personal Health &middot; Research-Backed &middot; Private
           </Badge>
-          <Heading size={{ initial: "7", md: "9" }} align="center" style={{ maxWidth: "800px" }}>
-            Your Personal Health & Research Companion
-          </Heading>
-          <Text
-            size="4"
-            align="center"
-            color="gray"
-            style={{ maxWidth: "640px" }}
-          >
-            Track conditions, medications, and blood tests alongside
-            therapeutic goals and notes — connected to peer-reviewed research
-            and an AI health chat that knows your records.
-          </Text>
+          {!isPending && !user && (
+            <>
+              <Heading size={{ initial: "7", md: "9" }} align="center" style={{ maxWidth: "800px" }}>
+                Your Personal Health & Research Companion
+              </Heading>
+              <Text
+                size="4"
+                align="center"
+                color="gray"
+                style={{ maxWidth: "640px" }}
+              >
+                Track conditions, medications, and blood tests alongside
+                therapeutic goals and notes — connected to peer-reviewed research
+                and an AI health chat that knows your records.
+              </Text>
+            </>
+          )}
 
           {user && (
             <Text size="3" color="indigo" weight="medium">
