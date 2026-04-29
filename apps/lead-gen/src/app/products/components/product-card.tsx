@@ -426,12 +426,14 @@ export function ProductCard({
           mt: "3",
           minHeight: "2.625rem",
           lineHeight: "1.5",
-          display: "-webkit-box",
-          WebkitLineClamp: 2,
-          WebkitBoxOrient: "vertical",
           overflow: "hidden",
           color: description ? "ui.secondary" : "gray.10",
         })}
+        style={{
+          display: "-webkit-box",
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: "vertical" as const,
+        }}
       >
         {description || "No description yet — run ICP to enrich."}
       </Text>
@@ -475,7 +477,7 @@ export function ProductCard({
       {/* Non-admin / mobile inline actions */}
       {!isAdmin && (
         <Flex gap="2" mt="4" wrap="wrap">
-          {p.icpAnalysis && (
+          {!!p.icpAnalysis && (
             <Link
               href={`/products/${p.slug}/icp`}
               className={button({ variant: "outline", size: "sm" })}
