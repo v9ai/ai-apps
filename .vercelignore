@@ -60,31 +60,3 @@ __pycache__
 *.egg-info
 .langgraph_api
 .wrangler
-
-# --- auto-appended by scripts/deploy-vercel.ts for target=research-thera ---
-# Other apps not depended on by the deploy target
-apps/bricks
-apps/hoa
-apps/knowledge
-apps/law-adversarial
-apps/lead-gen
-apps/movies
-apps/nomadically.work
-apps/real-estate
-apps/travel
-apps/vadim.blog
-# Workspace packages not depended on by the deploy target
-packages/auth
-packages/company-intel
-packages/config-eslint
-packages/config-typescript
-packages/db-backup
-packages/deepseek
-packages/jest-presets
-packages/llm-router
-packages/logger
-packages/og
-packages/qwen
-packages/research
-packages/resume
-packages/ui
