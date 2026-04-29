@@ -229,10 +229,10 @@ app = FastAPI(title="research-thera LangGraph", lifespan=lifespan)
 app.add_middleware(BearerTokenMiddleware)
 
 # ── Healthcare routers (mounted from agentic-healthcare merge 2026-04-27) ──
-# Configures LlamaIndex on import; lazy because of FastEmbed model download.
+# `configure_llamaindex()` is called lazily inside healthcare routes (on first
+# use), not at startup — instantiating FastEmbed at boot used to push past the
+# CF Container port-readiness timeout for this 3+ GB image.
 try:
-    from healthcare.llm_settings import configure_llamaindex as _configure_llamaindex
-    _configure_llamaindex()
     from healthcare.routes.upload import router as _healthcare_upload_router
     from healthcare.routes.embed import router as _healthcare_embed_router
     from healthcare.routes.search import router as _healthcare_search_router
