@@ -17,12 +17,20 @@ type Product {
   domain: String
   slug: String
   description: String
+  highlights: JSON
+  icpAnalysis: JSON
+  icpAnalyzedAt: String
   pricingAnalysis: JSON
   pricingAnalyzedAt: String
   gtmAnalysis: JSON
   gtmAnalyzedAt: String
   intelReport: JSON
   intelReportAt: String
+  positioningAnalysis: JSON
+  publishedAt: DateTime
+  createdBy: String
+  createdAt: String!
+  updatedAt: String!
 }
 
 type IntelRun {

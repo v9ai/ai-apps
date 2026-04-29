@@ -75,17 +75,25 @@ export type MutationRunFullProductIntelAsyncArgs = {
 
 export type Product = {
   __typename?: 'Product';
+  createdAt: Scalars['String']['output'];
+  createdBy?: Maybe<Scalars['String']['output']>;
   description?: Maybe<Scalars['String']['output']>;
   domain?: Maybe<Scalars['String']['output']>;
   gtmAnalysis?: Maybe<Scalars['JSON']['output']>;
   gtmAnalyzedAt?: Maybe<Scalars['String']['output']>;
+  highlights?: Maybe<Scalars['JSON']['output']>;
+  icpAnalysis?: Maybe<Scalars['JSON']['output']>;
+  icpAnalyzedAt?: Maybe<Scalars['String']['output']>;
   id: Scalars['Int']['output'];
   intelReport?: Maybe<Scalars['JSON']['output']>;
   intelReportAt?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
+  positioningAnalysis?: Maybe<Scalars['JSON']['output']>;
   pricingAnalysis?: Maybe<Scalars['JSON']['output']>;
   pricingAnalyzedAt?: Maybe<Scalars['String']['output']>;
+  publishedAt?: Maybe<Scalars['DateTime']['output']>;
   slug?: Maybe<Scalars['String']['output']>;
+  updatedAt: Scalars['String']['output'];
   url: Scalars['String']['output'];
 };
 
@@ -260,17 +268,25 @@ export type MutationResolvers<ContextType = GatewayContext, ParentType extends R
 }>;
 
 export type ProductResolvers<ContextType = GatewayContext, ParentType extends ResolversParentTypes['Product'] = ResolversParentTypes['Product']> = ResolversObject<{
+  createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  createdBy?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   domain?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   gtmAnalysis?: Resolver<Maybe<ResolversTypes['JSON']>, ParentType, ContextType>;
   gtmAnalyzedAt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  highlights?: Resolver<Maybe<ResolversTypes['JSON']>, ParentType, ContextType>;
+  icpAnalysis?: Resolver<Maybe<ResolversTypes['JSON']>, ParentType, ContextType>;
+  icpAnalyzedAt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   intelReport?: Resolver<Maybe<ResolversTypes['JSON']>, ParentType, ContextType>;
   intelReportAt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  positioningAnalysis?: Resolver<Maybe<ResolversTypes['JSON']>, ParentType, ContextType>;
   pricingAnalysis?: Resolver<Maybe<ResolversTypes['JSON']>, ParentType, ContextType>;
   pricingAnalyzedAt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  publishedAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   slug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   url?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 }>;
 

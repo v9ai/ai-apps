@@ -248,12 +248,20 @@ function mapProduct(p: ProductRow) {
     domain: p.domain,
     slug: p.slug,
     description: p.description,
+    highlights: p.highlights,
+    icpAnalysis: p.icp_analysis,
+    icpAnalyzedAt: p.icp_analyzed_at,
     pricingAnalysis: p.pricing_analysis,
     pricingAnalyzedAt: p.pricing_analyzed_at,
     gtmAnalysis: p.gtm_analysis,
     gtmAnalyzedAt: p.gtm_analyzed_at,
     intelReport: p.intel_report,
     intelReportAt: p.intel_report_at,
+    positioningAnalysis: p.positioning_analysis,
+    publishedAt: p.published_at ? p.published_at.toISOString() : null,
+    createdBy: p.created_by,
+    createdAt: p.created_at,
+    updatedAt: p.updated_at,
   };
 }
 

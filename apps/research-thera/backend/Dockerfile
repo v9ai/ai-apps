@@ -36,12 +36,16 @@ COPY --from=builder /root/.local /root/.local
 
 WORKDIR /app
 
-# Pre-download the sentence-transformers models used by research_client so
-# cold-start requests don't pay the model download cost.
+# Pre-download the sentence-transformers and FastEmbed models used by
+# research_client / healthcare so cold-start requests don't pay the model
+# download cost (CF Container port-readiness times out before bge-large
+# can download at boot).
 RUN python - <<'PY'
 from sentence_transformers import SentenceTransformer, CrossEncoder
 SentenceTransformer("all-MiniLM-L6-v2")
 CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
+from fastembed import TextEmbedding
+TextEmbedding(model_name="BAAI/bge-large-en-v1.5")
 PY
 
 # Code COPY block — kept last so source edits don't invalidate the

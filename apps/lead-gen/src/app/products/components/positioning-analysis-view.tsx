@@ -3,11 +3,9 @@
 import { Badge, Box, Container, Flex, Heading, Separator, Text } from "@radix-ui/themes";
 import { css } from "styled-system/css";
 import { useProductBySlugQuery } from "@/__generated__/hooks";
-import { useAuth } from "@/lib/auth-hooks";
 import {
   LoadingShell,
   ErrorShell,
-  SignInGate,
   ProductNotFound,
   SubpageBreadcrumb,
   SubpageHero,
@@ -309,16 +307,11 @@ export function PositioningAnalysisView({ data }: { data: PositioningAnalysis })
 }
 
 export function ProductPositioningPage({ slug }: { slug: string }) {
-  const { user, loading: authLoading } = useAuth();
-
   const { data, loading, error } = useProductBySlugQuery({
     variables: { slug },
     fetchPolicy: "cache-and-network",
-    skip: !user,
   });
 
-  if (authLoading) return <LoadingShell />;
-  if (!user) return <SignInGate />;
   if (loading && !data) return <LoadingShell />;
   if (error) return <ErrorShell message={error.message} />;
 

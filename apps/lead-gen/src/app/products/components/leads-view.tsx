@@ -23,10 +23,8 @@ import {
   useProductBySlugQuery,
   useProductLeadsQuery,
 } from "@/__generated__/hooks";
-import { useAuth } from "@/lib/auth-hooks";
 import {
   LoadingShell,
-  SignInGate,
   ProductNotFound,
   SubpageBreadcrumb,
   SubpageHero,
@@ -73,13 +71,11 @@ function extractSignalHighlights(signals: unknown): string[] {
 }
 
 export function ProductLeadsPage({ slug }: { slug: string }) {
-  const { user, loading: authLoading } = useAuth();
   const [tier, setTier] = useState<TierFilter>("all");
 
   const { data: productData, loading: productLoading } = useProductBySlugQuery({
     variables: { slug },
     fetchPolicy: "cache-and-network",
-    skip: !user,
   });
 
   const { data: leadsData, loading: leadsLoading, error } = useProductLeadsQuery({
@@ -90,15 +86,12 @@ export function ProductLeadsPage({ slug }: { slug: string }) {
       offset: 0,
     },
     fetchPolicy: "cache-and-network",
-    skip: !user,
   });
 
   const product = productData?.productBySlug;
   const conn = leadsData?.productLeads;
   const leads = useMemo(() => conn?.leads ?? [], [conn]);
 
-  if (authLoading) return <LoadingShell />;
-  if (!user) return <SignInGate message="Please sign in to view this product's leads." />;
   if (productLoading && !productData) return <LoadingShell />;
   if (!product) return <ProductNotFound slug={slug} />;
 
