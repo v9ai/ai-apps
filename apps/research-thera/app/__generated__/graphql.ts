@@ -43,6 +43,8 @@ export type AddAppointmentInput = {
 };
 
 export type AddConditionInput = {
+  diagnosingDoctorId?: InputMaybe<Scalars['ID']['input']>;
+  familyMemberId?: InputMaybe<Scalars['Int']['input']>;
   name: Scalars['String']['input'];
   notes?: InputMaybe<Scalars['String']['input']>;
 };
@@ -429,6 +431,8 @@ export type CognitiveScoresInput = {
 export type Condition = {
   __typename?: 'Condition';
   createdAt: Scalars['String']['output'];
+  diagnosingDoctor?: Maybe<Doctor>;
+  diagnosingDoctorId?: Maybe<Scalars['ID']['output']>;
   familyMember?: Maybe<FamilyMember>;
   familyMemberId?: Maybe<Scalars['Int']['output']>;
   id: Scalars['ID']['output'];

@@ -312,6 +312,7 @@ export type Condition = {
   id: string;
   userId: string;
   familyMemberId: number | null;
+  diagnosingDoctorId: string | null;
   name: string;
   notes: string | null;
   createdAt: string;
@@ -323,6 +324,7 @@ function toCondition(r: Record<string, unknown>): Condition {
     userId: r.user_id as string,
     familyMemberId:
       r.family_member_id == null ? null : Number(r.family_member_id),
+    diagnosingDoctorId: (r.diagnosing_doctor_id as string | null) ?? null,
     name: r.name as string,
     notes: (r.notes as string | null) ?? null,
     createdAt:
@@ -334,7 +336,7 @@ function toCondition(r: Record<string, unknown>): Condition {
 
 export async function listConditions(userId: string): Promise<Condition[]> {
   const rows = await neonSql`
-    SELECT id, user_id, family_member_id, name, notes, created_at
+    SELECT id, user_id, family_member_id, diagnosing_doctor_id, name, notes, created_at
     FROM conditions
     WHERE user_id = ${userId}
     ORDER BY created_at DESC
@@ -347,7 +349,7 @@ export async function getCondition(
   userId: string,
 ): Promise<Condition | null> {
   const rows = await neonSql`
-    SELECT id, user_id, family_member_id, name, notes, created_at
+    SELECT id, user_id, family_member_id, diagnosing_doctor_id, name, notes, created_at
     FROM conditions
     WHERE id = ${id} AND user_id = ${userId}
     LIMIT 1
@@ -359,11 +361,19 @@ export async function createCondition(params: {
   userId: string;
   name: string;
   notes: string | null;
+  familyMemberId?: number | null;
+  diagnosingDoctorId?: string | null;
 }): Promise<Condition> {
   const rows = await neonSql`
-    INSERT INTO conditions (user_id, name, notes)
-    VALUES (${params.userId}, ${params.name}, ${params.notes})
-    RETURNING id, user_id, name, notes, created_at
+    INSERT INTO conditions (user_id, family_member_id, diagnosing_doctor_id, name, notes)
+    VALUES (
+      ${params.userId},
+      ${params.familyMemberId ?? null},
+      ${params.diagnosingDoctorId ?? null},
+      ${params.name},
+      ${params.notes}
+    )
+    RETURNING id, user_id, family_member_id, diagnosing_doctor_id, name, notes, created_at
   `;
   return toCondition(rows[0]);
 }

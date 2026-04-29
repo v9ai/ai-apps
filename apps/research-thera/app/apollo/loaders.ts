@@ -77,9 +77,39 @@ function toGoal(row: Record<string, unknown>): GoalRow {
   };
 }
 
+export type DoctorRow = {
+  id: string;
+  userId: string;
+  name: string;
+  specialty: string | null;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  notes: string | null;
+  createdAt: string;
+};
+
+function toDoctor(row: Record<string, unknown>): DoctorRow {
+  return {
+    id: row.id as string,
+    userId: row.user_id as string,
+    name: row.name as string,
+    specialty: (row.specialty as string | null) ?? null,
+    phone: (row.phone as string | null) ?? null,
+    email: (row.email as string | null) ?? null,
+    address: (row.address as string | null) ?? null,
+    notes: (row.notes as string | null) ?? null,
+    createdAt:
+      row.created_at instanceof Date
+        ? (row.created_at as Date).toISOString()
+        : (row.created_at as string),
+  };
+}
+
 export type Loaders = {
   familyMember: DataLoader<number, FamilyMemberRow | null>;
   goal: DataLoader<number, GoalRow | null>;
+  doctor: DataLoader<string, DoctorRow | null>;
 };
 
 export function createLoaders(): Loaders {
@@ -102,6 +132,17 @@ export function createLoaders(): Loaders {
         `;
         const byId = new Map<number, GoalRow>();
         for (const r of rows) byId.set(r.id as number, toGoal(r));
+        return ids.map((id) => byId.get(id) ?? null);
+      },
+      { cache: true },
+    ),
+    doctor: new DataLoader<string, DoctorRow | null>(
+      async (ids) => {
+        const rows = await neonSql`
+          SELECT * FROM doctors WHERE id = ANY(${ids as unknown as string[]}::uuid[])
+        `;
+        const byId = new Map<string, DoctorRow>();
+        for (const r of rows) byId.set(r.id as string, toDoctor(r));
         return ids.map((id) => byId.get(id) ?? null);
       },
       { cache: true },

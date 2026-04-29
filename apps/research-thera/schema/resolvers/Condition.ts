@@ -6,4 +6,9 @@ export const Condition: ConditionResolvers = {
     const fm = await ctx.loaders.familyMember.load(parent.familyMemberId);
     return (fm as any) ?? null;
   },
+  diagnosingDoctor: async (parent, _args, ctx) => {
+    if (!parent.diagnosingDoctorId) return null;
+    const doc = await ctx.loaders.doctor.load(String(parent.diagnosingDoctorId));
+    return (doc as any) ?? null;
+  },
 };

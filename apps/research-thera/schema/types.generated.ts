@@ -47,6 +47,8 @@ export type AddAppointmentInput = {
 };
 
 export type AddConditionInput = {
+  diagnosingDoctorId?: InputMaybe<Scalars['ID']['input']>;
+  familyMemberId?: InputMaybe<Scalars['Int']['input']>;
   name: Scalars['String']['input'];
   notes?: InputMaybe<Scalars['String']['input']>;
 };
@@ -428,6 +430,8 @@ export type CognitiveScoresInput = {
 export type Condition = {
   __typename?: 'Condition';
   createdAt: Scalars['String']['output'];
+  diagnosingDoctor?: Maybe<Doctor>;
+  diagnosingDoctorId?: Maybe<Scalars['ID']['output']>;
   familyMember?: Maybe<FamilyMember>;
   familyMemberId?: Maybe<Scalars['Int']['output']>;
   id: Scalars['ID']['output'];
@@ -4979,6 +4983,8 @@ export type CognitiveCheckInResolvers<ContextType = GraphQLContext, ParentType e
 
 export type ConditionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Condition'] = ResolversParentTypes['Condition']> = {
   createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  diagnosingDoctor?: Resolver<Maybe<ResolversTypes['Doctor']>, ParentType, ContextType>;
+  diagnosingDoctorId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
   familyMember?: Resolver<Maybe<ResolversTypes['FamilyMember']>, ParentType, ContextType>;
   familyMemberId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;

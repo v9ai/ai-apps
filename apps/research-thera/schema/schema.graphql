@@ -2224,15 +2224,19 @@ type Condition {
   id: ID!
   userId: String!
   familyMemberId: Int
+  diagnosingDoctorId: ID
   name: String!
   notes: String
   createdAt: String!
   familyMember: FamilyMember
+  diagnosingDoctor: Doctor
 }
 
 input AddConditionInput {
   name: String!
   notes: String
+  familyMemberId: Int
+  diagnosingDoctorId: ID
 }
 
 type DeleteConditionResult {

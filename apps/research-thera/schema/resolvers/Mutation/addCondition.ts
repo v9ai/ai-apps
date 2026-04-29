@@ -12,8 +12,16 @@ export const addCondition: NonNullable<MutationResolvers['addCondition']> = asyn
   const name = args.input.name.trim();
   if (!name) throw new Error("Condition name is required");
   const notes = args.input.notes?.trim() || null;
+  const familyMemberId = args.input.familyMemberId ?? null;
+  const diagnosingDoctorId = args.input.diagnosingDoctorId ?? null;
 
-  const condition = await db.createCondition({ userId: userEmail, name, notes });
+  const condition = await db.createCondition({
+    userId: userEmail,
+    name,
+    notes,
+    familyMemberId,
+    diagnosingDoctorId,
+  });
 
   // Embedding is non-blocking — log and continue if it fails
   try {

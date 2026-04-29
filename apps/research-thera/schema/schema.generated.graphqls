@@ -24,6 +24,8 @@ input AddAppointmentInput {
 }
 
 input AddConditionInput {
+  diagnosingDoctorId: ID
+  familyMemberId: Int
   name: String!
   notes: String
 }
@@ -389,6 +391,8 @@ input CognitiveScoresInput {
 
 type Condition {
   createdAt: String!
+  diagnosingDoctor: Doctor
+  diagnosingDoctorId: ID
   familyMember: FamilyMember
   familyMemberId: Int
   id: ID!
