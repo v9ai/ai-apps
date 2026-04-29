@@ -685,7 +685,7 @@ _BAD_LOGIN_RE = re.compile(
     | ^(oracle|adobe|google|microsoft|apple|meta|amazon|ibm|sap
         |salesforce|nvidia|samsung|bytedance|alibaba|tencent|baidu
         |cloudwego|kubeflow|mlflow|mariadb|redisearch
-        |ragapp|mozilla|netflix|airbnb|spotify|shopify|atlassian
+        |ragapp|mozilla|netflix|airbnb|shopify|atlassian
         |hashicorp|elastic|redis|mongodb|couchbase-ecosystem
         |google-marketing-solutions|google-cloud-platform
         |imbue-ai|gchq|edgeandnode|hkuds|smk-is
