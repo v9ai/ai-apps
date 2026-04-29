@@ -550,11 +550,154 @@ function getProfileLinks(): string[] {
   return links;
 }
 
+// ── Recruitment-only profile filter ──────────────────────────────────
+//
+// Aligned with backend/leadgen_agent/classify_recruitment_graph.py:
+// recruitment agencies, staffing agencies, executive search / headhunting,
+// RPO, talent marketplaces. Excludes in-house TA, generic HR, ATS vendors.
+
+const RECRUITMENT_PATTERNS: RegExp[] = [
+  /\brecruit(?:er|ers|ing|ment)?\b/i,
+  /\btalent\s+(?:acquisition|partner|sourcer|sourcing|specialist|advisor|consultant|manager|lead|scout|operator|agent)\b/i,
+  /\bhead[\s-]?hunt(?:er|ing)?\b/i,
+  /\bexec(?:utive)?\s+search\b/i,
+  /\bsourcer\b/i,
+  /\bstaffing\b/i,
+  /\bplacement\s+(?:agency|consultant)\b/i,
+  /\brpo\b/i, // recruitment process outsourcing
+  /\btalent\s+(?:marketplace|network|pool|agency)\b/i,
+  /\b(?:agency|external|contract|contingent)\s+recruiter\b/i,
+];
+
+const CARD_SELECTORS = [
+  // Current LinkedIn SDUI markup (people-search SRP renders rows as
+  // `[componentkey^="entity-collection-item-"]` inside `li.artdeco-list__item`).
+  '[componentkey^="entity-collection-item-"]',
+  "li.artdeco-list__item",
+  // Legacy / alternate markups still seen in some surfaces.
+  ".entity-result",
+  ".reusable-search__result-container",
+  ".feed-shared-update-v2",
+  ".update-components-actor",
+  ".artdeco-entity-lockup",
+  "[data-chameleon-result-urn]",
+  "li[data-urn]",
+];
+
+function findCardContainer(anchor: HTMLAnchorElement): Element | null {
+  for (const sel of CARD_SELECTORS) {
+    const card = anchor.closest(sel);
+    if (card) return card;
+  }
+  // Fallback: walk up to 8 ancestors looking for a sizeable text block.
+  let cur: Element | null = anchor.parentElement;
+  for (let depth = 0; depth < 8 && cur; depth++) {
+    const text = (cur.textContent || "").trim();
+    if (text.length > 60) return cur;
+    cur = cur.parentElement;
+  }
+  return null;
+}
+
+function matchedRecruitmentPattern(text: string): RegExp | null {
+  for (const re of RECRUITMENT_PATTERNS) {
+    if (re.test(text)) return re;
+  }
+  return null;
+}
+
+function looksLikeRecruitmentCard(card: Element): boolean {
+  const text = (card.textContent || "").slice(0, 1500);
+  return matchedRecruitmentPattern(text) !== null;
+}
+
+function getRecruitmentProfileLinks(): { links: string[]; scanned: number } {
+  const seen = new Set<string>();
+  const links: string[] = [];
+  const anchors = document.querySelectorAll<HTMLAnchorElement>('a[href*="/in/"]');
+  let scanned = 0;
+  let rejectedNoCard = 0;
+  let rejectedNoMatch = 0;
+  const matchedSamples: { url: string; pattern: string; snippet: string }[] = [];
+  const rejectedSamples: string[] = [];
+  // When nothing matches we want the FULL rejected list to diagnose; cap at 50
+  // so we don't blow the console up on a 100+ anchor page.
+  const REJECTED_SAMPLE_CAP_DEFAULT = 3;
+  const REJECTED_SAMPLE_CAP_VERBOSE = 50;
+
+  console.log(
+    `[RecruitFilter] Scanning ${anchors.length} /in/ anchors on ${window.location.pathname}`,
+  );
+
+  anchors.forEach((a) => {
+    let url: URL;
+    try {
+      url = new URL(a.href);
+    } catch {
+      return;
+    }
+    const match = url.pathname.match(/^\/in\/([^/]+)/);
+    if (!match) return;
+    const profilePath = `/in/${match[1]}`;
+    if (seen.has(profilePath)) return;
+
+    const card = findCardContainer(a);
+    if (!card) {
+      rejectedNoCard++;
+      return;
+    }
+    scanned++;
+    const text = (card.textContent || "").slice(0, 1500);
+    const hit = matchedRecruitmentPattern(text);
+    if (!hit) {
+      rejectedNoMatch++;
+      // Always collect up to the verbose cap; we'll decide which slice to log
+      // once we know whether the run produced any links.
+      if (rejectedSamples.length < REJECTED_SAMPLE_CAP_VERBOSE) {
+        rejectedSamples.push(`${profilePath} → ${text.slice(0, 200).trim()}`);
+      }
+      return;
+    }
+
+    seen.add(profilePath);
+    const finalUrl = `https://www.linkedin.com${profilePath}/`;
+    links.push(finalUrl);
+    if (matchedSamples.length < 10) {
+      matchedSamples.push({
+        url: finalUrl,
+        pattern: hit.toString(),
+        snippet: text.slice(0, 120).trim(),
+      });
+    }
+  });
+
+  console.log(
+    `[RecruitFilter] Result: kept ${links.length}, rejected ${rejectedNoMatch} (no recruiter signal), ${rejectedNoCard} skipped (no card container).`,
+  );
+  if (matchedSamples.length > 0) {
+    console.log("[RecruitFilter] Matched samples:", matchedSamples);
+  }
+  if (rejectedSamples.length > 0) {
+    // Dump the full rejected list when we scanned cards but kept nothing —
+    // this is the case the user is debugging ("only 2 profiles per run").
+    const verbose = scanned > 0 && links.length === 0;
+    const sample = verbose
+      ? rejectedSamples
+      : rejectedSamples.slice(0, REJECTED_SAMPLE_CAP_DEFAULT);
+    console.log(
+      `[RecruitFilter] Rejected samples${verbose ? " (verbose, no matches)" : ""}:`,
+      sample,
+    );
+  }
+
+  return { links, scanned };
+}
+
 function createBrowseProfilesButton(): HTMLButtonElement {
   const btn = document.createElement("button");
   btn.setAttribute(BROWSE_PROFILES_BTN_ATTR, "true");
-  btn.textContent = "Browse Profiles";
-  btn.title = "Open each profile sequentially, extract & save contact info";
+  btn.textContent = "Browse Recruiters";
+  btn.title = "Visit only recruitment-firm profiles in view (recruiters, talent agencies, headhunters, RPO, executive search) and save to CRM. Shift-click to bypass the 24h visit dedup and re-visit profiles seen recently.";
   btn.style.cssText = `
     position: fixed;
     bottom: 80px;
@@ -583,27 +726,32 @@ function createBrowseProfilesButton(): HTMLButtonElement {
     e.preventDefault();
     e.stopPropagation();
 
-    const profiles = getProfileLinks();
+    const ignoreDedup = e.shiftKey;
+
+    const { links: profiles, scanned } = getRecruitmentProfileLinks();
     if (profiles.length === 0) {
-      btn.textContent = "No profiles found";
-      setTimeout(() => { btn.textContent = "Browse Profiles"; }, 2000);
+      btn.textContent = scanned === 0 ? "No cards in view" : `0 of ${scanned} are recruiters`;
+      setTimeout(() => { btn.textContent = "Browse Recruiters"; }, 2500);
       return;
     }
 
     btn.disabled = true;
-    btn.textContent = `Starting (${profiles.length})...`;
+    btn.textContent = ignoreDedup
+      ? `Starting (${profiles.length}/${scanned}, no dedup)...`
+      : `Starting (${profiles.length}/${scanned})...`;
     btn.style.backgroundColor = "#5b21b6";
 
     safeSendMessage({
       action: "startProfileBrowsing",
       profiles,
       returnUrl: window.location.href,
+      ignoreDedup,
     }, (response) => {
       if (!response?.success) {
         btn.textContent = "Error";
         btn.style.backgroundColor = "#dc2626";
         setTimeout(() => {
-          btn.textContent = "Browse Profiles";
+          btn.textContent = "Browse Recruiters";
           btn.style.backgroundColor = "#7c3aed";
           btn.disabled = false;
         }, 2000);
@@ -615,46 +763,208 @@ function createBrowseProfilesButton(): HTMLButtonElement {
   return btn;
 }
 
-function injectBrowseProfilesButton() {
-  if (!window.location.hostname.includes("linkedin.com")) return;
-  if (!window.location.pathname.startsWith("/search/results/people")) return;
-  if (document.querySelector(`[${BROWSE_PROFILES_BTN_ATTR}]`)) return;
+// Browse buttons are injected on people-search results AND on the feed
+// (so the user can kick off traversal from anywhere they happen to be).
+function isOnBrowsableLinkedInPath(): boolean {
+  if (!window.location.hostname.includes("linkedin.com")) return false;
+  const p = window.location.pathname;
+  return p.startsWith("/search/results/people") || p.startsWith("/feed");
+}
 
-  document.body.appendChild(createBrowseProfilesButton());
+function syncBrowseButtonForPath() {
+  if (!document.body) return;
+  if (isOnBrowsableLinkedInPath()) {
+    if (!document.querySelector(`[${BROWSE_PROFILES_BTN_ATTR}]`)) {
+      document.body.appendChild(createBrowseProfilesButton());
+    }
+  } else {
+    document.querySelectorAll(`[${BROWSE_PROFILES_BTN_ATTR}]`).forEach((el) => el.remove());
+    browseProfilesBtn = null;
+  }
+}
+
+function injectBrowseProfilesButton() {
+  syncBrowseButtonForPath();
 }
 
 function observeBrowseProfilesButton() {
   if (!window.location.hostname.includes("linkedin.com")) return;
-  if (!window.location.pathname.startsWith("/search/results/people")) return;
 
-  setTimeout(injectBrowseProfilesButton, 1500);
+  setTimeout(syncBrowseButtonForPath, 1500);
 
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
   const obs = new MutationObserver(() => {
     if (teardownIfDead()) return;
     if (debounceTimer) clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(injectBrowseProfilesButton, 1000);
+    debounceTimer = setTimeout(syncBrowseButtonForPath, 1000);
   });
   obs.observe(document.body, { childList: true, subtree: true });
   _observers.push(obs);
+
+  // SPA nav: import-people-button.ts patches history.pushState and dispatches
+  // 'lg:locationchange' globally — listen so we re-sync when LinkedIn moves
+  // us between /feed/ and /search/results/people/ without a full reload.
+  window.addEventListener("lg:locationchange", () => {
+    if (teardownIfDead()) return;
+    syncBrowseButtonForPath();
+  });
 }
 
 observeBrowseProfilesButton();
 
+// ── Browse All Pages Button (Voyager pagination) ────────────────────
+//
+// Sits next to "Browse Profiles". Triggers cross-page traversal via the
+// Voyager search-clusters endpoint (capped at LinkedIn's ~1000 results)
+// instead of just the visible page. Refuses to run unless the search
+// URL has a remote-keyword signal — see people-search-traversal.ts.
+
+const BROWSE_ALL_BTN_ATTR = "data-lg-browse-all-pages-btn";
+let browseAllBtn: HTMLButtonElement | null = null;
+
+function createBrowseAllButton(): HTMLButtonElement {
+  const btn = document.createElement("button");
+  btn.setAttribute(BROWSE_ALL_BTN_ATTR, "true");
+  btn.textContent = "Browse All Pages";
+  btn.title = "Paginate every search page via Voyager API and visit each remote profile";
+  btn.style.cssText = `
+    position: fixed;
+    bottom: 136px;
+    right: 24px;
+    z-index: 9999;
+    background-color: #0f766e;
+    color: white;
+    border: none;
+    border-radius: 24px;
+    padding: 12px 24px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    transition: background-color 0.2s;
+  `;
+
+  btn.addEventListener("mouseenter", () => {
+    if (!btn.disabled) btn.style.backgroundColor = "#115e59";
+  });
+  btn.addEventListener("mouseleave", () => {
+    if (!btn.disabled) btn.style.backgroundColor = "#0f766e";
+  });
+
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // On /feed/ there is no search context to paginate — prompt for
+    // keywords (must include 'remote') and navigate to the search URL.
+    // The user clicks the button again on the search results page to
+    // actually trigger Voyager pagination.
+    if (window.location.pathname.startsWith("/feed")) {
+      const kw = window.prompt(
+        "Search keywords (must include 'remote' / 'fully remote' / 'wfh'):",
+        "remote engineer",
+      );
+      if (!kw) return;
+      const target = `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(kw)}&origin=GLOBAL_SEARCH_HEADER`;
+      window.location.href = target;
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = "Paginating…";
+    btn.style.backgroundColor = "#115e59";
+    safeSendMessage(
+      {
+        action: "startProfileBrowsingAllPages",
+        searchUrl: window.location.href,
+      },
+      (response) => {
+        if (!response?.success) {
+          btn.textContent = "Error";
+          btn.style.backgroundColor = "#dc2626";
+          setTimeout(() => {
+            btn.textContent = "Browse All Pages";
+            btn.style.backgroundColor = "#0f766e";
+            btn.disabled = false;
+          }, 2000);
+        }
+      },
+    );
+  });
+
+  browseAllBtn = btn;
+  return btn;
+}
+
+function syncBrowseAllButtonForPath() {
+  if (!document.body) return;
+  if (isOnBrowsableLinkedInPath()) {
+    if (!document.querySelector(`[${BROWSE_ALL_BTN_ATTR}]`)) {
+      document.body.appendChild(createBrowseAllButton());
+    }
+  } else {
+    document.querySelectorAll(`[${BROWSE_ALL_BTN_ATTR}]`).forEach((el) => el.remove());
+    browseAllBtn = null;
+  }
+}
+
+function injectBrowseAllButton() {
+  syncBrowseAllButtonForPath();
+}
+
+function observeBrowseAllButton() {
+  if (!window.location.hostname.includes("linkedin.com")) return;
+
+  setTimeout(syncBrowseAllButtonForPath, 1500);
+
+  let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+  const obs = new MutationObserver(() => {
+    if (teardownIfDead()) return;
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(syncBrowseAllButtonForPath, 1000);
+  });
+  obs.observe(document.body, { childList: true, subtree: true });
+  _observers.push(obs);
+
+  window.addEventListener("lg:locationchange", () => {
+    if (teardownIfDead()) return;
+    syncBrowseAllButtonForPath();
+  });
+}
+
+observeBrowseAllButton();
+
 // Listen for progress updates from background script
 chrome.runtime.onMessage.addListener((message) => {
   if (!isExtensionAlive()) return;
-  if (message.action === "browseProgress" && browseProfilesBtn) {
-    browseProfilesBtn.textContent = `${message.current}/${message.total} ${message.name || ""}`.trim();
+  if (message.action === "browseProgress") {
+    const text = `${message.current}/${message.total} ${message.name || ""}`.trim();
+    if (browseProfilesBtn) browseProfilesBtn.textContent = text;
+    if (browseAllBtn) browseAllBtn.textContent = text;
   }
-  if (message.action === "browseDone" && browseProfilesBtn) {
-    browseProfilesBtn.textContent = `Done! ${message.saved} saved`;
-    browseProfilesBtn.style.backgroundColor = "#16a34a";
-    setTimeout(() => {
-      browseProfilesBtn!.textContent = "Browse Profiles";
-      browseProfilesBtn!.style.backgroundColor = "#7c3aed";
-      browseProfilesBtn!.disabled = false;
-    }, 3000);
+  if (message.action === "browseDone") {
+    if (browseProfilesBtn) {
+      browseProfilesBtn.textContent = message.error
+        ? message.error.slice(0, 40)
+        : `Done! ${message.saved} saved`;
+      browseProfilesBtn.style.backgroundColor = message.error ? "#dc2626" : "#16a34a";
+      setTimeout(() => {
+        browseProfilesBtn!.textContent = "Browse Recruiters";
+        browseProfilesBtn!.style.backgroundColor = "#7c3aed";
+        browseProfilesBtn!.disabled = false;
+      }, 4000);
+    }
+    if (browseAllBtn) {
+      browseAllBtn.textContent = message.error
+        ? message.error.slice(0, 40)
+        : `Done! ${message.saved} saved`;
+      browseAllBtn.style.backgroundColor = message.error ? "#dc2626" : "#16a34a";
+      setTimeout(() => {
+        browseAllBtn!.textContent = "Browse All Pages";
+        browseAllBtn!.style.backgroundColor = "#0f766e";
+        browseAllBtn!.disabled = false;
+      }, 4000);
+    }
   }
 
   // Import People progress messages are handled by ./import-people-button.
@@ -1062,6 +1372,101 @@ function removeProfileButton() {
   importProfileBtn = null;
 }
 
+/**
+ * Parse LinkedIn's SDUI Experience section and return the entry that's
+ * marked "- Present", or the most recent entry if none is current.
+ *
+ * Why: LinkedIn now renders the profile via SDUI (componentkey="..." divs);
+ * the legacy `#experience` anchor and `data-field="experience_company_logo"`
+ * selectors no longer match, so the prior fallback chain silently picked
+ * a wrong company from the page-level DOM or the headline.
+ */
+function extractCurrentRoleFromExperience(): {
+  companyName: string;
+  companyLinkedinUrl: string;
+  position: string;
+} | null {
+  const sectionMatch = document.querySelector(
+    '[componentkey*="ExperienceTopLevelSection"], #experience',
+  );
+  if (!sectionMatch) return null;
+  const section: Element =
+    sectionMatch.id === "experience"
+      ? sectionMatch.closest("section") ?? sectionMatch
+      : sectionMatch;
+
+  const entries = section.querySelectorAll<HTMLElement>(
+    '[componentkey^="entity-collection-item-"], li.artdeco-list__item',
+  );
+  if (entries.length === 0) return null;
+
+  type Parsed = {
+    companyName: string;
+    companyLinkedinUrl: string;
+    position: string;
+    dateRange: string;
+  };
+
+  const parseEntry = (entry: HTMLElement): Parsed | null => {
+    const companyLink = entry.querySelector<HTMLAnchorElement>(
+      'a[href*="/company/"]',
+    );
+    if (!companyLink) return null;
+
+    const companyLinkedinUrl = companyLink.href.split("?")[0].replace(/\/$/, "");
+
+    const ps = Array.from(entry.querySelectorAll<HTMLParagraphElement>("p"))
+      .map((p) => p.textContent?.trim() || "")
+      .filter(Boolean);
+
+    const position = ps[0] || "";
+
+    // Company line is the first `<p>` after position that contains `·` or matches
+    // the company link's aria-label. Strip employment type ("· Full-time").
+    let companyName = "";
+    for (let i = 1; i < ps.length; i++) {
+      if (ps[i].includes("·") && !/\b(Present|\d{4})\b/.test(ps[i])) {
+        companyName = ps[i].split("·")[0].trim();
+        break;
+      }
+    }
+    if (!companyName) {
+      const ariaLabel =
+        companyLink.getAttribute("aria-label") ||
+        companyLink.querySelector("figure")?.getAttribute("aria-label") ||
+        companyLink.querySelector("img")?.getAttribute("alt") ||
+        "";
+      companyName = ariaLabel.replace(/\s+logo$/i, "").trim();
+    }
+    if (!companyName) {
+      companyName = companyLink.textContent?.trim() || "";
+    }
+
+    const dateRange =
+      ps.find(
+        (t) => /[-–]/.test(t) && /\b(Present|\d{4})\b/.test(t),
+      ) || "";
+
+    return { companyName, companyLinkedinUrl, position, dateRange };
+  };
+
+  const parsed: Parsed[] = [];
+  entries.forEach((entry) => {
+    const p = parseEntry(entry);
+    if (p) parsed.push(p);
+  });
+  if (parsed.length === 0) return null;
+
+  const current =
+    parsed.find((p) => /[-–]\s*Present\b/i.test(p.dateRange)) ?? parsed[0];
+
+  return {
+    companyName: current.companyName,
+    companyLinkedinUrl: current.companyLinkedinUrl,
+    position: current.position,
+  };
+}
+
 /** Extract profile data directly from the DOM (runs in content script context). */
 function extractProfileFromDOM(): {
   name: string;
@@ -1070,6 +1475,7 @@ function extractProfileFromDOM(): {
   linkedinUrl: string;
   currentCompany: string;
   currentCompanyLinkedinUrl: string;
+  currentPosition: string;
 } {
   // Debug: log all h1 elements to console
   const allH1 = document.querySelectorAll("h1");
@@ -1113,6 +1519,17 @@ function extractProfileFromDOM(): {
   // Current company — try various selectors
   let currentCompany = "";
   let currentCompanyLinkedinUrl = "";
+  let currentPosition = "";
+
+  // Strategy 0: parse the Experience section and pick the "- Present" entry.
+  // Handles LinkedIn's SDUI render where #experience and data-field selectors
+  // don't exist.
+  const fromExperience = extractCurrentRoleFromExperience();
+  if (fromExperience?.companyName) {
+    currentCompany = fromExperience.companyName;
+    currentCompanyLinkedinUrl = fromExperience.companyLinkedinUrl;
+    currentPosition = fromExperience.position;
+  }
 
   // Strategy 1: company link in the top card area
   const companySelectors = [
@@ -1155,7 +1572,7 @@ function extractProfileFromDOM(): {
     }
   }
 
-  console.log("[LG ImportProfile] company:", JSON.stringify(currentCompany), "url:", currentCompanyLinkedinUrl);
+  console.log("[LG ImportProfile] company:", JSON.stringify(currentCompany), "url:", currentCompanyLinkedinUrl, "position:", JSON.stringify(currentPosition));
 
   return {
     name,
@@ -1164,6 +1581,7 @@ function extractProfileFromDOM(): {
     linkedinUrl: window.location.href.split("?")[0],
     currentCompany,
     currentCompanyLinkedinUrl,
+    currentPosition,
   };
 }
 

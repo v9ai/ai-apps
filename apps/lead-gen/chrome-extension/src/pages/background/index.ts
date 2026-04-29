@@ -4,6 +4,7 @@ import { gqlRequest } from "../../services/graphql";
 import { importJobsToD1, type D1JobInput } from "../../services/jobs-d1-importer";
 import { startKeepAlive, stopKeepAlive, waitForTabLoad, clickSeeMore, randomDelay } from "./tab-utils";
 import { browseProfiles, setBrowseCancelled, extractFullProfileData, parseName, parseHeadline } from "./profile-browsing";
+import { traverseAllSearchPages } from "./people-search-traversal";
 import { browseCompanies, setCompanyCancelled } from "./company-browsing";
 import { browsePeople, importPeopleFromCurrentPage, setPeopleCancelled } from "./people-scraping";
 import { findRelatedCompanies, setFindRelatedCancelled } from "./find-related";
@@ -123,9 +124,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   // ── Start Profile Browsing ──
   if (message.action === "startProfileBrowsing") {
-    const { profiles, returnUrl } = message as {
+    const { profiles, returnUrl, ignoreDedup } = message as {
       profiles: string[];
       returnUrl: string;
+      ignoreDedup?: boolean;
     };
     const tabId = sender.tab?.id;
     if (!tabId) {
@@ -134,7 +136,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
     sendResponse({ success: true });
     startKeepAlive();
-    browseProfiles(tabId, profiles, returnUrl).finally(stopKeepAlive);
+    browseProfiles(tabId, profiles, returnUrl, { ignoreDedup }).finally(
+      stopKeepAlive,
+    );
     return true;
   }
 
@@ -142,6 +146,20 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "stopProfileBrowsing") {
     setBrowseCancelled(true);
     sendResponse({ success: true });
+    return true;
+  }
+
+  // ── Start Profile Browsing — All Search Pages (Voyager) ──
+  if (message.action === "startProfileBrowsingAllPages") {
+    const { searchUrl } = message as { searchUrl: string };
+    const tabId = sender.tab?.id;
+    if (!tabId) {
+      sendResponse({ success: false, error: "No tab ID" });
+      return true;
+    }
+    sendResponse({ success: true });
+    startKeepAlive();
+    traverseAllSearchPages(tabId, searchUrl).finally(stopKeepAlive);
     return true;
   }
 
@@ -634,6 +652,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         linkedinUrl: string;
         currentCompany: string;
         currentCompanyLinkedinUrl: string;
+        currentPosition?: string;
       };
     };
     const tabId = sender.tab?.id;
@@ -653,7 +672,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       startKeepAlive();
       try {
         const { firstName, lastName } = parseName(profileData.name);
-        const { position } = parseHeadline(profileData.headline);
+        const position =
+          profileData.currentPosition || parseHeadline(profileData.headline).position;
         const companyName = profileData.currentCompany;
 
         await notifyTab({ status: `${profileData.name} — looking up...` });
