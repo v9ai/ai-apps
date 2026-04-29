@@ -11,6 +11,8 @@ export class ResearchTheraContainer extends Container {
     super(ctx, env);
     this.envVars = {
       NEON_DATABASE_URL: env.NEON_DATABASE_URL ?? "",
+      // healthcare/config.py uses pydantic-settings field `database_url`
+      DATABASE_URL: env.NEON_DATABASE_URL ?? "",
       DEEPSEEK_API_KEY: env.DEEPSEEK_API_KEY ?? "",
       OPENAI_API_KEY: env.OPENAI_API_KEY ?? "",
       DASHSCOPE_API_KEY: env.DASHSCOPE_API_KEY ?? "",
