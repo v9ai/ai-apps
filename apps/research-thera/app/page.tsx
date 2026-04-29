@@ -14,6 +14,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/app/lib/auth/client";
 import { AuthDialog } from "./components/AuthDialog";
+import { HomeTasks } from "./components/HomeTasks";
 import {
   RocketIcon,
   MagnifyingGlassIcon,
@@ -107,6 +108,8 @@ export default function Home() {
           </Flex>
         </Flex>
       </Card>
+
+      {user && <HomeTasks />}
 
       {/* Features Grid */}
       <Flex direction="column" gap="4">
