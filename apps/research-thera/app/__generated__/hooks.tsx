@@ -275,6 +275,7 @@ export type BloodTest = {
   familyMemberId?: Maybe<Scalars['Int']['output']>;
   fileName: Scalars['String']['output'];
   filePath: Scalars['String']['output'];
+  fileUrl: Scalars['String']['output'];
   id: Scalars['ID']['output'];
   markersCount: Scalars['Int']['output'];
   status: Scalars['String']['output'];
@@ -1164,6 +1165,7 @@ export type FamilyDocument = {
   familyMemberId: Scalars['Int']['output'];
   fileName?: Maybe<Scalars['String']['output']>;
   filePath?: Maybe<Scalars['String']['output']>;
+  fileUrl?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   source?: Maybe<Scalars['String']['output']>;
   title: Scalars['String']['output'];
@@ -1762,6 +1764,7 @@ export type MedicalLetter = {
   doctorId: Scalars['ID']['output'];
   fileName: Scalars['String']['output'];
   filePath: Scalars['String']['output'];
+  fileUrl: Scalars['String']['output'];
   id: Scalars['ID']['output'];
   letterDate?: Maybe<Scalars['String']['output']>;
   uploadedAt: Scalars['String']['output'];

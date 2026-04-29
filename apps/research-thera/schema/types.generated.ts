@@ -273,6 +273,7 @@ export type BloodTest = {
   familyMemberId?: Maybe<Scalars['Int']['output']>;
   fileName: Scalars['String']['output'];
   filePath: Scalars['String']['output'];
+  fileUrl: Scalars['String']['output'];
   id: Scalars['ID']['output'];
   markersCount: Scalars['Int']['output'];
   status: Scalars['String']['output'];
@@ -1156,6 +1157,7 @@ export type FamilyDocument = {
   familyMemberId: Scalars['Int']['output'];
   fileName?: Maybe<Scalars['String']['output']>;
   filePath?: Maybe<Scalars['String']['output']>;
+  fileUrl?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   source?: Maybe<Scalars['String']['output']>;
   title: Scalars['String']['output'];
@@ -1746,6 +1748,7 @@ export type MedicalLetter = {
   doctorId: Scalars['ID']['output'];
   fileName: Scalars['String']['output'];
   filePath: Scalars['String']['output'];
+  fileUrl: Scalars['String']['output'];
   id: Scalars['ID']['output'];
   letterDate?: Maybe<Scalars['String']['output']>;
   uploadedAt: Scalars['String']['output'];
@@ -4870,6 +4873,7 @@ export type BloodTestResolvers<ContextType = GraphQLContext, ParentType extends 
   familyMemberId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   fileName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   filePath?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  fileUrl?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   markersCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   status?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -5463,6 +5467,7 @@ export type FamilyDocumentResolvers<ContextType = GraphQLContext, ParentType ext
   familyMemberId?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   fileName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   filePath?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  fileUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   source?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -5939,6 +5944,7 @@ export type MedicalLetterResolvers<ContextType = GraphQLContext, ParentType exte
   doctorId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   fileName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   filePath?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  fileUrl?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   letterDate?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   uploadedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;

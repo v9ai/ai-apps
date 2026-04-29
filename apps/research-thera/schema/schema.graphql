@@ -2852,6 +2852,7 @@ type BloodTest {
   familyMemberId: Int
   fileName: String!
   filePath: String!
+  fileUrl: String!
   status: String!
   testDate: String
   errorMessage: String
@@ -2873,6 +2874,7 @@ type MedicalLetter {
   doctorId: ID!
   fileName: String!
   filePath: String!
+  fileUrl: String!
   description: String
   letterDate: String
   uploadedAt: String!
@@ -2898,6 +2900,7 @@ type FamilyDocument {
   externalUrl: String
   fileName: String
   filePath: String
+  fileUrl: String
   createdAt: String!
 }
 

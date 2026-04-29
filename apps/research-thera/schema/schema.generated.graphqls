@@ -244,6 +244,7 @@ type BloodTest {
   familyMemberId: Int
   fileName: String!
   filePath: String!
+  fileUrl: String!
   id: ID!
   markersCount: Int!
   status: String!
@@ -1055,6 +1056,7 @@ type FamilyDocument {
   familyMemberId: Int!
   fileName: String
   filePath: String
+  fileUrl: String
   id: ID!
   source: String
   title: String!
@@ -1605,6 +1607,7 @@ type MedicalLetter {
   doctorId: ID!
   fileName: String!
   filePath: String!
+  fileUrl: String!
   id: ID!
   letterDate: String
   uploadedAt: String!
