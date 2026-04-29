@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Button, Card, Flex, Grid, Text } from "@radix-ui/themes";
 import {
   useDeleteVehiclePhotoMutation,
@@ -60,20 +61,31 @@ export function PhotosGrid({
         {photos.map((p) => (
           <Card key={p.id} size="1">
             <Flex direction="column" gap="2">
-              {p.url && (
-                <img
-                  src={p.url}
-                  alt={p.caption ?? ""}
-                  style={{
-                    width: "100%",
-                    aspectRatio: "1 / 1",
-                    objectFit: "cover",
-                    borderRadius: 4,
-                    background: "var(--gray-3)",
-                  }}
-                />
-              )}
-              {p.caption && <Text size="1">{p.caption}</Text>}
+              <Link
+                href={`/vehicles/${vehicleId}/photos/${p.id}`}
+                style={{
+                  textDecoration: "none",
+                  color: "inherit",
+                  display: "block",
+                }}
+              >
+                <Flex direction="column" gap="2">
+                  {p.url && (
+                    <img
+                      src={p.url}
+                      alt={p.caption ?? ""}
+                      style={{
+                        width: "100%",
+                        aspectRatio: "1 / 1",
+                        objectFit: "cover",
+                        borderRadius: 4,
+                        background: "var(--gray-3)",
+                      }}
+                    />
+                  )}
+                  {p.caption && <Text size="1">{p.caption}</Text>}
+                </Flex>
+              </Link>
               <Button
                 size="1"
                 variant="soft"

@@ -1,7 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import { Box, Flex, Heading, IconButton, Button, DropdownMenu } from "@radix-ui/themes";
-import { GitHubLogoIcon, HamburgerMenuIcon } from "@radix-ui/react-icons";
+import {
+  ChevronDownIcon,
+  ChevronRightIcon,
+  GitHubLogoIcon,
+  HamburgerMenuIcon,
+} from "@radix-ui/react-icons";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import UserMenu from "./UserMenu";
@@ -9,37 +15,88 @@ import { SIDEBAR_WIDTH } from "./sidebar-constants";
 
 export { SIDEBAR_WIDTH };
 
-const NAV_LINKS = [
-  { href: "/allergies", label: "Allergies & Intolerances" },
-  { href: "/appointments", label: "Appointments" },
-  { href: "/blood-tests", label: "Blood Tests" },
-  { href: "/books", label: "Books" },
-  { href: "/brain-memory", label: "Brain & Memory" },
-  { href: "/chat", label: "Chat" },
-  { href: "/conditions", label: "Conditions" },
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/discussions", label: "Discuții" },
-  { href: "/doctors", label: "Doctors" },
-  { href: "/family", label: "Family" },
-  { href: "/games", label: "Games" },
-  { href: "/goals", label: "Goals" },
-  { href: "/habits", label: "Habits" },
-  { href: "/issues", label: "Issues" },
-  { href: "/journal", label: "Journal" },
-  { href: "/medications", label: "Medications" },
-  { href: "/notes", label: "Notes" },
-  { href: "/protocols", label: "Protocols" },
-  { href: "/routines", label: "Routines" },
-  { href: "/search", label: "Search" },
-  { href: "/stories", label: "Stories" },
-  { href: "/symptoms", label: "Symptoms" },
-  { href: "/tasks", label: "Tasks" },
-  { href: "/trajectory", label: "Trajectory" },
+type NavLeaf = { href: string; label: string };
+type NavItem =
+  | ({ kind: "link" } & NavLeaf)
+  | { kind: "group"; key: string; label: string; children: NavLeaf[] };
+
+const NAV_ITEMS: NavItem[] = [
+  { kind: "link", href: "/appointments", label: "Appointments" },
+  { kind: "link", href: "/books", label: "Books" },
+  { kind: "link", href: "/chat", label: "Chat" },
+  { kind: "link", href: "/dashboard", label: "Dashboard" },
+  { kind: "link", href: "/discussions", label: "Discuții" },
+  { kind: "link", href: "/family", label: "Family" },
+  { kind: "link", href: "/games", label: "Games" },
+  { kind: "link", href: "/goals", label: "Goals" },
+  {
+    kind: "group",
+    key: "health",
+    label: "Health",
+    children: [
+      { href: "/allergies", label: "Allergies & Intolerances" },
+      { href: "/blood-tests", label: "Blood Tests" },
+      { href: "/brain-memory", label: "Brain & Memory" },
+      { href: "/conditions", label: "Conditions" },
+      { href: "/doctors", label: "Doctors" },
+      { href: "/issues", label: "Issues" },
+      { href: "/medications", label: "Medications" },
+      { href: "/protocols", label: "Protocols" },
+      { href: "/symptoms", label: "Symptoms" },
+    ],
+  },
+  { kind: "link", href: "/habits", label: "Habits" },
+  { kind: "link", href: "/journal", label: "Journal" },
+  { kind: "link", href: "/notes", label: "Notes" },
+  { kind: "link", href: "/routines", label: "Routines" },
+  { kind: "link", href: "/search", label: "Search" },
+  { kind: "link", href: "/stories", label: "Stories" },
+  { kind: "link", href: "/tasks", label: "Tasks" },
+  { kind: "link", href: "/trajectory", label: "Trajectory" },
 ];
 
 export function Header() {
   const pathname = usePathname();
   const router = useRouter();
+
+  const isPathActive = (href: string) => pathname.startsWith(href);
+  const isGroupActive = (children: NavLeaf[]) =>
+    children.some((c) => isPathActive(c.href));
+
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
+    const initial: Record<string, boolean> = {};
+    for (const item of NAV_ITEMS) {
+      if (item.kind === "group") {
+        initial[item.key] = isGroupActive(item.children);
+      }
+    }
+    return initial;
+  });
+
+  const renderLeafButton = (link: NavLeaf, indent = false) => {
+    const isActive = isPathActive(link.href);
+    return (
+      <Button
+        key={link.href}
+        variant="ghost"
+        size="2"
+        color={isActive ? "indigo" : "gray"}
+        highContrast={isActive}
+        asChild
+        style={{
+          justifyContent: "flex-start",
+          ...(indent && { paddingLeft: "20px" }),
+          ...(isActive && {
+            borderLeft: "2px solid var(--indigo-9)",
+            paddingLeft: indent ? "18px" : "10px",
+            background: "var(--indigo-a3)",
+          }),
+        }}
+      >
+        <Link href={link.href}>{link.label}</Link>
+      </Button>
+    );
+  };
 
   return (
     <>
@@ -72,27 +129,55 @@ export function Header() {
 
           <nav aria-label="Main navigation" style={{ flex: 1 }}>
             <Flex direction="column" gap="2">
-              {NAV_LINKS.map((link) => {
-                const isActive = pathname.startsWith(link.href);
+              {NAV_ITEMS.map((item) => {
+                if (item.kind === "link") {
+                  return renderLeafButton(item);
+                }
+                const groupActive = isGroupActive(item.children);
+                const isOpen = openGroups[item.key] ?? false;
+                const subnavId = `subnav-${item.key}`;
                 return (
-                  <Button
-                    key={link.href}
-                    variant="ghost"
-                    size="2"
-                    color={isActive ? "indigo" : "gray"}
-                    highContrast={isActive}
-                    asChild
-                    style={{
-                      justifyContent: "flex-start",
-                      ...(isActive && {
-                        borderLeft: "2px solid var(--indigo-9)",
-                        paddingLeft: "10px",
-                        background: "var(--indigo-a3)",
-                      }),
-                    }}
-                  >
-                    <Link href={link.href}>{link.label}</Link>
-                  </Button>
+                  <Flex key={item.key} direction="column" gap="1">
+                    <Button
+                      variant="ghost"
+                      size="2"
+                      color={groupActive ? "indigo" : "gray"}
+                      highContrast={groupActive}
+                      onClick={() =>
+                        setOpenGroups((prev) => ({
+                          ...prev,
+                          [item.key]: !isOpen,
+                        }))
+                      }
+                      aria-expanded={isOpen}
+                      aria-controls={subnavId}
+                      style={{
+                        justifyContent: "space-between",
+                        ...(groupActive && {
+                          background: "var(--indigo-a3)",
+                        }),
+                      }}
+                    >
+                      <span>{item.label}</span>
+                      {isOpen ? (
+                        <ChevronDownIcon width="14" height="14" />
+                      ) : (
+                        <ChevronRightIcon width="14" height="14" />
+                      )}
+                    </Button>
+                    {isOpen && (
+                      <Flex
+                        id={subnavId}
+                        direction="column"
+                        gap="1"
+                        style={{ paddingLeft: "8px" }}
+                      >
+                        {item.children.map((child) =>
+                          renderLeafButton(child, true)
+                        )}
+                      </Flex>
+                    )}
+                  </Flex>
                 );
               })}
             </Flex>
@@ -156,16 +241,39 @@ export function Header() {
                   </IconButton>
                 </DropdownMenu.Trigger>
                 <DropdownMenu.Content align="end">
-                  {NAV_LINKS.map((link) => {
-                    const isActive = pathname.startsWith(link.href);
+                  {NAV_ITEMS.map((item) => {
+                    if (item.kind === "link") {
+                      const isActive = isPathActive(item.href);
+                      return (
+                        <DropdownMenu.Item
+                          key={item.href}
+                          color={isActive ? "indigo" : undefined}
+                          onClick={() => router.push(item.href)}
+                        >
+                          {item.label}
+                        </DropdownMenu.Item>
+                      );
+                    }
                     return (
-                      <DropdownMenu.Item
-                        key={link.href}
-                        color={isActive ? "indigo" : undefined}
-                        onClick={() => router.push(link.href)}
-                      >
-                        {link.label}
-                      </DropdownMenu.Item>
+                      <DropdownMenu.Sub key={item.key}>
+                        <DropdownMenu.SubTrigger>
+                          {item.label}
+                        </DropdownMenu.SubTrigger>
+                        <DropdownMenu.SubContent>
+                          {item.children.map((child) => {
+                            const isActive = isPathActive(child.href);
+                            return (
+                              <DropdownMenu.Item
+                                key={child.href}
+                                color={isActive ? "indigo" : undefined}
+                                onClick={() => router.push(child.href)}
+                              >
+                                {child.label}
+                              </DropdownMenu.Item>
+                            );
+                          })}
+                        </DropdownMenu.SubContent>
+                      </DropdownMenu.Sub>
                     );
                   })}
                   <DropdownMenu.Separator />

@@ -101,6 +101,8 @@ export function useProductRunsLive(
         }
       }
     });
+    // Granular deps avoid re-firing every render (runs is rebuilt each call).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [runs.icp?.id, runs.icp?.status, runs.pricing?.id, runs.pricing?.status, runs.gtm?.id, runs.gtm?.status, runs.product_intel?.id, runs.product_intel?.status, productName, skip]);
 
   const loading = icp.loading || pricing.loading || gtm.loading || intel.loading;
