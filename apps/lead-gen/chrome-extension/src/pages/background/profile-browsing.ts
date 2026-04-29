@@ -7,6 +7,10 @@ import {
   recordBrowsemap,
   type BrowsemapRecommendation,
 } from "../../services/browsemap-tracker";
+import {
+  getCachedSelfProfileSlug,
+  slugFromLinkedInUrl,
+} from "../../services/self-profile";
 import { randomDelay, waitForTabLoad, clickSeeMore } from "./tab-utils";
 
 const VISIT_SKIP_WINDOW_DAYS = 1;
@@ -22,27 +26,53 @@ function extractProfileData(tabId: number): Promise<{
   headline: string;
   location: string;
   linkedinUrl: string;
+  pageTitle: string;
 } | null> {
   return chrome.scripting
     .executeScript({
       target: { tabId },
       world: "MAIN",
       func: () => {
-        const nameEl =
-          document.querySelector("h1.text-heading-xlarge") ||
-          document.querySelector("h1");
-        const headlineEl = document.querySelector(
-          ".text-body-medium.break-words",
-        );
-        const locationEl = document.querySelector(
-          "span.text-body-small.inline.t-black--light.break-words",
-        );
+        // Name: try several selectors (LinkedIn rotates the top-card markup
+        // between text-heading-xlarge, SDUI componentkey-prefixed h1s, and
+        // plain `main h1`). Last-resort fallback parses document.title which
+        // LinkedIn formats as "Name - Headline | LinkedIn" or "(N) Name | …".
+        const nameSelectors = [
+          "h1.text-heading-xlarge",
+          "main h1.inline",
+          "section h1",
+          "main h1",
+          "h1",
+        ];
+        let name = "";
+        for (const sel of nameSelectors) {
+          const el = document.querySelector(sel);
+          const txt = el?.textContent?.trim();
+          if (txt) { name = txt; break; }
+        }
+        if (!name && document.title) {
+          // "(3) Vadim Nicolai - Software Engineer | LinkedIn" → "Vadim Nicolai"
+          const t = document.title.replace(/^\(\d+\)\s*/, "");
+          const cut = t.split(/\s[-|]\s/)[0]?.trim();
+          if (cut && cut !== "LinkedIn") name = cut;
+        }
+
+        const headlineEl =
+          document.querySelector(".text-body-medium.break-words") ||
+          document.querySelector("main .text-body-medium") ||
+          document.querySelector("section .text-body-medium");
+        const locationEl =
+          document.querySelector(
+            "span.text-body-small.inline.t-black--light.break-words",
+          ) ||
+          document.querySelector("main .text-body-small.t-black--light");
 
         return {
-          name: nameEl?.textContent?.trim() || "",
+          name,
           headline: headlineEl?.textContent?.trim() || "",
           location: locationEl?.textContent?.trim() || "",
           linkedinUrl: window.location.href.split("?")[0],
+          pageTitle: document.title || "",
         };
       },
     })
@@ -164,14 +194,16 @@ export function extractFullProfileData(tabId: number): Promise<FullProfileData |
 // recruiters that LinkedIn co-recommends with the one we just visited.
 // Stable hooks: section[componentkey^="profileAsideBrowsemap"], with a fallback
 // to the h3 text. Class names rotate constantly, so we never match on them.
-export function extractBrowsemapSidebar(
+export async function extractBrowsemapSidebar(
   tabId: number,
 ): Promise<BrowsemapRecommendation[]> {
+  const selfSlug = (await getCachedSelfProfileSlug()) ?? "";
   return chrome.scripting
     .executeScript({
       target: { tabId },
       world: "MAIN",
-      func: () => {
+      args: [selfSlug],
+      func: (selfSlugArg: string) => {
         let section: Element | null = document.querySelector(
           'section[componentkey^="profileAsideBrowsemap"]',
         );
@@ -207,6 +239,7 @@ export function extractBrowsemapSidebar(
           const slugMatch = profileUrl.match(/\/in\/([^/?]+)/);
           if (!slugMatch) continue;
           const slug = slugMatch[1];
+          if (selfSlugArg && slug === selfSlugArg) continue;
 
           // Walk up to the row container (the wrapping div with the avatar +
           // text). The outer <a> wraps a <figure> + a text block with <p> tags.
@@ -323,6 +356,24 @@ export async function browseProfiles(
   let postsScrapeFailed = 0;
   const runStart = Date.now();
 
+  // Hard-exclude the active session's own profile. Content-script filter
+  // already drops it at the source, but the Voyager all-pages traversal
+  // reaches here without that filter — this is the single chokepoint.
+  const selfSlug = await getCachedSelfProfileSlug();
+  if (selfSlug) {
+    const before = profiles.length;
+    profiles = profiles.filter((url) => slugFromLinkedInUrl(url) !== selfSlug);
+    if (before !== profiles.length) {
+      console.log(
+        `[BrowseProfiles] Pre-filtered self (${selfSlug}): ${before} → ${profiles.length} candidates`,
+      );
+    }
+  } else {
+    console.warn(
+      `[BrowseProfiles] No cached self slug — cannot exclude self profile. Visit /feed/ once to seed cache.`,
+    );
+  }
+
   console.log(
     `[BrowseProfiles] === Starting recruiter loop: ${profiles.length} profiles, returnUrl=${returnUrl} ===`,
   );
@@ -392,10 +443,13 @@ export async function browseProfiles(
     const data = await extractProfileData(tabId);
     if (!data || !data.name) {
       skippedNoData++;
+      // Don't recordVisit() here — no-data is a transient extraction failure
+      // (auth wall, slow render, selector rot). Recording it would poison the
+      // 24h dedup set and skip the URL on every subsequent run.
       console.warn(
-        `[BrowseProfiles]   ✗ No name extracted (auth wall? CAPTCHA? unloaded?) — skipping`,
+        `[BrowseProfiles]   ✗ No name extracted — skipping (NOT recorded, will retry next run)\n` +
+          `[BrowseProfiles]     pageTitle="${data?.pageTitle ?? "(no data)"}" headline="${data?.headline ?? ""}" url=${profileUrl}`,
       );
-      await recordVisit(null, profileUrl, false, "no-data");
       await randomDelay(2000);
       continue;
     }
