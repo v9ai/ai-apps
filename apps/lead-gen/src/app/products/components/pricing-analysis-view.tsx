@@ -823,13 +823,12 @@ export function PricingAnalysisView({ data }: { data: PricingAnalysis }) {
 }
 
 export function ProductPricingPage({ slug }: { slug: string }) {
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
   const isAdmin = user?.email === ADMIN_EMAIL;
 
   const { data, loading, error, refetch } = useProductBySlugQuery({
     variables: { slug },
     fetchPolicy: "cache-and-network",
-    skip: !user,
   });
 
   const [analyzePricing, analyzeState] = useAnalyzeProductPricingAsyncMutation();
@@ -840,24 +839,6 @@ export function ProductPricingPage({ slug }: { slug: string }) {
 
   const latestRun = runsData?.productIntelRuns?.[0];
   const terminal = latestRun ? TERMINAL_STATUSES.has(latestRun.status) : true;
-
-  if (authLoading) {
-    return (
-      <Container size="3" p="6">
-        <Text color="gray" role="status" aria-live="polite">
-          Loading…
-        </Text>
-      </Container>
-    );
-  }
-
-  if (!user) {
-    return (
-      <Container size="3" p="8">
-        <Text color="gray">Please sign in to view this product.</Text>
-      </Container>
-    );
-  }
 
   if (loading && !data) {
     return (
