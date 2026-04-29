@@ -1,5 +1,5 @@
 import type { ComponentType, SVGProps } from "react";
-import { HomeIcon } from "@radix-ui/react-icons";
+import { HomeIcon, LayersIcon } from "@radix-ui/react-icons";
 
 export type NavIcon = ComponentType<
   Omit<SVGProps<SVGSVGElement>, "children"> & {
@@ -17,6 +17,7 @@ export type NavItem =
 export const NAV_ITEMS: NavItem[] = [
   { kind: "link", href: "/family", label: "Family" },
   { kind: "link", href: "/house", label: "House", icon: HomeIcon },
+  { kind: "link", href: "/lsf", label: "LSF", icon: LayersIcon },
   { kind: "link", href: "/dashboard", label: "Dashboard" },
   { kind: "link", href: "/chat", label: "Chat" },
   { kind: "link", href: "/search", label: "Search" },
