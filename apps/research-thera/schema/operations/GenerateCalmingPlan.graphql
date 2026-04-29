@@ -1,0 +1,14 @@
+mutation GenerateCalmingPlan($familyMemberId: Int!, $language: String) {
+  generateCalmingPlan(familyMemberId: $familyMemberId, language: $language) {
+    success
+    message
+    plan {
+      id
+      familyMemberId
+      language
+      planMarkdown
+      safetyNotes
+      generatedAt
+    }
+  }
+}
