@@ -18,7 +18,7 @@
     "deploy:l": "VERCEL_PROJECT_ID=prj_LOKs6EndDbg0ZfkP8Nm2n86j0nok VERCEL_ORG_ID=team_PWwGsn3xORVtRDLLoES2BYVV vercel deploy --prod",
     "deploy:n": "VERCEL_PROJECT_ID=prj_YK5twFzCLh0okpfWRptY0AXwJZEL VERCEL_ORG_ID=team_PWwGsn3xORVtRDLLoES2BYVV vercel deploy --prod --archive=tgz",
     "deploy:h": "vercel deploy --prod",
-    "deploy:r": "VERCEL_PROJECT_ID=prj_BXXetgE6jgiq9lpWsoa9plAB3Baz VERCEL_ORG_ID=team_PWwGsn3xORVtRDLLoES2BYVV vercel deploy --prod --archive=tgz",
+    "deploy:r": "VERCEL_PROJECT_ID=prj_BXXetgE6jgiq9lpWsoa9plAB3Baz VERCEL_ORG_ID=team_PWwGsn3xORVtRDLLoES2BYVV tsx scripts/deploy-vercel.ts research-thera --archive=tgz",
     "deploy:re": "vercel deploy --prod --cwd apps/real-estate",
     "deploy:k": "VERCEL_PROJECT_ID=prj_HmZ37BPDql0kOnFT9iiPsnQBOryr VERCEL_ORG_ID=team_PWwGsn3xORVtRDLLoES2BYVV vercel deploy --prod",
     "deploy:p": "vercel deploy --prod --cwd apps/hoa",
