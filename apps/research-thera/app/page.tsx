@@ -41,17 +41,28 @@ export default function Home() {
     setAuthOpen(true);
   };
 
+  if (user) {
+    return (
+      <Flex direction="column" gap="6">
+        <HomeTasks />
+        <AuthDialog
+          open={authOpen}
+          onOpenChange={setAuthOpen}
+          defaultMode={authMode}
+        />
+      </Flex>
+    );
+  }
+
   return (
     <Flex direction="column" gap="6">
       {/* Hero Section */}
       <Card size={{ initial: "2", md: "4" }} style={{ background: "var(--indigo-3)" }}>
         <Flex direction="column" gap="4" align="center" py="4">
-          {!user && (
-            <Badge size="2" variant="soft" color="indigo">
-              Personal Health &middot; Research-Backed &middot; Private
-            </Badge>
-          )}
-          {!isPending && !user && (
+          <Badge size="2" variant="soft" color="indigo">
+            Personal Health &middot; Research-Backed &middot; Private
+          </Badge>
+          {!isPending && (
             <>
               <Heading size={{ initial: "7", md: "9" }} align="center" style={{ maxWidth: "800px" }}>
                 Your Personal Health & Research Companion
@@ -69,13 +80,6 @@ export default function Home() {
             </>
           )}
 
-          {user && (
-            <Text size="3" color="indigo" weight="medium">
-              Welcome back,{" "}
-              {user.name || user.email}!
-            </Text>
-          )}
-
           <Flex gap="3" mt="2">
             {isPending ? (
               <>
@@ -86,7 +90,7 @@ export default function Home() {
                   Loading...
                 </Button>
               </>
-            ) : !user ? (
+            ) : (
               <>
                 <Button size="3" onClick={() => openAuth("signup")} color="indigo">
                   Get Started
@@ -95,27 +99,10 @@ export default function Home() {
                   Sign In
                 </Button>
               </>
-            ) : (
-              <>
-                <Button size="3" onClick={() => router.push("/dashboard")}>
-                  <LayoutDashboard size={16} />
-                  Open Dashboard
-                </Button>
-                <Button
-                  size="3"
-                  variant="soft"
-                  onClick={() => router.push("/chat")}
-                >
-                  <MessageSquare size={16} />
-                  Open Chat
-                </Button>
-              </>
             )}
           </Flex>
         </Flex>
       </Card>
-
-      {user && <HomeTasks />}
 
       {/* Features Grid */}
       <Flex direction="column" gap="4">
