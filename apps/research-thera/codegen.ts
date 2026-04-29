@@ -14,6 +14,11 @@ const config: CodegenConfig = {
     schema: defineConfig({
       typesPluginsConfig: {
         contextType: "../app/apollo/context#GraphQLContext",
+        mappers: {
+          BloodTest: "../src/db/healthcare#BloodTest as BloodTestRow",
+          MedicalLetter: "../src/db/healthcare#MedicalLetter as MedicalLetterRow",
+          FamilyDocument: "../src/db/healthcare#FamilyDocument as FamilyDocumentRow",
+        },
       },
     }),
     // Client-side: Generate typed queries/mutations with gql function and React hooks

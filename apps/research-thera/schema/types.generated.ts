@@ -1,4 +1,5 @@
 import { GraphQLResolveInfo } from 'graphql';
+import { BloodTest as BloodTestRow, MedicalLetter as MedicalLetterRow, FamilyDocument as FamilyDocumentRow } from '../src/db/healthcare';
 import { GraphQLContext } from '../app/apollo/context';
 export type Maybe<T> = T | null | undefined;
 export type InputMaybe<T> = T | null | undefined;
@@ -4226,7 +4227,7 @@ export type ResolversTypes = {
   BehaviorIntensity: ResolverTypeWrapper<'LOW' | 'MEDIUM' | 'HIGH'>;
   BehaviorObservation: ResolverTypeWrapper<Omit<BehaviorObservation, 'familyMember' | 'goal' | 'intensity' | 'observationType'> & { familyMember?: Maybe<ResolversTypes['FamilyMember']>, goal?: Maybe<ResolversTypes['Goal']>, intensity?: Maybe<ResolversTypes['BehaviorIntensity']>, observationType: ResolversTypes['BehaviorObservationType'] }>;
   BehaviorObservationType: ResolverTypeWrapper<'REFUSAL' | 'TARGET_OCCURRED' | 'AVOIDANCE' | 'PARTIAL'>;
-  BloodTest: ResolverTypeWrapper<BloodTest>;
+  BloodTest: ResolverTypeWrapper<BloodTestRow>;
   BogdanDiscussionGuide: ResolverTypeWrapper<BogdanDiscussionGuide>;
   BuildClaimCardsInput: BuildClaimCardsInput;
   BuildClaimCardsResult: ResolverTypeWrapper<Omit<BuildClaimCardsResult, 'cards'> & { cards: Array<ResolversTypes['ClaimCard']> }>;
@@ -4330,8 +4331,8 @@ export type ResolversTypes = {
   EvidenceLocator: ResolverTypeWrapper<EvidenceLocator>;
   EvidencePolarity: ResolverTypeWrapper<'CONTRADICTS' | 'IRRELEVANT' | 'MIXED' | 'SUPPORTS'>;
   ExtractedIssue: ResolverTypeWrapper<ExtractedIssue>;
-  FamilyDocument: ResolverTypeWrapper<FamilyDocument>;
-  FamilyMember: ResolverTypeWrapper<Omit<FamilyMember, 'affirmations' | 'behaviorObservations' | 'goals' | 'issues' | 'relationships' | 'shares' | 'teacherFeedbacks'> & { affirmations: Array<ResolversTypes['Affirmation']>, behaviorObservations: Array<ResolversTypes['BehaviorObservation']>, goals: Array<ResolversTypes['Goal']>, issues: Array<ResolversTypes['Issue']>, relationships: Array<ResolversTypes['Relationship']>, shares: Array<ResolversTypes['FamilyMemberShare']>, teacherFeedbacks: Array<ResolversTypes['TeacherFeedback']> }>;
+  FamilyDocument: ResolverTypeWrapper<FamilyDocumentRow>;
+  FamilyMember: ResolverTypeWrapper<Omit<FamilyMember, 'affirmations' | 'behaviorObservations' | 'bloodTests' | 'goals' | 'issues' | 'relationships' | 'shares' | 'teacherFeedbacks'> & { affirmations: Array<ResolversTypes['Affirmation']>, behaviorObservations: Array<ResolversTypes['BehaviorObservation']>, bloodTests: Array<ResolversTypes['BloodTest']>, goals: Array<ResolversTypes['Goal']>, issues: Array<ResolversTypes['Issue']>, relationships: Array<ResolversTypes['Relationship']>, shares: Array<ResolversTypes['FamilyMemberShare']>, teacherFeedbacks: Array<ResolversTypes['TeacherFeedback']> }>;
   FamilyMemberShare: ResolverTypeWrapper<Omit<FamilyMemberShare, 'role'> & { role: ResolversTypes['FamilyMemberShareRole'] }>;
   FamilyMemberShareRole: ResolverTypeWrapper<'EDITOR'>;
   FamilySystemInsight: ResolverTypeWrapper<FamilySystemInsight>;
@@ -4386,7 +4387,7 @@ export type ResolversTypes = {
   LanguageExample: ResolverTypeWrapper<LanguageExample>;
   LanguageGuide: ResolverTypeWrapper<LanguageGuide>;
   LogGameCompletionInput: LogGameCompletionInput;
-  MedicalLetter: ResolverTypeWrapper<MedicalLetter>;
+  MedicalLetter: ResolverTypeWrapper<MedicalLetterRow>;
   Medication: ResolverTypeWrapper<Omit<Medication, 'familyMember'> & { familyMember?: Maybe<ResolversTypes['FamilyMember']> }>;
   MedicationAdverseEvent: ResolverTypeWrapper<MedicationAdverseEvent>;
   MedicationCorrelation: ResolverTypeWrapper<MedicationCorrelation>;
@@ -4516,7 +4517,7 @@ export type ResolversParentTypes = {
   AudioMetadata: AudioMetadata;
   AudioSegmentInfo: AudioSegmentInfo;
   BehaviorObservation: Omit<BehaviorObservation, 'familyMember' | 'goal'> & { familyMember?: Maybe<ResolversParentTypes['FamilyMember']>, goal?: Maybe<ResolversParentTypes['Goal']> };
-  BloodTest: BloodTest;
+  BloodTest: BloodTestRow;
   BogdanDiscussionGuide: BogdanDiscussionGuide;
   BuildClaimCardsInput: BuildClaimCardsInput;
   BuildClaimCardsResult: Omit<BuildClaimCardsResult, 'cards'> & { cards: Array<ResolversParentTypes['ClaimCard']> };
@@ -4614,8 +4615,8 @@ export type ResolversParentTypes = {
   EvidenceItem: EvidenceItem;
   EvidenceLocator: EvidenceLocator;
   ExtractedIssue: ExtractedIssue;
-  FamilyDocument: FamilyDocument;
-  FamilyMember: Omit<FamilyMember, 'affirmations' | 'behaviorObservations' | 'goals' | 'issues' | 'relationships' | 'shares' | 'teacherFeedbacks'> & { affirmations: Array<ResolversParentTypes['Affirmation']>, behaviorObservations: Array<ResolversParentTypes['BehaviorObservation']>, goals: Array<ResolversParentTypes['Goal']>, issues: Array<ResolversParentTypes['Issue']>, relationships: Array<ResolversParentTypes['Relationship']>, shares: Array<ResolversParentTypes['FamilyMemberShare']>, teacherFeedbacks: Array<ResolversParentTypes['TeacherFeedback']> };
+  FamilyDocument: FamilyDocumentRow;
+  FamilyMember: Omit<FamilyMember, 'affirmations' | 'behaviorObservations' | 'bloodTests' | 'goals' | 'issues' | 'relationships' | 'shares' | 'teacherFeedbacks'> & { affirmations: Array<ResolversParentTypes['Affirmation']>, behaviorObservations: Array<ResolversParentTypes['BehaviorObservation']>, bloodTests: Array<ResolversParentTypes['BloodTest']>, goals: Array<ResolversParentTypes['Goal']>, issues: Array<ResolversParentTypes['Issue']>, relationships: Array<ResolversParentTypes['Relationship']>, shares: Array<ResolversParentTypes['FamilyMemberShare']>, teacherFeedbacks: Array<ResolversParentTypes['TeacherFeedback']> };
   FamilyMemberShare: FamilyMemberShare;
   FamilySystemInsight: FamilySystemInsight;
   FollowUpStep: FollowUpStep;
@@ -4662,7 +4663,7 @@ export type ResolversParentTypes = {
   LanguageExample: LanguageExample;
   LanguageGuide: LanguageGuide;
   LogGameCompletionInput: LogGameCompletionInput;
-  MedicalLetter: MedicalLetter;
+  MedicalLetter: MedicalLetterRow;
   Medication: Omit<Medication, 'familyMember'> & { familyMember?: Maybe<ResolversParentTypes['FamilyMember']> };
   MedicationAdverseEvent: MedicationAdverseEvent;
   MedicationCorrelation: MedicationCorrelation;
