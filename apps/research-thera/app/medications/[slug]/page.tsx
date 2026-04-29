@@ -23,6 +23,7 @@ import {
   MedicationsDocument,
 } from "../../__generated__/hooks";
 import { AuthGate } from "../../components/AuthGate";
+import { CalmingSuggestionsPanel } from "../../components/CalmingSuggestionsPanel";
 import { MontelukastSafetyPanel } from "../../components/MontelukastSafetyPanel";
 import { RegimenAnalysisPanel } from "../../components/RegimenAnalysisPanel";
 
@@ -125,6 +126,8 @@ function PersonView({
         {!loading && !error && current.length > 0 && (
           <RegimenAnalysisPanel slug={slug} />
         )}
+
+        {!loading && !error && slug === "bogdan" && <CalmingSuggestionsPanel />}
 
         {!loading && !error && current.length > 0 && (
           <MedicationSection
