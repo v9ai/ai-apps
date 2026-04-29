@@ -4247,7 +4247,7 @@ export type AppointmentsQuery = { __typename?: 'Query', appointments: Array<{ __
 export type BloodTestsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type BloodTestsQuery = { __typename?: 'Query', bloodTests: Array<{ __typename?: 'BloodTest', id: string, fileName: string, fileUrl: string, status: string, testDate?: string | null, errorMessage?: string | null, uploadedAt: string, markersCount: number }> };
+export type BloodTestsQuery = { __typename?: 'Query', bloodTests: Array<{ __typename?: 'BloodTest', id: string, familyMemberId?: number | null, fileName: string, fileUrl: string, status: string, testDate?: string | null, errorMessage?: string | null, uploadedAt: string, markersCount: number }> };
 
 export type BogdanDiscussionsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -6374,6 +6374,7 @@ export const BloodTestsDocument = gql`
     query BloodTests {
   bloodTests {
     id
+    familyMemberId
     fileName
     fileUrl
     status

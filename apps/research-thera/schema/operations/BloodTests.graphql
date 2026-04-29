@@ -1,6 +1,7 @@
 query BloodTests {
   bloodTests {
     id
+    familyMemberId
     fileName
     fileUrl
     status

@@ -58,6 +58,8 @@ class CalmingPlanState(TypedDict, total=False):
     # Internals
     _member: dict
     _issues: list[dict]
+    _allergies: list[dict]
+    _characteristics: list[dict]
     _deep_analysis: Optional[dict]
     _research: list[dict]
     _plan_draft: dict
@@ -137,9 +139,11 @@ async def load_context(state: CalmingPlanState) -> dict:
     try:
         async with neon.connection() as conn:
             async with conn.cursor() as cur:
-                # Member profile — scoped to user_id for safety.
+                # Member profile — scoped to user_id for safety. Includes the
+                # free-text `allergies` column on family_members (separate from
+                # the structured `allergies` table).
                 await cur.execute(
-                    "SELECT id, first_name, age_years, date_of_birth, preferred_language, relationship "
+                    "SELECT id, first_name, age_years, date_of_birth, preferred_language, relationship, allergies "
                     "FROM family_members WHERE id = %s AND user_id = %s",
                     (family_member_id, user_email),
                 )
@@ -153,13 +157,19 @@ async def load_context(state: CalmingPlanState) -> dict:
                     "date_of_birth": row[3],
                     "preferred_language": row[4],
                     "relationship": row[5],
+                    "allergies_text": row[6],
                 }
 
-                # Recent issues (last 10 by created_at).
+                # All issues — no LIMIT, severity-then-recency ordered. Caller
+                # said "take into account all the issues", so we feed the full
+                # list to the LLM and let prompt-side compression handle volume.
                 await cur.execute(
                     "SELECT title, category, severity, description "
                     "FROM issues WHERE family_member_id = %s AND user_id = %s "
-                    "ORDER BY created_at DESC LIMIT 10",
+                    "ORDER BY CASE severity "
+                    "  WHEN 'CRITICAL' THEN 1 WHEN 'HIGH' THEN 2 "
+                    "  WHEN 'MEDIUM' THEN 3 WHEN 'LOW' THEN 4 ELSE 5 END, "
+                    "created_at DESC",
                     (family_member_id, user_email),
                 )
                 issue_rows = await cur.fetchall()
@@ -167,6 +177,55 @@ async def load_context(state: CalmingPlanState) -> dict:
                     {"title": r[0], "category": r[1], "severity": r[2], "description": r[3]}
                     for r in issue_rows
                 ]
+
+                # Structured allergies (allergies table). Best-effort — older
+                # databases without this table will fall back to the free-text
+                # column on family_members.
+                allergies: list[dict] = []
+                try:
+                    await cur.execute(
+                        "SELECT name, kind, severity, notes FROM allergies "
+                        "WHERE family_member_id = %s AND user_id = %s "
+                        "ORDER BY CASE severity "
+                        "  WHEN 'severe' THEN 1 WHEN 'moderate' THEN 2 "
+                        "  WHEN 'mild' THEN 3 ELSE 4 END",
+                        (family_member_id, user_email),
+                    )
+                    allergies = [
+                        {"name": r[0], "kind": r[1], "severity": r[2], "notes": r[3]}
+                        for r in await cur.fetchall()
+                    ]
+                except Exception as exc:
+                    print(f"[calming_plan] allergies table unavailable: {exc}")
+
+                # Family-member characteristics (broader than `issues` —
+                # includes risk-tier, impairment domains, age-of-onset).
+                characteristics: list[dict] = []
+                try:
+                    await cur.execute(
+                        "SELECT category, title, description, severity, risk_tier, "
+                        "impairment_domains, tags "
+                        "FROM family_member_characteristics "
+                        "WHERE family_member_id = %s AND user_id = %s "
+                        "ORDER BY CASE risk_tier "
+                        "  WHEN 'HIGH' THEN 1 WHEN 'MODERATE' THEN 2 "
+                        "  WHEN 'LOW' THEN 3 ELSE 4 END",
+                        (family_member_id, user_email),
+                    )
+                    characteristics = [
+                        {
+                            "category": r[0],
+                            "title": r[1],
+                            "description": r[2],
+                            "severity": r[3],
+                            "risk_tier": r[4],
+                            "impairment_domains": r[5],
+                            "tags": r[6],
+                        }
+                        for r in await cur.fetchall()
+                    ]
+                except Exception as exc:
+                    print(f"[calming_plan] family_member_characteristics unavailable: {exc}")
 
                 # Most recent deep analysis.
                 await cur.execute(
@@ -200,6 +259,8 @@ async def load_context(state: CalmingPlanState) -> dict:
     return {
         "_member": member,
         "_issues": issues,
+        "_allergies": allergies,
+        "_characteristics": characteristics,
         "_deep_analysis": deep_analysis,
         "language": language,
     }
@@ -275,6 +336,8 @@ async def search_research(state: CalmingPlanState) -> dict:
 def _build_plan_prompt(state: CalmingPlanState) -> str:
     member = state.get("_member") or {}
     issues = state.get("_issues") or []
+    allergies = state.get("_allergies") or []
+    characteristics = state.get("_characteristics") or []
     deep = state.get("_deep_analysis") or {}
     research = state.get("_research") or []
     language = state.get("language", "ro")
@@ -291,11 +354,32 @@ def _build_plan_prompt(state: CalmingPlanState) -> str:
         "Currently on medications: NO (caller confirmed)",
     ]
 
+    # Allergy block — combine structured rows + free-text column. This block
+    # is repeated in the safety_review pass so the model can't lose track of it.
+    allergy_lines: list[str] = []
+    for a in allergies:
+        sev = (a.get("severity") or "").upper()
+        kind = a.get("kind") or "allergy"
+        line = f"- [{sev}] {kind}: {a.get('name', '')}"
+        if a.get("notes"):
+            line += f" — {a['notes']}"
+        allergy_lines.append(line)
+    if member.get("allergies_text"):
+        allergy_lines.append(f"- (free-text from profile) {member['allergies_text']}")
+    allergies_block = "\n".join(allergy_lines) or "(no allergies recorded — still apply standard pediatric caution)"
+
     issues_block = "\n".join(
         f"- [{(i.get('severity') or '').upper()}] {i.get('title')} ({i.get('category')}): "
         f"{(i.get('description') or '')[:240]}"
         for i in issues
     ) or "(no issues recorded)"
+
+    characteristics_block = "\n".join(
+        f"- [{(c.get('risk_tier') or 'NONE').upper()}] {c.get('title')} ({c.get('category')}): "
+        f"{(c.get('description') or '')[:240]}"
+        + (f" | impairment: {c['impairment_domains']}" if c.get('impairment_domains') else "")
+        for c in characteristics
+    ) or "(no characteristics recorded)"
 
     deep_block = ""
     if deep.get("summary"):
