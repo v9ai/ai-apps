@@ -46,9 +46,11 @@ export default function Home() {
       {/* Hero Section */}
       <Card size={{ initial: "2", md: "4" }} style={{ background: "var(--indigo-3)" }}>
         <Flex direction="column" gap="4" align="center" py="4">
-          <Badge size="2" variant="soft" color="indigo">
-            Personal Health &middot; Research-Backed &middot; Private
-          </Badge>
+          {!user && (
+            <Badge size="2" variant="soft" color="indigo">
+              Personal Health &middot; Research-Backed &middot; Private
+            </Badge>
+          )}
           {!isPending && !user && (
             <>
               <Heading size={{ initial: "7", md: "9" }} align="center" style={{ maxWidth: "800px" }}>
