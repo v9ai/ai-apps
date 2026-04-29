@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { css } from "styled-system/css";
 import { useSession } from "@/lib/auth-client";
-import { HubType, hubDisplayName, hubColor } from "@/lib/parser";
+import { HubType, hubDisplayName, hubColor, HUB_TYPE_SLUG } from "@/lib/parser";
 
 interface UserHub {
   id: number;
@@ -737,7 +737,7 @@ export default function MyPartsPage() {
                 })}
               >
                 <Link
-                  href={`/hubs/${hub.id}`}
+                  href={`/hubs/${HUB_TYPE_SLUG[hub.hubType as HubType] ?? hub.id}`}
                   className={css({
                     display: "flex",
                     alignItems: "center",

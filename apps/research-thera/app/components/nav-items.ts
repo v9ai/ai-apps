@@ -31,7 +31,6 @@ export const NAV_ITEMS: NavItem[] = [
     label: "Plan",
     children: [
       { href: "/goals", label: "Goals" },
-      { href: "/trajectory", label: "Trajectory" },
       { href: "/stories", label: "Stories" },
       { href: "/routines", label: "Routines" },
       { href: "/habits", label: "Habits" },

@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { userHubs, hubTypeDocs } from "@/lib/schema";
 import { eq, and } from "drizzle-orm";
+import { resolveHub } from "@/lib/hub-resolve";
 
 export async function GET(
   _request: NextRequest,
@@ -15,9 +16,9 @@ export async function GET(
   }
 
   const { id } = await params;
-  const hubId = Number(id);
-  if (!Number.isInteger(hubId)) {
-    return NextResponse.json({ error: "Invalid hub id" }, { status: 400 });
+  const resolved = await resolveHub(id, session.user.id);
+  if (!resolved) {
+    return NextResponse.json({ error: "Hub not found" }, { status: 404 });
   }
 
   const [row] = await db
@@ -31,7 +32,7 @@ export async function GET(
     })
     .from(userHubs)
     .leftJoin(hubTypeDocs, eq(hubTypeDocs.hubType, userHubs.hubType))
-    .where(and(eq(userHubs.id, hubId), eq(userHubs.userId, session.user.id)))
+    .where(and(eq(userHubs.id, resolved.id), eq(userHubs.userId, session.user.id)))
     .limit(1);
 
   if (!row) {
@@ -51,11 +52,15 @@ export async function DELETE(
   }
 
   const { id } = await params;
+  const resolved = await resolveHub(id, session.user.id);
+  if (!resolved) {
+    return NextResponse.json({ error: "Hub not found" }, { status: 404 });
+  }
 
   await db
     .delete(userHubs)
     .where(
-      and(eq(userHubs.id, Number(id)), eq(userHubs.userId, session.user.id))
+      and(eq(userHubs.id, resolved.id), eq(userHubs.userId, session.user.id))
     );
 
   return NextResponse.json({ success: true });

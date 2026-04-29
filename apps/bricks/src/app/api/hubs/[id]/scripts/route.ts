@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { userHubs, scripts as userScriptsTable } from "@/lib/schema";
+import { scripts as userScriptsTable } from "@/lib/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { getAllScripts } from "@/lib/scripts";
 import { slugify } from "@/lib/parser";
+import { resolveHub } from "@/lib/hub-resolve";
 
 export async function GET(
   _request: NextRequest,
@@ -17,18 +18,8 @@ export async function GET(
   }
 
   const { id } = await params;
-  const hubId = Number(id);
-  if (!Number.isInteger(hubId)) {
-    return NextResponse.json({ error: "Invalid hub id" }, { status: 400 });
-  }
-
-  const [hubRow] = await db
-    .select({ hubType: userHubs.hubType })
-    .from(userHubs)
-    .where(and(eq(userHubs.id, hubId), eq(userHubs.userId, session.user.id)))
-    .limit(1);
-
-  if (!hubRow) {
+  const resolved = await resolveHub(id, session.user.id);
+  if (!resolved) {
     return NextResponse.json({ error: "Hub not found" }, { status: 404 });
   }
 
@@ -37,7 +28,7 @@ export async function GET(
   // we only want unambiguous matches surfaced on a specific hub page.
   const all = getAllScripts();
   const scripts = all
-    .filter((s) => s.hubType === hubRow.hubType)
+    .filter((s) => s.hubType === resolved.hubType)
     .map((s) => ({
       slug: slugify(s.filename),
       filename: s.filename,
@@ -60,10 +51,10 @@ export async function GET(
     .where(
       and(
         eq(userScriptsTable.userId, session.user.id),
-        eq(userScriptsTable.hub, hubRow.hubType),
+        eq(userScriptsTable.hub, resolved.hubType),
       ),
     )
     .orderBy(desc(userScriptsTable.createdAt));
 
-  return NextResponse.json({ hubType: hubRow.hubType, scripts, userScripts });
+  return NextResponse.json({ hubType: resolved.hubType, scripts, userScripts });
 }
