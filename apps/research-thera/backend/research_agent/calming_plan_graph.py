@@ -1188,27 +1188,38 @@ async def persist_plan(state: CalmingPlanState) -> dict:
 
     plan_markdown = _render_markdown(plan, name=member.get("first_name") or "Family member", language=language)
 
-    try:
-        async with neon.connection() as conn:
-            async with conn.cursor() as cur:
-                await cur.execute(
-                    "INSERT INTO calming_plans "
-                    "(family_member_id, user_id, language, plan_json, plan_markdown, sources_json, safety_notes) "
-                    "VALUES (%s, %s, %s, %s::jsonb, %s, %s::jsonb, %s) RETURNING id",
-                    (
-                        family_member_id,
-                        user_email,
-                        language,
-                        json.dumps(plan, ensure_ascii=False),
-                        plan_markdown,
-                        json.dumps(sources, ensure_ascii=False),
-                        safety_notes,
-                    ),
-                )
-                row = await cur.fetchone()
-                plan_id = int(row[0]) if row else 0
-    except Exception as exc:
-        return {"error": f"persist_plan failed: {exc}"}
+    # Retry once on transient connection/SSL drops — Neon serverless connections
+    # can be reaped after long idle (the deep graph holds for 3-5 min).
+    last_exc: Optional[Exception] = None
+    plan_id = 0
+    for attempt in range(2):
+        try:
+            async with neon.connection() as conn:
+                async with conn.cursor() as cur:
+                    await cur.execute(
+                        "INSERT INTO calming_plans "
+                        "(family_member_id, user_id, language, plan_json, plan_markdown, sources_json, safety_notes) "
+                        "VALUES (%s, %s, %s, %s::jsonb, %s, %s::jsonb, %s) RETURNING id",
+                        (
+                            family_member_id,
+                            user_email,
+                            language,
+                            json.dumps(plan, ensure_ascii=False),
+                            plan_markdown,
+                            json.dumps(sources, ensure_ascii=False),
+                            safety_notes,
+                        ),
+                    )
+                    row = await cur.fetchone()
+                    plan_id = int(row[0]) if row else 0
+            break  # success
+        except Exception as exc:
+            last_exc = exc
+            if attempt == 0:
+                print(f"[calming_plan] persist_plan attempt 1 failed ({exc}); retrying", flush=True)
+                await asyncio.sleep(1.0)
+            else:
+                return {"error": f"persist_plan failed after retry: {exc}"}
 
     return {
         "plan_id": plan_id,
