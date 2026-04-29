@@ -67,22 +67,6 @@ export type ProductCardProps = {
   onDelete: (id: number, name: string) => void;
 };
 
-const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
-
-function relativeTime(iso: string | null): string | null {
-  if (!iso) return null;
-  const ms = Date.now() - Date.parse(iso);
-  if (Number.isNaN(ms)) return null;
-  const sec = Math.round(ms / 1000);
-  if (sec < 60) return rtf.format(-sec, "second");
-  const min = Math.round(sec / 60);
-  if (min < 60) return rtf.format(-min, "minute");
-  const hr = Math.round(min / 60);
-  if (hr < 24) return rtf.format(-hr, "hour");
-  const day = Math.round(hr / 24);
-  return rtf.format(-day, "day");
-}
-
 function elapsedSeconds(iso: string | null): number {
   if (!iso) return 0;
   return Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 1000));
@@ -432,7 +416,6 @@ export function ProductCard({
           kind="icp"
           run={runs.icp}
           present={showIcp}
-          analyzedAt={p.icpAnalyzedAt}
           onRetry={() => onAnalyzeIcp(p.id, p.slug)}
           isAdmin={isAdmin}
         />
@@ -440,7 +423,6 @@ export function ProductCard({
           kind="pricing"
           run={runs.pricing}
           present={showPricing}
-          analyzedAt={p.pricingAnalyzedAt}
           onRetry={() => onAnalyzePricing(p.id)}
           isAdmin={isAdmin}
         />
@@ -448,7 +430,6 @@ export function ProductCard({
           kind="gtm"
           run={runs.gtm}
           present={showGtm}
-          analyzedAt={p.gtmAnalyzedAt}
           onRetry={() => onAnalyzeGtm(p.id)}
           isAdmin={isAdmin}
         />
@@ -456,7 +437,6 @@ export function ProductCard({
           kind="product_intel"
           run={runs.product_intel}
           present={showIntel}
-          analyzedAt={p.intelReportAt}
           onRetry={() => onRunFullIntel(p.id)}
           isAdmin={isAdmin}
         />
@@ -489,14 +469,12 @@ function KindStatus({
   kind,
   run,
   present,
-  analyzedAt,
   onRetry,
   isAdmin,
 }: {
   kind: IntelKind;
   run: ReturnType<typeof useProductRunsLive>["runs"][IntelKind];
   present: boolean;
-  analyzedAt: string | null;
   onRetry: () => void;
   isAdmin: boolean;
 }) {
