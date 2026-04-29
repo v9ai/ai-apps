@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "@radix-ui/themes/styles.css";
 import "./globals.css";
 import { Theme, Flex } from "@radix-ui/themes";
+import { Toaster } from "sonner";
 import { Providers } from "@/components/providers";
 import { SidebarProvider } from "@/components/sidebar-provider";
 import { Sidebar, MainContent } from "@/components/sidebar";
@@ -39,6 +40,7 @@ export default function RootLayout({
               </SidebarProvider>
             </ErrorBoundary>
           </Providers>
+          <Toaster richColors position="top-right" theme="dark" closeButton />
         </Theme>
       </body>
     </html>

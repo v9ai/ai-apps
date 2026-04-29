@@ -95,6 +95,7 @@ query GetFamilyMember($id: Int, $slug: String) {
     bloodTests {
       id
       fileName
+      fileUrl
       status
       testDate
       uploadedAt

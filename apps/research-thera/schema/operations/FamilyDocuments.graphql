@@ -9,6 +9,7 @@ query FamilyDocuments($familyMemberId: Int!) {
     externalUrl
     fileName
     filePath
+    fileUrl
     createdAt
   }
 }

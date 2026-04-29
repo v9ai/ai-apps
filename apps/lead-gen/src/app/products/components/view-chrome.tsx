@@ -189,8 +189,10 @@ export function ProductExternalLink({
 
 export function StatusBadge({
   status,
+  label,
 }: {
   status: string;
+  label?: string;
 }) {
   const color: "green" | "red" | "orange" | "amber" | "blue" | "gray" =
     status === "success"
@@ -202,9 +204,12 @@ export function StatusBadge({
           : status === "running" || status === "pending"
             ? "blue"
             : "gray";
+  const isInflight = status === "running" || status === "pending";
+  const text = label ?? status;
   return (
     <Badge color={color} size="2">
-      {status}…
+      {text}
+      {isInflight ? "…" : ""}
     </Badge>
   );
 }

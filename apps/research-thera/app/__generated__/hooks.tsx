@@ -4245,7 +4245,7 @@ export type AppointmentsQuery = { __typename?: 'Query', appointments: Array<{ __
 export type BloodTestsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type BloodTestsQuery = { __typename?: 'Query', bloodTests: Array<{ __typename?: 'BloodTest', id: string, fileName: string, status: string, testDate?: string | null, errorMessage?: string | null, uploadedAt: string, markersCount: number }> };
+export type BloodTestsQuery = { __typename?: 'Query', bloodTests: Array<{ __typename?: 'BloodTest', id: string, fileName: string, fileUrl: string, status: string, testDate?: string | null, errorMessage?: string | null, uploadedAt: string, markersCount: number }> };
 
 export type BogdanDiscussionsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -4736,7 +4736,7 @@ export type DoctorQueryVariables = Exact<{
 }>;
 
 
-export type DoctorQuery = { __typename?: 'Query', doctor?: { __typename?: 'Doctor', id: string, name: string, specialty?: string | null, phone?: string | null, email?: string | null, address?: string | null, notes?: string | null, createdAt: string } | null, medicalLetters: Array<{ __typename?: 'MedicalLetter', id: string, fileName: string, filePath: string, description?: string | null, letterDate?: string | null, uploadedAt: string }> };
+export type DoctorQuery = { __typename?: 'Query', doctor?: { __typename?: 'Doctor', id: string, name: string, specialty?: string | null, phone?: string | null, email?: string | null, address?: string | null, notes?: string | null, createdAt: string } | null, medicalLetters: Array<{ __typename?: 'MedicalLetter', id: string, fileName: string, filePath: string, fileUrl: string, description?: string | null, letterDate?: string | null, uploadedAt: string }> };
 
 export type DoctorsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -4755,7 +4755,7 @@ export type FamilyDocumentsQueryVariables = Exact<{
 }>;
 
 
-export type FamilyDocumentsQuery = { __typename?: 'Query', familyDocuments: Array<{ __typename?: 'FamilyDocument', id: string, title: string, documentType: string, documentDate?: string | null, source?: string | null, content?: string | null, externalUrl?: string | null, fileName?: string | null, filePath?: string | null, createdAt: string }> };
+export type FamilyDocumentsQuery = { __typename?: 'Query', familyDocuments: Array<{ __typename?: 'FamilyDocument', id: string, title: string, documentType: string, documentDate?: string | null, source?: string | null, content?: string | null, externalUrl?: string | null, fileName?: string | null, filePath?: string | null, fileUrl?: string | null, createdAt: string }> };
 
 export type GenerateAffirmationsForFamilyMemberMutationVariables = Exact<{
   familyMemberId: Scalars['Int']['input'];
@@ -5076,7 +5076,7 @@ export type GetFamilyMemberQueryVariables = Exact<{
 }>;
 
 
-export type GetFamilyMemberQuery = { __typename?: 'Query', familyMember?: { __typename?: 'FamilyMember', id: number, userId: string, slug?: string | null, firstName: string, name?: string | null, ageYears?: number | null, relationship?: string | null, email?: string | null, phone?: string | null, location?: string | null, occupation?: string | null, dateOfBirth?: string | null, bio?: string | null, allergies?: string | null, createdAt: string, updatedAt: string, shares: Array<{ __typename?: 'FamilyMemberShare', familyMemberId: number, email: string, role: FamilyMemberShareRole, createdAt: string, createdBy: string }>, goals: Array<{ __typename?: 'Goal', id: number, title: string, status: string, description?: string | null, createdAt: string }>, behaviorObservations: Array<{ __typename?: 'BehaviorObservation', id: number, familyMemberId: number, goalId?: number | null, createdBy: string, observedAt: string, observationType: BehaviorObservationType, frequency?: number | null, intensity?: BehaviorIntensity | null, context?: string | null, notes?: string | null, createdAt: string, updatedAt: string }>, teacherFeedbacks: Array<{ __typename?: 'TeacherFeedback', id: number, familyMemberId: number, createdBy: string, teacherName: string, subject?: string | null, feedbackDate: string, content: string, tags?: Array<string> | null, source?: FeedbackSource | null, extracted: boolean, createdAt: string, updatedAt: string }>, issues: Array<{ __typename?: 'Issue', id: number, feedbackId?: number | null, familyMemberId: number, createdBy: string, title: string, description: string, category: string, severity: string, recommendations?: Array<string> | null, createdAt: string, updatedAt: string }>, relationships: Array<{ __typename?: 'Relationship', id: number, createdBy: string, subjectType: PersonType, subjectId: number, relatedType: PersonType, relatedId: number, relationshipType: string, context?: string | null, startDate?: string | null, status: RelationshipStatus, createdAt: string, updatedAt: string, related?: { __typename?: 'RelationshipPerson', id: number, type: PersonType, slug?: string | null, firstName: string, lastName?: string | null } | null }>, bloodTests: Array<{ __typename?: 'BloodTest', id: string, fileName: string, status: string, testDate?: string | null, uploadedAt: string, markersCount: number }> } | null };
+export type GetFamilyMemberQuery = { __typename?: 'Query', familyMember?: { __typename?: 'FamilyMember', id: number, userId: string, slug?: string | null, firstName: string, name?: string | null, ageYears?: number | null, relationship?: string | null, email?: string | null, phone?: string | null, location?: string | null, occupation?: string | null, dateOfBirth?: string | null, bio?: string | null, allergies?: string | null, createdAt: string, updatedAt: string, shares: Array<{ __typename?: 'FamilyMemberShare', familyMemberId: number, email: string, role: FamilyMemberShareRole, createdAt: string, createdBy: string }>, goals: Array<{ __typename?: 'Goal', id: number, title: string, status: string, description?: string | null, createdAt: string }>, behaviorObservations: Array<{ __typename?: 'BehaviorObservation', id: number, familyMemberId: number, goalId?: number | null, createdBy: string, observedAt: string, observationType: BehaviorObservationType, frequency?: number | null, intensity?: BehaviorIntensity | null, context?: string | null, notes?: string | null, createdAt: string, updatedAt: string }>, teacherFeedbacks: Array<{ __typename?: 'TeacherFeedback', id: number, familyMemberId: number, createdBy: string, teacherName: string, subject?: string | null, feedbackDate: string, content: string, tags?: Array<string> | null, source?: FeedbackSource | null, extracted: boolean, createdAt: string, updatedAt: string }>, issues: Array<{ __typename?: 'Issue', id: number, feedbackId?: number | null, familyMemberId: number, createdBy: string, title: string, description: string, category: string, severity: string, recommendations?: Array<string> | null, createdAt: string, updatedAt: string }>, relationships: Array<{ __typename?: 'Relationship', id: number, createdBy: string, subjectType: PersonType, subjectId: number, relatedType: PersonType, relatedId: number, relationshipType: string, context?: string | null, startDate?: string | null, status: RelationshipStatus, createdAt: string, updatedAt: string, related?: { __typename?: 'RelationshipPerson', id: number, type: PersonType, slug?: string | null, firstName: string, lastName?: string | null } | null }>, bloodTests: Array<{ __typename?: 'BloodTest', id: string, fileName: string, fileUrl: string, status: string, testDate?: string | null, uploadedAt: string, markersCount: number }> } | null };
 
 export type GetFamilyMembersQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -6372,6 +6372,7 @@ export const BloodTestsDocument = gql`
   bloodTests {
     id
     fileName
+    fileUrl
     status
     testDate
     errorMessage
@@ -9248,6 +9249,7 @@ export const DoctorDocument = gql`
     id
     fileName
     filePath
+    fileUrl
     description
     letterDate
     uploadedAt
@@ -9392,6 +9394,7 @@ export const FamilyDocumentsDocument = gql`
     externalUrl
     fileName
     filePath
+    fileUrl
     createdAt
   }
 }
@@ -11723,6 +11726,7 @@ export const GetFamilyMemberDocument = gql`
     bloodTests {
       id
       fileName
+      fileUrl
       status
       testDate
       uploadedAt

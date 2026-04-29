@@ -13,6 +13,7 @@ query Doctor($id: ID!) {
     id
     fileName
     filePath
+    fileUrl
     description
     letterDate
     uploadedAt

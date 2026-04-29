@@ -2,6 +2,7 @@ query BloodTests {
   bloodTests {
     id
     fileName
+    fileUrl
     status
     testDate
     errorMessage
