@@ -188,6 +188,19 @@ class ClassifyRecruitmentBulkState(TypedDict, total=False):
     applied: int
 
 
+class ApplyRecruitmentVerdictsState(TypedDict, total=False):
+    # input — exactly one of csv_path / verdicts must be set.
+    # csv_path is the local-dev path (CF Container fs is ephemeral, so callers
+    # there should pass `verdicts` inline instead).
+    csv_path: str
+    verdicts: list[dict[str, Any]]  # [{id, confidence, reasons[, key, name]}]
+    threshold: float                # default 0.60
+    # output
+    eligible_count: int
+    applied: int
+    method: str                     # "classify-recruitment-llm-v1"
+
+
 class ClassifyAiIntentState(TypedDict, total=False):
     # input — posts is the primary signal; name/headline/company give context
     contact_id: int  # echoed back for batch joins; not consumed by the scorer

@@ -5,3 +5,5 @@ __pycache__/
 .pytest_cache/
 # Vendored pypackages copied in pre-deploy; kept out of git to avoid duplication.
 vendor/
+# Classification run outputs written to backend/ root by scripts/classify_*.py
+classify_*.csv

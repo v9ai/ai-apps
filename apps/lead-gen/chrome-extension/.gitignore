@@ -390,3 +390,6 @@ $RECYCLE.BIN/
 
 #generated manifest
 public/manifest.json
+
+# Packaged extension artifacts (timestamped builds from package script)
+lead-gen-extension-*.zip

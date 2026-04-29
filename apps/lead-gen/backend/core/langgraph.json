@@ -25,6 +25,7 @@
     "classify_paper": "leadgen_agent.classify_paper_graph:graph",
     "classify_recruitment": "leadgen_agent.classify_recruitment_graph:graph",
     "classify_recruitment_bulk": "leadgen_agent.classify_recruitment_bulk_graph:graph",
+    "apply_recruitment_verdicts": "leadgen_agent.apply_recruitment_verdicts_graph:graph",
     "classify_ai_intent": "leadgen_agent.classify_ai_intent_graph:graph",
     "score_recruiter_fit": "leadgen_agent.score_recruiter_fit_graph:graph",
     "deep_scrape": "leadgen_agent.deep_scrape_graph:graph",

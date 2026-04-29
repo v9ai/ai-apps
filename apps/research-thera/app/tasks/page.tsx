@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Flex, Heading, Text } from "@radix-ui/themes";
 import {
@@ -30,7 +31,7 @@ const emptyMessages: Record<string, string> = {
   completed: "No completed tasks yet. Complete some tasks to see them here.",
 };
 
-export default function TasksPage() {
+function TasksPageInner() {
   const params = useSearchParams();
   const rawStatus = params.get("status") ?? "inbox";
   const status: ValidStatus = (VALID_STATUSES as readonly string[]).includes(rawStatus)
@@ -112,3 +113,10 @@ export default function TasksPage() {
   );
 }
 
+export default function TasksPage() {
+  return (
+    <Suspense fallback={<Text size="2" color="gray">Loading...</Text>}>
+      <TasksPageInner />
+    </Suspense>
+  );
+}

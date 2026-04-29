@@ -1,9 +1,12 @@
-"""Apply verdicts from classify_recruitment_full.csv to companies.category.
+"""Apply cached recruitment verdicts to companies via the LangGraph apply graph.
 
-Reads the dry-run CSV produced by ``classify_recruitment_companies.py``,
-filters rows with ``is_recruitment=True`` AND ``confidence >= --threshold``,
-and UPDATEs ``companies`` to set ``category='STAFFING'``, ``score``, and
-``score_reasons``. Skips re-classifying — uses cached verdicts.
+Thin CLI wrapper over ``apply_recruitment_verdicts_graph.graph`` (registered in
+``core/langgraph.json`` as ``apply_recruitment_verdicts``). The graph itself
+loads the CSV, filters by ``confidence >= --threshold``, and UPDATEs
+``companies.category='STAFFING'`` + ``score`` + ``score_reasons``.
+
+In-process invocation (not HTTP) sidesteps the ``langgraph dev`` single-worker
+queue (see memory ``feedback_leadgen_langgraph_fanout``).
 
 Usage (from backend/):
     python scripts/apply_recruitment_verdicts.py [--csv path] [--threshold 0.60]
@@ -12,12 +15,12 @@ Usage (from backend/):
 from __future__ import annotations
 
 import argparse
-import csv
-import json
+import asyncio
 import logging
 import os
 import sys
 from pathlib import Path
+from typing import Any
 
 _ROOT = Path(__file__).resolve().parents[2]
 _env_local = _ROOT / ".env.local"
@@ -35,23 +38,14 @@ for _envfile in (_env_backend, _env_local):
             if k and k not in os.environ:
                 os.environ[k] = v
 
-import psycopg
-
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from leadgen_agent.deep_icp_graph import _dsn  # noqa: E402
+from leadgen_agent.apply_recruitment_verdicts_graph import graph  # noqa: E402
 
 log = logging.getLogger("apply_recruitment_verdicts")
 
-METHOD_TAG = "classify-recruitment-llm-v1"
 
-UPDATE_SQL = (
-    "UPDATE companies SET category = %s, score = %s, score_reasons = %s, "
-    "updated_at = now()::text WHERE id = %s"
-)
-
-
-def main() -> int:
+async def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--csv", default="classify_recruitment_full.csv")
     parser.add_argument("--threshold", type=float, default=0.60)
@@ -59,52 +53,21 @@ def main() -> int:
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
-    csv_path = Path(args.csv)
-    if not csv_path.exists():
-        log.error("csv not found: %s", csv_path)
-        return 1
+    state: dict[str, Any] = {
+        "csv_path": args.csv,
+        "threshold": float(args.threshold),
+    }
 
-    eligible: list[dict] = []
-    with csv_path.open() as fh:
-        reader = csv.DictReader(fh)
-        for row in reader:
-            if (row.get("is_recruitment") or "").strip().lower() != "true":
-                continue
-            try:
-                conf = float(row.get("confidence") or 0.0)
-            except ValueError:
-                continue
-            if conf < args.threshold:
-                continue
-            eligible.append({
-                "id": int(row["id"]),
-                "key": row.get("key") or "",
-                "name": row.get("name") or "",
-                "confidence": conf,
-                "reasons": [s.strip() for s in (row.get("reasons") or "").split("|") if s.strip()],
-            })
+    final = await graph.ainvoke(state)
 
-    log.info("eligible (is_recruitment=True, confidence>=%.2f): %d rows", args.threshold, len(eligible))
-    if not eligible:
-        return 0
-
-    with psycopg.connect(_dsn(), autocommit=True, connect_timeout=10) as conn:
-        with conn.cursor() as cur:
-            for r in eligible:
-                reasons = {
-                    "method": METHOD_TAG,
-                    "is_recruitment": True,
-                    "confidence": r["confidence"],
-                    "reasons": r["reasons"],
-                }
-                cur.execute(
-                    UPDATE_SQL,
-                    ("STAFFING", r["confidence"], json.dumps(reasons), r["id"]),
-                )
-
-    log.info("updated %d companies to category=STAFFING", len(eligible))
+    log.info(
+        "applied: eligible=%d updated=%d method=%s",
+        final.get("eligible_count", 0),
+        final.get("applied", 0),
+        final.get("method", ""),
+    )
     return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(asyncio.run(main()))
