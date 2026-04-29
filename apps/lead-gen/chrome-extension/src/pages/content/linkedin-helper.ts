@@ -2015,7 +2015,7 @@ function createImportProfileButton(): HTMLButtonElement {
 /** Transform the import button into a green link to the existing contact's app page. */
 function showExistingContactLink(
   btn: HTMLButtonElement,
-  contact: { slug?: string; firstName?: string; lastName?: string },
+  contact: { id?: number; slug?: string; firstName?: string; lastName?: string },
 ) {
   btn.dataset.existingContact = "true";
   btn.style.backgroundColor = "#16a34a";
@@ -2025,7 +2025,9 @@ function showExistingContactLink(
   const link = document.createElement("a");
   link.href = contact.slug
     ? `https://agenticleadgen.xyz/contacts/${contact.slug}`
-    : "https://agenticleadgen.xyz/contacts";
+    : contact.id
+      ? `https://agenticleadgen.xyz/contacts/${contact.id}`
+      : "https://agenticleadgen.xyz/contacts";
   link.target = "_blank";
   link.rel = "noopener noreferrer";
   const name = [contact.firstName, contact.lastName].filter(Boolean).join(" ");
