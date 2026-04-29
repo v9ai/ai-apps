@@ -67,6 +67,17 @@ async function freshContext(): Promise<{ context: BrowserContext; close: () => P
   return { context, close: () => browser.close() };
 }
 
+function isJunkSlug(slug: string): boolean {
+  // Pixel dimensions baked into CDN thumbnail URLs (e.g. /course/240x135/)
+  if (/^\d+x\d+$/.test(slug)) return true;
+  // Pure numeric IDs (e.g. /course/5296538/) — Udemy redirects these to the
+  // canonical slug, so we'd scrape the same course twice.
+  if (/^\d+$/.test(slug)) return true;
+  // Real course slugs always contain at least one hyphen.
+  if (!slug.includes("-")) return true;
+  return false;
+}
+
 function extractCourseUrls(rawUrls: string[]): string[] {
   const seen = new Set<string>();
   return rawUrls
@@ -78,7 +89,9 @@ function extractCourseUrls(rawUrls: string[]): string[] {
       if (!u || seen.has(u)) return false;
       seen.add(u);
       const slug = u.replace("https://www.udemy.com/course/", "").replace("/", "");
-      return !PROMO_SLUGS.has(slug);
+      if (PROMO_SLUGS.has(slug)) return false;
+      if (isJunkSlug(slug)) return false;
+      return true;
     });
 }
 

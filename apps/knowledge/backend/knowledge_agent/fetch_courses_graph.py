@@ -179,16 +179,21 @@ async def summarize_node(state: FetchCoursesState) -> dict:
             )
 
     llm = make_llm(temperature=FAST_TEMP)
-    parsed = await ainvoke_json(
-        llm,
-        [
-            {"role": "system", "content": _summary_prompt(topic_name, len(picks))},
-            {
-                "role": "user",
-                "content": f"Curated courses:\n{json.dumps(picks, ensure_ascii=False)}",
-            },
-        ],
-    )
+    try:
+        parsed = await ainvoke_json(
+            llm,
+            [
+                {"role": "system", "content": _summary_prompt(topic_name, len(picks))},
+                {
+                    "role": "user",
+                    "content": f"Curated courses:\n{json.dumps(picks, ensure_ascii=False)}",
+                },
+            ],
+        )
+    except Exception:
+        # Summary is best-effort — never fail the graph because the LLM
+        # returned something un-parseable.
+        return {"summary": ""}
     summary = ""
     if isinstance(parsed, dict):
         summary = str(parsed.get("summary") or "").strip()
