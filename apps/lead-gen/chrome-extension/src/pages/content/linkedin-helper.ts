@@ -944,6 +944,122 @@ function observeBrowseAllButton() {
 
 observeBrowseAllButton();
 
+// ── Score All DB Contacts Button ────────────────────────────────────
+//
+// Stacks above "Browse All Pages". Triggers the scoreAllDbContacts
+// background handler which paginates the entire contacts table and
+// runs the same browseProfiles engine (visit → save no-op → scrape
+// posts → score_recruiter_fit → upsert recruiter_fit_scores).
+// Only injected on /feed/ — this is a global op, not page-scoped.
+
+const SCORE_ALL_BTN_ATTR = "data-lg-score-all-btn";
+let scoreAllBtn: HTMLButtonElement | null = null;
+
+function createScoreAllButton(): HTMLButtonElement {
+  const btn = document.createElement("button");
+  btn.setAttribute(SCORE_ALL_BTN_ATTR, "true");
+  btn.textContent = "Score All Contacts";
+  btn.title = "Re-score every saved contact with a LinkedIn URL via score_recruiter_fit (Shift-click: ignore 24h dedup)";
+  btn.style.cssText = `
+    position: fixed;
+    bottom: 192px;
+    right: 24px;
+    z-index: 9999;
+    background-color: #d97706;
+    color: white;
+    border: none;
+    border-radius: 24px;
+    padding: 12px 24px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    transition: background-color 0.2s;
+  `;
+
+  btn.addEventListener("mouseenter", () => {
+    if (!btn.disabled) btn.style.backgroundColor = "#b45309";
+  });
+  btn.addEventListener("mouseleave", () => {
+    if (!btn.disabled) btn.style.backgroundColor = "#d97706";
+  });
+
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const ignoreDedup = e.shiftKey;
+    const proceed = window.confirm(
+      "Score every saved contact with a LinkedIn URL?\n\n" +
+        "This visits each profile (≈5s/contact) and may take hours.\n" +
+        (ignoreDedup ? "Ignoring 24h re-visit dedup (shift-click).\n" : "") +
+        "Continue?",
+    );
+    if (!proceed) return;
+
+    btn.disabled = true;
+    btn.textContent = ignoreDedup ? "Starting (no dedup)…" : "Starting…";
+    btn.style.backgroundColor = "#92400e";
+
+    safeSendMessage(
+      {
+        action: "scoreAllDbContacts",
+        returnUrl: window.location.href,
+        ignoreDedup,
+      },
+      (response) => {
+        if (!response?.success) {
+          btn.textContent = "Error";
+          btn.style.backgroundColor = "#dc2626";
+          setTimeout(() => {
+            btn.textContent = "Score All Contacts";
+            btn.style.backgroundColor = "#d97706";
+            btn.disabled = false;
+          }, 2000);
+        }
+      },
+    );
+  });
+
+  scoreAllBtn = btn;
+  return btn;
+}
+
+function syncScoreAllButtonForPath() {
+  if (!document.body) return;
+  // Only on /feed/ — search-page traversal has its own scoped buttons.
+  const onFeed = window.location.pathname.startsWith("/feed");
+  if (onFeed) {
+    if (!document.querySelector(`[${SCORE_ALL_BTN_ATTR}]`)) {
+      document.body.appendChild(createScoreAllButton());
+    }
+  } else {
+    document.querySelectorAll(`[${SCORE_ALL_BTN_ATTR}]`).forEach((el) => el.remove());
+    scoreAllBtn = null;
+  }
+}
+
+function observeScoreAllButton() {
+  if (!window.location.hostname.includes("linkedin.com")) return;
+  setTimeout(syncScoreAllButtonForPath, 1500);
+
+  let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+  const obs = new MutationObserver(() => {
+    if (teardownIfDead()) return;
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(syncScoreAllButtonForPath, 1000);
+  });
+  obs.observe(document.body, { childList: true, subtree: true });
+  _observers.push(obs);
+
+  window.addEventListener("lg:locationchange", () => {
+    if (teardownIfDead()) return;
+    syncScoreAllButtonForPath();
+  });
+}
+
+observeScoreAllButton();
+
 // Listen for progress updates from background script
 chrome.runtime.onMessage.addListener((message) => {
   if (!isExtensionAlive()) return;
@@ -951,6 +1067,23 @@ chrome.runtime.onMessage.addListener((message) => {
     const text = `${message.current}/${message.total} ${message.name || ""}`.trim();
     if (browseProfilesBtn) browseProfilesBtn.textContent = text;
     if (browseAllBtn) browseAllBtn.textContent = text;
+  }
+  if (message.action === "scoreAllProgress" && scoreAllBtn) {
+    scoreAllBtn.textContent =
+      `${message.current}/${message.total} ${message.name || ""}`.trim();
+  }
+  if (message.action === "scoreAllDone" && scoreAllBtn) {
+    scoreAllBtn.textContent = message.error
+      ? message.error.slice(0, 40)
+      : `Done! ${message.saved} scored`;
+    scoreAllBtn.style.backgroundColor = message.error ? "#dc2626" : "#16a34a";
+    setTimeout(() => {
+      if (scoreAllBtn) {
+        scoreAllBtn.textContent = "Score All Contacts";
+        scoreAllBtn.style.backgroundColor = "#d97706";
+        scoreAllBtn.disabled = false;
+      }
+    }, 4000);
   }
   if (message.action === "browseDone") {
     if (browseProfilesBtn) {
@@ -1392,41 +1525,100 @@ function removeProfileButton() {
  * without ever bringing those sections into view, and our DOM scrape sees
  * an empty page. Force-scroll fixes that without changing the click UX.
  */
-async function ensureLazySectionsRendered(): Promise<void> {
+async function walkSectionsAndCapture(): Promise<{
+  initialY: number;
+  experience: { companyName: string; companyLinkedinUrl: string; position: string } | null;
+  emails: string[];
+}> {
   const initialY = window.scrollY;
   const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
-  // Step the scroll position down the document so every IntersectionObserver
-  // fires. A single scrollTo(bottom) often skips intermediate observers if the
-  // page is taller than ~3× viewport.
+  // Pass 1: step top → bottom in 80%-viewport hops so every IntersectionObserver
+  // fires. Repeat until the page height stabilizes — LinkedIn lazy-loads sections
+  // (Education, Licenses, Skills, Recommendations…) below Experience, and each
+  // one mounting extends document.scrollHeight. A single top-to-bottom pass
+  // would stop short of the new bottom and miss late-mounting sections.
   const docHeight = () =>
     Math.max(
       document.body.scrollHeight,
       document.documentElement.scrollHeight,
     );
   const viewport = window.innerHeight;
-  for (let y = 0; y < docHeight(); y += Math.floor(viewport * 0.8)) {
-    window.scrollTo({ top: y, behavior: "auto" });
-    await sleep(120);
+  const stepDown = async (target: number) => {
+    for (let y = window.scrollY; y < target; y += Math.floor(viewport * 0.8)) {
+      window.scrollTo({ top: y, behavior: "auto" });
+      await sleep(150);
+    }
+    window.scrollTo({ top: target, behavior: "auto" });
+    await sleep(300);
+  };
+  let prevHeight = 0;
+  let stableCount = 0;
+  let passes = 0;
+  for (; passes < 6 && stableCount < 2; passes++) {
+    window.scrollTo({ top: 0, behavior: "auto" });
+    await sleep(80);
+    await stepDown(docHeight());
+    const dh = docHeight();
+    if (dh === prevHeight) stableCount++;
+    else { prevHeight = dh; stableCount = 0; }
   }
-  window.scrollTo({ top: docHeight(), behavior: "auto" });
-  await sleep(250);
+  console.log(`[LG ImportProfile] lazy-load[scroll]: ${passes} passes, final docHeight=${prevHeight}`);
 
-  // Wait up to 2s for the Experience section to be in the DOM.
-  for (let i = 0; i < 20; i++) {
-    if (
-      document.querySelector(
-        '[componentkey*="ExperienceTopLevelSection"], #experience',
-      )
-    ) {
-      break;
+  // Pass 2: wait up to 4s for Experience entries to mount, then EXTRACT WHILE
+  // PARKED on the section. LinkedIn's profile DOM is virtualized — scrolling
+  // away unmounts sections shortly after they leave the viewport. If we tried
+  // to extract after returning to the top, the entries we just mounted would
+  // already be gone.
+  let expDiag = "";
+  let expSection: HTMLElement | null = null;
+  for (let i = 0; i < 40; i++) {
+    const sec = document.querySelector<HTMLElement>(
+      '[componentkey*="ExperienceTopLevelSection"], #experience',
+    );
+    if (!sec) {
+      expDiag = "no section yet";
+    } else {
+      const root = sec.id === "experience" ? sec.closest("section") ?? sec : sec;
+      const entries = root.querySelectorAll(
+        '[componentkey^="entity-collection-item-"], li.artdeco-list__item',
+      );
+      if (entries.length > 0) {
+        expDiag = `ready: ${entries.length} entries after ${i * 100}ms`;
+        expSection = sec;
+        break;
+      }
+      expDiag = `section mounted, awaiting entries (poll ${i})`;
+      if (i === 10 || i === 25) {
+        sec.scrollIntoView({ block: "center" });
+      }
     }
     await sleep(100);
   }
+  console.log(`[LG ImportProfile] lazy-load[experience]: ${expDiag}`);
+  let experience: ReturnType<typeof extractCurrentRoleFromExperience> = null;
+  if (expSection) {
+    expSection.scrollIntoView({ block: "center" });
+    await sleep(150);
+    experience = extractCurrentRoleFromExperience();
+  }
 
-  window.scrollTo({ top: initialY, behavior: "auto" });
-  // One frame for layout to settle before we querySelector.
-  await sleep(50);
+  // Pass 3: scroll the About section into view and extract emails. Without
+  // this step the About section can already be unmounted by the time the
+  // sync extractor reads its `[data-testid="expandable-text-box"]`.
+  const aboutSection = document.querySelector<HTMLElement>(
+    '[componentkey*="profile.card."][componentkey$="About"], #about',
+  );
+  if (aboutSection) {
+    aboutSection.scrollIntoView({ block: "center" });
+    await sleep(200);
+    console.log("[LG ImportProfile] lazy-load[about]: ready");
+  } else {
+    console.log("[LG ImportProfile] lazy-load[about]: section not found");
+  }
+  const emails = extractEmailsFromAbout();
+
+  return { initialY, experience, emails };
 }
 
 /**
@@ -1551,6 +1743,7 @@ function extractCurrentRoleFromExperience(): {
     const p = parseEntry(entry);
     if (p) parsed.push(p);
   });
+  console.log("[LG ImportProfile] experience: parsed", parsed.length, "of", entries.length, "entries:", parsed.map((p) => `${p.position} @ ${p.companyName} [${p.dateRange}]`));
   if (parsed.length === 0) return null;
 
   const current =
@@ -1564,7 +1757,10 @@ function extractCurrentRoleFromExperience(): {
 }
 
 /** Extract profile data directly from the DOM (runs in content script context). */
-function extractProfileFromDOM(): {
+function extractProfileFromDOM(captured?: {
+  experience?: { companyName: string; companyLinkedinUrl: string; position: string } | null;
+  emails?: string[];
+}): {
   name: string;
   headline: string;
   location: string;
@@ -1618,10 +1814,12 @@ function extractProfileFromDOM(): {
   let currentCompanyLinkedinUrl = "";
   let currentPosition = "";
 
-  // Strategy 0: parse the Experience section and pick the "- Present" entry.
-  // Handles LinkedIn's SDUI render where #experience and data-field selectors
-  // don't exist.
-  const fromExperience = extractCurrentRoleFromExperience();
+  // Strategy 0: use the pre-captured experience data from walkSectionsAndCapture
+  // (so we read while Experience was in view). Fall back to a synchronous read
+  // for legacy / non-orchestrated callers.
+  const fromExperience = captured?.experience !== undefined
+    ? captured.experience
+    : extractCurrentRoleFromExperience();
   if (fromExperience?.companyName) {
     currentCompany = fromExperience.companyName;
     currentCompanyLinkedinUrl = fromExperience.companyLinkedinUrl;
@@ -1671,7 +1869,7 @@ function extractProfileFromDOM(): {
 
   console.log("[LG ImportProfile] company:", JSON.stringify(currentCompany), "url:", currentCompanyLinkedinUrl, "position:", JSON.stringify(currentPosition));
 
-  const currentEmails = extractEmailsFromAbout();
+  const currentEmails = captured?.emails ?? extractEmailsFromAbout();
   console.log("[LG ImportProfile] emails:", currentEmails);
 
   return {
@@ -1731,11 +1929,19 @@ function createImportProfileButton(): HTMLButtonElement {
     // the Experience section's DOM nodes don't exist and SDUI parsing returns
     // nothing. Force a full-page scroll to trigger every IntersectionObserver,
     // wait for the renders to settle, then extract.
-    await ensureLazySectionsRendered();
+    // Walk down the page, mounting and EXTRACTING from each lazy section while
+    // it's still in view. LinkedIn's profile DOM is virtualized — sections far
+    // off-screen get unmounted shortly after they leave the viewport, so we
+    // can't simply load everything then read at the end.
+    const { initialY, experience, emails } = await walkSectionsAndCapture();
 
     btn.textContent = "Importing...";
 
-    const profileData = extractProfileFromDOM();
+    const profileData = extractProfileFromDOM({ experience, emails });
+
+    // Restore the user's scroll position only AFTER all DOM reads finished.
+    window.scrollTo({ top: initialY, behavior: "auto" });
+
     if (!profileData.name) {
       btn.textContent = "No profile data found";
       btn.disabled = false;

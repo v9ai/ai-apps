@@ -25,6 +25,13 @@ const LINKEDIN_API =
   import.meta.env.VITE_RUST_SERVER_URL ||
   "http://localhost:9876";
 
+console.log(
+  `[D1Posts] LINKEDIN_API base resolved to: ${LINKEDIN_API}` +
+    (LINKEDIN_API.includes("localhost")
+      ? " ⚠️ localhost fallback — set VITE_LINKEDIN_API_URL to the CF Worker URL for D1 writes."
+      : ""),
+);
+
 // ── Types ──
 
 interface ScrapedContact {
@@ -183,40 +190,40 @@ export async function postPosts(
   contactId: number,
   posts: ScrapedPost[],
 ): Promise<PostResult> {
-  const res = await fetch(`${LINKEDIN_API}/posts`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ contact_id: contactId, posts }),
-  });
+  const url = `${LINKEDIN_API}/posts`;
+  const t0 = Date.now();
+  console.log(
+    `[D1Posts] POST ${url} contactId=${contactId} count=${posts.length}`,
+  );
 
-  if (!res.ok) throw new Error(`Server error: ${res.status}`);
-  const data = await res.json();
-
-  // Dual-write to Neon for TechWolf analysis pipeline
+  let res: Response;
   try {
-    const inputs = posts
-      .filter((p) => p.post_url)
-      .map((p) => ({
-        url: p.post_url!,
-        type: "post" as const,
-        contactId,
-        content: p.post_text || null,
-        authorName: p.author_name || null,
-        authorUrl: p.author_url || null,
-        postedAt: p.posted_date || null,
-      }));
-    if (inputs.length > 0) {
-      await gqlRequest(
-        `mutation UpsertPostsToNeon($inputs: [UpsertLinkedInPostInput!]!) {
-          upsertLinkedInPosts(inputs: $inputs) { success }
-        }`,
-        { inputs },
-      );
-    }
-  } catch {
-    // Non-critical: LinkedIn API is primary store
+    res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ contact_id: contactId, posts }),
+    });
+  } catch (err) {
+    console.error(
+      `[D1Posts] Network error → ${url}:`,
+      err instanceof Error ? err.message : String(err),
+      "(check VITE_LINKEDIN_API_URL — falls back to localhost:9876 if unset)",
+    );
+    throw err;
   }
 
+  if (!res.ok) {
+    const body = await res.text().catch(() => "(unreadable)");
+    console.error(
+      `[D1Posts] Server error ${res.status} ${res.statusText} from ${url}: ${body.slice(0, 200)}`,
+    );
+    throw new Error(`Server error: ${res.status}`);
+  }
+
+  const data = await res.json();
+  console.log(
+    `[D1Posts] OK contactId=${contactId} inserted=${data.inserted} filtered=${data.filtered ?? 0} (${Date.now() - t0}ms)`,
+  );
   return { inserted: data.inserted, filtered: data.filtered || 0 };
 }
 
@@ -226,14 +233,38 @@ async function postLikes(
   contactId: number,
   likes: ScrapedLike[],
 ): Promise<{ inserted: number }> {
-  const res = await fetch(`${LINKEDIN_API}/likes`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ contact_id: contactId, likes }),
-  });
+  const url = `${LINKEDIN_API}/likes`;
+  const t0 = Date.now();
+  console.log(
+    `[D1Posts] POST ${url} contactId=${contactId} count=${likes.length} (likes)`,
+  );
 
-  if (!res.ok) throw new Error(`Server error: ${res.status}`);
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ contact_id: contactId, likes }),
+    });
+  } catch (err) {
+    console.error(
+      `[D1Posts] Likes network error → ${url}:`,
+      err instanceof Error ? err.message : String(err),
+    );
+    throw err;
+  }
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => "(unreadable)");
+    console.error(
+      `[D1Posts] Likes server error ${res.status} ${res.statusText}: ${body.slice(0, 200)}`,
+    );
+    throw new Error(`Server error: ${res.status}`);
+  }
   const data = await res.json();
+  console.log(
+    `[D1Posts] Likes OK contactId=${contactId} inserted=${data.inserted} (${Date.now() - t0}ms)`,
+  );
   return { inserted: data.inserted };
 }
 
@@ -634,14 +665,14 @@ export async function scrapeContactPostsSingle(
   contactId: number,
   linkedinUrl: string,
   contactName: string,
-): Promise<void> {
+): Promise<{ postTexts: string[] }> {
   postsCancelled = false;
 
   // Check server
   const healthy = await checkServerHealth();
   if (!healthy) {
     await notifyWebApp({ error: "LinkedIn API not running on localhost:9876", source: "contactScrape" });
-    return;
+    return { postTexts: [] };
   }
 
   await notifyWebApp({ status: `Navigating to ${contactName}'s activity...`, source: "contactScrape", contactName });
@@ -654,7 +685,7 @@ export async function scrapeContactPostsSingle(
     await chrome.tabs.update(tabId, { url: activityUrl });
   } catch {
     await notifyWebApp({ error: "Tab closed", source: "contactScrape" });
-    return;
+    return { postTexts: [] };
   }
   await waitForTabLoad(tabId);
   await sleep(3000);
@@ -664,11 +695,11 @@ export async function scrapeContactPostsSingle(
     const tabInfo = await chrome.tabs.get(tabId);
     if (!tabInfo.url?.includes("linkedin.com/in/")) {
       await notifyWebApp({ error: `Redirected away from ${contactName}'s profile`, source: "contactScrape" });
-      return;
+      return { postTexts: [] };
     }
   } catch {
     await notifyWebApp({ error: "Tab closed", source: "contactScrape" });
-    return;
+    return { postTexts: [] };
   }
 
   // Scrape posts
@@ -679,7 +710,7 @@ export async function scrapeContactPostsSingle(
     posts = await scrollAndExtract(tabId);
   } catch (err) {
     await notifyWebApp({ error: `Extraction failed: ${err instanceof Error ? err.message : String(err)}`, source: "contactScrape" });
-    return;
+    return { postTexts: [] };
   }
 
   let totalPosts = 0;
@@ -691,7 +722,7 @@ export async function scrapeContactPostsSingle(
       totalFiltered = filtered;
     } catch (err) {
       await notifyWebApp({ error: `Failed to save posts: ${err instanceof Error ? err.message : String(err)}`, source: "contactScrape" });
-      return;
+      return { postTexts: [] };
     }
   }
 
@@ -738,6 +769,11 @@ export async function scrapeContactPostsSingle(
   console.log(
     `[PostScraper] ${contactName}: ${totalPosts} posts, ${totalFiltered} filtered, ${totalLikes} likes`,
   );
+
+  const postTexts = posts
+    .map((p) => (p.post_text ?? "").trim())
+    .filter((t) => t.length > 0);
+  return { postTexts };
 }
 
 // ── Progress messaging ──

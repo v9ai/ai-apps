@@ -227,6 +227,27 @@ export const Contact = {
   loraScoredAt(parent: DbContact) {
     return parent.lora_scored_at ?? null;
   },
+  recruiterFitScore(parent: DbContact) {
+    return parent.recruiter_fit_score ?? null;
+  },
+  recruiterFitTier(parent: DbContact) {
+    return parent.recruiter_fit_tier ?? null;
+  },
+  recruiterFitSpecialty(parent: DbContact) {
+    return parent.recruiter_fit_specialty ?? null;
+  },
+  recruiterFitRemoteGlobal(parent: DbContact) {
+    return parent.recruiter_fit_remote_global ?? null;
+  },
+  recruiterFitReasons(parent: DbContact) {
+    const raw = parent.recruiter_fit_reasons;
+    if (Array.isArray(raw)) return raw.filter((r): r is string => typeof r === "string");
+    if (typeof raw === "string") return cachedParseArray(parent, "recruiter_fit_reasons", raw);
+    return [];
+  },
+  recruiterFitScoredAt(parent: DbContact) {
+    return parent.recruiter_fit_scored_at ?? null;
+  },
   papers(parent: DbContact) {
     // papers is a jsonb column; Drizzle auto-parses it to an array of objects.
     const raw = parent.papers;

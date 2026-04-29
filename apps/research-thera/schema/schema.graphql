@@ -309,6 +309,17 @@ type Query {
 
   # Healthcare — Family documents (PDFs / Drive links scoped to a family member)
   familyDocuments(familyMemberId: Int!): [FamilyDocument!]!
+
+  # Tasks (merged from apps/todo)
+  tasks(status: TaskStatus!, limit: Int = 7, offset: Int = 0): [Task!]!
+  taskCounts: TaskCounts!
+  task(id: ID!): Task
+  userPreferences: UserPreferences!
+  userStreak: UserStreak!
+
+  # Vehicles (merged from apps/my-car)
+  vehicles: [Vehicle!]!
+  vehicle(id: ID!): Vehicle
 }
 
 # (chat mutation lives under Mutation type below)
@@ -543,6 +554,27 @@ type Mutation {
 
   # Healthcare — Medical letters (R2-backed; upload via /api route, not GraphQL)
   deleteMedicalLetter(id: ID!): DeleteMedicalLetterResult!
+
+  # Tasks (merged from apps/todo)
+  createTask(input: CreateTaskInput!): Task!
+  updateTask(id: ID!, input: UpdateTaskInput!): Task!
+  deleteTask(id: ID!): DeleteTaskResult!
+  reorderTasks(updates: [TaskPositionUpdate!]!): Boolean!
+  addTaskDependency(blockingTaskId: ID!, blockedTaskId: ID!): Boolean!
+  removeTaskDependency(blockingTaskId: ID!, blockedTaskId: ID!): Boolean!
+  updateUserPreferences(input: UpdateUserPreferencesInput!): UserPreferences!
+  parseTaskFromText(input: String!): ParsedTask
+  suggestTaskCategorization(title: String!, description: String): TaskCategorization
+
+  # Vehicles (merged from apps/my-car)
+  addVehicle(input: AddVehicleInput!): Vehicle!
+  updateVehicle(id: ID!, input: UpdateVehicleInput!): Vehicle!
+  deleteVehicle(id: ID!): DeleteVehicleResult!
+  addVehicleServiceRecord(input: AddVehicleServiceRecordInput!): VehicleServiceRecord!
+  deleteVehicleServiceRecord(id: ID!): DeleteVehicleServiceRecordResult!
+  requestVehiclePhotoUpload(input: RequestVehiclePhotoUploadInput!): VehiclePhotoUploadTicket!
+  addVehiclePhoto(input: AddVehiclePhotoInput!): VehiclePhoto!
+  deleteVehiclePhoto(id: ID!): DeleteVehiclePhotoResult!
 }
 
 type Subscription {
@@ -2867,4 +2899,255 @@ type FamilyDocument {
   fileName: String
   filePath: String
   createdAt: String!
+}
+
+# ============================================
+# Tasks (merged from apps/todo)
+# ============================================
+
+enum TaskStatus {
+  inbox
+  active
+  completed
+  archived
+}
+
+enum EnergyLevel {
+  high
+  medium
+  low
+}
+
+type Task {
+  id: ID!
+  title: String!
+  description: String
+  status: TaskStatus!
+  priorityScore: Float!
+  priorityManual: Int
+  dueDate: String
+  estimatedMinutes: Int
+  actualMinutes: Int
+  energyPreference: EnergyLevel
+  parentTaskId: ID
+  position: Int!
+  completedAt: String
+  createdAt: String!
+  updatedAt: String!
+  subtasks: [Task!]!
+  blockers: [TaskRef!]!
+  blocked: [TaskRef!]!
+}
+
+type TaskRef {
+  id: ID!
+  title: String!
+  status: TaskStatus!
+}
+
+type TaskCounts {
+  inbox: Int!
+  active: Int!
+  completed: Int!
+  archived: Int!
+}
+
+type DeleteTaskResult {
+  success: Boolean!
+}
+
+input CreateTaskInput {
+  title: String!
+  description: String
+  status: TaskStatus
+  priorityManual: Int
+  dueDate: String
+  estimatedMinutes: Int
+  energyPreference: EnergyLevel
+  parentTaskId: ID
+}
+
+input UpdateTaskInput {
+  title: String
+  description: String
+  status: TaskStatus
+  priorityManual: Int
+  priorityScore: Float
+  dueDate: String
+  estimatedMinutes: Int
+  actualMinutes: Int
+  energyPreference: EnergyLevel
+  position: Int
+  completedAt: String
+}
+
+input TaskPositionUpdate {
+  id: ID!
+  position: Int!
+}
+
+type PriorityWeights {
+  deadlineUrgency: Float!
+  userValue: Float!
+  dependencyImpact: Float!
+  projectWeight: Float!
+}
+
+input PriorityWeightsInput {
+  deadlineUrgency: Float!
+  userValue: Float!
+  dependencyImpact: Float!
+  projectWeight: Float!
+}
+
+type UserPreferences {
+  chronotype: String!
+  chunkSize: Int!
+  gamificationEnabled: Boolean!
+  bufferPercentage: Int!
+  priorityWeights: PriorityWeights!
+}
+
+input UpdateUserPreferencesInput {
+  chronotype: String
+  chunkSize: Int
+  gamificationEnabled: Boolean
+  bufferPercentage: Int
+  priorityWeights: PriorityWeightsInput
+}
+
+type UserStreak {
+  currentStreak: Int!
+  longestStreak: Int!
+  lastCompletedDate: String
+  freezeAvailable: Int!
+  streakOptIn: Boolean!
+}
+
+type ParsedTask {
+  title: String!
+  dueDate: String
+  estimatedMinutes: Int
+  energyPreference: EnergyLevel
+}
+
+type TaskCategorization {
+  priority: Int!
+  energyPreference: EnergyLevel!
+  estimatedMinutes: Int!
+}
+
+# =============================================================================
+# Vehicles (merged from apps/my-car)
+# =============================================================================
+
+type Vehicle {
+  id: ID!
+  userId: String!
+  make: String!
+  model: String!
+  year: Int!
+  vin: String
+  licensePlate: String
+  nickname: String
+  odometerMiles: Int
+  color: String
+  notes: String
+  createdAt: String!
+  updatedAt: String!
+  photos: [VehiclePhoto!]
+  serviceRecords: [VehicleServiceRecord!]
+  thumbnailUrl: String
+}
+
+type VehiclePhoto {
+  id: ID!
+  vehicleId: ID!
+  r2Key: String!
+  contentType: String!
+  sizeBytes: Int!
+  caption: String
+  createdAt: String!
+  url: String
+}
+
+type VehicleServiceRecord {
+  id: ID!
+  vehicleId: ID!
+  type: String!
+  serviceDate: String!
+  odometerMiles: Int
+  costCents: Int
+  vendor: String
+  notes: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+input AddVehicleInput {
+  make: String!
+  model: String!
+  year: Int!
+  vin: String
+  licensePlate: String
+  nickname: String
+  odometerMiles: Int
+  color: String
+  notes: String
+}
+
+input UpdateVehicleInput {
+  make: String
+  model: String
+  year: Int
+  vin: String
+  licensePlate: String
+  nickname: String
+  odometerMiles: Int
+  color: String
+  notes: String
+}
+
+input AddVehicleServiceRecordInput {
+  vehicleId: ID!
+  type: String!
+  serviceDate: String!
+  odometerMiles: Int
+  costCents: Int
+  vendor: String
+  notes: String
+}
+
+input RequestVehiclePhotoUploadInput {
+  vehicleId: ID!
+  filename: String!
+  contentType: String!
+}
+
+type VehiclePhotoUploadTicket {
+  uploadUrl: String!
+  r2Key: String!
+}
+
+input AddVehiclePhotoInput {
+  vehicleId: ID!
+  r2Key: String!
+  contentType: String!
+  sizeBytes: Int!
+  caption: String
+}
+
+type DeleteVehicleResult {
+  id: ID!
+  deleted: Boolean!
+}
+
+type DeleteVehiclePhotoResult {
+  id: ID!
+  deleted: Boolean!
+}
+
+type DeleteVehicleServiceRecordResult {
+  id: ID!
+  deleted: Boolean!
 }

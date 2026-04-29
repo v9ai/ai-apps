@@ -103,6 +103,36 @@ export type AddSymptomInput = {
   severity?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type AddVehicleInput = {
+  color?: InputMaybe<Scalars['String']['input']>;
+  licensePlate?: InputMaybe<Scalars['String']['input']>;
+  make: Scalars['String']['input'];
+  model: Scalars['String']['input'];
+  nickname?: InputMaybe<Scalars['String']['input']>;
+  notes?: InputMaybe<Scalars['String']['input']>;
+  odometerMiles?: InputMaybe<Scalars['Int']['input']>;
+  vin?: InputMaybe<Scalars['String']['input']>;
+  year: Scalars['Int']['input'];
+};
+
+export type AddVehiclePhotoInput = {
+  caption?: InputMaybe<Scalars['String']['input']>;
+  contentType: Scalars['String']['input'];
+  r2Key: Scalars['String']['input'];
+  sizeBytes: Scalars['Int']['input'];
+  vehicleId: Scalars['ID']['input'];
+};
+
+export type AddVehicleServiceRecordInput = {
+  costCents?: InputMaybe<Scalars['Int']['input']>;
+  notes?: InputMaybe<Scalars['String']['input']>;
+  odometerMiles?: InputMaybe<Scalars['Int']['input']>;
+  serviceDate: Scalars['String']['input'];
+  type: Scalars['String']['input'];
+  vehicleId: Scalars['ID']['input'];
+  vendor?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type Affirmation = {
   __typename?: 'Affirmation';
   category: AffirmationCategory;
@@ -705,6 +735,17 @@ export type CreateSubGoalInput = {
   title: Scalars['String']['input'];
 };
 
+export type CreateTaskInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  dueDate?: InputMaybe<Scalars['String']['input']>;
+  energyPreference?: InputMaybe<EnergyLevel>;
+  estimatedMinutes?: InputMaybe<Scalars['Int']['input']>;
+  parentTaskId?: InputMaybe<Scalars['ID']['input']>;
+  priorityManual?: InputMaybe<Scalars['Int']['input']>;
+  status?: InputMaybe<TaskStatus>;
+  title: Scalars['String']['input'];
+};
+
 export type CreateTeacherFeedbackInput = {
   content: Scalars['String']['input'];
   familyMemberId: Scalars['Int']['input'];
@@ -985,10 +1026,33 @@ export type DeleteSymptomResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type DeleteTaskResult = {
+  __typename?: 'DeleteTaskResult';
+  success: Scalars['Boolean']['output'];
+};
+
 export type DeleteTeacherFeedbackResult = {
   __typename?: 'DeleteTeacherFeedbackResult';
   message?: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
+};
+
+export type DeleteVehiclePhotoResult = {
+  __typename?: 'DeleteVehiclePhotoResult';
+  deleted: Scalars['Boolean']['output'];
+  id: Scalars['ID']['output'];
+};
+
+export type DeleteVehicleResult = {
+  __typename?: 'DeleteVehicleResult';
+  deleted: Scalars['Boolean']['output'];
+  id: Scalars['ID']['output'];
+};
+
+export type DeleteVehicleServiceRecordResult = {
+  __typename?: 'DeleteVehicleServiceRecordResult';
+  deleted: Scalars['Boolean']['output'];
+  id: Scalars['ID']['output'];
 };
 
 export type DevelopmentalContext = {
@@ -1050,6 +1114,12 @@ export type EmotionalLandscape = {
   primaryEmotions: Array<Scalars['String']['output']>;
   underlyingEmotions: Array<Scalars['String']['output']>;
 };
+
+export enum EnergyLevel {
+  High = 'high',
+  Low = 'low',
+  Medium = 'medium'
+}
 
 export type EvidenceItem = {
   __typename?: 'EvidenceItem';
@@ -1851,6 +1921,10 @@ export type Mutation = {
   addProtocol: Protocol;
   addSupplement: ProtocolSupplement;
   addSymptom: Symptom;
+  addTaskDependency: Scalars['Boolean']['output'];
+  addVehicle: Vehicle;
+  addVehiclePhoto: VehiclePhoto;
+  addVehicleServiceRecord: VehicleServiceRecord;
   buildClaimCards: BuildClaimCardsResult;
   checkNoteClaims: CheckNoteClaimsResult;
   convertIssueToGoal: Goal;
@@ -1870,6 +1944,7 @@ export type Mutation = {
   createRelationship: Relationship;
   createStory: Story;
   createSubGoal: Goal;
+  createTask: Task;
   createTeacherFeedback: TeacherFeedback;
   deleteAffirmation: DeleteAffirmationResult;
   deleteAllergy: DeleteAllergyResult;
@@ -1906,8 +1981,12 @@ export type Mutation = {
   deleteStory: DeleteStoryResult;
   deleteSupplement: DeleteSupplementResult;
   deleteSymptom: DeleteSymptomResult;
+  deleteTask: DeleteTaskResult;
   deleteTeacherFeedback: DeleteTeacherFeedbackResult;
   deleteTherapeuticQuestions: DeleteQuestionsResult;
+  deleteVehicle: DeleteVehicleResult;
+  deleteVehiclePhoto: DeleteVehiclePhotoResult;
+  deleteVehicleServiceRecord: DeleteVehicleServiceRecordResult;
   extractContactFeedbackIssues: ContactFeedback;
   generateAffirmationsForFamilyMember: GenerateAffirmationsResult;
   generateAudio: GenerateAudioResult;
@@ -1935,9 +2014,13 @@ export type Mutation = {
   logGameCompletion: GameCompletion;
   logHabit: HabitLog;
   markTeacherFeedbackExtracted: TeacherFeedback;
+  parseTaskFromText?: Maybe<ParsedTask>;
   recordCognitiveBaseline: CognitiveBaseline;
   recordCognitiveCheckIn: CognitiveCheckIn;
   refreshClaimCard: ClaimCard;
+  removeTaskDependency: Scalars['Boolean']['output'];
+  reorderTasks: Scalars['Boolean']['output'];
+  requestVehiclePhotoUpload: VehiclePhotoUploadTicket;
   sendConversationMessage: Conversation;
   sendHealthcareChatMessage: HealthcareChatResponse;
   setMedicationActive: Medication;
@@ -1946,6 +2029,7 @@ export type Mutation = {
   setTagLanguage: Scalars['Boolean']['output'];
   shareFamilyMember: FamilyMemberShare;
   shareNote: NoteShare;
+  suggestTaskCategorization?: Maybe<TaskCategorization>;
   unlinkContactFromIssue: UnlinkContactResult;
   unlinkGoalFamilyMember: Goal;
   unlinkIssues: UnlinkIssuesResult;
@@ -1966,8 +2050,11 @@ export type Mutation = {
   updateProtocolStatus: Protocol;
   updateRelationship: Relationship;
   updateStory: Story;
+  updateTask: Task;
   updateTeacherFeedback: TeacherFeedback;
+  updateUserPreferences: UserPreferences;
   updateUserSettings: UserSettings;
+  updateVehicle: Vehicle;
 };
 
 
@@ -2014,6 +2101,27 @@ export type MutationAddSupplementArgs = {
 
 export type MutationAddSymptomArgs = {
   input: AddSymptomInput;
+};
+
+
+export type MutationAddTaskDependencyArgs = {
+  blockedTaskId: Scalars['ID']['input'];
+  blockingTaskId: Scalars['ID']['input'];
+};
+
+
+export type MutationAddVehicleArgs = {
+  input: AddVehicleInput;
+};
+
+
+export type MutationAddVehiclePhotoArgs = {
+  input: AddVehiclePhotoInput;
+};
+
+
+export type MutationAddVehicleServiceRecordArgs = {
+  input: AddVehicleServiceRecordInput;
 };
 
 
@@ -2115,6 +2223,11 @@ export type MutationCreateStoryArgs = {
 export type MutationCreateSubGoalArgs = {
   goalId: Scalars['Int']['input'];
   input: CreateSubGoalInput;
+};
+
+
+export type MutationCreateTaskArgs = {
+  input: CreateTaskInput;
 };
 
 
@@ -2299,6 +2412,11 @@ export type MutationDeleteSymptomArgs = {
 };
 
 
+export type MutationDeleteTaskArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
 export type MutationDeleteTeacherFeedbackArgs = {
   id: Scalars['Int']['input'];
 };
@@ -2308,6 +2426,21 @@ export type MutationDeleteTherapeuticQuestionsArgs = {
   goalId?: InputMaybe<Scalars['Int']['input']>;
   issueId?: InputMaybe<Scalars['Int']['input']>;
   journalEntryId?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type MutationDeleteVehicleArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationDeleteVehiclePhotoArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationDeleteVehicleServiceRecordArgs = {
+  id: Scalars['ID']['input'];
 };
 
 
@@ -2474,6 +2607,11 @@ export type MutationMarkTeacherFeedbackExtractedArgs = {
 };
 
 
+export type MutationParseTaskFromTextArgs = {
+  input: Scalars['String']['input'];
+};
+
+
 export type MutationRecordCognitiveBaselineArgs = {
   input: CognitiveScoresInput;
   protocolId: Scalars['ID']['input'];
@@ -2488,6 +2626,22 @@ export type MutationRecordCognitiveCheckInArgs = {
 
 export type MutationRefreshClaimCardArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type MutationRemoveTaskDependencyArgs = {
+  blockedTaskId: Scalars['ID']['input'];
+  blockingTaskId: Scalars['ID']['input'];
+};
+
+
+export type MutationReorderTasksArgs = {
+  updates: Array<TaskPositionUpdate>;
+};
+
+
+export type MutationRequestVehiclePhotoUploadArgs = {
+  input: RequestVehiclePhotoUploadInput;
 };
 
 
@@ -2536,6 +2690,12 @@ export type MutationShareNoteArgs = {
   email: Scalars['String']['input'];
   noteId: Scalars['Int']['input'];
   role?: InputMaybe<NoteShareRole>;
+};
+
+
+export type MutationSuggestTaskCategorizationArgs = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  title: Scalars['String']['input'];
 };
 
 
@@ -2657,15 +2817,32 @@ export type MutationUpdateStoryArgs = {
 };
 
 
+export type MutationUpdateTaskArgs = {
+  id: Scalars['ID']['input'];
+  input: UpdateTaskInput;
+};
+
+
 export type MutationUpdateTeacherFeedbackArgs = {
   id: Scalars['Int']['input'];
   input: UpdateTeacherFeedbackInput;
 };
 
 
+export type MutationUpdateUserPreferencesArgs = {
+  input: UpdateUserPreferencesInput;
+};
+
+
 export type MutationUpdateUserSettingsArgs = {
   storyLanguage: Scalars['String']['input'];
   storyMinutes?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type MutationUpdateVehicleArgs = {
+  id: Scalars['ID']['input'];
+  input: UpdateVehicleInput;
 };
 
 export type Note = {
@@ -2780,6 +2957,14 @@ export type ParentAdviceItem = {
   title: Scalars['String']['output'];
 };
 
+export type ParsedTask = {
+  __typename?: 'ParsedTask';
+  dueDate?: Maybe<Scalars['String']['output']>;
+  energyPreference?: Maybe<EnergyLevel>;
+  estimatedMinutes?: Maybe<Scalars['Int']['output']>;
+  title: Scalars['String']['output'];
+};
+
 export type PatternCluster = {
   __typename?: 'PatternCluster';
   categories: Array<Scalars['String']['output']>;
@@ -2817,6 +3002,21 @@ export type PriorityRecommendation = {
   relatedResearchIds?: Maybe<Array<Scalars['Int']['output']>>;
   suggestedApproach: Scalars['String']['output'];
   urgency: Scalars['String']['output'];
+};
+
+export type PriorityWeights = {
+  __typename?: 'PriorityWeights';
+  deadlineUrgency: Scalars['Float']['output'];
+  dependencyImpact: Scalars['Float']['output'];
+  projectWeight: Scalars['Float']['output'];
+  userValue: Scalars['Float']['output'];
+};
+
+export type PriorityWeightsInput = {
+  deadlineUrgency: Scalars['Float']['input'];
+  dependencyImpact: Scalars['Float']['input'];
+  projectWeight: Scalars['Float']['input'];
+  userValue: Scalars['Float']['input'];
 };
 
 export type Protocol = {
@@ -2941,11 +3141,18 @@ export type Query = {
   story?: Maybe<Story>;
   symptoms: Array<Symptom>;
   tagLanguage?: Maybe<Scalars['String']['output']>;
+  task?: Maybe<Task>;
+  taskCounts: TaskCounts;
+  tasks: Array<Task>;
   teacherFeedback?: Maybe<TeacherFeedback>;
   teacherFeedbacks: Array<TeacherFeedback>;
   therapeuticQuestions: Array<TherapeuticQuestion>;
+  userPreferences: UserPreferences;
   userSettings: UserSettings;
+  userStreak: UserStreak;
   vaultStatus: VaultStatus;
+  vehicle?: Maybe<Vehicle>;
+  vehicles: Array<Vehicle>;
 };
 
 
@@ -3251,6 +3458,18 @@ export type QueryTagLanguageArgs = {
 };
 
 
+export type QueryTaskArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryTasksArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  status: TaskStatus;
+};
+
+
 export type QueryTeacherFeedbackArgs = {
   id: Scalars['Int']['input'];
 };
@@ -3265,6 +3484,11 @@ export type QueryTherapeuticQuestionsArgs = {
   goalId?: InputMaybe<Scalars['Int']['input']>;
   issueId?: InputMaybe<Scalars['Int']['input']>;
   journalEntryId?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryVehicleArgs = {
+  id: Scalars['ID']['input'];
 };
 
 export type RecommendedBook = {
@@ -3338,6 +3562,12 @@ export enum RelationshipStatus {
   Active = 'ACTIVE',
   Ended = 'ENDED'
 }
+
+export type RequestVehiclePhotoUploadInput = {
+  contentType: Scalars['String']['input'];
+  filename: Scalars['String']['input'];
+  vehicleId: Scalars['ID']['input'];
+};
 
 export type Research = {
   __typename?: 'Research';
@@ -3529,6 +3759,62 @@ export type TalkingPoint = {
   relatedResearchIds?: Maybe<Array<Scalars['Int']['output']>>;
   researchBacking?: Maybe<Scalars['String']['output']>;
 };
+
+export type Task = {
+  __typename?: 'Task';
+  actualMinutes?: Maybe<Scalars['Int']['output']>;
+  blocked: Array<TaskRef>;
+  blockers: Array<TaskRef>;
+  completedAt?: Maybe<Scalars['String']['output']>;
+  createdAt: Scalars['String']['output'];
+  description?: Maybe<Scalars['String']['output']>;
+  dueDate?: Maybe<Scalars['String']['output']>;
+  energyPreference?: Maybe<EnergyLevel>;
+  estimatedMinutes?: Maybe<Scalars['Int']['output']>;
+  id: Scalars['ID']['output'];
+  parentTaskId?: Maybe<Scalars['ID']['output']>;
+  position: Scalars['Int']['output'];
+  priorityManual?: Maybe<Scalars['Int']['output']>;
+  priorityScore: Scalars['Float']['output'];
+  status: TaskStatus;
+  subtasks: Array<Task>;
+  title: Scalars['String']['output'];
+  updatedAt: Scalars['String']['output'];
+};
+
+export type TaskCategorization = {
+  __typename?: 'TaskCategorization';
+  energyPreference: EnergyLevel;
+  estimatedMinutes: Scalars['Int']['output'];
+  priority: Scalars['Int']['output'];
+};
+
+export type TaskCounts = {
+  __typename?: 'TaskCounts';
+  active: Scalars['Int']['output'];
+  archived: Scalars['Int']['output'];
+  completed: Scalars['Int']['output'];
+  inbox: Scalars['Int']['output'];
+};
+
+export type TaskPositionUpdate = {
+  id: Scalars['ID']['input'];
+  position: Scalars['Int']['input'];
+};
+
+export type TaskRef = {
+  __typename?: 'TaskRef';
+  id: Scalars['ID']['output'];
+  status: TaskStatus;
+  title: Scalars['String']['output'];
+};
+
+export enum TaskStatus {
+  Active = 'active',
+  Archived = 'archived',
+  Completed = 'completed',
+  Inbox = 'inbox'
+}
 
 export type TeacherFeedback = {
   __typename?: 'TeacherFeedback';
@@ -3725,6 +4011,20 @@ export type UpdateStoryInput = {
   content?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type UpdateTaskInput = {
+  actualMinutes?: InputMaybe<Scalars['Int']['input']>;
+  completedAt?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  dueDate?: InputMaybe<Scalars['String']['input']>;
+  energyPreference?: InputMaybe<EnergyLevel>;
+  estimatedMinutes?: InputMaybe<Scalars['Int']['input']>;
+  position?: InputMaybe<Scalars['Int']['input']>;
+  priorityManual?: InputMaybe<Scalars['Int']['input']>;
+  priorityScore?: InputMaybe<Scalars['Float']['input']>;
+  status?: InputMaybe<TaskStatus>;
+  title?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type UpdateTeacherFeedbackInput = {
   content?: InputMaybe<Scalars['String']['input']>;
   feedbackDate?: InputMaybe<Scalars['String']['input']>;
@@ -3734,11 +4034,49 @@ export type UpdateTeacherFeedbackInput = {
   teacherName?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type UpdateUserPreferencesInput = {
+  bufferPercentage?: InputMaybe<Scalars['Int']['input']>;
+  chronotype?: InputMaybe<Scalars['String']['input']>;
+  chunkSize?: InputMaybe<Scalars['Int']['input']>;
+  gamificationEnabled?: InputMaybe<Scalars['Boolean']['input']>;
+  priorityWeights?: InputMaybe<PriorityWeightsInput>;
+};
+
+export type UpdateVehicleInput = {
+  color?: InputMaybe<Scalars['String']['input']>;
+  licensePlate?: InputMaybe<Scalars['String']['input']>;
+  make?: InputMaybe<Scalars['String']['input']>;
+  model?: InputMaybe<Scalars['String']['input']>;
+  nickname?: InputMaybe<Scalars['String']['input']>;
+  notes?: InputMaybe<Scalars['String']['input']>;
+  odometerMiles?: InputMaybe<Scalars['Int']['input']>;
+  vin?: InputMaybe<Scalars['String']['input']>;
+  year?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type UserPreferences = {
+  __typename?: 'UserPreferences';
+  bufferPercentage: Scalars['Int']['output'];
+  chronotype: Scalars['String']['output'];
+  chunkSize: Scalars['Int']['output'];
+  gamificationEnabled: Scalars['Boolean']['output'];
+  priorityWeights: PriorityWeights;
+};
+
 export type UserSettings = {
   __typename?: 'UserSettings';
   storyLanguage: Scalars['String']['output'];
   storyMinutes: Scalars['Int']['output'];
   userId: Scalars['String']['output'];
+};
+
+export type UserStreak = {
+  __typename?: 'UserStreak';
+  currentStreak: Scalars['Int']['output'];
+  freezeAvailable: Scalars['Int']['output'];
+  lastCompletedDate?: Maybe<Scalars['String']['output']>;
+  longestStreak: Scalars['Int']['output'];
+  streakOptIn: Scalars['Boolean']['output'];
 };
 
 export type VaultStatus = {
@@ -3752,6 +4090,58 @@ export type VaultUnlockResult = {
   message?: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
   unlocked: Scalars['Boolean']['output'];
+};
+
+export type Vehicle = {
+  __typename?: 'Vehicle';
+  color?: Maybe<Scalars['String']['output']>;
+  createdAt: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  licensePlate?: Maybe<Scalars['String']['output']>;
+  make: Scalars['String']['output'];
+  model: Scalars['String']['output'];
+  nickname?: Maybe<Scalars['String']['output']>;
+  notes?: Maybe<Scalars['String']['output']>;
+  odometerMiles?: Maybe<Scalars['Int']['output']>;
+  photos?: Maybe<Array<VehiclePhoto>>;
+  serviceRecords?: Maybe<Array<VehicleServiceRecord>>;
+  thumbnailUrl?: Maybe<Scalars['String']['output']>;
+  updatedAt: Scalars['String']['output'];
+  userId: Scalars['String']['output'];
+  vin?: Maybe<Scalars['String']['output']>;
+  year: Scalars['Int']['output'];
+};
+
+export type VehiclePhoto = {
+  __typename?: 'VehiclePhoto';
+  caption?: Maybe<Scalars['String']['output']>;
+  contentType: Scalars['String']['output'];
+  createdAt: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  r2Key: Scalars['String']['output'];
+  sizeBytes: Scalars['Int']['output'];
+  url?: Maybe<Scalars['String']['output']>;
+  vehicleId: Scalars['ID']['output'];
+};
+
+export type VehiclePhotoUploadTicket = {
+  __typename?: 'VehiclePhotoUploadTicket';
+  r2Key: Scalars['String']['output'];
+  uploadUrl: Scalars['String']['output'];
+};
+
+export type VehicleServiceRecord = {
+  __typename?: 'VehicleServiceRecord';
+  costCents?: Maybe<Scalars['Int']['output']>;
+  createdAt: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  notes?: Maybe<Scalars['String']['output']>;
+  odometerMiles?: Maybe<Scalars['Int']['output']>;
+  serviceDate: Scalars['String']['output'];
+  type: Scalars['String']['output'];
+  updatedAt: Scalars['String']['output'];
+  vehicleId: Scalars['ID']['output'];
+  vendor?: Maybe<Scalars['String']['output']>;
 };
 
 export type AddAllergyMutationVariables = Exact<{
@@ -3817,6 +4207,27 @@ export type AddSymptomMutationVariables = Exact<{
 
 
 export type AddSymptomMutation = { __typename?: 'Mutation', addSymptom: { __typename?: 'Symptom', id: string, description: string, severity?: string | null, loggedAt: string, createdAt: string } };
+
+export type AddVehicleMutationVariables = Exact<{
+  input: AddVehicleInput;
+}>;
+
+
+export type AddVehicleMutation = { __typename?: 'Mutation', addVehicle: { __typename?: 'Vehicle', id: string, make: string, model: string, year: number, nickname?: string | null } };
+
+export type AddVehiclePhotoMutationVariables = Exact<{
+  input: AddVehiclePhotoInput;
+}>;
+
+
+export type AddVehiclePhotoMutation = { __typename?: 'Mutation', addVehiclePhoto: { __typename?: 'VehiclePhoto', id: string, vehicleId: string, r2Key: string, caption?: string | null, url?: string | null, createdAt: string } };
+
+export type AddVehicleServiceRecordMutationVariables = Exact<{
+  input: AddVehicleServiceRecordInput;
+}>;
+
+
+export type AddVehicleServiceRecordMutation = { __typename?: 'Mutation', addVehicleServiceRecord: { __typename?: 'VehicleServiceRecord', id: string, vehicleId: string, type: string, serviceDate: string, odometerMiles?: number | null, costCents?: number | null, vendor?: string | null, notes?: string | null } };
 
 export type AllergiesQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -4013,6 +4424,13 @@ export type CreateSubGoalMutationVariables = Exact<{
 
 
 export type CreateSubGoalMutation = { __typename?: 'Mutation', createSubGoal: { __typename?: 'Goal', id: number, slug?: string | null, title: string, description?: string | null, status: string, parentGoalId?: number | null, createdAt: string, updatedAt: string, familyMemberId?: number | null } };
+
+export type CreateTaskMutationVariables = Exact<{
+  input: CreateTaskInput;
+}>;
+
+
+export type CreateTaskMutation = { __typename?: 'Mutation', createTask: { __typename?: 'Task', id: string, title: string, description?: string | null, status: TaskStatus, priorityScore: number, priorityManual?: number | null, dueDate?: string | null, estimatedMinutes?: number | null, actualMinutes?: number | null, energyPreference?: EnergyLevel | null, parentTaskId?: string | null, position: number, completedAt?: string | null, createdAt: string, updatedAt: string } };
 
 export type CreateTeacherFeedbackMutationVariables = Exact<{
   input: CreateTeacherFeedbackInput;
@@ -4266,6 +4684,13 @@ export type DeleteSymptomMutationVariables = Exact<{
 
 export type DeleteSymptomMutation = { __typename?: 'Mutation', deleteSymptom: { __typename?: 'DeleteSymptomResult', success: boolean } };
 
+export type DeleteTaskMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteTaskMutation = { __typename?: 'Mutation', deleteTask: { __typename?: 'DeleteTaskResult', success: boolean } };
+
 export type DeleteTeacherFeedbackMutationVariables = Exact<{
   id: Scalars['Int']['input'];
 }>;
@@ -4281,6 +4706,27 @@ export type DeleteTherapeuticQuestionsMutationVariables = Exact<{
 
 
 export type DeleteTherapeuticQuestionsMutation = { __typename?: 'Mutation', deleteTherapeuticQuestions: { __typename?: 'DeleteQuestionsResult', success: boolean, message?: string | null, deletedCount: number } };
+
+export type DeleteVehicleMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteVehicleMutation = { __typename?: 'Mutation', deleteVehicle: { __typename?: 'DeleteVehicleResult', id: string, deleted: boolean } };
+
+export type DeleteVehiclePhotoMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteVehiclePhotoMutation = { __typename?: 'Mutation', deleteVehiclePhoto: { __typename?: 'DeleteVehiclePhotoResult', id: string, deleted: boolean } };
+
+export type DeleteVehicleServiceRecordMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteVehicleServiceRecordMutation = { __typename?: 'Mutation', deleteVehicleServiceRecord: { __typename?: 'DeleteVehicleServiceRecordResult', id: string, deleted: boolean } };
 
 export type DoctorQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -4938,6 +5384,21 @@ export type MemoryEntriesQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type MemoryEntriesQuery = { __typename?: 'Query', memoryEntries: Array<{ __typename?: 'MemoryEntry', id: string, category: string, description?: string | null, context?: string | null, protocolId?: string | null, overallScore?: number | null, shortTermScore?: number | null, longTermScore?: number | null, workingMemoryScore?: number | null, recallSpeed?: number | null, loggedAt: string, createdAt: string }>, memoryBaseline?: { __typename?: 'MemoryBaseline', id: string, overallScore?: number | null, shortTermScore?: number | null, longTermScore?: number | null, workingMemoryScore?: number | null, recallSpeed?: number | null, recordedAt: string } | null };
 
+export type ParseTaskFromTextMutationVariables = Exact<{
+  input: Scalars['String']['input'];
+}>;
+
+
+export type ParseTaskFromTextMutation = { __typename?: 'Mutation', parseTaskFromText?: { __typename?: 'ParsedTask', title: string, dueDate?: string | null, estimatedMinutes?: number | null, energyPreference?: EnergyLevel | null } | null };
+
+export type SuggestTaskCategorizationMutationVariables = Exact<{
+  title: Scalars['String']['input'];
+  description?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type SuggestTaskCategorizationMutation = { __typename?: 'Mutation', suggestTaskCategorization?: { __typename?: 'TaskCategorization', priority: number, energyPreference: EnergyLevel, estimatedMinutes: number } | null };
+
 export type ProtocolQueryVariables = Exact<{
   slug: Scalars['String']['input'];
 }>;
@@ -4972,6 +5433,20 @@ export type RegimenAnalysisQueryVariables = Exact<{
 
 
 export type RegimenAnalysisQuery = { __typename?: 'Query', regimenAnalysis?: { __typename?: 'RegimenAnalysis', id: string, slug: string, severityOverall?: string | null, summary?: string | null, missingFacts: Array<string>, medsCount: number, language?: string | null, updatedAt: string, flags: Array<{ __typename?: 'RegimenFlag', type: string, drugs: Array<string>, severity: string, message: string, recommendation?: string | null }> } | null };
+
+export type ReorderTasksMutationVariables = Exact<{
+  updates: Array<TaskPositionUpdate> | TaskPositionUpdate;
+}>;
+
+
+export type ReorderTasksMutation = { __typename?: 'Mutation', reorderTasks: boolean };
+
+export type RequestVehiclePhotoUploadMutationVariables = Exact<{
+  input: RequestVehiclePhotoUploadInput;
+}>;
+
+
+export type RequestVehiclePhotoUploadMutation = { __typename?: 'Mutation', requestVehiclePhotoUpload: { __typename?: 'VehiclePhotoUploadTicket', uploadUrl: string, r2Key: string } };
 
 export type SendConversationMessageMutationVariables = Exact<{
   conversationId: Scalars['Int']['input'];
@@ -5031,6 +5506,55 @@ export type SetTagLanguageMutationVariables = Exact<{
 
 
 export type SetTagLanguageMutation = { __typename?: 'Mutation', setTagLanguage: boolean };
+
+export type AddTaskDependencyMutationVariables = Exact<{
+  blockingTaskId: Scalars['ID']['input'];
+  blockedTaskId: Scalars['ID']['input'];
+}>;
+
+
+export type AddTaskDependencyMutation = { __typename?: 'Mutation', addTaskDependency: boolean };
+
+export type RemoveTaskDependencyMutationVariables = Exact<{
+  blockingTaskId: Scalars['ID']['input'];
+  blockedTaskId: Scalars['ID']['input'];
+}>;
+
+
+export type RemoveTaskDependencyMutation = { __typename?: 'Mutation', removeTaskDependency: boolean };
+
+export type TaskFieldsFragment = { __typename?: 'Task', id: string, title: string, description?: string | null, status: TaskStatus, priorityScore: number, priorityManual?: number | null, dueDate?: string | null, estimatedMinutes?: number | null, actualMinutes?: number | null, energyPreference?: EnergyLevel | null, parentTaskId?: string | null, position: number, completedAt?: string | null, createdAt: string, updatedAt: string };
+
+export type GetTasksQueryVariables = Exact<{
+  status: TaskStatus;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type GetTasksQuery = { __typename?: 'Query', tasks: Array<{ __typename?: 'Task', id: string, title: string, description?: string | null, status: TaskStatus, priorityScore: number, priorityManual?: number | null, dueDate?: string | null, estimatedMinutes?: number | null, actualMinutes?: number | null, energyPreference?: EnergyLevel | null, parentTaskId?: string | null, position: number, completedAt?: string | null, createdAt: string, updatedAt: string }> };
+
+export type GetTaskCountsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetTaskCountsQuery = { __typename?: 'Query', taskCounts: { __typename?: 'TaskCounts', inbox: number, active: number, completed: number, archived: number } };
+
+export type GetTaskQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetTaskQuery = { __typename?: 'Query', task?: { __typename?: 'Task', id: string, title: string, description?: string | null, status: TaskStatus, priorityScore: number, priorityManual?: number | null, dueDate?: string | null, estimatedMinutes?: number | null, actualMinutes?: number | null, energyPreference?: EnergyLevel | null, parentTaskId?: string | null, position: number, completedAt?: string | null, createdAt: string, updatedAt: string, subtasks: Array<{ __typename?: 'Task', id: string, title: string, description?: string | null, status: TaskStatus, priorityScore: number, priorityManual?: number | null, dueDate?: string | null, estimatedMinutes?: number | null, actualMinutes?: number | null, energyPreference?: EnergyLevel | null, parentTaskId?: string | null, position: number, completedAt?: string | null, createdAt: string, updatedAt: string }>, blockers: Array<{ __typename?: 'TaskRef', id: string, title: string, status: TaskStatus }>, blocked: Array<{ __typename?: 'TaskRef', id: string, title: string, status: TaskStatus }> } | null };
+
+export type GetUserPreferencesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetUserPreferencesQuery = { __typename?: 'Query', userPreferences: { __typename?: 'UserPreferences', chronotype: string, chunkSize: number, gamificationEnabled: boolean, bufferPercentage: number, priorityWeights: { __typename?: 'PriorityWeights', deadlineUrgency: number, userValue: number, dependencyImpact: number, projectWeight: number } } };
+
+export type GetUserStreakQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetUserStreakQuery = { __typename?: 'Query', userStreak: { __typename?: 'UserStreak', currentStreak: number, longestStreak: number, lastCompletedDate?: string | null, freezeAvailable: number, streakOptIn: boolean } };
 
 export type UnlinkContactFromIssueMutationVariables = Exact<{
   issueId: Scalars['Int']['input'];
@@ -5182,6 +5706,14 @@ export type UpdateStoryMutationVariables = Exact<{
 
 export type UpdateStoryMutation = { __typename?: 'Mutation', updateStory: { __typename?: 'Story', id: number, goalId?: number | null, createdBy?: string | null, content: string, createdAt: string, updatedAt: string } };
 
+export type UpdateTaskMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  input: UpdateTaskInput;
+}>;
+
+
+export type UpdateTaskMutation = { __typename?: 'Mutation', updateTask: { __typename?: 'Task', id: string, title: string, description?: string | null, status: TaskStatus, priorityScore: number, priorityManual?: number | null, dueDate?: string | null, estimatedMinutes?: number | null, actualMinutes?: number | null, energyPreference?: EnergyLevel | null, parentTaskId?: string | null, position: number, completedAt?: string | null, createdAt: string, updatedAt: string } };
+
 export type UpdateTeacherFeedbackMutationVariables = Exact<{
   id: Scalars['Int']['input'];
   input: UpdateTeacherFeedbackInput;
@@ -5189,6 +5721,21 @@ export type UpdateTeacherFeedbackMutationVariables = Exact<{
 
 
 export type UpdateTeacherFeedbackMutation = { __typename?: 'Mutation', updateTeacherFeedback: { __typename?: 'TeacherFeedback', id: number, familyMemberId: number, createdBy: string, teacherName: string, subject?: string | null, feedbackDate: string, content: string, tags?: Array<string> | null, source?: FeedbackSource | null, extracted: boolean, createdAt: string, updatedAt: string } };
+
+export type UpdateUserPreferencesMutationVariables = Exact<{
+  input: UpdateUserPreferencesInput;
+}>;
+
+
+export type UpdateUserPreferencesMutation = { __typename?: 'Mutation', updateUserPreferences: { __typename?: 'UserPreferences', chronotype: string, chunkSize: number, gamificationEnabled: boolean, bufferPercentage: number, priorityWeights: { __typename?: 'PriorityWeights', deadlineUrgency: number, userValue: number, dependencyImpact: number, projectWeight: number } } };
+
+export type UpdateVehicleMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  input: UpdateVehicleInput;
+}>;
+
+
+export type UpdateVehicleMutation = { __typename?: 'Mutation', updateVehicle: { __typename?: 'Vehicle', id: string, make: string, model: string, year: number, vin?: string | null, licensePlate?: string | null, nickname?: string | null, odometerMiles?: number | null, color?: string | null, notes?: string | null, updatedAt: string } };
 
 export type GetUserSettingsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -5208,7 +5755,37 @@ export type VaultStatusQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type VaultStatusQuery = { __typename?: 'Query', vaultStatus: { __typename?: 'VaultStatus', unlocked: boolean, available: boolean } };
 
+export type VehicleQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
 
+
+export type VehicleQuery = { __typename?: 'Query', vehicle?: { __typename?: 'Vehicle', id: string, make: string, model: string, year: number, vin?: string | null, licensePlate?: string | null, nickname?: string | null, odometerMiles?: number | null, color?: string | null, notes?: string | null, createdAt: string, updatedAt: string, photos?: Array<{ __typename?: 'VehiclePhoto', id: string, r2Key: string, caption?: string | null, url?: string | null, createdAt: string }> | null, serviceRecords?: Array<{ __typename?: 'VehicleServiceRecord', id: string, type: string, serviceDate: string, odometerMiles?: number | null, costCents?: number | null, vendor?: string | null, notes?: string | null }> | null } | null };
+
+export type VehiclesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type VehiclesQuery = { __typename?: 'Query', vehicles: Array<{ __typename?: 'Vehicle', id: string, make: string, model: string, year: number, nickname?: string | null, color?: string | null, licensePlate?: string | null, odometerMiles?: number | null, thumbnailUrl?: string | null }> };
+
+export const TaskFieldsFragmentDoc = gql`
+    fragment TaskFields on Task {
+  id
+  title
+  description
+  status
+  priorityScore
+  priorityManual
+  dueDate
+  estimatedMinutes
+  actualMinutes
+  energyPreference
+  parentTaskId
+  position
+  completedAt
+  createdAt
+  updatedAt
+}
+    `;
 export const AddAllergyDocument = gql`
     mutation AddAllergy($input: AddAllergyInput!) {
   addAllergy(input: $input) {
@@ -5569,6 +6146,121 @@ export function useAddSymptomMutation(baseOptions?: Apollo.MutationHookOptions<A
 export type AddSymptomMutationHookResult = ReturnType<typeof useAddSymptomMutation>;
 export type AddSymptomMutationResult = Apollo.MutationResult<AddSymptomMutation>;
 export type AddSymptomMutationOptions = Apollo.BaseMutationOptions<AddSymptomMutation, AddSymptomMutationVariables>;
+export const AddVehicleDocument = gql`
+    mutation AddVehicle($input: AddVehicleInput!) {
+  addVehicle(input: $input) {
+    id
+    make
+    model
+    year
+    nickname
+  }
+}
+    `;
+export type AddVehicleMutationFn = Apollo.MutationFunction<AddVehicleMutation, AddVehicleMutationVariables>;
+
+/**
+ * __useAddVehicleMutation__
+ *
+ * To run a mutation, you first call `useAddVehicleMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAddVehicleMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [addVehicleMutation, { data, loading, error }] = useAddVehicleMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useAddVehicleMutation(baseOptions?: Apollo.MutationHookOptions<AddVehicleMutation, AddVehicleMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<AddVehicleMutation, AddVehicleMutationVariables>(AddVehicleDocument, options);
+      }
+export type AddVehicleMutationHookResult = ReturnType<typeof useAddVehicleMutation>;
+export type AddVehicleMutationResult = Apollo.MutationResult<AddVehicleMutation>;
+export type AddVehicleMutationOptions = Apollo.BaseMutationOptions<AddVehicleMutation, AddVehicleMutationVariables>;
+export const AddVehiclePhotoDocument = gql`
+    mutation AddVehiclePhoto($input: AddVehiclePhotoInput!) {
+  addVehiclePhoto(input: $input) {
+    id
+    vehicleId
+    r2Key
+    caption
+    url
+    createdAt
+  }
+}
+    `;
+export type AddVehiclePhotoMutationFn = Apollo.MutationFunction<AddVehiclePhotoMutation, AddVehiclePhotoMutationVariables>;
+
+/**
+ * __useAddVehiclePhotoMutation__
+ *
+ * To run a mutation, you first call `useAddVehiclePhotoMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAddVehiclePhotoMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [addVehiclePhotoMutation, { data, loading, error }] = useAddVehiclePhotoMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useAddVehiclePhotoMutation(baseOptions?: Apollo.MutationHookOptions<AddVehiclePhotoMutation, AddVehiclePhotoMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<AddVehiclePhotoMutation, AddVehiclePhotoMutationVariables>(AddVehiclePhotoDocument, options);
+      }
+export type AddVehiclePhotoMutationHookResult = ReturnType<typeof useAddVehiclePhotoMutation>;
+export type AddVehiclePhotoMutationResult = Apollo.MutationResult<AddVehiclePhotoMutation>;
+export type AddVehiclePhotoMutationOptions = Apollo.BaseMutationOptions<AddVehiclePhotoMutation, AddVehiclePhotoMutationVariables>;
+export const AddVehicleServiceRecordDocument = gql`
+    mutation AddVehicleServiceRecord($input: AddVehicleServiceRecordInput!) {
+  addVehicleServiceRecord(input: $input) {
+    id
+    vehicleId
+    type
+    serviceDate
+    odometerMiles
+    costCents
+    vendor
+    notes
+  }
+}
+    `;
+export type AddVehicleServiceRecordMutationFn = Apollo.MutationFunction<AddVehicleServiceRecordMutation, AddVehicleServiceRecordMutationVariables>;
+
+/**
+ * __useAddVehicleServiceRecordMutation__
+ *
+ * To run a mutation, you first call `useAddVehicleServiceRecordMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAddVehicleServiceRecordMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [addVehicleServiceRecordMutation, { data, loading, error }] = useAddVehicleServiceRecordMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useAddVehicleServiceRecordMutation(baseOptions?: Apollo.MutationHookOptions<AddVehicleServiceRecordMutation, AddVehicleServiceRecordMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<AddVehicleServiceRecordMutation, AddVehicleServiceRecordMutationVariables>(AddVehicleServiceRecordDocument, options);
+      }
+export type AddVehicleServiceRecordMutationHookResult = ReturnType<typeof useAddVehicleServiceRecordMutation>;
+export type AddVehicleServiceRecordMutationResult = Apollo.MutationResult<AddVehicleServiceRecordMutation>;
+export type AddVehicleServiceRecordMutationOptions = Apollo.BaseMutationOptions<AddVehicleServiceRecordMutation, AddVehicleServiceRecordMutationVariables>;
 export const AllergiesDocument = gql`
     query Allergies {
   allergies {
@@ -7073,6 +7765,39 @@ export function useCreateSubGoalMutation(baseOptions?: Apollo.MutationHookOption
 export type CreateSubGoalMutationHookResult = ReturnType<typeof useCreateSubGoalMutation>;
 export type CreateSubGoalMutationResult = Apollo.MutationResult<CreateSubGoalMutation>;
 export type CreateSubGoalMutationOptions = Apollo.BaseMutationOptions<CreateSubGoalMutation, CreateSubGoalMutationVariables>;
+export const CreateTaskDocument = gql`
+    mutation CreateTask($input: CreateTaskInput!) {
+  createTask(input: $input) {
+    ...TaskFields
+  }
+}
+    ${TaskFieldsFragmentDoc}`;
+export type CreateTaskMutationFn = Apollo.MutationFunction<CreateTaskMutation, CreateTaskMutationVariables>;
+
+/**
+ * __useCreateTaskMutation__
+ *
+ * To run a mutation, you first call `useCreateTaskMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateTaskMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createTaskMutation, { data, loading, error }] = useCreateTaskMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCreateTaskMutation(baseOptions?: Apollo.MutationHookOptions<CreateTaskMutation, CreateTaskMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateTaskMutation, CreateTaskMutationVariables>(CreateTaskDocument, options);
+      }
+export type CreateTaskMutationHookResult = ReturnType<typeof useCreateTaskMutation>;
+export type CreateTaskMutationResult = Apollo.MutationResult<CreateTaskMutation>;
+export type CreateTaskMutationOptions = Apollo.BaseMutationOptions<CreateTaskMutation, CreateTaskMutationVariables>;
 export const CreateTeacherFeedbackDocument = gql`
     mutation CreateTeacherFeedback($input: CreateTeacherFeedbackInput!) {
   createTeacherFeedback(input: $input) {
@@ -8294,6 +9019,39 @@ export function useDeleteSymptomMutation(baseOptions?: Apollo.MutationHookOption
 export type DeleteSymptomMutationHookResult = ReturnType<typeof useDeleteSymptomMutation>;
 export type DeleteSymptomMutationResult = Apollo.MutationResult<DeleteSymptomMutation>;
 export type DeleteSymptomMutationOptions = Apollo.BaseMutationOptions<DeleteSymptomMutation, DeleteSymptomMutationVariables>;
+export const DeleteTaskDocument = gql`
+    mutation DeleteTask($id: ID!) {
+  deleteTask(id: $id) {
+    success
+  }
+}
+    `;
+export type DeleteTaskMutationFn = Apollo.MutationFunction<DeleteTaskMutation, DeleteTaskMutationVariables>;
+
+/**
+ * __useDeleteTaskMutation__
+ *
+ * To run a mutation, you first call `useDeleteTaskMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteTaskMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteTaskMutation, { data, loading, error }] = useDeleteTaskMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteTaskMutation(baseOptions?: Apollo.MutationHookOptions<DeleteTaskMutation, DeleteTaskMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteTaskMutation, DeleteTaskMutationVariables>(DeleteTaskDocument, options);
+      }
+export type DeleteTaskMutationHookResult = ReturnType<typeof useDeleteTaskMutation>;
+export type DeleteTaskMutationResult = Apollo.MutationResult<DeleteTaskMutation>;
+export type DeleteTaskMutationOptions = Apollo.BaseMutationOptions<DeleteTaskMutation, DeleteTaskMutationVariables>;
 export const DeleteTeacherFeedbackDocument = gql`
     mutation DeleteTeacherFeedback($id: Int!) {
   deleteTeacherFeedback(id: $id) {
@@ -8369,6 +9127,108 @@ export function useDeleteTherapeuticQuestionsMutation(baseOptions?: Apollo.Mutat
 export type DeleteTherapeuticQuestionsMutationHookResult = ReturnType<typeof useDeleteTherapeuticQuestionsMutation>;
 export type DeleteTherapeuticQuestionsMutationResult = Apollo.MutationResult<DeleteTherapeuticQuestionsMutation>;
 export type DeleteTherapeuticQuestionsMutationOptions = Apollo.BaseMutationOptions<DeleteTherapeuticQuestionsMutation, DeleteTherapeuticQuestionsMutationVariables>;
+export const DeleteVehicleDocument = gql`
+    mutation DeleteVehicle($id: ID!) {
+  deleteVehicle(id: $id) {
+    id
+    deleted
+  }
+}
+    `;
+export type DeleteVehicleMutationFn = Apollo.MutationFunction<DeleteVehicleMutation, DeleteVehicleMutationVariables>;
+
+/**
+ * __useDeleteVehicleMutation__
+ *
+ * To run a mutation, you first call `useDeleteVehicleMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteVehicleMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteVehicleMutation, { data, loading, error }] = useDeleteVehicleMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteVehicleMutation(baseOptions?: Apollo.MutationHookOptions<DeleteVehicleMutation, DeleteVehicleMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteVehicleMutation, DeleteVehicleMutationVariables>(DeleteVehicleDocument, options);
+      }
+export type DeleteVehicleMutationHookResult = ReturnType<typeof useDeleteVehicleMutation>;
+export type DeleteVehicleMutationResult = Apollo.MutationResult<DeleteVehicleMutation>;
+export type DeleteVehicleMutationOptions = Apollo.BaseMutationOptions<DeleteVehicleMutation, DeleteVehicleMutationVariables>;
+export const DeleteVehiclePhotoDocument = gql`
+    mutation DeleteVehiclePhoto($id: ID!) {
+  deleteVehiclePhoto(id: $id) {
+    id
+    deleted
+  }
+}
+    `;
+export type DeleteVehiclePhotoMutationFn = Apollo.MutationFunction<DeleteVehiclePhotoMutation, DeleteVehiclePhotoMutationVariables>;
+
+/**
+ * __useDeleteVehiclePhotoMutation__
+ *
+ * To run a mutation, you first call `useDeleteVehiclePhotoMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteVehiclePhotoMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteVehiclePhotoMutation, { data, loading, error }] = useDeleteVehiclePhotoMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteVehiclePhotoMutation(baseOptions?: Apollo.MutationHookOptions<DeleteVehiclePhotoMutation, DeleteVehiclePhotoMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteVehiclePhotoMutation, DeleteVehiclePhotoMutationVariables>(DeleteVehiclePhotoDocument, options);
+      }
+export type DeleteVehiclePhotoMutationHookResult = ReturnType<typeof useDeleteVehiclePhotoMutation>;
+export type DeleteVehiclePhotoMutationResult = Apollo.MutationResult<DeleteVehiclePhotoMutation>;
+export type DeleteVehiclePhotoMutationOptions = Apollo.BaseMutationOptions<DeleteVehiclePhotoMutation, DeleteVehiclePhotoMutationVariables>;
+export const DeleteVehicleServiceRecordDocument = gql`
+    mutation DeleteVehicleServiceRecord($id: ID!) {
+  deleteVehicleServiceRecord(id: $id) {
+    id
+    deleted
+  }
+}
+    `;
+export type DeleteVehicleServiceRecordMutationFn = Apollo.MutationFunction<DeleteVehicleServiceRecordMutation, DeleteVehicleServiceRecordMutationVariables>;
+
+/**
+ * __useDeleteVehicleServiceRecordMutation__
+ *
+ * To run a mutation, you first call `useDeleteVehicleServiceRecordMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteVehicleServiceRecordMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteVehicleServiceRecordMutation, { data, loading, error }] = useDeleteVehicleServiceRecordMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteVehicleServiceRecordMutation(baseOptions?: Apollo.MutationHookOptions<DeleteVehicleServiceRecordMutation, DeleteVehicleServiceRecordMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteVehicleServiceRecordMutation, DeleteVehicleServiceRecordMutationVariables>(DeleteVehicleServiceRecordDocument, options);
+      }
+export type DeleteVehicleServiceRecordMutationHookResult = ReturnType<typeof useDeleteVehicleServiceRecordMutation>;
+export type DeleteVehicleServiceRecordMutationResult = Apollo.MutationResult<DeleteVehicleServiceRecordMutation>;
+export type DeleteVehicleServiceRecordMutationOptions = Apollo.BaseMutationOptions<DeleteVehicleServiceRecordMutation, DeleteVehicleServiceRecordMutationVariables>;
 export const DoctorDocument = gql`
     query Doctor($id: ID!) {
   doctor(id: $id) {
@@ -13962,6 +14822,78 @@ export type MemoryEntriesQueryHookResult = ReturnType<typeof useMemoryEntriesQue
 export type MemoryEntriesLazyQueryHookResult = ReturnType<typeof useMemoryEntriesLazyQuery>;
 export type MemoryEntriesSuspenseQueryHookResult = ReturnType<typeof useMemoryEntriesSuspenseQuery>;
 export type MemoryEntriesQueryResult = Apollo.QueryResult<MemoryEntriesQuery, MemoryEntriesQueryVariables>;
+export const ParseTaskFromTextDocument = gql`
+    mutation ParseTaskFromText($input: String!) {
+  parseTaskFromText(input: $input) {
+    title
+    dueDate
+    estimatedMinutes
+    energyPreference
+  }
+}
+    `;
+export type ParseTaskFromTextMutationFn = Apollo.MutationFunction<ParseTaskFromTextMutation, ParseTaskFromTextMutationVariables>;
+
+/**
+ * __useParseTaskFromTextMutation__
+ *
+ * To run a mutation, you first call `useParseTaskFromTextMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useParseTaskFromTextMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [parseTaskFromTextMutation, { data, loading, error }] = useParseTaskFromTextMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useParseTaskFromTextMutation(baseOptions?: Apollo.MutationHookOptions<ParseTaskFromTextMutation, ParseTaskFromTextMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<ParseTaskFromTextMutation, ParseTaskFromTextMutationVariables>(ParseTaskFromTextDocument, options);
+      }
+export type ParseTaskFromTextMutationHookResult = ReturnType<typeof useParseTaskFromTextMutation>;
+export type ParseTaskFromTextMutationResult = Apollo.MutationResult<ParseTaskFromTextMutation>;
+export type ParseTaskFromTextMutationOptions = Apollo.BaseMutationOptions<ParseTaskFromTextMutation, ParseTaskFromTextMutationVariables>;
+export const SuggestTaskCategorizationDocument = gql`
+    mutation SuggestTaskCategorization($title: String!, $description: String) {
+  suggestTaskCategorization(title: $title, description: $description) {
+    priority
+    energyPreference
+    estimatedMinutes
+  }
+}
+    `;
+export type SuggestTaskCategorizationMutationFn = Apollo.MutationFunction<SuggestTaskCategorizationMutation, SuggestTaskCategorizationMutationVariables>;
+
+/**
+ * __useSuggestTaskCategorizationMutation__
+ *
+ * To run a mutation, you first call `useSuggestTaskCategorizationMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useSuggestTaskCategorizationMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [suggestTaskCategorizationMutation, { data, loading, error }] = useSuggestTaskCategorizationMutation({
+ *   variables: {
+ *      title: // value for 'title'
+ *      description: // value for 'description'
+ *   },
+ * });
+ */
+export function useSuggestTaskCategorizationMutation(baseOptions?: Apollo.MutationHookOptions<SuggestTaskCategorizationMutation, SuggestTaskCategorizationMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<SuggestTaskCategorizationMutation, SuggestTaskCategorizationMutationVariables>(SuggestTaskCategorizationDocument, options);
+      }
+export type SuggestTaskCategorizationMutationHookResult = ReturnType<typeof useSuggestTaskCategorizationMutation>;
+export type SuggestTaskCategorizationMutationResult = Apollo.MutationResult<SuggestTaskCategorizationMutation>;
+export type SuggestTaskCategorizationMutationOptions = Apollo.BaseMutationOptions<SuggestTaskCategorizationMutation, SuggestTaskCategorizationMutationVariables>;
 export const ProtocolDocument = gql`
     query Protocol($slug: String!) {
   protocol(slug: $slug) {
@@ -14238,6 +15170,71 @@ export type RegimenAnalysisQueryHookResult = ReturnType<typeof useRegimenAnalysi
 export type RegimenAnalysisLazyQueryHookResult = ReturnType<typeof useRegimenAnalysisLazyQuery>;
 export type RegimenAnalysisSuspenseQueryHookResult = ReturnType<typeof useRegimenAnalysisSuspenseQuery>;
 export type RegimenAnalysisQueryResult = Apollo.QueryResult<RegimenAnalysisQuery, RegimenAnalysisQueryVariables>;
+export const ReorderTasksDocument = gql`
+    mutation ReorderTasks($updates: [TaskPositionUpdate!]!) {
+  reorderTasks(updates: $updates)
+}
+    `;
+export type ReorderTasksMutationFn = Apollo.MutationFunction<ReorderTasksMutation, ReorderTasksMutationVariables>;
+
+/**
+ * __useReorderTasksMutation__
+ *
+ * To run a mutation, you first call `useReorderTasksMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useReorderTasksMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [reorderTasksMutation, { data, loading, error }] = useReorderTasksMutation({
+ *   variables: {
+ *      updates: // value for 'updates'
+ *   },
+ * });
+ */
+export function useReorderTasksMutation(baseOptions?: Apollo.MutationHookOptions<ReorderTasksMutation, ReorderTasksMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<ReorderTasksMutation, ReorderTasksMutationVariables>(ReorderTasksDocument, options);
+      }
+export type ReorderTasksMutationHookResult = ReturnType<typeof useReorderTasksMutation>;
+export type ReorderTasksMutationResult = Apollo.MutationResult<ReorderTasksMutation>;
+export type ReorderTasksMutationOptions = Apollo.BaseMutationOptions<ReorderTasksMutation, ReorderTasksMutationVariables>;
+export const RequestVehiclePhotoUploadDocument = gql`
+    mutation RequestVehiclePhotoUpload($input: RequestVehiclePhotoUploadInput!) {
+  requestVehiclePhotoUpload(input: $input) {
+    uploadUrl
+    r2Key
+  }
+}
+    `;
+export type RequestVehiclePhotoUploadMutationFn = Apollo.MutationFunction<RequestVehiclePhotoUploadMutation, RequestVehiclePhotoUploadMutationVariables>;
+
+/**
+ * __useRequestVehiclePhotoUploadMutation__
+ *
+ * To run a mutation, you first call `useRequestVehiclePhotoUploadMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRequestVehiclePhotoUploadMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [requestVehiclePhotoUploadMutation, { data, loading, error }] = useRequestVehiclePhotoUploadMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useRequestVehiclePhotoUploadMutation(baseOptions?: Apollo.MutationHookOptions<RequestVehiclePhotoUploadMutation, RequestVehiclePhotoUploadMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<RequestVehiclePhotoUploadMutation, RequestVehiclePhotoUploadMutationVariables>(RequestVehiclePhotoUploadDocument, options);
+      }
+export type RequestVehiclePhotoUploadMutationHookResult = ReturnType<typeof useRequestVehiclePhotoUploadMutation>;
+export type RequestVehiclePhotoUploadMutationResult = Apollo.MutationResult<RequestVehiclePhotoUploadMutation>;
+export type RequestVehiclePhotoUploadMutationOptions = Apollo.BaseMutationOptions<RequestVehiclePhotoUploadMutation, RequestVehiclePhotoUploadMutationVariables>;
 export const SendConversationMessageDocument = gql`
     mutation SendConversationMessage($conversationId: Int!, $message: String!) {
   sendConversationMessage(conversationId: $conversationId, message: $message) {
@@ -14554,6 +15551,319 @@ export function useSetTagLanguageMutation(baseOptions?: Apollo.MutationHookOptio
 export type SetTagLanguageMutationHookResult = ReturnType<typeof useSetTagLanguageMutation>;
 export type SetTagLanguageMutationResult = Apollo.MutationResult<SetTagLanguageMutation>;
 export type SetTagLanguageMutationOptions = Apollo.BaseMutationOptions<SetTagLanguageMutation, SetTagLanguageMutationVariables>;
+export const AddTaskDependencyDocument = gql`
+    mutation AddTaskDependency($blockingTaskId: ID!, $blockedTaskId: ID!) {
+  addTaskDependency(
+    blockingTaskId: $blockingTaskId
+    blockedTaskId: $blockedTaskId
+  )
+}
+    `;
+export type AddTaskDependencyMutationFn = Apollo.MutationFunction<AddTaskDependencyMutation, AddTaskDependencyMutationVariables>;
+
+/**
+ * __useAddTaskDependencyMutation__
+ *
+ * To run a mutation, you first call `useAddTaskDependencyMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAddTaskDependencyMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [addTaskDependencyMutation, { data, loading, error }] = useAddTaskDependencyMutation({
+ *   variables: {
+ *      blockingTaskId: // value for 'blockingTaskId'
+ *      blockedTaskId: // value for 'blockedTaskId'
+ *   },
+ * });
+ */
+export function useAddTaskDependencyMutation(baseOptions?: Apollo.MutationHookOptions<AddTaskDependencyMutation, AddTaskDependencyMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<AddTaskDependencyMutation, AddTaskDependencyMutationVariables>(AddTaskDependencyDocument, options);
+      }
+export type AddTaskDependencyMutationHookResult = ReturnType<typeof useAddTaskDependencyMutation>;
+export type AddTaskDependencyMutationResult = Apollo.MutationResult<AddTaskDependencyMutation>;
+export type AddTaskDependencyMutationOptions = Apollo.BaseMutationOptions<AddTaskDependencyMutation, AddTaskDependencyMutationVariables>;
+export const RemoveTaskDependencyDocument = gql`
+    mutation RemoveTaskDependency($blockingTaskId: ID!, $blockedTaskId: ID!) {
+  removeTaskDependency(
+    blockingTaskId: $blockingTaskId
+    blockedTaskId: $blockedTaskId
+  )
+}
+    `;
+export type RemoveTaskDependencyMutationFn = Apollo.MutationFunction<RemoveTaskDependencyMutation, RemoveTaskDependencyMutationVariables>;
+
+/**
+ * __useRemoveTaskDependencyMutation__
+ *
+ * To run a mutation, you first call `useRemoveTaskDependencyMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRemoveTaskDependencyMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [removeTaskDependencyMutation, { data, loading, error }] = useRemoveTaskDependencyMutation({
+ *   variables: {
+ *      blockingTaskId: // value for 'blockingTaskId'
+ *      blockedTaskId: // value for 'blockedTaskId'
+ *   },
+ * });
+ */
+export function useRemoveTaskDependencyMutation(baseOptions?: Apollo.MutationHookOptions<RemoveTaskDependencyMutation, RemoveTaskDependencyMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<RemoveTaskDependencyMutation, RemoveTaskDependencyMutationVariables>(RemoveTaskDependencyDocument, options);
+      }
+export type RemoveTaskDependencyMutationHookResult = ReturnType<typeof useRemoveTaskDependencyMutation>;
+export type RemoveTaskDependencyMutationResult = Apollo.MutationResult<RemoveTaskDependencyMutation>;
+export type RemoveTaskDependencyMutationOptions = Apollo.BaseMutationOptions<RemoveTaskDependencyMutation, RemoveTaskDependencyMutationVariables>;
+export const GetTasksDocument = gql`
+    query GetTasks($status: TaskStatus!, $limit: Int, $offset: Int) {
+  tasks(status: $status, limit: $limit, offset: $offset) {
+    ...TaskFields
+  }
+}
+    ${TaskFieldsFragmentDoc}`;
+
+/**
+ * __useGetTasksQuery__
+ *
+ * To run a query within a React component, call `useGetTasksQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetTasksQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetTasksQuery({
+ *   variables: {
+ *      status: // value for 'status'
+ *      limit: // value for 'limit'
+ *      offset: // value for 'offset'
+ *   },
+ * });
+ */
+export function useGetTasksQuery(baseOptions: Apollo.QueryHookOptions<GetTasksQuery, GetTasksQueryVariables> & ({ variables: GetTasksQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetTasksQuery, GetTasksQueryVariables>(GetTasksDocument, options);
+      }
+export function useGetTasksLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetTasksQuery, GetTasksQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetTasksQuery, GetTasksQueryVariables>(GetTasksDocument, options);
+        }
+// @ts-ignore
+export function useGetTasksSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetTasksQuery, GetTasksQueryVariables>): Apollo.UseSuspenseQueryResult<GetTasksQuery, GetTasksQueryVariables>;
+export function useGetTasksSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetTasksQuery, GetTasksQueryVariables>): Apollo.UseSuspenseQueryResult<GetTasksQuery | undefined, GetTasksQueryVariables>;
+export function useGetTasksSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetTasksQuery, GetTasksQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetTasksQuery, GetTasksQueryVariables>(GetTasksDocument, options);
+        }
+export type GetTasksQueryHookResult = ReturnType<typeof useGetTasksQuery>;
+export type GetTasksLazyQueryHookResult = ReturnType<typeof useGetTasksLazyQuery>;
+export type GetTasksSuspenseQueryHookResult = ReturnType<typeof useGetTasksSuspenseQuery>;
+export type GetTasksQueryResult = Apollo.QueryResult<GetTasksQuery, GetTasksQueryVariables>;
+export const GetTaskCountsDocument = gql`
+    query GetTaskCounts {
+  taskCounts {
+    inbox
+    active
+    completed
+    archived
+  }
+}
+    `;
+
+/**
+ * __useGetTaskCountsQuery__
+ *
+ * To run a query within a React component, call `useGetTaskCountsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetTaskCountsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetTaskCountsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetTaskCountsQuery(baseOptions?: Apollo.QueryHookOptions<GetTaskCountsQuery, GetTaskCountsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetTaskCountsQuery, GetTaskCountsQueryVariables>(GetTaskCountsDocument, options);
+      }
+export function useGetTaskCountsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetTaskCountsQuery, GetTaskCountsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetTaskCountsQuery, GetTaskCountsQueryVariables>(GetTaskCountsDocument, options);
+        }
+// @ts-ignore
+export function useGetTaskCountsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetTaskCountsQuery, GetTaskCountsQueryVariables>): Apollo.UseSuspenseQueryResult<GetTaskCountsQuery, GetTaskCountsQueryVariables>;
+export function useGetTaskCountsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetTaskCountsQuery, GetTaskCountsQueryVariables>): Apollo.UseSuspenseQueryResult<GetTaskCountsQuery | undefined, GetTaskCountsQueryVariables>;
+export function useGetTaskCountsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetTaskCountsQuery, GetTaskCountsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetTaskCountsQuery, GetTaskCountsQueryVariables>(GetTaskCountsDocument, options);
+        }
+export type GetTaskCountsQueryHookResult = ReturnType<typeof useGetTaskCountsQuery>;
+export type GetTaskCountsLazyQueryHookResult = ReturnType<typeof useGetTaskCountsLazyQuery>;
+export type GetTaskCountsSuspenseQueryHookResult = ReturnType<typeof useGetTaskCountsSuspenseQuery>;
+export type GetTaskCountsQueryResult = Apollo.QueryResult<GetTaskCountsQuery, GetTaskCountsQueryVariables>;
+export const GetTaskDocument = gql`
+    query GetTask($id: ID!) {
+  task(id: $id) {
+    ...TaskFields
+    subtasks {
+      ...TaskFields
+    }
+    blockers {
+      id
+      title
+      status
+    }
+    blocked {
+      id
+      title
+      status
+    }
+  }
+}
+    ${TaskFieldsFragmentDoc}`;
+
+/**
+ * __useGetTaskQuery__
+ *
+ * To run a query within a React component, call `useGetTaskQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetTaskQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetTaskQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetTaskQuery(baseOptions: Apollo.QueryHookOptions<GetTaskQuery, GetTaskQueryVariables> & ({ variables: GetTaskQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetTaskQuery, GetTaskQueryVariables>(GetTaskDocument, options);
+      }
+export function useGetTaskLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetTaskQuery, GetTaskQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetTaskQuery, GetTaskQueryVariables>(GetTaskDocument, options);
+        }
+// @ts-ignore
+export function useGetTaskSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetTaskQuery, GetTaskQueryVariables>): Apollo.UseSuspenseQueryResult<GetTaskQuery, GetTaskQueryVariables>;
+export function useGetTaskSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetTaskQuery, GetTaskQueryVariables>): Apollo.UseSuspenseQueryResult<GetTaskQuery | undefined, GetTaskQueryVariables>;
+export function useGetTaskSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetTaskQuery, GetTaskQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetTaskQuery, GetTaskQueryVariables>(GetTaskDocument, options);
+        }
+export type GetTaskQueryHookResult = ReturnType<typeof useGetTaskQuery>;
+export type GetTaskLazyQueryHookResult = ReturnType<typeof useGetTaskLazyQuery>;
+export type GetTaskSuspenseQueryHookResult = ReturnType<typeof useGetTaskSuspenseQuery>;
+export type GetTaskQueryResult = Apollo.QueryResult<GetTaskQuery, GetTaskQueryVariables>;
+export const GetUserPreferencesDocument = gql`
+    query GetUserPreferences {
+  userPreferences {
+    chronotype
+    chunkSize
+    gamificationEnabled
+    bufferPercentage
+    priorityWeights {
+      deadlineUrgency
+      userValue
+      dependencyImpact
+      projectWeight
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetUserPreferencesQuery__
+ *
+ * To run a query within a React component, call `useGetUserPreferencesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetUserPreferencesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetUserPreferencesQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetUserPreferencesQuery(baseOptions?: Apollo.QueryHookOptions<GetUserPreferencesQuery, GetUserPreferencesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetUserPreferencesQuery, GetUserPreferencesQueryVariables>(GetUserPreferencesDocument, options);
+      }
+export function useGetUserPreferencesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetUserPreferencesQuery, GetUserPreferencesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetUserPreferencesQuery, GetUserPreferencesQueryVariables>(GetUserPreferencesDocument, options);
+        }
+// @ts-ignore
+export function useGetUserPreferencesSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetUserPreferencesQuery, GetUserPreferencesQueryVariables>): Apollo.UseSuspenseQueryResult<GetUserPreferencesQuery, GetUserPreferencesQueryVariables>;
+export function useGetUserPreferencesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetUserPreferencesQuery, GetUserPreferencesQueryVariables>): Apollo.UseSuspenseQueryResult<GetUserPreferencesQuery | undefined, GetUserPreferencesQueryVariables>;
+export function useGetUserPreferencesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetUserPreferencesQuery, GetUserPreferencesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetUserPreferencesQuery, GetUserPreferencesQueryVariables>(GetUserPreferencesDocument, options);
+        }
+export type GetUserPreferencesQueryHookResult = ReturnType<typeof useGetUserPreferencesQuery>;
+export type GetUserPreferencesLazyQueryHookResult = ReturnType<typeof useGetUserPreferencesLazyQuery>;
+export type GetUserPreferencesSuspenseQueryHookResult = ReturnType<typeof useGetUserPreferencesSuspenseQuery>;
+export type GetUserPreferencesQueryResult = Apollo.QueryResult<GetUserPreferencesQuery, GetUserPreferencesQueryVariables>;
+export const GetUserStreakDocument = gql`
+    query GetUserStreak {
+  userStreak {
+    currentStreak
+    longestStreak
+    lastCompletedDate
+    freezeAvailable
+    streakOptIn
+  }
+}
+    `;
+
+/**
+ * __useGetUserStreakQuery__
+ *
+ * To run a query within a React component, call `useGetUserStreakQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetUserStreakQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetUserStreakQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetUserStreakQuery(baseOptions?: Apollo.QueryHookOptions<GetUserStreakQuery, GetUserStreakQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetUserStreakQuery, GetUserStreakQueryVariables>(GetUserStreakDocument, options);
+      }
+export function useGetUserStreakLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetUserStreakQuery, GetUserStreakQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetUserStreakQuery, GetUserStreakQueryVariables>(GetUserStreakDocument, options);
+        }
+// @ts-ignore
+export function useGetUserStreakSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetUserStreakQuery, GetUserStreakQueryVariables>): Apollo.UseSuspenseQueryResult<GetUserStreakQuery, GetUserStreakQueryVariables>;
+export function useGetUserStreakSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetUserStreakQuery, GetUserStreakQueryVariables>): Apollo.UseSuspenseQueryResult<GetUserStreakQuery | undefined, GetUserStreakQueryVariables>;
+export function useGetUserStreakSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetUserStreakQuery, GetUserStreakQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetUserStreakQuery, GetUserStreakQueryVariables>(GetUserStreakDocument, options);
+        }
+export type GetUserStreakQueryHookResult = ReturnType<typeof useGetUserStreakQuery>;
+export type GetUserStreakLazyQueryHookResult = ReturnType<typeof useGetUserStreakLazyQuery>;
+export type GetUserStreakSuspenseQueryHookResult = ReturnType<typeof useGetUserStreakSuspenseQuery>;
+export type GetUserStreakQueryResult = Apollo.QueryResult<GetUserStreakQuery, GetUserStreakQueryVariables>;
 export const UnlinkContactFromIssueDocument = gql`
     mutation UnlinkContactFromIssue($issueId: Int!, $contactId: Int!) {
   unlinkContactFromIssue(issueId: $issueId, contactId: $contactId) {
@@ -15335,6 +16645,40 @@ export function useUpdateStoryMutation(baseOptions?: Apollo.MutationHookOptions<
 export type UpdateStoryMutationHookResult = ReturnType<typeof useUpdateStoryMutation>;
 export type UpdateStoryMutationResult = Apollo.MutationResult<UpdateStoryMutation>;
 export type UpdateStoryMutationOptions = Apollo.BaseMutationOptions<UpdateStoryMutation, UpdateStoryMutationVariables>;
+export const UpdateTaskDocument = gql`
+    mutation UpdateTask($id: ID!, $input: UpdateTaskInput!) {
+  updateTask(id: $id, input: $input) {
+    ...TaskFields
+  }
+}
+    ${TaskFieldsFragmentDoc}`;
+export type UpdateTaskMutationFn = Apollo.MutationFunction<UpdateTaskMutation, UpdateTaskMutationVariables>;
+
+/**
+ * __useUpdateTaskMutation__
+ *
+ * To run a mutation, you first call `useUpdateTaskMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateTaskMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateTaskMutation, { data, loading, error }] = useUpdateTaskMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpdateTaskMutation(baseOptions?: Apollo.MutationHookOptions<UpdateTaskMutation, UpdateTaskMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateTaskMutation, UpdateTaskMutationVariables>(UpdateTaskDocument, options);
+      }
+export type UpdateTaskMutationHookResult = ReturnType<typeof useUpdateTaskMutation>;
+export type UpdateTaskMutationResult = Apollo.MutationResult<UpdateTaskMutation>;
+export type UpdateTaskMutationOptions = Apollo.BaseMutationOptions<UpdateTaskMutation, UpdateTaskMutationVariables>;
 export const UpdateTeacherFeedbackDocument = gql`
     mutation UpdateTeacherFeedback($id: Int!, $input: UpdateTeacherFeedbackInput!) {
   updateTeacherFeedback(id: $id, input: $input) {
@@ -15380,6 +16724,92 @@ export function useUpdateTeacherFeedbackMutation(baseOptions?: Apollo.MutationHo
 export type UpdateTeacherFeedbackMutationHookResult = ReturnType<typeof useUpdateTeacherFeedbackMutation>;
 export type UpdateTeacherFeedbackMutationResult = Apollo.MutationResult<UpdateTeacherFeedbackMutation>;
 export type UpdateTeacherFeedbackMutationOptions = Apollo.BaseMutationOptions<UpdateTeacherFeedbackMutation, UpdateTeacherFeedbackMutationVariables>;
+export const UpdateUserPreferencesDocument = gql`
+    mutation UpdateUserPreferences($input: UpdateUserPreferencesInput!) {
+  updateUserPreferences(input: $input) {
+    chronotype
+    chunkSize
+    gamificationEnabled
+    bufferPercentage
+    priorityWeights {
+      deadlineUrgency
+      userValue
+      dependencyImpact
+      projectWeight
+    }
+  }
+}
+    `;
+export type UpdateUserPreferencesMutationFn = Apollo.MutationFunction<UpdateUserPreferencesMutation, UpdateUserPreferencesMutationVariables>;
+
+/**
+ * __useUpdateUserPreferencesMutation__
+ *
+ * To run a mutation, you first call `useUpdateUserPreferencesMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateUserPreferencesMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateUserPreferencesMutation, { data, loading, error }] = useUpdateUserPreferencesMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpdateUserPreferencesMutation(baseOptions?: Apollo.MutationHookOptions<UpdateUserPreferencesMutation, UpdateUserPreferencesMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateUserPreferencesMutation, UpdateUserPreferencesMutationVariables>(UpdateUserPreferencesDocument, options);
+      }
+export type UpdateUserPreferencesMutationHookResult = ReturnType<typeof useUpdateUserPreferencesMutation>;
+export type UpdateUserPreferencesMutationResult = Apollo.MutationResult<UpdateUserPreferencesMutation>;
+export type UpdateUserPreferencesMutationOptions = Apollo.BaseMutationOptions<UpdateUserPreferencesMutation, UpdateUserPreferencesMutationVariables>;
+export const UpdateVehicleDocument = gql`
+    mutation UpdateVehicle($id: ID!, $input: UpdateVehicleInput!) {
+  updateVehicle(id: $id, input: $input) {
+    id
+    make
+    model
+    year
+    vin
+    licensePlate
+    nickname
+    odometerMiles
+    color
+    notes
+    updatedAt
+  }
+}
+    `;
+export type UpdateVehicleMutationFn = Apollo.MutationFunction<UpdateVehicleMutation, UpdateVehicleMutationVariables>;
+
+/**
+ * __useUpdateVehicleMutation__
+ *
+ * To run a mutation, you first call `useUpdateVehicleMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateVehicleMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateVehicleMutation, { data, loading, error }] = useUpdateVehicleMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpdateVehicleMutation(baseOptions?: Apollo.MutationHookOptions<UpdateVehicleMutation, UpdateVehicleMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateVehicleMutation, UpdateVehicleMutationVariables>(UpdateVehicleDocument, options);
+      }
+export type UpdateVehicleMutationHookResult = ReturnType<typeof useUpdateVehicleMutation>;
+export type UpdateVehicleMutationResult = Apollo.MutationResult<UpdateVehicleMutation>;
+export type UpdateVehicleMutationOptions = Apollo.BaseMutationOptions<UpdateVehicleMutation, UpdateVehicleMutationVariables>;
 export const GetUserSettingsDocument = gql`
     query GetUserSettings {
   userSettings {
@@ -15503,3 +16933,123 @@ export type VaultStatusQueryHookResult = ReturnType<typeof useVaultStatusQuery>;
 export type VaultStatusLazyQueryHookResult = ReturnType<typeof useVaultStatusLazyQuery>;
 export type VaultStatusSuspenseQueryHookResult = ReturnType<typeof useVaultStatusSuspenseQuery>;
 export type VaultStatusQueryResult = Apollo.QueryResult<VaultStatusQuery, VaultStatusQueryVariables>;
+export const VehicleDocument = gql`
+    query Vehicle($id: ID!) {
+  vehicle(id: $id) {
+    id
+    make
+    model
+    year
+    vin
+    licensePlate
+    nickname
+    odometerMiles
+    color
+    notes
+    createdAt
+    updatedAt
+    photos {
+      id
+      r2Key
+      caption
+      url
+      createdAt
+    }
+    serviceRecords {
+      id
+      type
+      serviceDate
+      odometerMiles
+      costCents
+      vendor
+      notes
+    }
+  }
+}
+    `;
+
+/**
+ * __useVehicleQuery__
+ *
+ * To run a query within a React component, call `useVehicleQuery` and pass it any options that fit your needs.
+ * When your component renders, `useVehicleQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useVehicleQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useVehicleQuery(baseOptions: Apollo.QueryHookOptions<VehicleQuery, VehicleQueryVariables> & ({ variables: VehicleQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<VehicleQuery, VehicleQueryVariables>(VehicleDocument, options);
+      }
+export function useVehicleLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<VehicleQuery, VehicleQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<VehicleQuery, VehicleQueryVariables>(VehicleDocument, options);
+        }
+// @ts-ignore
+export function useVehicleSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<VehicleQuery, VehicleQueryVariables>): Apollo.UseSuspenseQueryResult<VehicleQuery, VehicleQueryVariables>;
+export function useVehicleSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<VehicleQuery, VehicleQueryVariables>): Apollo.UseSuspenseQueryResult<VehicleQuery | undefined, VehicleQueryVariables>;
+export function useVehicleSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<VehicleQuery, VehicleQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<VehicleQuery, VehicleQueryVariables>(VehicleDocument, options);
+        }
+export type VehicleQueryHookResult = ReturnType<typeof useVehicleQuery>;
+export type VehicleLazyQueryHookResult = ReturnType<typeof useVehicleLazyQuery>;
+export type VehicleSuspenseQueryHookResult = ReturnType<typeof useVehicleSuspenseQuery>;
+export type VehicleQueryResult = Apollo.QueryResult<VehicleQuery, VehicleQueryVariables>;
+export const VehiclesDocument = gql`
+    query Vehicles {
+  vehicles {
+    id
+    make
+    model
+    year
+    nickname
+    color
+    licensePlate
+    odometerMiles
+    thumbnailUrl
+  }
+}
+    `;
+
+/**
+ * __useVehiclesQuery__
+ *
+ * To run a query within a React component, call `useVehiclesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useVehiclesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useVehiclesQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useVehiclesQuery(baseOptions?: Apollo.QueryHookOptions<VehiclesQuery, VehiclesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<VehiclesQuery, VehiclesQueryVariables>(VehiclesDocument, options);
+      }
+export function useVehiclesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<VehiclesQuery, VehiclesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<VehiclesQuery, VehiclesQueryVariables>(VehiclesDocument, options);
+        }
+// @ts-ignore
+export function useVehiclesSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<VehiclesQuery, VehiclesQueryVariables>): Apollo.UseSuspenseQueryResult<VehiclesQuery, VehiclesQueryVariables>;
+export function useVehiclesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<VehiclesQuery, VehiclesQueryVariables>): Apollo.UseSuspenseQueryResult<VehiclesQuery | undefined, VehiclesQueryVariables>;
+export function useVehiclesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<VehiclesQuery, VehiclesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<VehiclesQuery, VehiclesQueryVariables>(VehiclesDocument, options);
+        }
+export type VehiclesQueryHookResult = ReturnType<typeof useVehiclesQuery>;
+export type VehiclesLazyQueryHookResult = ReturnType<typeof useVehiclesLazyQuery>;
+export type VehiclesSuspenseQueryHookResult = ReturnType<typeof useVehiclesSuspenseQuery>;
+export type VehiclesQueryResult = Apollo.QueryResult<VehiclesQuery, VehiclesQueryVariables>;

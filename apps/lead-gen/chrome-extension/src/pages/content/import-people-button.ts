@@ -242,15 +242,27 @@ chrome.runtime.onMessage.addListener((message) => {
     importPeopleBtn.textContent = message.message;
   }
   if (message.action === "importPeopleDone") {
-    importPeopleBtn.textContent = `Done! ${message.imported} imported`;
+    const href = message.companyKey
+      ? `https://agenticleadgen.xyz/companies/${message.companyKey}`
+      : "https://agenticleadgen.xyz/companies";
     importPeopleBtn.style.backgroundColor = "#16a34a";
-    setTimeout(() => {
-      if (importPeopleBtn) {
-        importPeopleBtn.textContent = "Import People";
-        importPeopleBtn.style.backgroundColor = "#0a66c2";
-        importPeopleBtn.disabled = false;
-      }
-    }, 3000);
+    importPeopleBtn.style.padding = "0";
+    importPeopleBtn.disabled = false;
+    importPeopleBtn.innerHTML = "";
+    const link = document.createElement("a");
+    link.href = href;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.textContent = `View: ${message.imported} imported`;
+    link.style.cssText = `
+      color: white;
+      text-decoration: none;
+      display: block;
+      padding: 12px 24px;
+      font-size: 15px;
+      font-weight: 600;
+    `;
+    importPeopleBtn.appendChild(link);
   }
   if (message.action === "importPeopleError") {
     importPeopleBtn.textContent = message.error?.slice(0, 30) || "Error";

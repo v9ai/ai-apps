@@ -428,6 +428,7 @@ async function handleJobsD1List(req: Request, env: Env): Promise<Response> {
        FROM opportunities o
        LEFT JOIN companies c ON c.id = o.company_id
        WHERE COALESCE(o.archived, 0) = 0
+         AND o.status = 'open'
        ORDER BY o.created_at DESC
        LIMIT ?`,
   )
@@ -478,6 +479,62 @@ async function handleJobsD1Archive(req: Request, env: Env): Promise<Response> {
   if (changes === 0) return json(req, { error: "Not found" }, 404);
 
   return json(req, { archived: true });
+}
+
+// ── D1 status update: change a D1 opportunity's status (e.g. open → applied) ──
+//
+// POST /api/jobs/d1/opportunities/status
+//   headers: Authorization: Bearer <JOBS_D1_TOKEN>
+//   body:    { id: string, status: "open"|"applied"|"interviewing"|"offer"|"rejected"|"closed" }
+//   reply:   { status: string }
+
+const ALLOWED_D1_STATUSES = new Set([
+  "open",
+  "applied",
+  "interviewing",
+  "offer",
+  "rejected",
+  "closed",
+]);
+
+async function handleJobsD1Status(req: Request, env: Env): Promise<Response> {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: corsHeaders(req) });
+  }
+  if (req.method !== "POST") {
+    return json(req, { error: "Method not allowed" }, 405);
+  }
+
+  const auth = req.headers.get("authorization") ?? "";
+  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+  if (!env.JOBS_D1_TOKEN || !token || !constantTimeEq(token, env.JOBS_D1_TOKEN)) {
+    return json(req, { error: "Unauthorized" }, 401);
+  }
+
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return json(req, { error: "Invalid JSON" }, 400);
+  }
+
+  const id = asString((body as { id?: unknown })?.id);
+  const status = asString((body as { status?: unknown })?.status);
+  if (!id) return json(req, { error: "Missing id" }, 400);
+  if (!status || !ALLOWED_D1_STATUSES.has(status)) {
+    return json(req, { error: "Invalid status" }, 400);
+  }
+
+  const res = await env.DB.prepare(
+    `UPDATE opportunities SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+  )
+    .bind(status, id)
+    .run();
+
+  const changes = (res as { meta?: { changes?: number } }).meta?.changes ?? 0;
+  if (changes === 0) return json(req, { error: "Not found" }, 404);
+
+  return json(req, { status });
 }
 
 // ── D1 posts upsert: single or batch insert/update by URL ──
@@ -766,6 +823,336 @@ async function handleCompanyPostsD1(
   return json(req, { company_key: slug, count: posts.length, posts });
 }
 
+// ── D1 contact_visits (audit + dedup for Browse Recruiters) ──
+//
+// POST /api/contacts/d1/visits         — upsert one visit row
+// POST /api/contacts/d1/visits/recent  — bulk-check which URLs were visited within N days
+//   Both require Authorization: Bearer <JOBS_D1_TOKEN>.
+
+async function handleContactVisitsRecord(
+  req: Request,
+  env: Env,
+): Promise<Response> {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: corsHeaders(req) });
+  }
+  if (req.method !== "POST") {
+    return json(req, { error: "Method not allowed" }, 405);
+  }
+
+  const auth = req.headers.get("authorization") ?? "";
+  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+  if (!env.JOBS_D1_TOKEN || !token || !constantTimeEq(token, env.JOBS_D1_TOKEN)) {
+    return json(req, { error: "Unauthorized" }, 401);
+  }
+
+  let body: {
+    contact_id?: number | null;
+    linkedin_url?: string;
+    ok?: boolean;
+    reason?: string;
+  };
+  try {
+    body = (await req.json()) as typeof body;
+  } catch {
+    return json(req, { error: "Invalid JSON" }, 400);
+  }
+
+  const linkedinUrl = (body.linkedin_url ?? "").trim();
+  if (!linkedinUrl) {
+    return json(req, { error: "linkedin_url required" }, 400);
+  }
+  // contact_id may be null when the visit failed before a contact was created.
+  // Coerce to 0 so the NOT NULL column is satisfied; a downstream join can
+  // treat 0 as "no contact yet".
+  const contactId = Number.isFinite(body.contact_id) ? Number(body.contact_id) : 0;
+  const okValue = body.ok === false ? 0 : 1;
+  const reason = (body.reason ?? "").slice(0, 200) || null;
+
+  try {
+    const row = await env.DB.prepare(
+      `INSERT INTO contact_visits (contact_id, linkedin_url, ok, reason)
+       VALUES (?, ?, ?, ?)
+       ON CONFLICT(linkedin_url) DO UPDATE SET
+         visited_at = CURRENT_TIMESTAMP,
+         contact_id = excluded.contact_id,
+         ok         = excluded.ok,
+         reason     = excluded.reason
+       RETURNING id, visited_at`,
+    )
+      .bind(contactId, linkedinUrl, okValue, reason)
+      .first<{ id: number; visited_at: string }>();
+
+    return json(req, { id: row?.id ?? null, visited_at: row?.visited_at ?? null });
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    return json(req, { error: "visit upsert failed", message }, 500);
+  }
+}
+
+// ── D1 recruiter_fit_scores (output of score_recruiter_fit langgraph) ──
+//
+// POST /api/contacts/d1/recruiter-fit/upsert
+//   body:    { contact_id?, linkedin_url, fit_score, tier, specialty,
+//              remote_global?, reasons? }
+//   reply:   { id, scored_at }
+//   Upserts on linkedin_url. Requires Authorization: Bearer <JOBS_D1_TOKEN>.
+
+async function handleRecruiterFitUpsert(
+  req: Request,
+  env: Env,
+): Promise<Response> {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: corsHeaders(req) });
+  }
+  if (req.method !== "POST") {
+    return json(req, { error: "Method not allowed" }, 405);
+  }
+
+  const auth = req.headers.get("authorization") ?? "";
+  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+  if (!env.JOBS_D1_TOKEN || !token || !constantTimeEq(token, env.JOBS_D1_TOKEN)) {
+    return json(req, { error: "Unauthorized" }, 401);
+  }
+
+  let body: {
+    contact_id?: number | null;
+    linkedin_url?: string;
+    fit_score?: number;
+    tier?: string;
+    specialty?: string;
+    remote_global?: boolean | null;
+    reasons?: unknown;
+  };
+  try {
+    body = (await req.json()) as typeof body;
+  } catch {
+    return json(req, { error: "Invalid JSON" }, 400);
+  }
+
+  const linkedinUrl = (body.linkedin_url ?? "").trim();
+  if (!linkedinUrl) {
+    return json(req, { error: "linkedin_url required" }, 400);
+  }
+  const fitScore = Number.isFinite(body.fit_score) ? Number(body.fit_score) : null;
+  if (fitScore === null) {
+    return json(req, { error: "fit_score required" }, 400);
+  }
+  const tier = (body.tier ?? "").trim();
+  if (!["ideal", "strong", "weak", "off_target"].includes(tier)) {
+    return json(req, { error: "tier must be ideal|strong|weak|off_target" }, 400);
+  }
+  const specialty = (body.specialty ?? "").trim();
+  if (!["ai_ml", "engineering_general", "non_technical", "unknown"].includes(specialty)) {
+    return json(req, { error: "specialty invalid" }, 400);
+  }
+  const contactId = Number.isFinite(body.contact_id) ? Number(body.contact_id) : null;
+  const remoteGlobal =
+    body.remote_global === true ? 1 : body.remote_global === false ? 0 : null;
+  const reasons = Array.isArray(body.reasons) ? body.reasons.slice(0, 3) : [];
+  const reasonsJson = JSON.stringify(reasons);
+
+  try {
+    const row = await env.DB.prepare(
+      `INSERT INTO recruiter_fit_scores
+         (contact_id, linkedin_url, fit_score, tier, specialty, remote_global, reasons)
+       VALUES (?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(linkedin_url) DO UPDATE SET
+         contact_id    = excluded.contact_id,
+         fit_score     = excluded.fit_score,
+         tier          = excluded.tier,
+         specialty     = excluded.specialty,
+         remote_global = excluded.remote_global,
+         reasons       = excluded.reasons,
+         scored_at     = CURRENT_TIMESTAMP
+       RETURNING id, scored_at`,
+    )
+      .bind(contactId, linkedinUrl, fitScore, tier, specialty, remoteGlobal, reasonsJson)
+      .first<{ id: number; scored_at: string }>();
+
+    return json(req, { id: row?.id ?? null, scored_at: row?.scored_at ?? null });
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    return json(req, { error: "fit-score upsert failed", message }, 500);
+  }
+}
+
+// ── D1 linkedin_browsemap (capture "More profiles for you" sidebar) ──
+//
+// POST /api/linkedin/d1/browsemap/upsert
+//   body:    { source_profile_url, recommendations: [{ profile_url, slug, name,
+//              headline?, degree?, is_verified?, is_premium?, avatar_url?, position? }] }
+//   reply:   { ok: true, count }
+//   Bumps last_seen_at on conflict; first_seen_at survives.
+//   Requires Authorization: Bearer <JOBS_D1_TOKEN>.
+
+interface IncomingBrowsemapItem {
+  profile_url?: unknown;
+  slug?: unknown;
+  name?: unknown;
+  headline?: unknown;
+  degree?: unknown;
+  is_verified?: unknown;
+  is_premium?: unknown;
+  avatar_url?: unknown;
+  position?: unknown;
+}
+
+async function handleBrowsemapUpsert(
+  req: Request,
+  env: Env,
+): Promise<Response> {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: corsHeaders(req) });
+  }
+  if (req.method !== "POST") {
+    return json(req, { error: "Method not allowed" }, 405);
+  }
+
+  const auth = req.headers.get("authorization") ?? "";
+  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+  if (!env.JOBS_D1_TOKEN || !token || !constantTimeEq(token, env.JOBS_D1_TOKEN)) {
+    return json(req, { error: "Unauthorized" }, 401);
+  }
+
+  let body: {
+    source_profile_url?: string;
+    recommendations?: IncomingBrowsemapItem[];
+  };
+  try {
+    body = (await req.json()) as typeof body;
+  } catch {
+    return json(req, { error: "Invalid JSON" }, 400);
+  }
+
+  const sourceUrl = (body.source_profile_url ?? "").trim();
+  if (!sourceUrl) {
+    return json(req, { error: "source_profile_url required" }, 400);
+  }
+  const items = Array.isArray(body.recommendations) ? body.recommendations : [];
+  if (items.length === 0) {
+    return json(req, { ok: true, count: 0 });
+  }
+
+  const stmts = [];
+  const seen = new Set<string>();
+  for (const raw of items) {
+    const profileUrl = asString(raw?.profile_url);
+    const slug = asString(raw?.slug);
+    const name = asString(raw?.name);
+    if (!profileUrl || !slug || !name) continue;
+    if (seen.has(profileUrl)) continue;
+    seen.add(profileUrl);
+
+    const headline = asString(raw?.headline);
+    const degree = asString(raw?.degree);
+    const isVerified = raw?.is_verified ? 1 : 0;
+    const isPremium = raw?.is_premium ? 1 : 0;
+    const avatarUrl = asString(raw?.avatar_url);
+    const position = Number.isFinite(raw?.position) ? Number(raw?.position) : null;
+
+    stmts.push(
+      env.DB.prepare(
+        `INSERT INTO linkedin_browsemap (
+           source_profile_url, recommended_profile_url, recommended_slug,
+           recommended_name, recommended_headline, connection_degree,
+           is_verified, is_premium, avatar_url, position, last_seen_at
+         ) VALUES (?,?,?,?,?,?,?,?,?,?, CURRENT_TIMESTAMP)
+         ON CONFLICT(source_profile_url, recommended_profile_url) DO UPDATE SET
+           recommended_name     = excluded.recommended_name,
+           recommended_headline = excluded.recommended_headline,
+           connection_degree    = excluded.connection_degree,
+           is_verified          = excluded.is_verified,
+           is_premium           = excluded.is_premium,
+           avatar_url           = excluded.avatar_url,
+           position             = excluded.position,
+           last_seen_at         = CURRENT_TIMESTAMP`,
+      ).bind(
+        sourceUrl,
+        profileUrl,
+        slug,
+        name,
+        headline,
+        degree,
+        isVerified,
+        isPremium,
+        avatarUrl,
+        position,
+      ),
+    );
+  }
+
+  if (stmts.length === 0) return json(req, { ok: true, count: 0 });
+
+  try {
+    await env.DB.batch(stmts);
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    return json(req, { error: "browsemap upsert failed", message }, 500);
+  }
+
+  return json(req, { ok: true, count: stmts.length });
+}
+
+async function handleContactVisitsRecent(
+  req: Request,
+  env: Env,
+): Promise<Response> {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: corsHeaders(req) });
+  }
+  if (req.method !== "POST") {
+    return json(req, { error: "Method not allowed" }, 405);
+  }
+
+  const auth = req.headers.get("authorization") ?? "";
+  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+  if (!env.JOBS_D1_TOKEN || !token || !constantTimeEq(token, env.JOBS_D1_TOKEN)) {
+    return json(req, { error: "Unauthorized" }, 401);
+  }
+
+  let body: { urls?: string[]; since_days?: number };
+  try {
+    body = (await req.json()) as typeof body;
+  } catch {
+    return json(req, { error: "Invalid JSON" }, 400);
+  }
+
+  const urls = Array.isArray(body.urls)
+    ? body.urls.filter((u) => typeof u === "string" && u.length > 0)
+    : [];
+  if (urls.length === 0) return json(req, { visited: {} });
+
+  const sinceDays = Number.isFinite(body.since_days) ? Number(body.since_days) : 7;
+  const sinceClause = `-${Math.max(0, Math.floor(sinceDays))} days`;
+
+  // Chunk to keep the IN-list bind count bounded (D1 caps at ~100 binds per stmt).
+  const CHUNK = 90;
+  const visited: Record<string, string> = {};
+  try {
+    for (let i = 0; i < urls.length; i += CHUNK) {
+      const slice = urls.slice(i, i + CHUNK);
+      const placeholders = slice.map(() => "?").join(",");
+      const sql =
+        `SELECT linkedin_url, visited_at FROM contact_visits ` +
+        `WHERE visited_at >= datetime('now', ?) ` +
+        `AND linkedin_url IN (${placeholders})`;
+      const res = await env.DB.prepare(sql).bind(sinceClause, ...slice).all();
+      for (const row of (res.results ?? []) as Array<{
+        linkedin_url: string;
+        visited_at: string;
+      }>) {
+        visited[row.linkedin_url] = row.visited_at;
+      }
+    }
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    return json(req, { error: "visit lookup failed", message }, 500);
+  }
+
+  return json(req, { visited });
+}
+
 export default {
   async fetch(req: Request, env: Env): Promise<Response> {
     const url = new URL(req.url);
@@ -778,6 +1165,9 @@ export default {
     }
     if (url.pathname === "/api/jobs/d1/opportunities/archive") {
       return handleJobsD1Archive(req, env);
+    }
+    if (url.pathname === "/api/jobs/d1/opportunities/status") {
+      return handleJobsD1Status(req, env);
     }
 
     // GET /api/companies/:slug/posts/d1
@@ -800,6 +1190,23 @@ export default {
     {
       const m = /^\/api\/posts\/d1\/(\d+)\/?$/.exec(url.pathname);
       if (m) return handlePostsD1GetOrDelete(req, env, parseInt(m[1], 10));
+    }
+
+    // POST /api/contacts/d1/visits — record a profile visit (upsert)
+    if (url.pathname === "/api/contacts/d1/visits") {
+      return handleContactVisitsRecord(req, env);
+    }
+    // POST /api/contacts/d1/visits/recent — bulk-check recent visits
+    if (url.pathname === "/api/contacts/d1/visits/recent") {
+      return handleContactVisitsRecent(req, env);
+    }
+    // POST /api/linkedin/d1/browsemap/upsert — capture sidebar recommendations
+    if (url.pathname === "/api/linkedin/d1/browsemap/upsert") {
+      return handleBrowsemapUpsert(req, env);
+    }
+    // POST /api/contacts/d1/recruiter-fit/upsert — persist score_recruiter_fit graph output
+    if (url.pathname === "/api/contacts/d1/recruiter-fit/upsert") {
+      return handleRecruiterFitUpsert(req, env);
     }
 
     const { tier, key, bodyText } = await classify(req, url);

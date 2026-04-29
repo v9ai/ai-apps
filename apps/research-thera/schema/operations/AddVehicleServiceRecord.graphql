@@ -1,0 +1,12 @@
+mutation AddVehicleServiceRecord($input: AddVehicleServiceRecordInput!) {
+  addVehicleServiceRecord(input: $input) {
+    id
+    vehicleId
+    type
+    serviceDate
+    odometerMiles
+    costCents
+    vendor
+    notes
+  }
+}

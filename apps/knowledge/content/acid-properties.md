@@ -70,7 +70,7 @@ Throwing inside the transaction callback automatically rolls back all changes â€
 
 > A transaction brings the database from one valid state to another valid state.
 
-Consistency means that every transaction respects the database's rules: constraints (NOT NULL, UNIQUE, CHECK, FOREIGN KEY), triggers, and any application-level invariants. If a transaction would violate a constraint, it is rejected entirely.
+Consistency means that every transaction respects the database's rules: constraints (NOT NULL, UNIQUE, CHECK, [FOREIGN KEY](/foreign-keys)), triggers, and any application-level invariants. If a transaction would violate a constraint, it is rejected entirely.
 
 ### Enforced by the database
 

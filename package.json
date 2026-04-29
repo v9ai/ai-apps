@@ -10,8 +10,6 @@
     "dev:b": "turbo run dev --filter=vadim.blog",
     "dev:re": "turbo run dev --filter=real-estate & cd apps/real-estate/analyzer && uv run uvicorn server:app --port 8005 --reload",
     "dev:k": "turbo run dev --filter=knowledge",
-    "dev:t": "turbo run dev --filter=todo",
-    "dev:c": "turbo run dev --filter=my-car",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
     "lint": "turbo run lint",
@@ -23,14 +21,12 @@
     "deploy:r": "VERCEL_PROJECT_ID=prj_BXXetgE6jgiq9lpWsoa9plAB3Baz VERCEL_ORG_ID=team_PWwGsn3xORVtRDLLoES2BYVV vercel deploy --prod --archive=tgz",
     "deploy:re": "vercel deploy --prod --cwd apps/real-estate",
     "deploy:k": "VERCEL_PROJECT_ID=prj_HmZ37BPDql0kOnFT9iiPsnQBOryr VERCEL_ORG_ID=team_PWwGsn3xORVtRDLLoES2BYVV vercel deploy --prod",
-    "deploy:t": "vercel deploy --prod --cwd apps/todo",
     "deploy:p": "vercel deploy --prod --cwd apps/hoa",
     "deploy:br": "VERCEL_PROJECT_ID=prj_KzjAVUDbxWndDLQrvPsmAuoaHqsw VERCEL_ORG_ID=team_PWwGsn3xORVtRDLLoES2BYVV vercel deploy --prod",
     "dev:p": "turbo run dev --filter=humans-of-ai",
     "dev:br": "turbo run dev --filter=bricks",
     "dev:tr": "turbo run dev --filter=travel",
     "deploy:tr": "VERCEL_PROJECT_ID=prj_kVmaliWhzFSMh15zVdV6qfLlZYsA VERCEL_ORG_ID=team_PWwGsn3xORVtRDLLoES2BYVV vercel deploy --prod --cwd apps/travel",
-    "deploy:c": "vercel deploy --prod --cwd apps/my-car",
     "deploy:all": "pnpm deploy:n && pnpm deploy:l && pnpm deploy:h && pnpm deploy:r && pnpm deploy:re && pnpm deploy:blog && pnpm deploy:p && pnpm deploy:tr"
   },
   "devDependencies": {

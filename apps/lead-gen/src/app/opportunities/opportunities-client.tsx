@@ -4,7 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import { Container, Heading, Text, Table, Badge, Flex, Button, IconButton } from "@radix-ui/themes";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ExternalLinkIcon, EyeNoneIcon, Cross2Icon } from "@radix-ui/react-icons";
+import { ExternalLinkIcon, EyeNoneIcon, Cross2Icon, CheckIcon } from "@radix-ui/react-icons";
 import { EvalStatsPanel } from "./eval-stats-panel";
 import {
   blockOpportunityCompany,
@@ -12,6 +12,7 @@ import {
   blockLocation,
   hideOpportunity,
   hideD1Opportunity,
+  markD1Applied,
 } from "./actions";
 import type { OpportunitiesPageQuery } from "@/__generated__/hooks";
 
@@ -120,6 +121,23 @@ export function OpportunitiesClient({
       const res = await blockLocation(label);
       if ("error" in res) {
         console.error("[block location]", res.error);
+        return;
+      }
+      router.refresh();
+    });
+  }
+
+  function handleApplyD1(id: string) {
+    setHidden((prev) => new Set(prev).add(id));
+    startTransition(async () => {
+      const res = await markD1Applied(id);
+      if ("error" in res) {
+        setHidden((prev) => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+        console.error("[apply d1]", res.error);
         return;
       }
       router.refresh();
@@ -326,6 +344,15 @@ export function OpportunitiesClient({
                   </Table.Cell>
                   <Table.Cell>
                     <Flex gap="3" align="center">
+                      <Button
+                        size="2"
+                        variant="ghost"
+                        color="green"
+                        onClick={() => handleApplyD1(opp.id)}
+                        title="Mark as applied"
+                      >
+                        <CheckIcon width={14} height={14} /> Apply
+                      </Button>
                       <Button
                         size="2"
                         variant="ghost"

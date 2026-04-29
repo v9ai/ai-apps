@@ -19,7 +19,6 @@ Use this mapping to find the correct deploy script:
 | hoa | `cd /Users/vadimnicolai/Public/ai-apps && pnpm deploy:p` |
 | bricks | `cd /Users/vadimnicolai/Public/ai-apps && pnpm deploy:br` |
 | travel | `cd /Users/vadimnicolai/Public/ai-apps && pnpm deploy:tr` |
-| my-car | `cd /Users/vadimnicolai/Public/ai-apps && pnpm deploy:c` |
 
 If `$ARGUMENTS` is provided (e.g., `/deploy knowledge`), use that as the app name instead of CWD.
 

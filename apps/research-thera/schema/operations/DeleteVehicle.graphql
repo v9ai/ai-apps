@@ -1,0 +1,6 @@
+mutation DeleteVehicle($id: ID!) {
+  deleteVehicle(id: $id) {
+    id
+    deleted
+  }
+}

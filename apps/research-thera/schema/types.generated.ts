@@ -105,6 +105,36 @@ export type AddSymptomInput = {
   severity?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type AddVehicleInput = {
+  color?: InputMaybe<Scalars['String']['input']>;
+  licensePlate?: InputMaybe<Scalars['String']['input']>;
+  make: Scalars['String']['input'];
+  model: Scalars['String']['input'];
+  nickname?: InputMaybe<Scalars['String']['input']>;
+  notes?: InputMaybe<Scalars['String']['input']>;
+  odometerMiles?: InputMaybe<Scalars['Int']['input']>;
+  vin?: InputMaybe<Scalars['String']['input']>;
+  year: Scalars['Int']['input'];
+};
+
+export type AddVehiclePhotoInput = {
+  caption?: InputMaybe<Scalars['String']['input']>;
+  contentType: Scalars['String']['input'];
+  r2Key: Scalars['String']['input'];
+  sizeBytes: Scalars['Int']['input'];
+  vehicleId: Scalars['ID']['input'];
+};
+
+export type AddVehicleServiceRecordInput = {
+  costCents?: InputMaybe<Scalars['Int']['input']>;
+  notes?: InputMaybe<Scalars['String']['input']>;
+  odometerMiles?: InputMaybe<Scalars['Int']['input']>;
+  serviceDate: Scalars['String']['input'];
+  type: Scalars['String']['input'];
+  vehicleId: Scalars['ID']['input'];
+  vendor?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type Affirmation = {
   __typename?: 'Affirmation';
   category: AffirmationCategory;
@@ -702,6 +732,17 @@ export type CreateSubGoalInput = {
   title: Scalars['String']['input'];
 };
 
+export type CreateTaskInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  dueDate?: InputMaybe<Scalars['String']['input']>;
+  energyPreference?: InputMaybe<EnergyLevel>;
+  estimatedMinutes?: InputMaybe<Scalars['Int']['input']>;
+  parentTaskId?: InputMaybe<Scalars['ID']['input']>;
+  priorityManual?: InputMaybe<Scalars['Int']['input']>;
+  status?: InputMaybe<TaskStatus>;
+  title: Scalars['String']['input'];
+};
+
 export type CreateTeacherFeedbackInput = {
   content: Scalars['String']['input'];
   familyMemberId: Scalars['Int']['input'];
@@ -980,10 +1021,33 @@ export type DeleteSymptomResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type DeleteTaskResult = {
+  __typename?: 'DeleteTaskResult';
+  success: Scalars['Boolean']['output'];
+};
+
 export type DeleteTeacherFeedbackResult = {
   __typename?: 'DeleteTeacherFeedbackResult';
   message?: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
+};
+
+export type DeleteVehiclePhotoResult = {
+  __typename?: 'DeleteVehiclePhotoResult';
+  deleted: Scalars['Boolean']['output'];
+  id: Scalars['ID']['output'];
+};
+
+export type DeleteVehicleResult = {
+  __typename?: 'DeleteVehicleResult';
+  deleted: Scalars['Boolean']['output'];
+  id: Scalars['ID']['output'];
+};
+
+export type DeleteVehicleServiceRecordResult = {
+  __typename?: 'DeleteVehicleServiceRecordResult';
+  deleted: Scalars['Boolean']['output'];
+  id: Scalars['ID']['output'];
 };
 
 export type DevelopmentalContext = {
@@ -1044,6 +1108,11 @@ export type EmotionalLandscape = {
   primaryEmotions: Array<Scalars['String']['output']>;
   underlyingEmotions: Array<Scalars['String']['output']>;
 };
+
+export type EnergyLevel =
+  | 'high'
+  | 'low'
+  | 'medium';
 
 export type EvidenceItem = {
   __typename?: 'EvidenceItem';
@@ -1836,6 +1905,10 @@ export type Mutation = {
   addProtocol: Protocol;
   addSupplement: ProtocolSupplement;
   addSymptom: Symptom;
+  addTaskDependency: Scalars['Boolean']['output'];
+  addVehicle: Vehicle;
+  addVehiclePhoto: VehiclePhoto;
+  addVehicleServiceRecord: VehicleServiceRecord;
   buildClaimCards: BuildClaimCardsResult;
   checkNoteClaims: CheckNoteClaimsResult;
   convertIssueToGoal: Goal;
@@ -1855,6 +1928,7 @@ export type Mutation = {
   createRelationship: Relationship;
   createStory: Story;
   createSubGoal: Goal;
+  createTask: Task;
   createTeacherFeedback: TeacherFeedback;
   deleteAffirmation: DeleteAffirmationResult;
   deleteAllergy: DeleteAllergyResult;
@@ -1891,8 +1965,12 @@ export type Mutation = {
   deleteStory: DeleteStoryResult;
   deleteSupplement: DeleteSupplementResult;
   deleteSymptom: DeleteSymptomResult;
+  deleteTask: DeleteTaskResult;
   deleteTeacherFeedback: DeleteTeacherFeedbackResult;
   deleteTherapeuticQuestions: DeleteQuestionsResult;
+  deleteVehicle: DeleteVehicleResult;
+  deleteVehiclePhoto: DeleteVehiclePhotoResult;
+  deleteVehicleServiceRecord: DeleteVehicleServiceRecordResult;
   extractContactFeedbackIssues: ContactFeedback;
   generateAffirmationsForFamilyMember: GenerateAffirmationsResult;
   generateAudio: GenerateAudioResult;
@@ -1920,9 +1998,13 @@ export type Mutation = {
   logGameCompletion: GameCompletion;
   logHabit: HabitLog;
   markTeacherFeedbackExtracted: TeacherFeedback;
+  parseTaskFromText?: Maybe<ParsedTask>;
   recordCognitiveBaseline: CognitiveBaseline;
   recordCognitiveCheckIn: CognitiveCheckIn;
   refreshClaimCard: ClaimCard;
+  removeTaskDependency: Scalars['Boolean']['output'];
+  reorderTasks: Scalars['Boolean']['output'];
+  requestVehiclePhotoUpload: VehiclePhotoUploadTicket;
   sendConversationMessage: Conversation;
   sendHealthcareChatMessage: HealthcareChatResponse;
   setMedicationActive: Medication;
@@ -1931,6 +2013,7 @@ export type Mutation = {
   setTagLanguage: Scalars['Boolean']['output'];
   shareFamilyMember: FamilyMemberShare;
   shareNote: NoteShare;
+  suggestTaskCategorization?: Maybe<TaskCategorization>;
   unlinkContactFromIssue: UnlinkContactResult;
   unlinkGoalFamilyMember: Goal;
   unlinkIssues: UnlinkIssuesResult;
@@ -1951,8 +2034,11 @@ export type Mutation = {
   updateProtocolStatus: Protocol;
   updateRelationship: Relationship;
   updateStory: Story;
+  updateTask: Task;
   updateTeacherFeedback: TeacherFeedback;
+  updateUserPreferences: UserPreferences;
   updateUserSettings: UserSettings;
+  updateVehicle: Vehicle;
 };
 
 
@@ -1999,6 +2085,27 @@ export type MutationaddSupplementArgs = {
 
 export type MutationaddSymptomArgs = {
   input: AddSymptomInput;
+};
+
+
+export type MutationaddTaskDependencyArgs = {
+  blockedTaskId: Scalars['ID']['input'];
+  blockingTaskId: Scalars['ID']['input'];
+};
+
+
+export type MutationaddVehicleArgs = {
+  input: AddVehicleInput;
+};
+
+
+export type MutationaddVehiclePhotoArgs = {
+  input: AddVehiclePhotoInput;
+};
+
+
+export type MutationaddVehicleServiceRecordArgs = {
+  input: AddVehicleServiceRecordInput;
 };
 
 
@@ -2100,6 +2207,11 @@ export type MutationcreateStoryArgs = {
 export type MutationcreateSubGoalArgs = {
   goalId: Scalars['Int']['input'];
   input: CreateSubGoalInput;
+};
+
+
+export type MutationcreateTaskArgs = {
+  input: CreateTaskInput;
 };
 
 
@@ -2284,6 +2396,11 @@ export type MutationdeleteSymptomArgs = {
 };
 
 
+export type MutationdeleteTaskArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
 export type MutationdeleteTeacherFeedbackArgs = {
   id: Scalars['Int']['input'];
 };
@@ -2293,6 +2410,21 @@ export type MutationdeleteTherapeuticQuestionsArgs = {
   goalId?: InputMaybe<Scalars['Int']['input']>;
   issueId?: InputMaybe<Scalars['Int']['input']>;
   journalEntryId?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type MutationdeleteVehicleArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationdeleteVehiclePhotoArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationdeleteVehicleServiceRecordArgs = {
+  id: Scalars['ID']['input'];
 };
 
 
@@ -2459,6 +2591,11 @@ export type MutationmarkTeacherFeedbackExtractedArgs = {
 };
 
 
+export type MutationparseTaskFromTextArgs = {
+  input: Scalars['String']['input'];
+};
+
+
 export type MutationrecordCognitiveBaselineArgs = {
   input: CognitiveScoresInput;
   protocolId: Scalars['ID']['input'];
@@ -2473,6 +2610,22 @@ export type MutationrecordCognitiveCheckInArgs = {
 
 export type MutationrefreshClaimCardArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type MutationremoveTaskDependencyArgs = {
+  blockedTaskId: Scalars['ID']['input'];
+  blockingTaskId: Scalars['ID']['input'];
+};
+
+
+export type MutationreorderTasksArgs = {
+  updates: Array<TaskPositionUpdate>;
+};
+
+
+export type MutationrequestVehiclePhotoUploadArgs = {
+  input: RequestVehiclePhotoUploadInput;
 };
 
 
@@ -2521,6 +2674,12 @@ export type MutationshareNoteArgs = {
   email: Scalars['String']['input'];
   noteId: Scalars['Int']['input'];
   role?: InputMaybe<NoteShareRole>;
+};
+
+
+export type MutationsuggestTaskCategorizationArgs = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  title: Scalars['String']['input'];
 };
 
 
@@ -2642,15 +2801,32 @@ export type MutationupdateStoryArgs = {
 };
 
 
+export type MutationupdateTaskArgs = {
+  id: Scalars['ID']['input'];
+  input: UpdateTaskInput;
+};
+
+
 export type MutationupdateTeacherFeedbackArgs = {
   id: Scalars['Int']['input'];
   input: UpdateTeacherFeedbackInput;
 };
 
 
+export type MutationupdateUserPreferencesArgs = {
+  input: UpdateUserPreferencesInput;
+};
+
+
 export type MutationupdateUserSettingsArgs = {
   storyLanguage: Scalars['String']['input'];
   storyMinutes?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type MutationupdateVehicleArgs = {
+  id: Scalars['ID']['input'];
+  input: UpdateVehicleInput;
 };
 
 export type Note = {
@@ -2759,6 +2935,14 @@ export type ParentAdviceItem = {
   title: Scalars['String']['output'];
 };
 
+export type ParsedTask = {
+  __typename?: 'ParsedTask';
+  dueDate?: Maybe<Scalars['String']['output']>;
+  energyPreference?: Maybe<EnergyLevel>;
+  estimatedMinutes?: Maybe<Scalars['Int']['output']>;
+  title: Scalars['String']['output'];
+};
+
 export type PatternCluster = {
   __typename?: 'PatternCluster';
   categories: Array<Scalars['String']['output']>;
@@ -2795,6 +2979,21 @@ export type PriorityRecommendation = {
   relatedResearchIds?: Maybe<Array<Scalars['Int']['output']>>;
   suggestedApproach: Scalars['String']['output'];
   urgency: Scalars['String']['output'];
+};
+
+export type PriorityWeights = {
+  __typename?: 'PriorityWeights';
+  deadlineUrgency: Scalars['Float']['output'];
+  dependencyImpact: Scalars['Float']['output'];
+  projectWeight: Scalars['Float']['output'];
+  userValue: Scalars['Float']['output'];
+};
+
+export type PriorityWeightsInput = {
+  deadlineUrgency: Scalars['Float']['input'];
+  dependencyImpact: Scalars['Float']['input'];
+  projectWeight: Scalars['Float']['input'];
+  userValue: Scalars['Float']['input'];
 };
 
 export type Protocol = {
@@ -2919,11 +3118,18 @@ export type Query = {
   story?: Maybe<Story>;
   symptoms: Array<Symptom>;
   tagLanguage?: Maybe<Scalars['String']['output']>;
+  task?: Maybe<Task>;
+  taskCounts: TaskCounts;
+  tasks: Array<Task>;
   teacherFeedback?: Maybe<TeacherFeedback>;
   teacherFeedbacks: Array<TeacherFeedback>;
   therapeuticQuestions: Array<TherapeuticQuestion>;
+  userPreferences: UserPreferences;
   userSettings: UserSettings;
+  userStreak: UserStreak;
   vaultStatus: VaultStatus;
+  vehicle?: Maybe<Vehicle>;
+  vehicles: Array<Vehicle>;
 };
 
 
@@ -3229,6 +3435,18 @@ export type QuerytagLanguageArgs = {
 };
 
 
+export type QuerytaskArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QuerytasksArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  status: TaskStatus;
+};
+
+
 export type QueryteacherFeedbackArgs = {
   id: Scalars['Int']['input'];
 };
@@ -3243,6 +3461,11 @@ export type QuerytherapeuticQuestionsArgs = {
   goalId?: InputMaybe<Scalars['Int']['input']>;
   issueId?: InputMaybe<Scalars['Int']['input']>;
   journalEntryId?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryvehicleArgs = {
+  id: Scalars['ID']['input'];
 };
 
 export type RecommendedBook = {
@@ -3315,6 +3538,12 @@ export type RelationshipPerson = {
 export type RelationshipStatus =
   | 'ACTIVE'
   | 'ENDED';
+
+export type RequestVehiclePhotoUploadInput = {
+  contentType: Scalars['String']['input'];
+  filename: Scalars['String']['input'];
+  vehicleId: Scalars['ID']['input'];
+};
 
 export type Research = {
   __typename?: 'Research';
@@ -3505,6 +3734,61 @@ export type TalkingPoint = {
   relatedResearchIds?: Maybe<Array<Scalars['Int']['output']>>;
   researchBacking?: Maybe<Scalars['String']['output']>;
 };
+
+export type Task = {
+  __typename?: 'Task';
+  actualMinutes?: Maybe<Scalars['Int']['output']>;
+  blocked: Array<TaskRef>;
+  blockers: Array<TaskRef>;
+  completedAt?: Maybe<Scalars['String']['output']>;
+  createdAt: Scalars['String']['output'];
+  description?: Maybe<Scalars['String']['output']>;
+  dueDate?: Maybe<Scalars['String']['output']>;
+  energyPreference?: Maybe<EnergyLevel>;
+  estimatedMinutes?: Maybe<Scalars['Int']['output']>;
+  id: Scalars['ID']['output'];
+  parentTaskId?: Maybe<Scalars['ID']['output']>;
+  position: Scalars['Int']['output'];
+  priorityManual?: Maybe<Scalars['Int']['output']>;
+  priorityScore: Scalars['Float']['output'];
+  status: TaskStatus;
+  subtasks: Array<Task>;
+  title: Scalars['String']['output'];
+  updatedAt: Scalars['String']['output'];
+};
+
+export type TaskCategorization = {
+  __typename?: 'TaskCategorization';
+  energyPreference: EnergyLevel;
+  estimatedMinutes: Scalars['Int']['output'];
+  priority: Scalars['Int']['output'];
+};
+
+export type TaskCounts = {
+  __typename?: 'TaskCounts';
+  active: Scalars['Int']['output'];
+  archived: Scalars['Int']['output'];
+  completed: Scalars['Int']['output'];
+  inbox: Scalars['Int']['output'];
+};
+
+export type TaskPositionUpdate = {
+  id: Scalars['ID']['input'];
+  position: Scalars['Int']['input'];
+};
+
+export type TaskRef = {
+  __typename?: 'TaskRef';
+  id: Scalars['ID']['output'];
+  status: TaskStatus;
+  title: Scalars['String']['output'];
+};
+
+export type TaskStatus =
+  | 'active'
+  | 'archived'
+  | 'completed'
+  | 'inbox';
 
 export type TeacherFeedback = {
   __typename?: 'TeacherFeedback';
@@ -3701,6 +3985,20 @@ export type UpdateStoryInput = {
   content?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type UpdateTaskInput = {
+  actualMinutes?: InputMaybe<Scalars['Int']['input']>;
+  completedAt?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  dueDate?: InputMaybe<Scalars['String']['input']>;
+  energyPreference?: InputMaybe<EnergyLevel>;
+  estimatedMinutes?: InputMaybe<Scalars['Int']['input']>;
+  position?: InputMaybe<Scalars['Int']['input']>;
+  priorityManual?: InputMaybe<Scalars['Int']['input']>;
+  priorityScore?: InputMaybe<Scalars['Float']['input']>;
+  status?: InputMaybe<TaskStatus>;
+  title?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type UpdateTeacherFeedbackInput = {
   content?: InputMaybe<Scalars['String']['input']>;
   feedbackDate?: InputMaybe<Scalars['String']['input']>;
@@ -3710,11 +4008,49 @@ export type UpdateTeacherFeedbackInput = {
   teacherName?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type UpdateUserPreferencesInput = {
+  bufferPercentage?: InputMaybe<Scalars['Int']['input']>;
+  chronotype?: InputMaybe<Scalars['String']['input']>;
+  chunkSize?: InputMaybe<Scalars['Int']['input']>;
+  gamificationEnabled?: InputMaybe<Scalars['Boolean']['input']>;
+  priorityWeights?: InputMaybe<PriorityWeightsInput>;
+};
+
+export type UpdateVehicleInput = {
+  color?: InputMaybe<Scalars['String']['input']>;
+  licensePlate?: InputMaybe<Scalars['String']['input']>;
+  make?: InputMaybe<Scalars['String']['input']>;
+  model?: InputMaybe<Scalars['String']['input']>;
+  nickname?: InputMaybe<Scalars['String']['input']>;
+  notes?: InputMaybe<Scalars['String']['input']>;
+  odometerMiles?: InputMaybe<Scalars['Int']['input']>;
+  vin?: InputMaybe<Scalars['String']['input']>;
+  year?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type UserPreferences = {
+  __typename?: 'UserPreferences';
+  bufferPercentage: Scalars['Int']['output'];
+  chronotype: Scalars['String']['output'];
+  chunkSize: Scalars['Int']['output'];
+  gamificationEnabled: Scalars['Boolean']['output'];
+  priorityWeights: PriorityWeights;
+};
+
 export type UserSettings = {
   __typename?: 'UserSettings';
   storyLanguage: Scalars['String']['output'];
   storyMinutes: Scalars['Int']['output'];
   userId: Scalars['String']['output'];
+};
+
+export type UserStreak = {
+  __typename?: 'UserStreak';
+  currentStreak: Scalars['Int']['output'];
+  freezeAvailable: Scalars['Int']['output'];
+  lastCompletedDate?: Maybe<Scalars['String']['output']>;
+  longestStreak: Scalars['Int']['output'];
+  streakOptIn: Scalars['Boolean']['output'];
 };
 
 export type VaultStatus = {
@@ -3728,6 +4064,58 @@ export type VaultUnlockResult = {
   message?: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
   unlocked: Scalars['Boolean']['output'];
+};
+
+export type Vehicle = {
+  __typename?: 'Vehicle';
+  color?: Maybe<Scalars['String']['output']>;
+  createdAt: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  licensePlate?: Maybe<Scalars['String']['output']>;
+  make: Scalars['String']['output'];
+  model: Scalars['String']['output'];
+  nickname?: Maybe<Scalars['String']['output']>;
+  notes?: Maybe<Scalars['String']['output']>;
+  odometerMiles?: Maybe<Scalars['Int']['output']>;
+  photos?: Maybe<Array<VehiclePhoto>>;
+  serviceRecords?: Maybe<Array<VehicleServiceRecord>>;
+  thumbnailUrl?: Maybe<Scalars['String']['output']>;
+  updatedAt: Scalars['String']['output'];
+  userId: Scalars['String']['output'];
+  vin?: Maybe<Scalars['String']['output']>;
+  year: Scalars['Int']['output'];
+};
+
+export type VehiclePhoto = {
+  __typename?: 'VehiclePhoto';
+  caption?: Maybe<Scalars['String']['output']>;
+  contentType: Scalars['String']['output'];
+  createdAt: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  r2Key: Scalars['String']['output'];
+  sizeBytes: Scalars['Int']['output'];
+  url?: Maybe<Scalars['String']['output']>;
+  vehicleId: Scalars['ID']['output'];
+};
+
+export type VehiclePhotoUploadTicket = {
+  __typename?: 'VehiclePhotoUploadTicket';
+  r2Key: Scalars['String']['output'];
+  uploadUrl: Scalars['String']['output'];
+};
+
+export type VehicleServiceRecord = {
+  __typename?: 'VehicleServiceRecord';
+  costCents?: Maybe<Scalars['Int']['output']>;
+  createdAt: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  notes?: Maybe<Scalars['String']['output']>;
+  odometerMiles?: Maybe<Scalars['Int']['output']>;
+  serviceDate: Scalars['String']['output'];
+  type: Scalars['String']['output'];
+  updatedAt: Scalars['String']['output'];
+  vehicleId: Scalars['ID']['output'];
+  vendor?: Maybe<Scalars['String']['output']>;
 };
 
 
@@ -3818,6 +4206,9 @@ export type ResolversTypes = {
   AddProtocolInput: AddProtocolInput;
   AddSupplementInput: AddSupplementInput;
   AddSymptomInput: AddSymptomInput;
+  AddVehicleInput: AddVehicleInput;
+  AddVehiclePhotoInput: AddVehiclePhotoInput;
+  AddVehicleServiceRecordInput: AddVehicleServiceRecordInput;
   Affirmation: ResolverTypeWrapper<Omit<Affirmation, 'category'> & { category: ResolversTypes['AffirmationCategory'] }>;
   AffirmationCategory: ResolverTypeWrapper<'GRATITUDE' | 'STRENGTH' | 'ENCOURAGEMENT' | 'GROWTH' | 'SELF_WORTH'>;
   Allergy: ResolverTypeWrapper<Omit<Allergy, 'familyMember' | 'kind'> & { familyMember?: Maybe<ResolversTypes['FamilyMember']>, kind: ResolversTypes['AllergyKind'] }>;
@@ -3879,6 +4270,7 @@ export type ResolversTypes = {
   CreateRelationshipInput: CreateRelationshipInput;
   CreateStoryInput: CreateStoryInput;
   CreateSubGoalInput: CreateSubGoalInput;
+  CreateTaskInput: CreateTaskInput;
   CreateTeacherFeedbackInput: CreateTeacherFeedbackInput;
   CritiqueScores: ResolverTypeWrapper<CritiqueScores>;
   DataSnapshot: ResolverTypeWrapper<DataSnapshot>;
@@ -3919,13 +4311,18 @@ export type ResolversTypes = {
   DeleteStoryResult: ResolverTypeWrapper<DeleteStoryResult>;
   DeleteSupplementResult: ResolverTypeWrapper<DeleteSupplementResult>;
   DeleteSymptomResult: ResolverTypeWrapper<DeleteSymptomResult>;
+  DeleteTaskResult: ResolverTypeWrapper<DeleteTaskResult>;
   DeleteTeacherFeedbackResult: ResolverTypeWrapper<DeleteTeacherFeedbackResult>;
+  DeleteVehiclePhotoResult: ResolverTypeWrapper<DeleteVehiclePhotoResult>;
+  DeleteVehicleResult: ResolverTypeWrapper<DeleteVehicleResult>;
+  DeleteVehicleServiceRecordResult: ResolverTypeWrapper<DeleteVehicleServiceRecordResult>;
   DevelopmentalContext: ResolverTypeWrapper<DevelopmentalContext>;
   DevelopmentalTier: ResolverTypeWrapper<'EARLY_CHILDHOOD' | 'MIDDLE_CHILDHOOD' | 'EARLY_ADOLESCENCE' | 'LATE_ADOLESCENCE' | 'ADULT'>;
   DiscussionGuide: ResolverTypeWrapper<DiscussionGuide>;
   DiscussionGuideCritique: ResolverTypeWrapper<DiscussionGuideCritique>;
   Doctor: ResolverTypeWrapper<Doctor>;
   EmotionalLandscape: ResolverTypeWrapper<EmotionalLandscape>;
+  EnergyLevel: ResolverTypeWrapper<'high' | 'medium' | 'low'>;
   EvidenceItem: ResolverTypeWrapper<Omit<EvidenceItem, 'polarity'> & { polarity: ResolversTypes['EvidencePolarity'] }>;
   EvidenceLocator: ResolverTypeWrapper<EvidenceLocator>;
   EvidencePolarity: ResolverTypeWrapper<'CONTRADICTS' | 'IRRELEVANT' | 'MIXED' | 'SUPPORTS'>;
@@ -4010,10 +4407,13 @@ export type ResolversTypes = {
   OpenAITTSVoice: ResolverTypeWrapper<'ALLOY' | 'ASH' | 'BALLAD' | 'CORAL' | 'ECHO' | 'FABLE' | 'ONYX' | 'NOVA' | 'SAGE' | 'SHIMMER' | 'VERSE' | 'MARIN' | 'CEDAR'>;
   PaperCandidate: ResolverTypeWrapper<PaperCandidate>;
   ParentAdviceItem: ResolverTypeWrapper<ParentAdviceItem>;
+  ParsedTask: ResolverTypeWrapper<Omit<ParsedTask, 'energyPreference'> & { energyPreference?: Maybe<ResolversTypes['EnergyLevel']> }>;
   PatternCluster: ResolverTypeWrapper<PatternCluster>;
   PersonType: ResolverTypeWrapper<'FAMILY_MEMBER' | 'CONTACT'>;
   PipelineDiagnostics: ResolverTypeWrapper<PipelineDiagnostics>;
   PriorityRecommendation: ResolverTypeWrapper<PriorityRecommendation>;
+  PriorityWeights: ResolverTypeWrapper<PriorityWeights>;
+  PriorityWeightsInput: PriorityWeightsInput;
   Protocol: ResolverTypeWrapper<Protocol>;
   ProtocolDetail: ResolverTypeWrapper<ProtocolDetail>;
   ProtocolSupplement: ResolverTypeWrapper<ProtocolSupplement>;
@@ -4025,6 +4425,7 @@ export type ResolversTypes = {
   Relationship: ResolverTypeWrapper<Omit<Relationship, 'related' | 'relatedType' | 'status' | 'subject' | 'subjectType'> & { related?: Maybe<ResolversTypes['RelationshipPerson']>, relatedType: ResolversTypes['PersonType'], status: ResolversTypes['RelationshipStatus'], subject?: Maybe<ResolversTypes['RelationshipPerson']>, subjectType: ResolversTypes['PersonType'] }>;
   RelationshipPerson: ResolverTypeWrapper<Omit<RelationshipPerson, 'type'> & { type: ResolversTypes['PersonType'] }>;
   RelationshipStatus: ResolverTypeWrapper<'ACTIVE' | 'ENDED'>;
+  RequestVehiclePhotoUploadInput: RequestVehiclePhotoUploadInput;
   Research: ResolverTypeWrapper<Omit<Research, 'goal'> & { goal?: Maybe<ResolversTypes['Goal']> }>;
   ResearchRelevanceMapping: ResolverTypeWrapper<ResearchRelevanceMapping>;
   ResearchSource: ResolverTypeWrapper<'ARXIV' | 'CROSSREF' | 'DATACITE' | 'EUROPEPMC' | 'OPENALEX' | 'PUBMED' | 'SEMANTIC_SCHOLAR'>;
@@ -4040,6 +4441,12 @@ export type ResolversTypes = {
   Subscription: ResolverTypeWrapper<Record<PropertyKey, never>>;
   Symptom: ResolverTypeWrapper<Symptom>;
   TalkingPoint: ResolverTypeWrapper<TalkingPoint>;
+  Task: ResolverTypeWrapper<Omit<Task, 'blocked' | 'blockers' | 'energyPreference' | 'status' | 'subtasks'> & { blocked: Array<ResolversTypes['TaskRef']>, blockers: Array<ResolversTypes['TaskRef']>, energyPreference?: Maybe<ResolversTypes['EnergyLevel']>, status: ResolversTypes['TaskStatus'], subtasks: Array<ResolversTypes['Task']> }>;
+  TaskCategorization: ResolverTypeWrapper<Omit<TaskCategorization, 'energyPreference'> & { energyPreference: ResolversTypes['EnergyLevel'] }>;
+  TaskCounts: ResolverTypeWrapper<TaskCounts>;
+  TaskPositionUpdate: TaskPositionUpdate;
+  TaskRef: ResolverTypeWrapper<Omit<TaskRef, 'status'> & { status: ResolversTypes['TaskStatus'] }>;
+  TaskStatus: ResolverTypeWrapper<'inbox' | 'active' | 'completed' | 'archived'>;
   TeacherFeedback: ResolverTypeWrapper<Omit<TeacherFeedback, 'familyMember' | 'source'> & { familyMember?: Maybe<ResolversTypes['FamilyMember']>, source?: Maybe<ResolversTypes['FeedbackSource']> }>;
   TextSegment: ResolverTypeWrapper<TextSegment>;
   TherapeuticInsight: ResolverTypeWrapper<TherapeuticInsight>;
@@ -4061,10 +4468,19 @@ export type ResolversTypes = {
   UpdateNoteInput: UpdateNoteInput;
   UpdateRelationshipInput: UpdateRelationshipInput;
   UpdateStoryInput: UpdateStoryInput;
+  UpdateTaskInput: UpdateTaskInput;
   UpdateTeacherFeedbackInput: UpdateTeacherFeedbackInput;
+  UpdateUserPreferencesInput: UpdateUserPreferencesInput;
+  UpdateVehicleInput: UpdateVehicleInput;
+  UserPreferences: ResolverTypeWrapper<UserPreferences>;
   UserSettings: ResolverTypeWrapper<UserSettings>;
+  UserStreak: ResolverTypeWrapper<UserStreak>;
   VaultStatus: ResolverTypeWrapper<VaultStatus>;
   VaultUnlockResult: ResolverTypeWrapper<VaultUnlockResult>;
+  Vehicle: ResolverTypeWrapper<Vehicle>;
+  VehiclePhoto: ResolverTypeWrapper<VehiclePhoto>;
+  VehiclePhotoUploadTicket: ResolverTypeWrapper<VehiclePhotoUploadTicket>;
+  VehicleServiceRecord: ResolverTypeWrapper<VehicleServiceRecord>;
 };
 
 /** Mapping between all available schema types and the resolvers parents */
@@ -4084,6 +4500,9 @@ export type ResolversParentTypes = {
   AddProtocolInput: AddProtocolInput;
   AddSupplementInput: AddSupplementInput;
   AddSymptomInput: AddSymptomInput;
+  AddVehicleInput: AddVehicleInput;
+  AddVehiclePhotoInput: AddVehiclePhotoInput;
+  AddVehicleServiceRecordInput: AddVehicleServiceRecordInput;
   Affirmation: Affirmation;
   Allergy: Omit<Allergy, 'familyMember'> & { familyMember?: Maybe<ResolversParentTypes['FamilyMember']> };
   AnticipatedReaction: AnticipatedReaction;
@@ -4140,6 +4559,7 @@ export type ResolversParentTypes = {
   CreateRelationshipInput: CreateRelationshipInput;
   CreateStoryInput: CreateStoryInput;
   CreateSubGoalInput: CreateSubGoalInput;
+  CreateTaskInput: CreateTaskInput;
   CreateTeacherFeedbackInput: CreateTeacherFeedbackInput;
   CritiqueScores: CritiqueScores;
   DataSnapshot: DataSnapshot;
@@ -4178,7 +4598,11 @@ export type ResolversParentTypes = {
   DeleteStoryResult: DeleteStoryResult;
   DeleteSupplementResult: DeleteSupplementResult;
   DeleteSymptomResult: DeleteSymptomResult;
+  DeleteTaskResult: DeleteTaskResult;
   DeleteTeacherFeedbackResult: DeleteTeacherFeedbackResult;
+  DeleteVehiclePhotoResult: DeleteVehiclePhotoResult;
+  DeleteVehicleResult: DeleteVehicleResult;
+  DeleteVehicleServiceRecordResult: DeleteVehicleServiceRecordResult;
   DevelopmentalContext: DevelopmentalContext;
   DiscussionGuide: DiscussionGuide;
   DiscussionGuideCritique: DiscussionGuideCritique;
@@ -4253,9 +4677,12 @@ export type ResolversParentTypes = {
   NoteShare: NoteShare;
   PaperCandidate: PaperCandidate;
   ParentAdviceItem: ParentAdviceItem;
+  ParsedTask: ParsedTask;
   PatternCluster: PatternCluster;
   PipelineDiagnostics: PipelineDiagnostics;
   PriorityRecommendation: PriorityRecommendation;
+  PriorityWeights: PriorityWeights;
+  PriorityWeightsInput: PriorityWeightsInput;
   Protocol: Protocol;
   ProtocolDetail: ProtocolDetail;
   ProtocolSupplement: ProtocolSupplement;
@@ -4266,6 +4693,7 @@ export type ResolversParentTypes = {
   RegimenFlag: RegimenFlag;
   Relationship: Omit<Relationship, 'related' | 'subject'> & { related?: Maybe<ResolversParentTypes['RelationshipPerson']>, subject?: Maybe<ResolversParentTypes['RelationshipPerson']> };
   RelationshipPerson: RelationshipPerson;
+  RequestVehiclePhotoUploadInput: RequestVehiclePhotoUploadInput;
   Research: Omit<Research, 'goal'> & { goal?: Maybe<ResolversParentTypes['Goal']> };
   ResearchRelevanceMapping: ResearchRelevanceMapping;
   RoutineAnalysis: Omit<RoutineAnalysis, 'familyMember'> & { familyMember?: Maybe<ResolversParentTypes['FamilyMember']> };
@@ -4280,6 +4708,11 @@ export type ResolversParentTypes = {
   Subscription: Record<PropertyKey, never>;
   Symptom: Symptom;
   TalkingPoint: TalkingPoint;
+  Task: Omit<Task, 'blocked' | 'blockers' | 'subtasks'> & { blocked: Array<ResolversParentTypes['TaskRef']>, blockers: Array<ResolversParentTypes['TaskRef']>, subtasks: Array<ResolversParentTypes['Task']> };
+  TaskCategorization: TaskCategorization;
+  TaskCounts: TaskCounts;
+  TaskPositionUpdate: TaskPositionUpdate;
+  TaskRef: TaskRef;
   TeacherFeedback: Omit<TeacherFeedback, 'familyMember'> & { familyMember?: Maybe<ResolversParentTypes['FamilyMember']> };
   TextSegment: TextSegment;
   TherapeuticInsight: TherapeuticInsight;
@@ -4301,10 +4734,19 @@ export type ResolversParentTypes = {
   UpdateNoteInput: UpdateNoteInput;
   UpdateRelationshipInput: UpdateRelationshipInput;
   UpdateStoryInput: UpdateStoryInput;
+  UpdateTaskInput: UpdateTaskInput;
   UpdateTeacherFeedbackInput: UpdateTeacherFeedbackInput;
+  UpdateUserPreferencesInput: UpdateUserPreferencesInput;
+  UpdateVehicleInput: UpdateVehicleInput;
+  UserPreferences: UserPreferences;
   UserSettings: UserSettings;
+  UserStreak: UserStreak;
   VaultStatus: VaultStatus;
   VaultUnlockResult: VaultUnlockResult;
+  Vehicle: Vehicle;
+  VehiclePhoto: VehiclePhoto;
+  VehiclePhotoUploadTicket: VehiclePhotoUploadTicket;
+  VehicleServiceRecord: VehicleServiceRecord;
 };
 
 export type ActionableRecommendationResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ActionableRecommendation'] = ResolversParentTypes['ActionableRecommendation']> = {
@@ -4912,9 +5354,28 @@ export type DeleteSymptomResultResolvers<ContextType = GraphQLContext, ParentTyp
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
 };
 
+export type DeleteTaskResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DeleteTaskResult'] = ResolversParentTypes['DeleteTaskResult']> = {
+  success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+};
+
 export type DeleteTeacherFeedbackResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DeleteTeacherFeedbackResult'] = ResolversParentTypes['DeleteTeacherFeedbackResult']> = {
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+};
+
+export type DeleteVehiclePhotoResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DeleteVehiclePhotoResult'] = ResolversParentTypes['DeleteVehiclePhotoResult']> = {
+  deleted?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+};
+
+export type DeleteVehicleResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DeleteVehicleResult'] = ResolversParentTypes['DeleteVehicleResult']> = {
+  deleted?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+};
+
+export type DeleteVehicleServiceRecordResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DeleteVehicleServiceRecordResult'] = ResolversParentTypes['DeleteVehicleServiceRecordResult']> = {
+  deleted?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
 };
 
 export type DevelopmentalContextResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DevelopmentalContext'] = ResolversParentTypes['DevelopmentalContext']> = {
@@ -4965,6 +5426,8 @@ export type EmotionalLandscapeResolvers<ContextType = GraphQLContext, ParentType
   primaryEmotions?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   underlyingEmotions?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
 };
+
+export type EnergyLevelResolvers = EnumResolverSignature<{ high?: any, low?: any, medium?: any }, ResolversTypes['EnergyLevel']>;
 
 export type EvidenceItemResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['EvidenceItem'] = ResolversParentTypes['EvidenceItem']> = {
   excerpt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -5623,6 +6086,10 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   addProtocol?: Resolver<ResolversTypes['Protocol'], ParentType, ContextType, RequireFields<MutationaddProtocolArgs, 'input'>>;
   addSupplement?: Resolver<ResolversTypes['ProtocolSupplement'], ParentType, ContextType, RequireFields<MutationaddSupplementArgs, 'input' | 'protocolId'>>;
   addSymptom?: Resolver<ResolversTypes['Symptom'], ParentType, ContextType, RequireFields<MutationaddSymptomArgs, 'input'>>;
+  addTaskDependency?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationaddTaskDependencyArgs, 'blockedTaskId' | 'blockingTaskId'>>;
+  addVehicle?: Resolver<ResolversTypes['Vehicle'], ParentType, ContextType, RequireFields<MutationaddVehicleArgs, 'input'>>;
+  addVehiclePhoto?: Resolver<ResolversTypes['VehiclePhoto'], ParentType, ContextType, RequireFields<MutationaddVehiclePhotoArgs, 'input'>>;
+  addVehicleServiceRecord?: Resolver<ResolversTypes['VehicleServiceRecord'], ParentType, ContextType, RequireFields<MutationaddVehicleServiceRecordArgs, 'input'>>;
   buildClaimCards?: Resolver<ResolversTypes['BuildClaimCardsResult'], ParentType, ContextType, RequireFields<MutationbuildClaimCardsArgs, 'input'>>;
   checkNoteClaims?: Resolver<ResolversTypes['CheckNoteClaimsResult'], ParentType, ContextType, RequireFields<MutationcheckNoteClaimsArgs, 'input'>>;
   convertIssueToGoal?: Resolver<ResolversTypes['Goal'], ParentType, ContextType, RequireFields<MutationconvertIssueToGoalArgs, 'id' | 'input'>>;
@@ -5642,6 +6109,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   createRelationship?: Resolver<ResolversTypes['Relationship'], ParentType, ContextType, RequireFields<MutationcreateRelationshipArgs, 'input'>>;
   createStory?: Resolver<ResolversTypes['Story'], ParentType, ContextType, RequireFields<MutationcreateStoryArgs, 'input'>>;
   createSubGoal?: Resolver<ResolversTypes['Goal'], ParentType, ContextType, RequireFields<MutationcreateSubGoalArgs, 'goalId' | 'input'>>;
+  createTask?: Resolver<ResolversTypes['Task'], ParentType, ContextType, RequireFields<MutationcreateTaskArgs, 'input'>>;
   createTeacherFeedback?: Resolver<ResolversTypes['TeacherFeedback'], ParentType, ContextType, RequireFields<MutationcreateTeacherFeedbackArgs, 'input'>>;
   deleteAffirmation?: Resolver<ResolversTypes['DeleteAffirmationResult'], ParentType, ContextType, RequireFields<MutationdeleteAffirmationArgs, 'id'>>;
   deleteAllergy?: Resolver<ResolversTypes['DeleteAllergyResult'], ParentType, ContextType, RequireFields<MutationdeleteAllergyArgs, 'id'>>;
@@ -5678,8 +6146,12 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   deleteStory?: Resolver<ResolversTypes['DeleteStoryResult'], ParentType, ContextType, RequireFields<MutationdeleteStoryArgs, 'id'>>;
   deleteSupplement?: Resolver<ResolversTypes['DeleteSupplementResult'], ParentType, ContextType, RequireFields<MutationdeleteSupplementArgs, 'id'>>;
   deleteSymptom?: Resolver<ResolversTypes['DeleteSymptomResult'], ParentType, ContextType, RequireFields<MutationdeleteSymptomArgs, 'id'>>;
+  deleteTask?: Resolver<ResolversTypes['DeleteTaskResult'], ParentType, ContextType, RequireFields<MutationdeleteTaskArgs, 'id'>>;
   deleteTeacherFeedback?: Resolver<ResolversTypes['DeleteTeacherFeedbackResult'], ParentType, ContextType, RequireFields<MutationdeleteTeacherFeedbackArgs, 'id'>>;
   deleteTherapeuticQuestions?: Resolver<ResolversTypes['DeleteQuestionsResult'], ParentType, ContextType, Partial<MutationdeleteTherapeuticQuestionsArgs>>;
+  deleteVehicle?: Resolver<ResolversTypes['DeleteVehicleResult'], ParentType, ContextType, RequireFields<MutationdeleteVehicleArgs, 'id'>>;
+  deleteVehiclePhoto?: Resolver<ResolversTypes['DeleteVehiclePhotoResult'], ParentType, ContextType, RequireFields<MutationdeleteVehiclePhotoArgs, 'id'>>;
+  deleteVehicleServiceRecord?: Resolver<ResolversTypes['DeleteVehicleServiceRecordResult'], ParentType, ContextType, RequireFields<MutationdeleteVehicleServiceRecordArgs, 'id'>>;
   extractContactFeedbackIssues?: Resolver<ResolversTypes['ContactFeedback'], ParentType, ContextType, RequireFields<MutationextractContactFeedbackIssuesArgs, 'id'>>;
   generateAffirmationsForFamilyMember?: Resolver<ResolversTypes['GenerateAffirmationsResult'], ParentType, ContextType, RequireFields<MutationgenerateAffirmationsForFamilyMemberArgs, 'familyMemberId'>>;
   generateAudio?: Resolver<ResolversTypes['GenerateAudioResult'], ParentType, ContextType, RequireFields<MutationgenerateAudioArgs, 'goalId'>>;
@@ -5707,9 +6179,13 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   logGameCompletion?: Resolver<ResolversTypes['GameCompletion'], ParentType, ContextType, RequireFields<MutationlogGameCompletionArgs, 'input'>>;
   logHabit?: Resolver<ResolversTypes['HabitLog'], ParentType, ContextType, RequireFields<MutationlogHabitArgs, 'habitId' | 'loggedDate'>>;
   markTeacherFeedbackExtracted?: Resolver<ResolversTypes['TeacherFeedback'], ParentType, ContextType, RequireFields<MutationmarkTeacherFeedbackExtractedArgs, 'id'>>;
+  parseTaskFromText?: Resolver<Maybe<ResolversTypes['ParsedTask']>, ParentType, ContextType, RequireFields<MutationparseTaskFromTextArgs, 'input'>>;
   recordCognitiveBaseline?: Resolver<ResolversTypes['CognitiveBaseline'], ParentType, ContextType, RequireFields<MutationrecordCognitiveBaselineArgs, 'input' | 'protocolId'>>;
   recordCognitiveCheckIn?: Resolver<ResolversTypes['CognitiveCheckIn'], ParentType, ContextType, RequireFields<MutationrecordCognitiveCheckInArgs, 'input' | 'protocolId'>>;
   refreshClaimCard?: Resolver<ResolversTypes['ClaimCard'], ParentType, ContextType, RequireFields<MutationrefreshClaimCardArgs, 'id'>>;
+  removeTaskDependency?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationremoveTaskDependencyArgs, 'blockedTaskId' | 'blockingTaskId'>>;
+  reorderTasks?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationreorderTasksArgs, 'updates'>>;
+  requestVehiclePhotoUpload?: Resolver<ResolversTypes['VehiclePhotoUploadTicket'], ParentType, ContextType, RequireFields<MutationrequestVehiclePhotoUploadArgs, 'input'>>;
   sendConversationMessage?: Resolver<ResolversTypes['Conversation'], ParentType, ContextType, RequireFields<MutationsendConversationMessageArgs, 'conversationId' | 'message'>>;
   sendHealthcareChatMessage?: Resolver<ResolversTypes['HealthcareChatResponse'], ParentType, ContextType, RequireFields<MutationsendHealthcareChatMessageArgs, 'input'>>;
   setMedicationActive?: Resolver<ResolversTypes['Medication'], ParentType, ContextType, RequireFields<MutationsetMedicationActiveArgs, 'id' | 'isActive'>>;
@@ -5718,6 +6194,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   setTagLanguage?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationsetTagLanguageArgs, 'language' | 'tag'>>;
   shareFamilyMember?: Resolver<ResolversTypes['FamilyMemberShare'], ParentType, ContextType, RequireFields<MutationshareFamilyMemberArgs, 'email' | 'familyMemberId'>>;
   shareNote?: Resolver<ResolversTypes['NoteShare'], ParentType, ContextType, RequireFields<MutationshareNoteArgs, 'email' | 'noteId'>>;
+  suggestTaskCategorization?: Resolver<Maybe<ResolversTypes['TaskCategorization']>, ParentType, ContextType, RequireFields<MutationsuggestTaskCategorizationArgs, 'title'>>;
   unlinkContactFromIssue?: Resolver<ResolversTypes['UnlinkContactResult'], ParentType, ContextType, RequireFields<MutationunlinkContactFromIssueArgs, 'contactId' | 'issueId'>>;
   unlinkGoalFamilyMember?: Resolver<ResolversTypes['Goal'], ParentType, ContextType, RequireFields<MutationunlinkGoalFamilyMemberArgs, 'id'>>;
   unlinkIssues?: Resolver<ResolversTypes['UnlinkIssuesResult'], ParentType, ContextType, RequireFields<MutationunlinkIssuesArgs, 'issueId' | 'linkedIssueId'>>;
@@ -5738,8 +6215,11 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   updateProtocolStatus?: Resolver<ResolversTypes['Protocol'], ParentType, ContextType, RequireFields<MutationupdateProtocolStatusArgs, 'id' | 'status'>>;
   updateRelationship?: Resolver<ResolversTypes['Relationship'], ParentType, ContextType, RequireFields<MutationupdateRelationshipArgs, 'id' | 'input'>>;
   updateStory?: Resolver<ResolversTypes['Story'], ParentType, ContextType, RequireFields<MutationupdateStoryArgs, 'id' | 'input'>>;
+  updateTask?: Resolver<ResolversTypes['Task'], ParentType, ContextType, RequireFields<MutationupdateTaskArgs, 'id' | 'input'>>;
   updateTeacherFeedback?: Resolver<ResolversTypes['TeacherFeedback'], ParentType, ContextType, RequireFields<MutationupdateTeacherFeedbackArgs, 'id' | 'input'>>;
+  updateUserPreferences?: Resolver<ResolversTypes['UserPreferences'], ParentType, ContextType, RequireFields<MutationupdateUserPreferencesArgs, 'input'>>;
   updateUserSettings?: Resolver<ResolversTypes['UserSettings'], ParentType, ContextType, RequireFields<MutationupdateUserSettingsArgs, 'storyLanguage'>>;
+  updateVehicle?: Resolver<ResolversTypes['Vehicle'], ParentType, ContextType, RequireFields<MutationupdateVehicleArgs, 'id' | 'input'>>;
 };
 
 export type NoteResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Note'] = ResolversParentTypes['Note']> = {
@@ -5815,6 +6295,13 @@ export type ParentAdviceItemResolvers<ContextType = GraphQLContext, ParentType e
   title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 };
 
+export type ParsedTaskResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ParsedTask'] = ResolversParentTypes['ParsedTask']> = {
+  dueDate?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  energyPreference?: Resolver<Maybe<ResolversTypes['EnergyLevel']>, ParentType, ContextType>;
+  estimatedMinutes?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
 export type PatternClusterResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['PatternCluster'] = ResolversParentTypes['PatternCluster']> = {
   categories?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   confidence?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
@@ -5846,6 +6333,13 @@ export type PriorityRecommendationResolvers<ContextType = GraphQLContext, Parent
   relatedResearchIds?: Resolver<Maybe<Array<ResolversTypes['Int']>>, ParentType, ContextType>;
   suggestedApproach?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   urgency?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type PriorityWeightsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['PriorityWeights'] = ResolversParentTypes['PriorityWeights']> = {
+  deadlineUrgency?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  dependencyImpact?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  projectWeight?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  userValue?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
 };
 
 export type ProtocolResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Protocol'] = ResolversParentTypes['Protocol']> = {
@@ -5965,11 +6459,18 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   story?: Resolver<Maybe<ResolversTypes['Story']>, ParentType, ContextType, RequireFields<QuerystoryArgs, 'id'>>;
   symptoms?: Resolver<Array<ResolversTypes['Symptom']>, ParentType, ContextType>;
   tagLanguage?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<QuerytagLanguageArgs, 'tag'>>;
+  task?: Resolver<Maybe<ResolversTypes['Task']>, ParentType, ContextType, RequireFields<QuerytaskArgs, 'id'>>;
+  taskCounts?: Resolver<ResolversTypes['TaskCounts'], ParentType, ContextType>;
+  tasks?: Resolver<Array<ResolversTypes['Task']>, ParentType, ContextType, RequireFields<QuerytasksArgs, 'limit' | 'offset' | 'status'>>;
   teacherFeedback?: Resolver<Maybe<ResolversTypes['TeacherFeedback']>, ParentType, ContextType, RequireFields<QueryteacherFeedbackArgs, 'id'>>;
   teacherFeedbacks?: Resolver<Array<ResolversTypes['TeacherFeedback']>, ParentType, ContextType, RequireFields<QueryteacherFeedbacksArgs, 'familyMemberId'>>;
   therapeuticQuestions?: Resolver<Array<ResolversTypes['TherapeuticQuestion']>, ParentType, ContextType, Partial<QuerytherapeuticQuestionsArgs>>;
+  userPreferences?: Resolver<ResolversTypes['UserPreferences'], ParentType, ContextType>;
   userSettings?: Resolver<ResolversTypes['UserSettings'], ParentType, ContextType>;
+  userStreak?: Resolver<ResolversTypes['UserStreak'], ParentType, ContextType>;
   vaultStatus?: Resolver<ResolversTypes['VaultStatus'], ParentType, ContextType>;
+  vehicle?: Resolver<Maybe<ResolversTypes['Vehicle']>, ParentType, ContextType, RequireFields<QueryvehicleArgs, 'id'>>;
+  vehicles?: Resolver<Array<ResolversTypes['Vehicle']>, ParentType, ContextType>;
 };
 
 export type RecommendedBookResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['RecommendedBook'] = ResolversParentTypes['RecommendedBook']> = {
@@ -6193,6 +6694,48 @@ export type TalkingPointResolvers<ContextType = GraphQLContext, ParentType exten
   researchBacking?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
 };
 
+export type TaskResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Task'] = ResolversParentTypes['Task']> = {
+  actualMinutes?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  blocked?: Resolver<Array<ResolversTypes['TaskRef']>, ParentType, ContextType>;
+  blockers?: Resolver<Array<ResolversTypes['TaskRef']>, ParentType, ContextType>;
+  completedAt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  dueDate?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  energyPreference?: Resolver<Maybe<ResolversTypes['EnergyLevel']>, ParentType, ContextType>;
+  estimatedMinutes?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  parentTaskId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
+  position?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  priorityManual?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  priorityScore?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  status?: Resolver<ResolversTypes['TaskStatus'], ParentType, ContextType>;
+  subtasks?: Resolver<Array<ResolversTypes['Task']>, ParentType, ContextType>;
+  title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type TaskCategorizationResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['TaskCategorization'] = ResolversParentTypes['TaskCategorization']> = {
+  energyPreference?: Resolver<ResolversTypes['EnergyLevel'], ParentType, ContextType>;
+  estimatedMinutes?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  priority?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+};
+
+export type TaskCountsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['TaskCounts'] = ResolversParentTypes['TaskCounts']> = {
+  active?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  archived?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  completed?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  inbox?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+};
+
+export type TaskRefResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['TaskRef'] = ResolversParentTypes['TaskRef']> = {
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  status?: Resolver<ResolversTypes['TaskStatus'], ParentType, ContextType>;
+  title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type TaskStatusResolvers = EnumResolverSignature<{ active?: any, archived?: any, completed?: any, inbox?: any }, ResolversTypes['TaskStatus']>;
+
 export type TeacherFeedbackResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['TeacherFeedback'] = ResolversParentTypes['TeacherFeedback']> = {
   content?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -6262,10 +6805,26 @@ export type UnlinkIssuesResultResolvers<ContextType = GraphQLContext, ParentType
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
 };
 
+export type UserPreferencesResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['UserPreferences'] = ResolversParentTypes['UserPreferences']> = {
+  bufferPercentage?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  chronotype?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  chunkSize?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  gamificationEnabled?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  priorityWeights?: Resolver<ResolversTypes['PriorityWeights'], ParentType, ContextType>;
+};
+
 export type UserSettingsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['UserSettings'] = ResolversParentTypes['UserSettings']> = {
   storyLanguage?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   storyMinutes?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   userId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type UserStreakResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['UserStreak'] = ResolversParentTypes['UserStreak']> = {
+  currentStreak?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  freezeAvailable?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  lastCompletedDate?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  longestStreak?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  streakOptIn?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
 };
 
 export type VaultStatusResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['VaultStatus'] = ResolversParentTypes['VaultStatus']> = {
@@ -6277,6 +6836,54 @@ export type VaultUnlockResultResolvers<ContextType = GraphQLContext, ParentType 
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   unlocked?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+};
+
+export type VehicleResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Vehicle'] = ResolversParentTypes['Vehicle']> = {
+  color?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  licensePlate?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  make?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  model?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  nickname?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  notes?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  odometerMiles?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  photos?: Resolver<Maybe<Array<ResolversTypes['VehiclePhoto']>>, ParentType, ContextType>;
+  serviceRecords?: Resolver<Maybe<Array<ResolversTypes['VehicleServiceRecord']>>, ParentType, ContextType>;
+  thumbnailUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  userId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  vin?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  year?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+};
+
+export type VehiclePhotoResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['VehiclePhoto'] = ResolversParentTypes['VehiclePhoto']> = {
+  caption?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  contentType?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  r2Key?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  sizeBytes?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  url?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  vehicleId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+};
+
+export type VehiclePhotoUploadTicketResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['VehiclePhotoUploadTicket'] = ResolversParentTypes['VehiclePhotoUploadTicket']> = {
+  r2Key?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  uploadUrl?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type VehicleServiceRecordResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['VehicleServiceRecord'] = ResolversParentTypes['VehicleServiceRecord']> = {
+  costCents?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  notes?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  odometerMiles?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  serviceDate?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  type?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  vehicleId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  vendor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
 };
 
 export type Resolvers<ContextType = GraphQLContext> = {
@@ -6363,13 +6970,18 @@ export type Resolvers<ContextType = GraphQLContext> = {
   DeleteStoryResult?: DeleteStoryResultResolvers<ContextType>;
   DeleteSupplementResult?: DeleteSupplementResultResolvers<ContextType>;
   DeleteSymptomResult?: DeleteSymptomResultResolvers<ContextType>;
+  DeleteTaskResult?: DeleteTaskResultResolvers<ContextType>;
   DeleteTeacherFeedbackResult?: DeleteTeacherFeedbackResultResolvers<ContextType>;
+  DeleteVehiclePhotoResult?: DeleteVehiclePhotoResultResolvers<ContextType>;
+  DeleteVehicleResult?: DeleteVehicleResultResolvers<ContextType>;
+  DeleteVehicleServiceRecordResult?: DeleteVehicleServiceRecordResultResolvers<ContextType>;
   DevelopmentalContext?: DevelopmentalContextResolvers<ContextType>;
   DevelopmentalTier?: DevelopmentalTierResolvers;
   DiscussionGuide?: DiscussionGuideResolvers<ContextType>;
   DiscussionGuideCritique?: DiscussionGuideCritiqueResolvers<ContextType>;
   Doctor?: DoctorResolvers<ContextType>;
   EmotionalLandscape?: EmotionalLandscapeResolvers<ContextType>;
+  EnergyLevel?: EnergyLevelResolvers;
   EvidenceItem?: EvidenceItemResolvers<ContextType>;
   EvidenceLocator?: EvidenceLocatorResolvers<ContextType>;
   EvidencePolarity?: EvidencePolarityResolvers;
@@ -6449,10 +7061,12 @@ export type Resolvers<ContextType = GraphQLContext> = {
   OpenAITTSVoice?: OpenAITTSVoiceResolvers;
   PaperCandidate?: PaperCandidateResolvers<ContextType>;
   ParentAdviceItem?: ParentAdviceItemResolvers<ContextType>;
+  ParsedTask?: ParsedTaskResolvers<ContextType>;
   PatternCluster?: PatternClusterResolvers<ContextType>;
   PersonType?: PersonTypeResolvers;
   PipelineDiagnostics?: PipelineDiagnosticsResolvers<ContextType>;
   PriorityRecommendation?: PriorityRecommendationResolvers<ContextType>;
+  PriorityWeights?: PriorityWeightsResolvers<ContextType>;
   Protocol?: ProtocolResolvers<ContextType>;
   ProtocolDetail?: ProtocolDetailResolvers<ContextType>;
   ProtocolSupplement?: ProtocolSupplementResolvers<ContextType>;
@@ -6478,6 +7092,11 @@ export type Resolvers<ContextType = GraphQLContext> = {
   Subscription?: SubscriptionResolvers<ContextType>;
   Symptom?: SymptomResolvers<ContextType>;
   TalkingPoint?: TalkingPointResolvers<ContextType>;
+  Task?: TaskResolvers<ContextType>;
+  TaskCategorization?: TaskCategorizationResolvers<ContextType>;
+  TaskCounts?: TaskCountsResolvers<ContextType>;
+  TaskRef?: TaskRefResolvers<ContextType>;
+  TaskStatus?: TaskStatusResolvers;
   TeacherFeedback?: TeacherFeedbackResolvers<ContextType>;
   TextSegment?: TextSegmentResolvers<ContextType>;
   TherapeuticInsight?: TherapeuticInsightResolvers<ContextType>;
@@ -6486,8 +7105,14 @@ export type Resolvers<ContextType = GraphQLContext> = {
   TimelinePhase?: TimelinePhaseResolvers<ContextType>;
   UnlinkContactResult?: UnlinkContactResultResolvers<ContextType>;
   UnlinkIssuesResult?: UnlinkIssuesResultResolvers<ContextType>;
+  UserPreferences?: UserPreferencesResolvers<ContextType>;
   UserSettings?: UserSettingsResolvers<ContextType>;
+  UserStreak?: UserStreakResolvers<ContextType>;
   VaultStatus?: VaultStatusResolvers<ContextType>;
   VaultUnlockResult?: VaultUnlockResultResolvers<ContextType>;
+  Vehicle?: VehicleResolvers<ContextType>;
+  VehiclePhoto?: VehiclePhotoResolvers<ContextType>;
+  VehiclePhotoUploadTicket?: VehiclePhotoUploadTicketResolvers<ContextType>;
+  VehicleServiceRecord?: VehicleServiceRecordResolvers<ContextType>;
 };
 

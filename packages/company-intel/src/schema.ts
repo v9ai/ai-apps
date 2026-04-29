@@ -202,6 +202,12 @@ export const contacts = pgTable(
     lora_tier: text("lora_tier"),
     lora_reasons: jsonb("lora_reasons"),
     lora_scored_at: text("lora_scored_at"),
+    recruiter_fit_score: real("recruiter_fit_score"),
+    recruiter_fit_tier: text("recruiter_fit_tier"),
+    recruiter_fit_specialty: text("recruiter_fit_specialty"),
+    recruiter_fit_remote_global: boolean("recruiter_fit_remote_global"),
+    recruiter_fit_reasons: jsonb("recruiter_fit_reasons"),
+    recruiter_fit_scored_at: text("recruiter_fit_scored_at"),
     papers: jsonb("papers"), // Append-only multi-pipeline array; merge by doi || (source, source_id) || title. Never overwrite.
     papers_enriched_at: text("papers_enriched_at"),
     paper_classifications: jsonb("paper_classifications"),
@@ -246,6 +252,9 @@ export const contacts = pgTable(
     loraTierIdx: index("idx_contacts_lora_tier")
       .on(table.lora_tier)
       .where(sql`lora_tier IS NOT NULL`),
+    recruiterFitTierIdx: index("idx_contacts_recruiter_fit_tier")
+      .on(table.recruiter_fit_tier)
+      .where(sql`recruiter_fit_tier IS NOT NULL`),
   }),
 );
 

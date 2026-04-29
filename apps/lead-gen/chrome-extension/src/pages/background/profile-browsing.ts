@@ -345,8 +345,10 @@ export async function browseProfiles(
   tabId: number,
   profiles: string[],
   returnUrl: string,
-  options?: { ignoreDedup?: boolean },
+  options?: { ignoreDedup?: boolean; progressAction?: string; doneAction?: string },
 ) {
+  const progressAction = options?.progressAction ?? "browseProgress";
+  const doneAction = options?.doneAction ?? "browseDone";
   browseCancelled = false;
   let saved = 0;
   let skippedNonRecruiter = 0;
@@ -464,7 +466,7 @@ export async function browseProfiles(
     // Send progress to content script (may fail if on profile page — that's fine)
     try {
       await chrome.tabs.sendMessage(tabId, {
-        action: "browseProgress",
+        action: progressAction,
         current: i + 1,
         total: profiles.length,
         name: firstName,
@@ -654,7 +656,7 @@ export async function browseProfiles(
   await randomDelay(2000);
   try {
     await chrome.tabs.sendMessage(tabId, {
-      action: "browseDone",
+      action: doneAction,
       saved,
     });
   } catch { /* content script may not be ready */ }

@@ -1,0 +1,3 @@
+mutation ReorderTasks($updates: [TaskPositionUpdate!]!) {
+  reorderTasks(updates: $updates)
+}

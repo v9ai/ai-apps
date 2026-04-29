@@ -83,6 +83,36 @@ input AddSymptomInput {
   severity: String
 }
 
+input AddVehicleInput {
+  color: String
+  licensePlate: String
+  make: String!
+  model: String!
+  nickname: String
+  notes: String
+  odometerMiles: Int
+  vin: String
+  year: Int!
+}
+
+input AddVehiclePhotoInput {
+  caption: String
+  contentType: String!
+  r2Key: String!
+  sizeBytes: Int!
+  vehicleId: ID!
+}
+
+input AddVehicleServiceRecordInput {
+  costCents: Int
+  notes: String
+  odometerMiles: Int
+  serviceDate: String!
+  type: String!
+  vehicleId: ID!
+  vendor: String
+}
+
 type Affirmation {
   category: AffirmationCategory!
   createdAt: String!
@@ -647,6 +677,17 @@ input CreateSubGoalInput {
   title: String!
 }
 
+input CreateTaskInput {
+  description: String
+  dueDate: String
+  energyPreference: EnergyLevel
+  estimatedMinutes: Int
+  parentTaskId: ID
+  priorityManual: Int
+  status: TaskStatus
+  title: String!
+}
+
 input CreateTeacherFeedbackInput {
   content: String!
   familyMemberId: Int!
@@ -890,9 +931,28 @@ type DeleteSymptomResult {
   success: Boolean!
 }
 
+type DeleteTaskResult {
+  success: Boolean!
+}
+
 type DeleteTeacherFeedbackResult {
   message: String
   success: Boolean!
+}
+
+type DeleteVehiclePhotoResult {
+  deleted: Boolean!
+  id: ID!
+}
+
+type DeleteVehicleResult {
+  deleted: Boolean!
+  id: ID!
+}
+
+type DeleteVehicleServiceRecordResult {
+  deleted: Boolean!
+  id: ID!
 }
 
 type DevelopmentalContext {
@@ -948,6 +1008,12 @@ type EmotionalLandscape {
   emotionalRegulation: String!
   primaryEmotions: [String!]!
   underlyingEmotions: [String!]!
+}
+
+enum EnergyLevel {
+  high
+  low
+  medium
 }
 
 type EvidenceItem {
@@ -1686,6 +1752,10 @@ type Mutation {
   addProtocol(input: AddProtocolInput!): Protocol!
   addSupplement(input: AddSupplementInput!, protocolId: ID!): ProtocolSupplement!
   addSymptom(input: AddSymptomInput!): Symptom!
+  addTaskDependency(blockedTaskId: ID!, blockingTaskId: ID!): Boolean!
+  addVehicle(input: AddVehicleInput!): Vehicle!
+  addVehiclePhoto(input: AddVehiclePhotoInput!): VehiclePhoto!
+  addVehicleServiceRecord(input: AddVehicleServiceRecordInput!): VehicleServiceRecord!
   buildClaimCards(input: BuildClaimCardsInput!): BuildClaimCardsResult!
   checkNoteClaims(input: CheckNoteClaimsInput!): CheckNoteClaimsResult!
   convertIssueToGoal(id: Int!, input: CreateGoalInput!): Goal!
@@ -1705,6 +1775,7 @@ type Mutation {
   createRelationship(input: CreateRelationshipInput!): Relationship!
   createStory(input: CreateStoryInput!): Story!
   createSubGoal(goalId: Int!, input: CreateSubGoalInput!): Goal!
+  createTask(input: CreateTaskInput!): Task!
   createTeacherFeedback(input: CreateTeacherFeedbackInput!): TeacherFeedback!
   deleteAffirmation(id: Int!): DeleteAffirmationResult!
   deleteAllergy(id: ID!): DeleteAllergyResult!
@@ -1741,8 +1812,12 @@ type Mutation {
   deleteStory(id: Int!): DeleteStoryResult!
   deleteSupplement(id: ID!): DeleteSupplementResult!
   deleteSymptom(id: ID!): DeleteSymptomResult!
+  deleteTask(id: ID!): DeleteTaskResult!
   deleteTeacherFeedback(id: Int!): DeleteTeacherFeedbackResult!
   deleteTherapeuticQuestions(goalId: Int, issueId: Int, journalEntryId: Int): DeleteQuestionsResult!
+  deleteVehicle(id: ID!): DeleteVehicleResult!
+  deleteVehiclePhoto(id: ID!): DeleteVehiclePhotoResult!
+  deleteVehicleServiceRecord(id: ID!): DeleteVehicleServiceRecordResult!
   extractContactFeedbackIssues(id: Int!): ContactFeedback!
   generateAffirmationsForFamilyMember(categoryFocus: AffirmationCategory, count: Int, familyMemberId: Int!, language: String): GenerateAffirmationsResult!
   generateAudio(goalId: Int!, language: String, storyId: Int, text: String, voice: String): GenerateAudioResult!
@@ -1770,9 +1845,13 @@ type Mutation {
   logGameCompletion(input: LogGameCompletionInput!): GameCompletion!
   logHabit(count: Int, habitId: Int!, loggedDate: String!, notes: String): HabitLog!
   markTeacherFeedbackExtracted(id: Int!): TeacherFeedback!
+  parseTaskFromText(input: String!): ParsedTask
   recordCognitiveBaseline(input: CognitiveScoresInput!, protocolId: ID!): CognitiveBaseline!
   recordCognitiveCheckIn(input: CognitiveCheckInInput!, protocolId: ID!): CognitiveCheckIn!
   refreshClaimCard(id: ID!): ClaimCard!
+  removeTaskDependency(blockedTaskId: ID!, blockingTaskId: ID!): Boolean!
+  reorderTasks(updates: [TaskPositionUpdate!]!): Boolean!
+  requestVehiclePhotoUpload(input: RequestVehiclePhotoUploadInput!): VehiclePhotoUploadTicket!
   sendConversationMessage(conversationId: Int!, message: String!): Conversation!
   sendHealthcareChatMessage(input: HealthcareChatInput!): HealthcareChatResponse!
   setMedicationActive(id: ID!, isActive: Boolean!): Medication!
@@ -1781,6 +1860,7 @@ type Mutation {
   setTagLanguage(language: String!, tag: String!): Boolean!
   shareFamilyMember(email: String!, familyMemberId: Int!, role: FamilyMemberShareRole): FamilyMemberShare!
   shareNote(email: String!, noteId: Int!, role: NoteShareRole): NoteShare!
+  suggestTaskCategorization(description: String, title: String!): TaskCategorization
   unlinkContactFromIssue(contactId: Int!, issueId: Int!): UnlinkContactResult!
   unlinkGoalFamilyMember(id: Int!): Goal!
   unlinkIssues(issueId: Int!, linkedIssueId: Int!): UnlinkIssuesResult!
@@ -1801,8 +1881,11 @@ type Mutation {
   updateProtocolStatus(id: ID!, status: String!): Protocol!
   updateRelationship(id: Int!, input: UpdateRelationshipInput!): Relationship!
   updateStory(id: Int!, input: UpdateStoryInput!): Story!
+  updateTask(id: ID!, input: UpdateTaskInput!): Task!
   updateTeacherFeedback(id: Int!, input: UpdateTeacherFeedbackInput!): TeacherFeedback!
+  updateUserPreferences(input: UpdateUserPreferencesInput!): UserPreferences!
   updateUserSettings(storyLanguage: String!, storyMinutes: Int): UserSettings!
+  updateVehicle(id: ID!, input: UpdateVehicleInput!): Vehicle!
 }
 
 type Note {
@@ -1912,6 +1995,13 @@ type ParentAdviceItem {
   title: String!
 }
 
+type ParsedTask {
+  dueDate: String
+  energyPreference: EnergyLevel
+  estimatedMinutes: Int
+  title: String!
+}
+
 type PatternCluster {
   categories: [String!]!
   confidence: Float!
@@ -1946,6 +2036,20 @@ type PriorityRecommendation {
   relatedResearchIds: [Int!]
   suggestedApproach: String!
   urgency: String!
+}
+
+type PriorityWeights {
+  deadlineUrgency: Float!
+  dependencyImpact: Float!
+  projectWeight: Float!
+  userValue: Float!
+}
+
+input PriorityWeightsInput {
+  deadlineUrgency: Float!
+  dependencyImpact: Float!
+  projectWeight: Float!
+  userValue: Float!
 }
 
 type Protocol {
@@ -2065,11 +2169,18 @@ type Query {
   story(id: Int!): Story
   symptoms: [Symptom!]!
   tagLanguage(tag: String!): String
+  task(id: ID!): Task
+  taskCounts: TaskCounts!
+  tasks(limit: Int = 7, offset: Int = 0, status: TaskStatus!): [Task!]!
   teacherFeedback(id: Int!): TeacherFeedback
   teacherFeedbacks(familyMemberId: Int!): [TeacherFeedback!]!
   therapeuticQuestions(goalId: Int, issueId: Int, journalEntryId: Int): [TherapeuticQuestion!]!
+  userPreferences: UserPreferences!
   userSettings: UserSettings!
+  userStreak: UserStreak!
   vaultStatus: VaultStatus!
+  vehicle(id: ID!): Vehicle
+  vehicles: [Vehicle!]!
 }
 
 type RecommendedBook {
@@ -2137,6 +2248,12 @@ type RelationshipPerson {
 enum RelationshipStatus {
   ACTIVE
   ENDED
+}
+
+input RequestVehiclePhotoUploadInput {
+  contentType: String!
+  filename: String!
+  vehicleId: ID!
 }
 
 type Research {
@@ -2310,6 +2427,58 @@ type TalkingPoint {
   point: String!
   relatedResearchIds: [Int!]
   researchBacking: String
+}
+
+type Task {
+  actualMinutes: Int
+  blocked: [TaskRef!]!
+  blockers: [TaskRef!]!
+  completedAt: String
+  createdAt: String!
+  description: String
+  dueDate: String
+  energyPreference: EnergyLevel
+  estimatedMinutes: Int
+  id: ID!
+  parentTaskId: ID
+  position: Int!
+  priorityManual: Int
+  priorityScore: Float!
+  status: TaskStatus!
+  subtasks: [Task!]!
+  title: String!
+  updatedAt: String!
+}
+
+type TaskCategorization {
+  energyPreference: EnergyLevel!
+  estimatedMinutes: Int!
+  priority: Int!
+}
+
+type TaskCounts {
+  active: Int!
+  archived: Int!
+  completed: Int!
+  inbox: Int!
+}
+
+input TaskPositionUpdate {
+  id: ID!
+  position: Int!
+}
+
+type TaskRef {
+  id: ID!
+  status: TaskStatus!
+  title: String!
+}
+
+enum TaskStatus {
+  active
+  archived
+  completed
+  inbox
 }
 
 type TeacherFeedback {
@@ -2499,6 +2668,20 @@ input UpdateStoryInput {
   content: String
 }
 
+input UpdateTaskInput {
+  actualMinutes: Int
+  completedAt: String
+  description: String
+  dueDate: String
+  energyPreference: EnergyLevel
+  estimatedMinutes: Int
+  position: Int
+  priorityManual: Int
+  priorityScore: Float
+  status: TaskStatus
+  title: String
+}
+
 input UpdateTeacherFeedbackInput {
   content: String
   feedbackDate: String
@@ -2508,10 +2691,46 @@ input UpdateTeacherFeedbackInput {
   teacherName: String
 }
 
+input UpdateUserPreferencesInput {
+  bufferPercentage: Int
+  chronotype: String
+  chunkSize: Int
+  gamificationEnabled: Boolean
+  priorityWeights: PriorityWeightsInput
+}
+
+input UpdateVehicleInput {
+  color: String
+  licensePlate: String
+  make: String
+  model: String
+  nickname: String
+  notes: String
+  odometerMiles: Int
+  vin: String
+  year: Int
+}
+
+type UserPreferences {
+  bufferPercentage: Int!
+  chronotype: String!
+  chunkSize: Int!
+  gamificationEnabled: Boolean!
+  priorityWeights: PriorityWeights!
+}
+
 type UserSettings {
   storyLanguage: String!
   storyMinutes: Int!
   userId: String!
+}
+
+type UserStreak {
+  currentStreak: Int!
+  freezeAvailable: Int!
+  lastCompletedDate: String
+  longestStreak: Int!
+  streakOptIn: Boolean!
 }
 
 type VaultStatus {
@@ -2523,4 +2742,52 @@ type VaultUnlockResult {
   message: String
   success: Boolean!
   unlocked: Boolean!
+}
+
+type Vehicle {
+  color: String
+  createdAt: String!
+  id: ID!
+  licensePlate: String
+  make: String!
+  model: String!
+  nickname: String
+  notes: String
+  odometerMiles: Int
+  photos: [VehiclePhoto!]
+  serviceRecords: [VehicleServiceRecord!]
+  thumbnailUrl: String
+  updatedAt: String!
+  userId: String!
+  vin: String
+  year: Int!
+}
+
+type VehiclePhoto {
+  caption: String
+  contentType: String!
+  createdAt: String!
+  id: ID!
+  r2Key: String!
+  sizeBytes: Int!
+  url: String
+  vehicleId: ID!
+}
+
+type VehiclePhotoUploadTicket {
+  r2Key: String!
+  uploadUrl: String!
+}
+
+type VehicleServiceRecord {
+  costCents: Int
+  createdAt: String!
+  id: ID!
+  notes: String
+  odometerMiles: Int
+  serviceDate: String!
+  type: String!
+  updatedAt: String!
+  vehicleId: ID!
+  vendor: String
 }

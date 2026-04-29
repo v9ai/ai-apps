@@ -1,0 +1,13 @@
+query Vehicles {
+  vehicles {
+    id
+    make
+    model
+    year
+    nickname
+    color
+    licensePlate
+    odometerMiles
+    thumbnailUrl
+  }
+}

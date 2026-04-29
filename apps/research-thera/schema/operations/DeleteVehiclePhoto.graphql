@@ -1,0 +1,6 @@
+mutation DeleteVehiclePhoto($id: ID!) {
+  deleteVehiclePhoto(id: $id) {
+    id
+    deleted
+  }
+}

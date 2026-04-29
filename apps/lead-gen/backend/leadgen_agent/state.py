@@ -162,6 +162,64 @@ class ClassifyPaperState(TypedDict, total=False):
     reasons: list[str]  # <= 3 short bullets
 
 
+class ClassifyRecruitmentState(TypedDict, total=False):
+    # input — at least one should be set; more signal = better verdict
+    name: str
+    website: str
+    description: str
+    # output
+    is_recruitment: bool
+    confidence: float  # 0.0 – 1.0
+    reasons: list[str]  # <= 3 short bullets
+
+
+class ClassifyRecruitmentBulkState(TypedDict, total=False):
+    # input
+    include_all: bool       # false (default) = only category IS NULL/''/'UNKNOWN'; true = every row
+    limit: int              # cap row count (for sanity runs)
+    concurrency: int        # default 8 — bounded LLM fan-out via asyncio.Semaphore
+    out_path: str           # default "classify_recruitment_all.csv" (relative resolved against CWD)
+    apply: bool             # false (default) = CSV only; true = UPDATE companies SET category='STAFFING' for high-conf hits
+    # output
+    count: int
+    is_recruitment_count: int
+    high_confidence_count: int
+    csv_path: str
+    applied: int
+
+
+class ClassifyAiIntentState(TypedDict, total=False):
+    # input — posts is the primary signal; name/headline/company give context
+    contact_id: int  # echoed back for batch joins; not consumed by the scorer
+    name: str
+    headline: str
+    company_name: str
+    posts: list[str]  # post bodies, newest first; capped at 10 in the node
+    # internal — populated by extract_signals, consumed by score_intent / format_reasons
+    signals: dict[str, Any]
+    # output
+    has_ai_intent: bool
+    intent_kind: str  # "hiring" | "buying" | "scaling" | "none"
+    confidence: float  # 0.0 – 1.0
+    reasons: list[str]  # <= 3 short bullets, each citing a post snippet
+
+
+class ScoreRecruiterFitState(TypedDict, total=False):
+    # input — name + headline + employer is the minimum useful signal
+    contact_id: int  # echoed back for batch joins
+    name: str
+    headline: str  # LinkedIn current headline
+    employer: str  # current company name (their staffing/search firm)
+    about: str  # LinkedIn about/bio (optional but high-signal)
+    recent_posts: list[str]  # last few posts, optional, capped at 5
+    # output
+    fit_score: float  # 0.0 – 1.0
+    tier: str  # "ideal" | "strong" | "weak" | "off_target"
+    specialty: str  # "ai_ml" | "engineering_general" | "non_technical" | "unknown"
+    remote_global: bool | None  # placements are remote/global? null = unknown
+    reasons: list[str]  # <= 3 short bullets
+
+
 class ContactEnrichState(TypedDict, total=False):
     # input
     contact_id: int

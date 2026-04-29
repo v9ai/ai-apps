@@ -1,0 +1,14 @@
+mutation UpdateUserPreferences($input: UpdateUserPreferencesInput!) {
+  updateUserPreferences(input: $input) {
+    chronotype
+    chunkSize
+    gamificationEnabled
+    bufferPercentage
+    priorityWeights {
+      deadlineUrgency
+      userValue
+      dependencyImpact
+      projectWeight
+    }
+  }
+}

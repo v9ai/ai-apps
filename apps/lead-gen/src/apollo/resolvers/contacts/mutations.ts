@@ -75,7 +75,12 @@ export const contactMutations = {
     requireAdmin(context);
     const { firstName, lastName, emails, tags, companyId, linkedinUrl, githubHandle, telegramHandle, position, email } = args.input;
 
-    // Dedup: if a contact with this LinkedIn URL already exists, return it
+    // Dedup: if a contact with this LinkedIn URL already exists, backfill any
+    // missing fields from the new input (slug, position, company_id, etc.) and
+    // return the updated row. The bulk people-scraping path leaves slug and
+    // position null; a later Import Profile re-import should fill those in
+    // rather than no-oping, otherwise the post-import redirect lands on
+    // /contacts/null and the contact looks orphaned in the UI.
     if (linkedinUrl) {
       const normalized = linkedinUrl.replace(/\/+$/, "").split("?")[0];
       const withSlash = normalized + "/";
@@ -83,7 +88,46 @@ export const contactMutations = {
         .where(or(eq(contacts.linkedin_url, normalized), eq(contacts.linkedin_url, withSlash)))
         .orderBy(sql`${contacts.slug} ASC NULLS LAST`)
         .limit(1);
-      if (existing) return existing;
+      if (existing) {
+        const updates: ContactUpdate = {};
+        if (!existing.slug) {
+          const baseSlug = deriveContactSlug({
+            github_handle: githubHandle,
+            linkedin_url: linkedinUrl,
+            first_name: firstName,
+            last_name: lastName ?? existing.last_name ?? "",
+          });
+          updates.slug = await resolveUniqueSlug(context.db, baseSlug);
+        }
+        if (!existing.position && position) updates.position = position;
+        if (!existing.company_id && companyId !== undefined) updates.company_id = companyId;
+        if (!existing.first_name && firstName) updates.first_name = firstName;
+        if (!existing.last_name && lastName) updates.last_name = lastName;
+        if (!existing.github_handle && githubHandle) updates.github_handle = githubHandle;
+        if (!existing.telegram_handle && telegramHandle) updates.telegram_handle = telegramHandle;
+        if (!existing.email && email) updates.email = email;
+        if (emails && emails.length > 0) {
+          const existingEmails: string[] = (() => {
+            const raw = existing.emails as unknown;
+            if (!raw) return [];
+            if (Array.isArray(raw)) return raw as string[];
+            if (typeof raw === "string") {
+              try { return JSON.parse(raw) as string[]; } catch { return []; }
+            }
+            return [];
+          })();
+          if (existingEmails.length === 0) {
+            updates.emails = JSON.stringify(emails);
+          }
+        }
+        if (Object.keys(updates).length === 0) return existing;
+        const [updated] = await context.db
+          .update(contacts)
+          .set(updates)
+          .where(eq(contacts.id, existing.id))
+          .returning();
+        return updated ?? existing;
+      }
     }
 
     const mlClassification = classifyContact(position);
@@ -1128,6 +1172,65 @@ export const contactMutations = {
       .where(eq(contacts.id, args.contactId))
       .returning();
 
+    return updated;
+  },
+
+  async setRecruiterFit(
+    _parent: unknown,
+    args: {
+      contactId: number;
+      fitScore: number;
+      tier: string;
+      specialty: string;
+      remoteGlobal?: boolean | null;
+      reasons?: string[] | null;
+    },
+    context: GraphQLContext,
+  ) {
+    requireAdmin(context);
+
+    const ALLOWED_TIERS = new Set(["ideal", "strong", "weak", "off_target"]);
+    const ALLOWED_SPECIALTIES = new Set([
+      "ai_ml",
+      "engineering_general",
+      "non_technical",
+      "unknown",
+    ]);
+    if (!ALLOWED_TIERS.has(args.tier)) {
+      throw new GraphQLError(`tier must be one of ${[...ALLOWED_TIERS].join("|")}`, {
+        extensions: { code: "BAD_USER_INPUT" },
+      });
+    }
+    if (!ALLOWED_SPECIALTIES.has(args.specialty)) {
+      throw new GraphQLError(`specialty must be one of ${[...ALLOWED_SPECIALTIES].join("|")}`, {
+        extensions: { code: "BAD_USER_INPUT" },
+      });
+    }
+    const fitScore = Math.max(0, Math.min(1, args.fitScore));
+    const reasons = Array.isArray(args.reasons)
+      ? args.reasons.filter((r): r is string => typeof r === "string").slice(0, 3)
+      : [];
+    const now = new Date().toISOString();
+
+    const [updated] = await context.db
+      .update(contacts)
+      .set({
+        recruiter_fit_score: fitScore,
+        recruiter_fit_tier: args.tier,
+        recruiter_fit_specialty: args.specialty,
+        recruiter_fit_remote_global: args.remoteGlobal ?? null,
+        recruiter_fit_reasons: reasons,
+        recruiter_fit_scored_at: now,
+        updated_at: now,
+      })
+      .where(eq(contacts.id, args.contactId))
+      .returning();
+
+    if (!updated) {
+      throw new GraphQLError(`Contact ${args.contactId} not found`, {
+        extensions: { code: "NOT_FOUND" },
+      });
+    }
     return updated;
   },
 

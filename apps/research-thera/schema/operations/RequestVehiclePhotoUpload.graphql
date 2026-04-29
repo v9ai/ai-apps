@@ -1,0 +1,6 @@
+mutation RequestVehiclePhotoUpload($input: RequestVehiclePhotoUploadInput!) {
+  requestVehiclePhotoUpload(input: $input) {
+    uploadUrl
+    r2Key
+  }
+}

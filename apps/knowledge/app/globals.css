@@ -4082,6 +4082,18 @@ body {
   background: var(--gray-1);
   overflow: hidden;
   margin-bottom: 16px;
+  width: 100%;
+  max-width: 100%;
+  height: clamp(240px, var(--graph-h, 320px), 560px);
+  touch-action: pan-y pinch-zoom;
+}
+@media (max-width: 768px) {
+  .mermaid-flow-container { height: clamp(220px, var(--graph-h, 300px), 360px); }
+}
+@media (max-width: 480px) {
+  .mermaid-flow-container { height: clamp(200px, var(--graph-h, 260px), 280px); }
+  .mermaid-fc-node { font-size: 11px; padding: 6px 12px; }
+  .mermaid-fc-circle { width: 40px; height: 40px; font-size: 9px; }
 }
 
 .mermaid-handle {

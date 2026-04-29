@@ -248,6 +248,103 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
+  // ── Score All DB Contacts — backfill score_recruiter_fit over every saved
+  // contact with a linkedin_url. Walks the contacts table in pages, dedupes,
+  // and reuses the same browseProfiles engine (createContact no-ops on
+  // duplicates → post-scrape + fit-score still run).
+  if (message.action === "scoreAllDbContacts") {
+    const { returnUrl, ignoreDedup } = message as {
+      returnUrl: string;
+      ignoreDedup?: boolean;
+    };
+    const tabId = sender.tab?.id;
+    if (!tabId) {
+      sendResponse({ success: false, error: "No tab ID" });
+      return true;
+    }
+    sendResponse({ success: true });
+
+    (async () => {
+      startKeepAlive();
+      try {
+        const PAGE_SIZE = 500;
+        const HARD_CAP = 10_000;
+        const seen = new Set<string>();
+        let offset = 0;
+        let totalReported = 0;
+        let pulled = 0;
+
+        while (offset < HARD_CAP) {
+          const queryResult = await gqlRequest(
+            `query AllContactsForScoring($limit: Int!, $offset: Int!) {
+              contacts(limit: $limit, offset: $offset) {
+                contacts { id linkedinUrl }
+                totalCount
+              }
+            }`,
+            { limit: PAGE_SIZE, offset },
+          );
+          const page = (queryResult.data?.contacts?.contacts ?? []) as Array<{
+            id: number | string;
+            linkedinUrl: string | null;
+          }>;
+          totalReported = Number(queryResult.data?.contacts?.totalCount ?? 0);
+          if (page.length === 0) break;
+          pulled += page.length;
+          for (const c of page) {
+            if (typeof c.linkedinUrl !== "string" || c.linkedinUrl.length === 0) continue;
+            const url = c.linkedinUrl.endsWith("/") ? c.linkedinUrl : c.linkedinUrl + "/";
+            seen.add(url);
+          }
+          console.log(
+            `[ScoreAllContacts] page offset=${offset}: +${page.length} (total pulled ${pulled}/${totalReported}, urls dedup=${seen.size})`,
+          );
+          offset += page.length;
+          if (page.length < PAGE_SIZE) break;
+        }
+
+        if (offset >= HARD_CAP) {
+          console.warn(
+            `[ScoreAllContacts] Hit HARD_CAP=${HARD_CAP} before exhausting totalCount=${totalReported}`,
+          );
+        }
+
+        const urls = [...seen];
+        console.log(
+          `[ScoreAllContacts] Total to score: ${urls.length} (from ${pulled} contacts pulled)`,
+        );
+
+        if (urls.length === 0) {
+          await chrome.tabs.sendMessage(tabId, {
+            action: "scoreAllDone",
+            saved: 0,
+            error: "No contacts with linkedinUrl",
+          }).catch(() => {});
+          return;
+        }
+
+        await browseProfiles(tabId, urls, returnUrl, {
+          ignoreDedup: ignoreDedup === true,
+          progressAction: "scoreAllProgress",
+          doneAction: "scoreAllDone",
+        });
+      } catch (err) {
+        console.error(
+          `[ScoreAllContacts] Failed:`,
+          err instanceof Error ? err.message : String(err),
+        );
+        await chrome.tabs.sendMessage(tabId, {
+          action: "scoreAllDone",
+          saved: 0,
+          error: err instanceof Error ? err.message : "score-all failed",
+        }).catch(() => {});
+      } finally {
+        stopKeepAlive();
+      }
+    })();
+    return true;
+  }
+
   // ── Start Profile Browsing — All Search Pages (Voyager) ──
   if (message.action === "startProfileBrowsingAllPages") {
     const { searchUrl } = message as { searchUrl: string };
@@ -752,6 +849,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         currentCompany: string;
         currentCompanyLinkedinUrl: string;
         currentPosition?: string;
+        currentEmails?: string[];
       };
     };
     const tabId = sender.tab?.id;
@@ -774,6 +872,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const position =
           profileData.currentPosition || parseHeadline(profileData.headline).position;
         const companyName = profileData.currentCompany;
+        const emails = profileData.currentEmails ?? [];
+        const primaryEmail = emails[0];
 
         await notifyTab({ status: `${profileData.name} — looking up...` });
 
@@ -833,6 +933,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
               linkedinUrl: profileData.linkedinUrl,
               position: position || undefined,
               ...(companyId !== undefined && { companyId }),
+              ...(primaryEmail && { email: primaryEmail }),
+              ...(emails.length > 0 && { emails }),
               tags: ["linkedin-import"],
             },
           },
@@ -845,7 +947,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           await notifyTab({
             done: true,
             slug: contact.slug,
-            status: `Imported: ${profileData.name}${companyName ? " at " + companyName : ""}`,
+            status: `Imported: ${profileData.name}${companyName ? " at " + companyName : ""}${primaryEmail ? " (" + primaryEmail + ")" : ""}`,
           });
         }
       } catch (err) {

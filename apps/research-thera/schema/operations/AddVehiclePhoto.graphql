@@ -1,0 +1,10 @@
+mutation AddVehiclePhoto($input: AddVehiclePhotoInput!) {
+  addVehiclePhoto(input: $input) {
+    id
+    vehicleId
+    r2Key
+    caption
+    url
+    createdAt
+  }
+}

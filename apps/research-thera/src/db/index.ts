@@ -57,6 +57,44 @@ import {
   listFamilyDocuments as _listFamilyDocuments,
 } from "./healthcare";
 
+import {
+  listTasks as _listTasks,
+  getTask as _getTask,
+  getSubtasks as _getSubtasks,
+  getTaskCounts as _getTaskCounts,
+  createTask as _createTask,
+  updateTask as _updateTask,
+  deleteTask as _deleteTask,
+  reorderTasks as _reorderTasks,
+  getBlockers as _getBlockers,
+  getBlocked as _getBlocked,
+  addTaskDependency as _addTaskDependency,
+  removeTaskDependency as _removeTaskDependency,
+  getUserPreferences as _getUserPreferences,
+  upsertUserPreferences as _upsertUserPreferences,
+  getUserStreak as _getUserStreak,
+  persistStreak as _persistStreak,
+} from "./tasks";
+
+export {
+  _listTasks as listTasks,
+  _getTask as getTask,
+  _getSubtasks as getSubtasks,
+  _getTaskCounts as getTaskCounts,
+  _createTask as createTask,
+  _updateTask as updateTask,
+  _deleteTask as deleteTask,
+  _reorderTasks as reorderTasks,
+  _getBlockers as getTaskBlockers,
+  _getBlocked as getTaskBlocked,
+  _addTaskDependency as addTaskDependency,
+  _removeTaskDependency as removeTaskDependency,
+  _getUserPreferences as getUserPreferences,
+  _upsertUserPreferences as upsertUserPreferences,
+  _getUserStreak as getUserStreak,
+  _persistStreak as persistStreak,
+};
+
 // Re-export healthcare functions so they're reachable as top-level exports
 export {
   _listConditions as listConditions,
@@ -132,6 +170,43 @@ export type {
   MedicalLetter,
   FamilyDocument,
 } from "./healthcare";
+
+import {
+  listVehicles as _listVehicles,
+  getVehicle as _getVehicle,
+  assertOwnsVehicle as _assertOwnsVehicle,
+  createVehicle as _createVehicle,
+  updateVehicle as _updateVehicle,
+  deleteVehicle as _deleteVehicle,
+  listVehiclePhotos as _listVehiclePhotos,
+  getFirstPhotoForVehicles as _getFirstPhotoForVehicles,
+  createVehiclePhoto as _createVehiclePhoto,
+  deleteVehiclePhoto as _deleteVehiclePhoto,
+  listVehicleServiceRecords as _listVehicleServiceRecords,
+  createVehicleServiceRecord as _createVehicleServiceRecord,
+  deleteVehicleServiceRecord as _deleteVehicleServiceRecord,
+} from "./vehicles";
+
+export {
+  _listVehicles as listVehicles,
+  _getVehicle as getVehicle,
+  _assertOwnsVehicle as assertOwnsVehicle,
+  _createVehicle as createVehicle,
+  _updateVehicle as updateVehicle,
+  _deleteVehicle as deleteVehicle,
+  _listVehiclePhotos as listVehiclePhotos,
+  _getFirstPhotoForVehicles as getFirstPhotoForVehicles,
+  _createVehiclePhoto as createVehiclePhoto,
+  _deleteVehiclePhoto as deleteVehiclePhoto,
+  _listVehicleServiceRecords as listVehicleServiceRecords,
+  _createVehicleServiceRecord as createVehicleServiceRecord,
+  _deleteVehicleServiceRecord as deleteVehicleServiceRecord,
+};
+export type {
+  Vehicle,
+  VehiclePhoto,
+  VehicleServiceRecord,
+} from "./vehicles";
 
 /**
  * Convert a SQL string with `?` placeholders to PostgreSQL `$N` style,
@@ -4358,5 +4433,36 @@ export const db = {
   getDoctor: _getDoctor,
   // Healthcare — Family documents
   listFamilyDocuments: _listFamilyDocuments,
+  // Tasks (merged from apps/todo)
+  listTasks: _listTasks,
+  getTask: _getTask,
+  getSubtasks: _getSubtasks,
+  getTaskCounts: _getTaskCounts,
+  createTask: _createTask,
+  updateTask: _updateTask,
+  deleteTask: _deleteTask,
+  reorderTasks: _reorderTasks,
+  getTaskBlockers: _getBlockers,
+  getTaskBlocked: _getBlocked,
+  addTaskDependency: _addTaskDependency,
+  removeTaskDependency: _removeTaskDependency,
+  getUserPreferences: _getUserPreferences,
+  upsertUserPreferences: _upsertUserPreferences,
+  getUserStreak: _getUserStreak,
+  persistStreak: _persistStreak,
+  // Vehicles (merged from apps/my-car)
+  listVehicles: _listVehicles,
+  getVehicle: _getVehicle,
+  assertOwnsVehicle: _assertOwnsVehicle,
+  createVehicle: _createVehicle,
+  updateVehicle: _updateVehicle,
+  deleteVehicle: _deleteVehicle,
+  listVehiclePhotos: _listVehiclePhotos,
+  getFirstPhotoForVehicles: _getFirstPhotoForVehicles,
+  createVehiclePhoto: _createVehiclePhoto,
+  deleteVehiclePhoto: _deleteVehiclePhoto,
+  listVehicleServiceRecords: _listVehicleServiceRecords,
+  createVehicleServiceRecord: _createVehicleServiceRecord,
+  deleteVehicleServiceRecord: _deleteVehicleServiceRecord,
 };
 

@@ -1,6 +1,6 @@
 # Knowledge
 
-AI engineering educational platform — 88 lessons across 14 categories with search, audio, knowledge graphs, and learning analytics.
+AI engineering educational platform — 92 lessons across 14 categories with search, audio, knowledge graphs, and learning analytics.
 
 ## Stack
 
@@ -260,7 +260,9 @@ graph LR
 
 ### Content Generation Pipeline
 
-LangGraph graph (`backend/knowledge_agent/article_generate_graph.py`, `assistant_id: article_generate`) generates knowledge base articles from a topic slug. Uses DeepSeek through five LLM passes, with a conditional revision loop (max 2) gated by quality checks (word count, code blocks, cross-refs). Catalog context (related topics, existing articles, style sample) is resolved by the Next.js caller via `lib/article-catalog.ts` and passed as input — the container has no filesystem access to the repo.
+LangGraph graph (`backend/knowledge_agent/article_generate_graph.py`, `assistant_id: article_generate`) generates knowledge base articles from a topic slug. Uses DeepSeek through five LLM passes, with a conditional revision loop (max 2) gated by quality checks (word count, code blocks, cross-refs, ≥5 ```xyflow JSON diagrams, mandatory `## Mental Model` and `## Runtime Internals` sections, no ```mermaid blocks).
+
+**Article generation runs in pure Python** via `backend/scripts/generate_article.py` — it imports `build_graph()` directly and calls `graph.ainvoke(state)` in-process. No HTTP, no TS langgraph-client. Catalog context (existing articles, style sample) is derived by the script scanning `content/*.md` directly. The other four graphs (`chat`, `app_prep`, `memorize_generate`, `course_review`) still go through the FastAPI HTTP path because they're invoked at runtime from the Next.js app.
 
 ```mermaid
 graph TD
@@ -342,12 +344,12 @@ apps/knowledge/
 │   ├── audio-player.tsx    # TTS audio playback
 │   ├── toc.tsx             # Auto-generated ToC
 │   └── ...
-├── content/                # 88 markdown lesson files
+├── content/                # 92 markdown lesson files
 ├── src/db/
 │   ├── index.ts            # Neon serverless client
 │   └── schema.ts           # Drizzle schema (22 tables, incl. learners, coursework, external_courses[+topic_group], lesson_courses, course_reviews)
-├── src/lib/langgraph-client.ts       # Typed POST /runs/wait client (chat, runAppPrep, runMemorizeGenerate, runArticleGenerate, runCourseReview)
-├── lib/article-catalog.ts            # Catalog helpers used by generate-article CLI (slugs, categories, related topics, style sample)
+├── src/lib/langgraph-client.ts       # Typed POST /runs/wait client (chat, runAppPrep, runMemorizeGenerate, runCourseReview) — article_generate is NOT here, it runs in pure Python
+├── lib/article-catalog.ts            # Catalog helpers (slugs, categories, related topics, style sample) — used by Next.js features; the Python article generator scans content/*.md directly
 ├── backend/                # Python FastAPI + LangGraph on Cloudflare Containers
 │   ├── wrangler.jsonc      # Worker + KnowledgeContainer (standard-1 on :7860)
 │   ├── Dockerfile          # python:3.12-slim, uvicorn --workers 1
@@ -388,7 +390,7 @@ apps/knowledge/
 ├── scripts/seed.ts                 # DB seeder (lessons from markdown)
 ├── scripts/seed-courses.ts         # Udemy course catalog seeder
 ├── scripts/scrape-udemy-courses.ts # Playwright scraper — deep-scrapes Udemy topic pages into external_courses
-├── scripts/generate-article.ts     # Article generator CLI
+├── backend/scripts/generate_article.py # Python CLI for article generation — invokes the LangGraph StateGraph in-process (no HTTP)
 ├── scripts/review-courses.ts       # 10-expert course reviewer CLI
 ├── scripts/test-langgraph-e2e.ts   # E2E integration test against deployed worker (routing/auth/404; --live adds one DeepSeek call)
 ├── sql/setup.sql           # Neon setup (FTS, RPCs, mat views)

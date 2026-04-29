@@ -1,0 +1,76 @@
+fragment TaskFields on Task {
+  id
+  title
+  description
+  status
+  priorityScore
+  priorityManual
+  dueDate
+  estimatedMinutes
+  actualMinutes
+  energyPreference
+  parentTaskId
+  position
+  completedAt
+  createdAt
+  updatedAt
+}
+
+query GetTasks($status: TaskStatus!, $limit: Int, $offset: Int) {
+  tasks(status: $status, limit: $limit, offset: $offset) {
+    ...TaskFields
+  }
+}
+
+query GetTaskCounts {
+  taskCounts {
+    inbox
+    active
+    completed
+    archived
+  }
+}
+
+query GetTask($id: ID!) {
+  task(id: $id) {
+    ...TaskFields
+    subtasks {
+      ...TaskFields
+    }
+    blockers {
+      id
+      title
+      status
+    }
+    blocked {
+      id
+      title
+      status
+    }
+  }
+}
+
+query GetUserPreferences {
+  userPreferences {
+    chronotype
+    chunkSize
+    gamificationEnabled
+    bufferPercentage
+    priorityWeights {
+      deadlineUrgency
+      userValue
+      dependencyImpact
+      projectWeight
+    }
+  }
+}
+
+query GetUserStreak {
+  userStreak {
+    currentStreak
+    longestStreak
+    lastCompletedDate
+    freezeAvailable
+    streakOptIn
+  }
+}

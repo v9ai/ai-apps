@@ -30,6 +30,7 @@ MAX_REVISIONS = 2
 MIN_WORD_COUNT = 1500
 MIN_CODE_BLOCKS = 2
 MIN_CROSS_REFS = 1
+MIN_MERMAID_BLOCKS = 5
 
 
 RESEARCH_PROMPT = """You are a technical researcher preparing material for an AI engineering knowledge base article.
@@ -61,20 +62,26 @@ Research notes:
 Existing articles in this knowledge base for cross-referencing:
 {existing_articles}
 
-Create a detailed outline for this article. Follow this structure pattern:
-1. Start with a `# Title` (concise, descriptive)
-2. An opening paragraph (no heading) that explains what this is, why it matters, and sets context
-3. `## Core Concepts` or similar foundational section
-4. `## How It Works` / technical deep-dive sections with code examples
-5. `## Patterns` / practical production patterns
-6. `## Common Pitfalls` / what goes wrong
-7. `## Comparison` with alternatives (if applicable)
-8. Cross-references to related articles using markdown links like [Article Title](/slug)
+Create a detailed outline for this article. The article must follow a "simple-first, then deep" arc:
+
+1. `# Title` — concise, descriptive
+2. **Opening paragraph** (no heading): one paragraph that explains what this is, why it matters, and sets context. Avoid jargon here.
+3. `## Mental Model` — **plain-English first**. Build intuition before any code. Three short subsections:
+   - `### What problem does it solve?` — contrast with the naive/linear approach
+   - `### The whiteboard analogy` — a concrete visual analogy (~120 words) ending with a `xyflow` JSON diagram
+   - `### Hello-world in ~10 lines` — minimum viable example with a matching `xyflow` JSON diagram
+4. `## Core Concepts` — definitions, type signatures, foundational primitives. Each major primitive gets a `xyflow` diagram alongside the code.
+5. `## How It Works` — technical sections with Python code examples and `xyflow` diagrams illustrating control flow / state changes.
+6. `## Runtime Internals` — **deep-dive** section: explain the underlying execution model (e.g., for LangGraph: Pregel/BSP supersteps, channels, deterministic replay). This is "why it works the way it does," not just "what the API is."
+7. `## Patterns` — practical production patterns with at least one `xyflow` diagram per pattern (e.g., fan-out, supervisor, HITL).
+8. `## Common Pitfalls` — what goes wrong and how to detect it.
+9. `## Comparison` with alternatives (if applicable).
 
 For each section, note:
 - Key points to cover
-- Code examples needed (specify language: Python preferred, TypeScript where relevant)
-- Diagrams or tables to include
+- Code examples needed — match the topic's natural language: SQL for database topics, Python for LLM/agent topics (LangGraph, agents), TypeScript where the API is JS-only. For LangGraph articles specifically, all examples must be Python.
+- **Diagrams**: every conceptual section must specify at least one `xyflow` JSON diagram — total target ≥ 6 diagrams across the article. Do NOT use mermaid; use the xyflow JSON fence described in the draft prompt.
+- Cross-references to related articles using markdown links like [Article Title](/slug)
 
 Output the outline as markdown with section headers and bullet points under each.
 """
@@ -95,17 +102,62 @@ Style reference (match this tone, depth, and format):
 {style_sample}
 ---
 
-Requirements:
+Structural requirements:
 - Start with `# Title` — a clear, descriptive title
 - Opening paragraph: explain what this is, why it matters, cross-reference related articles
+- **Second section MUST be `## Mental Model`** with the three subsections from the outline (problem, analogy, hello-world). Build intuition before any deep API material.
 - Use `##` for major sections, `###` for subsections
-- Include at least 3 real, working code examples (Python preferred, TypeScript where relevant)
+- Include a `## Runtime Internals` deep-dive section that explains the execution model, not just the API surface
+- Cross-reference at least 2 related articles as [Title](/slug) links
+
+Code requirements:
+- Include at least 3 real, working code examples in the language natural to the topic: **SQL** for database articles (PostgreSQL, MySQL, query optimization), **Python** for LLM/agent articles (LangGraph, agents, ML), **TypeScript** where the API is JS-only. Do not force Python into a SQL article or vice versa.
 - Use ```python or ```typescript code fences with proper syntax
 - Include tables for comparisons using markdown pipe syntax
-- Cross-reference at least 2 related articles as [Title](/slug) links
-- Write for an intermediate-to-senior AI engineer audience
-- Be specific and technical — no hand-waving or filler
-- Target 2000-4000 words
+
+Diagram requirements (CRITICAL — use xyflow, NOT mermaid):
+- Include **at least 5 interactive graph diagrams** using the ```xyflow code fence with strict JSON inside
+- Each xyflow block is rendered as a draggable React Flow graph by the knowledge app — DO NOT write mermaid syntax, DO NOT use ```mermaid fences
+- The JSON schema is exactly:
+
+  ```xyflow
+  {{
+    "direction": "TD",
+    "nodes": [
+      {{"id": "user", "label": "User Query", "shape": "circle"}},
+      {{"id": "agent", "label": "Agent\\nNode", "shape": "rect"}},
+      {{"id": "decide", "label": "Has tool calls?", "shape": "diamond"}},
+      {{"id": "tool", "label": "ToolNode", "shape": "rect"}},
+      {{"id": "done", "label": "Response", "shape": "circle"}}
+    ],
+    "edges": [
+      {{"source": "user", "target": "agent"}},
+      {{"source": "agent", "target": "decide"}},
+      {{"source": "decide", "target": "tool", "label": "yes"}},
+      {{"source": "decide", "target": "done", "label": "no"}},
+      {{"source": "tool", "target": "agent"}}
+    ]
+  }}
+  ```
+
+- `direction` must be `"TD"` (top-down) or `"LR"` (left-right). TD for hierarchical flows, LR for pipelines.
+- `shape` must be one of: `"rect"` (default), `"circle"` (start/end states), `"diamond"` (decisions), `"stadium"` (events).
+- Edges MUST reference existing node ids in the same block.
+- Use `\\n` inside labels for line breaks.
+- Optional `"label"` on edges for branch conditions.
+- Output **valid JSON only** inside the xyflow fence — no comments, no trailing commas. The renderer uses JSON.parse().
+
+Diagram placement:
+- One xyflow block in the whiteboard analogy subsection
+- One xyflow block matching the hello-world code
+- One xyflow block per major Core Concept primitive that has control flow (e.g., conditional routing, fan-out)
+- One xyflow block in Runtime Internals showing the execution loop / superstep model
+- One xyflow block per pattern in `## Patterns`
+
+Audience & length:
+- Write for an intermediate-to-senior AI engineer audience, but the Mental Model section should be approachable to a beginner
+- Be specific and technical in the deep sections — no hand-waving or filler
+- Target 2500–4500 words
 - No frontmatter, no YAML headers — just pure markdown starting with `# Title`
 
 Write the complete article now.
@@ -153,6 +205,10 @@ def check_quality(content: str) -> dict[str, Any]:
     cross_refs = len(re.findall(r"\]\(/[\w-]+\)", content))
     has_title = content.lstrip().startswith("# ")
     section_count = len(re.findall(r"^## ", content, flags=re.MULTILINE))
+    xyflow_blocks = len(re.findall(r"```xyflow\b", content))
+    mermaid_blocks = len(re.findall(r"```mermaid\b", content))
+    has_mental_model = bool(re.search(r"^##\s+Mental Model\b", content, flags=re.MULTILINE))
+    has_runtime_internals = bool(re.search(r"^##\s+Runtime Internals\b", content, flags=re.MULTILINE))
 
     issues: list[str] = []
     if word_count < MIN_WORD_COUNT:
@@ -165,6 +221,19 @@ def check_quality(content: str) -> dict[str, Any]:
         issues.append("Missing # title on first line")
     if section_count < 3:
         issues.append("Fewer than 3 ## sections")
+    if xyflow_blocks < MIN_MERMAID_BLOCKS:
+        issues.append(
+            f"Too few xyflow diagrams: {xyflow_blocks} (min {MIN_MERMAID_BLOCKS}). "
+            "Use ```xyflow JSON fences, not ```mermaid."
+        )
+    if mermaid_blocks > 0:
+        issues.append(
+            f"Found {mermaid_blocks} ```mermaid block(s) — replace each with a ```xyflow JSON diagram."
+        )
+    if not has_mental_model:
+        issues.append("Missing `## Mental Model` section (required as the second-level section before Core Concepts).")
+    if not has_runtime_internals:
+        issues.append("Missing `## Runtime Internals` deep-dive section.")
 
     return {
         "ok": len(issues) == 0,
@@ -172,6 +241,7 @@ def check_quality(content: str) -> dict[str, Any]:
         "wordCount": word_count,
         "codeBlocks": code_blocks,
         "crossRefs": cross_refs,
+        "xyflowBlocks": xyflow_blocks,
     }
 
 

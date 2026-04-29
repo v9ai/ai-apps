@@ -4,6 +4,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { ReactNode } from "react";
 import { MermaidFlow } from "@/components/mermaid-flow";
+import { XyflowDirect } from "@/components/xyflow-direct";
 
 function slugify(text: string): string {
   return text
@@ -80,6 +81,9 @@ export function MarkdownProse({ content }: { content: string }) {
               rawText = String(codeProps?.children || "").replace(/\n$/, "");
             }
 
+            if (lang === "xyflow") {
+              return <XyflowDirect json={rawText} />;
+            }
             if (lang === "mermaid") {
               return <MermaidFlow chart={rawText} />;
             }

@@ -38,7 +38,6 @@ import {
 } from "@/app/__generated__/hooks";
 import { authClient } from "@/app/lib/auth/client";
 import { Breadcrumbs } from "@/app/components/Breadcrumbs";
-import { DeepIssueAnalysisCard } from "@/app/components/DeepIssueAnalysisCard";
 import { DeepAnalysisPanel } from "@/app/components/DeepAnalysisPanel";
 import { DeepAnalysisSubjectType } from "@/app/__generated__/hooks";
 import JournalRecommendedBooksSection from "./_components/JournalRecommendedBooksSection";
@@ -770,15 +769,6 @@ function JournalEntryContent() {
           )}
         </Flex>
       </Card>
-
-      {entry.familyMemberId && (
-        <DeepIssueAnalysisCard
-          familyMemberId={entry.familyMemberId}
-          triggerIssueId={entry.issue?.id ?? null}
-          familyMemberFirstName={entry.familyMember?.firstName ?? null}
-          description={`Analyze all issues for ${entry.familyMember?.firstName ?? "this member"} in the context of this entry.`}
-        />
-      )}
 
       <DeepAnalysisPanel
         subjectType={DeepAnalysisSubjectType.JournalEntry}

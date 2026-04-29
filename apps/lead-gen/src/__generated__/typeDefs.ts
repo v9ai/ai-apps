@@ -447,6 +447,12 @@ type Contact {
   papersEnrichedAt: String
   position: String
   profile: ContactProfile
+  recruiterFitReasons: [String!]!
+  recruiterFitRemoteGlobal: Boolean
+  recruiterFitScore: Float
+  recruiterFitScoredAt: String
+  recruiterFitSpecialty: String
+  recruiterFitTier: String
   scholarProfile: JSON
   seniority: String
   slug: String
@@ -1431,6 +1437,7 @@ type Mutation {
   sendOutreachEmail(input: SendOutreachEmailInput!): SendOutreachEmailResult!
   sendScheduledEmailNow(resendId: String!): SendNowResult!
   setProductPublished(id: Int!, published: Boolean!): Product!
+  setRecruiterFit(contactId: Int!, fitScore: Float!, reasons: [String!], remoteGlobal: Boolean, specialty: String!, tier: String!): Contact!
   snoozeReminder(days: Int!, id: Int!): Reminder!
   syncResendEmails(companyId: Int): SyncResendResult!
   """

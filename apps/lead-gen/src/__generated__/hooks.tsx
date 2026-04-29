@@ -506,6 +506,12 @@ export type Contact = {
   papersEnrichedAt: Maybe<Scalars['String']['output']>;
   position: Maybe<Scalars['String']['output']>;
   profile: Maybe<ContactProfile>;
+  recruiterFitReasons: Array<Scalars['String']['output']>;
+  recruiterFitRemoteGlobal: Maybe<Scalars['Boolean']['output']>;
+  recruiterFitScore: Maybe<Scalars['Float']['output']>;
+  recruiterFitScoredAt: Maybe<Scalars['String']['output']>;
+  recruiterFitSpecialty: Maybe<Scalars['String']['output']>;
+  recruiterFitTier: Maybe<Scalars['String']['output']>;
   scholarProfile: Maybe<Scalars['JSON']['output']>;
   seniority: Maybe<Scalars['String']['output']>;
   slug: Maybe<Scalars['String']['output']>;
@@ -1547,6 +1553,7 @@ export type Mutation = {
   sendOutreachEmail: SendOutreachEmailResult;
   sendScheduledEmailNow: SendNowResult;
   setProductPublished: Product;
+  setRecruiterFit: Contact;
   snoozeReminder: Reminder;
   syncResendEmails: SyncResendResult;
   /**
@@ -2009,6 +2016,16 @@ export type MutationSendScheduledEmailNowArgs = {
 export type MutationSetProductPublishedArgs = {
   id: Scalars['Int']['input'];
   published: Scalars['Boolean']['input'];
+};
+
+
+export type MutationSetRecruiterFitArgs = {
+  contactId: Scalars['Int']['input'];
+  fitScore: Scalars['Float']['input'];
+  reasons?: InputMaybe<Array<Scalars['String']['input']>>;
+  remoteGlobal?: InputMaybe<Scalars['Boolean']['input']>;
+  specialty: Scalars['String']['input'];
+  tier: Scalars['String']['input'];
 };
 
 

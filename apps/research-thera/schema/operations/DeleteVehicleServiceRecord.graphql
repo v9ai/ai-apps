@@ -1,0 +1,6 @@
+mutation DeleteVehicleServiceRecord($id: ID!) {
+  deleteVehicleServiceRecord(id: $id) {
+    id
+    deleted
+  }
+}

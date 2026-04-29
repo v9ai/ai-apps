@@ -1,4 +1,5 @@
 import "@radix-ui/themes/styles.css";
+import "./tasks/tasks.css";
 import type { Metadata } from "next";
 import { Box, Container, Theme } from "@radix-ui/themes";
 import { ApolloProvider } from "./providers/ApolloProvider";
@@ -6,6 +7,7 @@ import { Header } from "./components/Header";
 import { SIDEBAR_WIDTH } from "./components/sidebar-constants";
 import { GlobalJournalShortcut } from "./components/GlobalJournalShortcut";
 import { VaultShortcut } from "./components/VaultShortcut";
+import { QuickCapture } from "./components/QuickCapture";
 
 export const metadata: Metadata = {
   title: {
@@ -34,6 +36,7 @@ export default function RootLayout({
             <Header />
             <GlobalJournalShortcut />
             <VaultShortcut />
+            <QuickCapture />
             <Box
               style={{
                 paddingLeft: `var(--sidebar-offset, 0px)`,

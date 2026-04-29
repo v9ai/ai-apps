@@ -473,7 +473,7 @@ export async function importPeopleFromCurrentPage(
       `mutation ImportCompanyWithContacts($input: ImportCompanyWithContactsInput!) {
         importCompanyWithContacts(input: $input) {
           success
-          company { id name }
+          company { id name key }
           contactsImported
           contactsSkipped
           errors
@@ -497,6 +497,7 @@ export async function importPeopleFromCurrentPage(
         imported: res.contactsImported,
         skipped: res.contactsSkipped,
         companyId: res.company?.id,
+        companyKey: res.company?.key,
       });
     } else {
       const errMsg = res?.errors?.[0] || result.errors?.[0]?.message || "Import failed";

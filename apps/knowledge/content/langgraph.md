@@ -1,749 +1,805 @@
-# LangGraph: Stateful Agent Orchestration with Graphs
+# LangGraph: Stateful Multi-Agent Graphs for Production AI
 
-LangGraph is a framework for building stateful, multi-step AI applications as directed graphs. Part of the LangChain ecosystem but usable independently, LangGraph models agent logic as a graph where nodes are computation steps, edges define control flow, and a shared state object flows through the entire execution. This architecture addresses the fundamental limitations of linear chain-based approaches: real-world AI workflows require branching, parallel execution, cycles, conditional routing, human-in-the-loop gates, and persistent state -- none of which fit naturally into sequential pipelines. This article covers LangGraph from first principles through production deployment, serving as the central reference for LangGraph content across this series. For foundational agent patterns, see [Agent Architectures](/agent-architectures); for multi-agent coordination, see [Multi-Agent Systems](/multi-agent-systems).
+LangGraph is a framework for building stateful, multi-actor applications with Large Language Models (LLMs). It models application logic as a directed graph where nodes are computational steps and edges define control flow. LangGraph solves the problem of building reliable, production-grade agent systems that need memory, human-in-the-loop, and complex branching—capabilities that simple linear chains cannot provide. As the orchestration layer for advanced AI systems, LangGraph sits above basic LLM calls and simple chains, providing the infrastructure for sophisticated agent architectures. For foundational agent patterns, see [Agent Architectures](/agent-architectures); for multi-agent coordination, see [Multi-Agent Systems](/multi-agent-systems).
+
+## Mental Model
+
+### What problem does it solve?
+
+The naive linear approach—prompt → LLM → output—fails for real-world AI applications. Simple chains cannot handle loops, conditional branching, multi-agent coordination, or persistent state across turns. Consider a customer support bot that needs to:
+
+- Remember conversation history across multiple turns
+- Decide whether to escalate to a human agent
+- Execute tools like checking order status or processing refunds
+- Loop back to gather more information if the initial query is ambiguous
+- Support parallel execution for tasks like fetching data from multiple sources simultaneously
+
+These requirements demand an execution model where state is first-class, control flow is dynamic, and persistence is built-in. LangGraph provides exactly this: a graph-based execution model where each node reads from and writes to a shared state object, edges can be conditional, and the entire execution can be paused, resumed, and replayed.
+
+### The whiteboard analogy
+
+Imagine a whiteboard where each step of a process writes its results, and the next step reads what it needs. The whiteboard persists between steps—if a step fails, you can see what was written and resume from there. Arrows on the whiteboard show which step comes next, but some arrows have conditions: "if the answer is good, go to end; otherwise, go back to research." Multiple people can write to the same whiteboard simultaneously (parallel execution), and a supervisor watches the whiteboard and decides who works next.
+
+```xyflow
+{
+  "direction": "TD",
+  "nodes": [
+    {"id": "input", "label": "User Input", "shape": "circle"},
+    {"id": "llm", "label": "LLM Call", "shape": "rect"},
+    {"id": "decide", "label": "Needs Tool?", "shape": "diamond"},
+    {"id": "tool", "label": "Execute Tool", "shape": "rect"},
+    {"id": "output", "label": "Final Answer", "shape": "circle"}
+  ],
+  "edges": [
+    {"source": "input", "target": "llm"},
+    {"source": "llm", "target": "decide"},
+    {"source": "decide", "target": "tool", "label": "yes"},
+    {"source": "decide", "target": "output", "label": "no"},
+    {"source": "tool", "target": "llm", "label": "loop back"}
+  ]
+}
+```
+
+### Hello-world in ~10 lines
+
+Here's a minimal agent that calls an LLM, checks if it wants to use a tool, and loops until it produces a final answer:
+
+```python
+from langgraph.graph import StateGraph, START, END
+from typing import TypedDict, Annotated, Literal
+import operator
+
+class AgentState(TypedDict):
+    messages: Annotated[list, operator.add]
+    next_action: str
+
+def call_model(state: AgentState) -> dict:
+    response = llm.invoke(state["messages"])
+    return {"messages": [response], "next_action": response.tool_calls and "tool" or "final"}
+
+def should_continue(state: AgentState) -> Literal["tool", "final"]:
+    return state["next_action"]
+
+graph = StateGraph(AgentState)
+graph.add_node("model", call_model)
+graph.add_conditional_edges("model", should_continue, {"tool": "tool", "final": END})
+graph.add_node("tool", lambda state: {"messages": [execute_tool(state["messages"][-1])]})
+graph.add_edge("tool", "model")
+graph.add_edge(START, "model")
+app = graph.compile()
+```
+
+This is a complete, stateful agent loop in under 15 lines. The state persists across turns, the conditional edge routes based on the LLM's decision, and the graph loops until a final answer is produced.
+
+```xyflow
+{
+  "direction": "TD",
+  "nodes": [
+    {"id": "start", "label": "invoke()", "shape": "circle"},
+    {"id": "model", "label": "call_model", "shape": "rect"},
+    {"id": "decide", "label": "should_continue", "shape": "diamond"},
+    {"id": "end", "label": "END", "shape": "circle"}
+  ],
+  "edges": [
+    {"source": "start", "target": "model"},
+    {"source": "model", "target": "decide"},
+    {"source": "decide", "target": "end", "label": "final"},
+    {"source": "decide", "target": "model", "label": "continue"}
+  ]
+}
+```
 
 ## Core Concepts
 
-### The StateGraph Abstraction
+### State
 
-Every LangGraph application starts with a `StateGraph` -- a directed graph parameterized by a state type. The state is a TypedDict that defines all the data flowing through the graph. Nodes are functions that read the current state and return partial updates. Edges connect nodes and define execution order.
+State is the heart of every LangGraph application. It's a TypedDict or Pydantic model that holds all data flowing through the graph. Key properties include immutable snapshots (each node receives a read-only view), reducer functions for merging updates from multiple nodes, and thread isolation (each conversation gets its own state namespace).
+
+```python
+from typing import TypedDict, Annotated, List
+import operator
+from pydantic import BaseModel
+
+class AgentState(TypedDict):
+    messages: Annotated[List[dict], operator.add]  # Reducer appends to list
+    next_agent: str
+    context: dict
+    iteration_count: int
+```
+
+The state acts as a central hub that all nodes read from and write to. Reducers define how updates to the same key are merged when multiple nodes write in parallel.
+
+```xyflow
+{
+  "direction": "TD",
+  "nodes": [
+    {"id": "node_a", "label": "Node A", "shape": "rect"},
+    {"id": "node_b", "label": "Node B", "shape": "rect"},
+    {"id": "node_c", "label": "Node C", "shape": "rect"},
+    {"id": "state", "label": "STATE", "shape": "stadium"}
+  ],
+  "edges": [
+    {"source": "node_a", "target": "state", "label": "writes"},
+    {"source": "state", "target": "node_b", "label": "reads"},
+    {"source": "state", "target": "node_c", "label": "reads"}
+  ]
+}
+```
+
+### Nodes
+
+Nodes are Python functions (sync or async) that take the current state and return a dictionary of updates. They can be LLM calls, tool executors, human approval steps, conditional logic, or API calls.
+
+```python
+async def call_llm(state: AgentState) -> dict:
+    """Call an LLM with the current conversation history."""
+    response = await llm.ainvoke(state["messages"])
+    return {"messages": [response]}
+
+def execute_tool(state: AgentState) -> dict:
+    """Execute a tool call from the last message."""
+    tool_call = state["messages"][-1].tool_calls[0]
+    result = available_tools[tool_call["name"]].invoke(tool_call["args"])
+    return {"messages": [ToolMessage(content=result, tool_call_id=tool_call["id"])]}
+
+def human_approval(state: AgentState) -> dict:
+    """Pause for human approval before sensitive actions."""
+    raise NodeInterrupt("Awaiting human approval for: " + str(state["pending_action"]))
+```
+
+### Edges
+
+Edges define the control flow between nodes. Normal edges are unconditional transitions, while conditional edges are functions that inspect the state and return the name of the next node.
+
+```python
+def route_based_on_topic(state: AgentState) -> str:
+    """Route to the appropriate specialist agent based on query topic."""
+    if "billing" in state["messages"][0].content.lower():
+        return "billing_agent"
+    elif "technical" in state["messages"][0].content.lower():
+        return "tech_support_agent"
+    else:
+        return "general_agent"
+
+# Add conditional edges
+graph.add_conditional_edges(
+    "router",
+    route_based_on_topic,
+    {
+        "billing_agent": "billing",
+        "tech_support_agent": "tech_support",
+        "general_agent": "general"
+    }
+)
+```
+
+```xyflow
+{
+  "direction": "TD",
+  "nodes": [
+    {"id": "router", "label": "Router", "shape": "diamond"},
+    {"id": "agent_a", "label": "Agent A", "shape": "rect"},
+    {"id": "agent_b", "label": "Agent B", "shape": "rect"}
+  ],
+  "edges": [
+    {"source": "router", "target": "agent_a", "label": "if topic == A"},
+    {"source": "router", "target": "agent_b", "label": "if topic == B"}
+  ]
+}
+```
+
+### Checkpointing / Persistence
+
+Checkpointing saves the state after every node execution, enabling fault tolerance, human-in-the-loop, and time travel. LangGraph provides several checkpointer implementations:
+
+| Checkpointer | Use Case | Persistence |
+|---|---|---|
+| `MemorySaver` | Development, testing | In-memory only |
+| `SqliteSaver` | Single-server production | Local SQLite file |
+| `PostgresSaver` | Multi-server production | PostgreSQL database |
+
+Each `thread_id` creates an independent conversation with its own state namespace:
+
+```python
+# First conversation
+result1 = app.invoke(
+    {"messages": [HumanMessage(content="Hello")]},
+    config={"configurable": {"thread_id": "conversation_1"}}
+)
+
+# Second conversation (completely isolated)
+result2 = app.invoke(
+    {"messages": [HumanMessage(content="Hi there")]},
+    config={"configurable": {"thread_id": "conversation_2"}}
+)
+```
+
+### Reducers
+
+Reducers define how to merge updates to the same key from multiple nodes. The most common pattern is `operator.add` for appending to lists:
+
+```python
+from typing import Annotated
+import operator
+
+class AgentState(TypedDict):
+    messages: Annotated[list, operator.add]  # Appends, doesn't overwrite
+    scores: Annotated[dict, merge_dicts]     # Custom reducer for dicts
+    count: int                               # No reducer = last write wins
+```
+
+Custom reducers handle more complex merge logic:
+
+```python
+def merge_dicts(current: dict, updates: dict) -> dict:
+    """Merge two dicts, with updates taking priority."""
+    merged = current.copy()
+    merged.update(updates)
+    return merged
+```
+
+### Command Object
+
+The `Command` object allows a node to set the next node and update state in one step. This is essential for agent loops where the LLM decides the next action:
+
+```python
+from langgraph.graph import Command
+
+def agent_node(state: AgentState) -> Command:
+    """LLM decides next action and updates state simultaneously."""
+    response = llm.invoke(state["messages"])
+    
+    if response.tool_calls:
+        return Command(
+            goto="tool_executor",
+            update={"messages": [response]}
+        )
+    else:
+        return Command(
+            goto=END,
+            update={"messages": [response]}
+        )
+```
+
+## How It Works
+
+### Graph Lifecycle
+
+1. **Definition**: Create a `StateGraph` with a state schema, then add nodes and edges
+2. **Compilation**: Compile with a checkpointer to create a `CompiledGraph`
+3. **Invocation**: Call `graph.invoke(input, config)` with a thread_id
+4. **Execution loop**: Load state → execute node → apply updates → save checkpoint → route to next node
+5. **Termination**: Route to `END` or hit the recursion limit
+
+```python
+# 1. Definition
+builder = StateGraph(AgentState)
+builder.add_node("retrieve", retrieve_docs)
+builder.add_node("generate", generate_answer)
+builder.add_edge(START, "retrieve")
+builder.add_edge("retrieve", "generate")
+builder.add_edge("generate", END)
+
+# 2. Compilation
+app = builder.compile(checkpointer=PostgresSaver.from_conn_string("postgresql://..."))
+
+# 3. Invocation
+result = app.invoke(
+    {"messages": [HumanMessage(content="What is LangGraph?")]},
+    config={"configurable": {"thread_id": "user_123"}}
+)
+```
+
+### Data Flow Step-by-Step
+
+Here's a detailed walkthrough of a simple Q&A agent:
 
 ```python
 from langgraph.graph import StateGraph, START, END
-from typing import TypedDict
+from typing import TypedDict, Annotated
+import operator
 
-class MyState(TypedDict):
+class QAState(TypedDict):
     query: str
     context: str
     answer: str
+    needs_retry: bool
 
-def retrieve(state: MyState) -> dict:
-    """Fetch relevant context for the query."""
-    docs = vector_store.search(state["query"], k=5)
-    return {"context": "\n".join(docs)}
+def retrieve(state: QAState) -> dict:
+    docs = vector_store.similarity_search(state["query"], k=3)
+    return {"context": "\n\n".join([d.page_content for d in docs])}
 
-def generate(state: MyState) -> dict:
-    """Generate an answer using the retrieved context."""
-    answer = llm.invoke(f"Context: {state['context']}\nQuestion: {state['query']}")
-    return {"answer": answer}
+def generate(state: QAState) -> dict:
+    prompt = f"Context: {state['context']}\n\nQuestion: {state['query']}\n\nAnswer:"
+    response = llm.invoke(prompt)
+    return {"answer": response.content, "needs_retry": "I don't know" in response.content}
 
-# Build the graph
-graph = StateGraph(MyState)
-graph.add_node("retrieve", retrieve)
-graph.add_node("generate", generate)
+def check_quality(state: QAState) -> str:
+    return "retry" if state["needs_retry"] else "done"
 
-graph.add_edge(START, "retrieve")
-graph.add_edge("retrieve", "generate")
-graph.add_edge("generate", END)
+def retry(state: QAState) -> dict:
+    # Expand search with different query
+    expanded_query = llm.invoke(f"Generate a better search query for: {state['query']}")
+    docs = vector_store.similarity_search(expanded_query.content, k=5)
+    return {"context": "\n\n".join([d.page_content for d in docs]), "needs_retry": False}
 
-app = graph.compile()
-result = app.invoke({"query": "What is context engineering?"})
+# Build graph
+builder = StateGraph(QAState)
+builder.add_node("retrieve", retrieve)
+builder.add_node("generate", generate)
+builder.add_node("retry", retry)
+builder.add_edge(START, "retrieve")
+builder.add_edge("retrieve", "generate")
+builder.add_conditional_edges("generate", check_quality, {"retry": "retry", "done": END})
+builder.add_edge("retry", "generate")
+
+app = builder.compile()
+
+# Execute
+result = app.invoke({"query": "What is the capital of France?"})
+print(result["answer"])  # "The capital of France is Paris."
 ```
 
-Key design principles:
-- **Nodes return partial state updates**, not the full state. LangGraph merges the returned dict into the current state.
-- **State is immutable within a node** -- each node receives a snapshot and returns updates.
-- **The graph is compiled** before execution, enabling validation of edges, detection of unreachable nodes, and optimization.
-
-### State Reducers
-
-When multiple nodes (especially parallel ones) write to the same state key, LangGraph needs to know how to merge the values. Reducers define this merge behavior:
-
-```python
-import operator
-from typing import Annotated
-from langgraph.graph.message import add_messages
-from langchain_core.messages import AnyMessage
-
-class AgentState(TypedDict):
-    # add_messages reducer: new messages are appended, not overwritten
-    messages: Annotated[list[AnyMessage], add_messages]
-    # operator.add reducer: lists from parallel branches are concatenated
-    results: Annotated[list[dict], operator.add]
-    # No reducer: last write wins (default behavior)
-    status: str
+```xyflow
+{
+  "direction": "TD",
+  "nodes": [
+    {"id": "input", "label": "Input: 'What is 2+2?'", "shape": "circle"},
+    {"id": "model", "label": "call_model", "shape": "rect"},
+    {"id": "decide", "label": "should_continue", "shape": "diamond"},
+    {"id": "tool", "label": "execute_tool", "shape": "rect"},
+    {"id": "output", "label": "Output: '4'", "shape": "circle"}
+  ],
+  "edges": [
+    {"source": "input", "target": "model"},
+    {"source": "model", "target": "decide"},
+    {"source": "decide", "target": "tool", "label": "tool_call"},
+    {"source": "decide", "target": "output", "label": "final"},
+    {"source": "tool", "target": "model"}
+  ]
+}
 ```
 
-The `add_messages` reducer is particularly important -- it handles message deduplication by ID, enables message updates (replacing a message with the same ID), and preserves conversation ordering. This is what makes LangGraph suitable for chat-based agent loops where the message list grows over time.
+### Streaming Modes
 
-Common reducers:
-- `add_messages`: Append messages, deduplicate by ID (for chat/agent state)
-- `operator.add`: Concatenate lists (for collecting results from parallel branches)
-- Custom function: Any `(existing, new) -> merged` callable for complex merge logic
-
-### Conditional Edges
-
-Conditional edges route execution based on the current state. This is what enables branching logic, decision points, and loop termination:
+LangGraph supports multiple streaming modes for real-time applications:
 
 ```python
-from typing import Literal
+# Stream full state after each node
+for event in app.stream(input, config, stream_mode="values"):
+    print(event)
 
-def should_continue(state: AgentState) -> Literal["tools", "end"]:
-    """Route based on whether the last message contains tool calls."""
-    last_message = state["messages"][-1]
-    if last_message.tool_calls:
-        return "tools"
-    return "end"
+# Stream only state updates from each node
+for event in app.stream(input, config, stream_mode="updates"):
+    print(event)
 
-graph.add_conditional_edges(
-    "agent",              # source node
-    should_continue,      # routing function
-    {                     # mapping: return value -> target node
-        "tools": "tools",
-        "end": END,
-    }
-)
+# Stream individual tokens from LLM calls
+for event in app.stream(input, config, stream_mode="messages"):
+    for chunk in event:
+        print(chunk.content, end="", flush=True)
 ```
 
-Conditional edges are the mechanism for implementing:
-- **ReAct loops**: Continue calling tools until the agent decides to respond
-- **Quality gates**: Route to revision if output doesn't meet criteria
-- **Error recovery**: Route to fallback logic on failure
-- **Human-in-the-loop**: Route to a wait state for human approval
+### Interrupts and Human-in-the-Loop
 
-### Command: Combined Routing and State Updates
-
-`Command` is a return type that combines a state update with an explicit routing directive in a single value. Instead of a node returning a plain dict (state update only) or a routing function returning a string (route only), `Command` lets a node do both atomically:
+The `NodeInterrupt` mechanism pauses execution and waits for external input:
 
 ```python
-from langgraph.types import Command
-
-def triage_agent(state: AgentState) -> Command:
-    """Classify the request and route to the appropriate specialist."""
-    classification = classifier_llm.invoke(state["messages"])
-
-    if classification == "billing":
-        return Command(
-            update={"messages": [classification_msg], "route": "billing"},
-            goto="billing_agent",
-        )
-    elif classification == "technical":
-        return Command(
-            update={"messages": [classification_msg], "route": "technical"},
-            goto="technical_agent",
-        )
-    else:
-        return Command(
-            update={"messages": [classification_msg]},
-            goto=END,
-        )
-
-# No need for a separate conditional_edges call — the node controls routing
-graph.add_node("triage", triage_agent)
-graph.add_node("billing_agent", billing_node)
-graph.add_node("technical_agent", technical_node)
-graph.add_edge(START, "triage")
-# billing_agent and technical_agent edges are determined by Command at runtime
-```
-
-`Command` is also the mechanism for resuming a graph after an `interrupt()` (see Human-in-the-Loop section):
-
-```python
-# Resume a paused graph with human input
-agent.invoke(Command(resume={"approved": True}), config=config)
-```
-
-When to use `Command` vs `add_conditional_edges`:
-- **`Command`**: When the routing decision is best made inside the node, alongside the state update that motivated the decision. Preferred for multi-agent handoffs where the current agent decides who handles next.
-- **`add_conditional_edges`**: When routing is a pure function of state, separate from computation. Preferred when multiple nodes share the same routing logic.
-
-### The Send() Primitive for Parallel Fan-Out
-
-`Send()` dispatches work to a node with a specific state payload, enabling the map-reduce pattern within a graph:
-
-```python
-from langgraph.types import Send
-
-def fan_out_tasks(state: MyState) -> list[Send]:
-    """Dispatch each sub-task to a worker node in parallel."""
-    return [
-        Send("worker", {"task": task, "results": []})
-        for task in state["sub_tasks"]
-    ]
-
-graph.add_conditional_edges("planner", fan_out_tasks)
-```
-
-When a node returns a list of `Send` objects, LangGraph executes all target nodes in parallel. Each worker receives its own state copy. Results are merged back using the configured reducer. This is conceptually MapReduce: the routing function is the map phase, workers are the compute phase, and reducers handle the reduce phase.
-
-For a detailed example of `Send()` in practice, see the red-teaming fan-out pattern in [Red-Teaming with LangGraph](/langgraph-red-teaming).
-
-## Prebuilt Components
-
-LangGraph ships prebuilt components for common patterns, reducing boilerplate for standard agent architectures:
-
-### ToolNode and tools_condition
-
-The most common pattern -- a ReAct agent that calls tools until it has an answer:
-
-```python
-from langgraph.prebuilt import ToolNode, tools_condition
-from langgraph.graph import StateGraph, START, END
-from langgraph.graph.message import add_messages
-from langchain_core.messages import AnyMessage
-from typing import Annotated, TypedDict
-
-class State(TypedDict):
-    messages: Annotated[list[AnyMessage], add_messages]
-
-tools = [search_tool, calculator_tool, weather_tool]
-tool_node = ToolNode(tools)
-
-def call_model(state: State) -> dict:
-    response = model.bind_tools(tools).invoke(state["messages"])
-    return {"messages": [response]}
-
-graph = StateGraph(State)
-graph.add_node("agent", call_model)
-graph.add_node("tools", tool_node)
-
-graph.add_edge(START, "agent")
-graph.add_conditional_edges("agent", tools_condition)  # AUTO: tool_calls -> "tools", else -> END
-graph.add_edge("tools", "agent")
-
-agent = graph.compile()
-```
-
-`tools_condition` inspects the last message: if it contains tool calls, route to the `"tools"` node; otherwise, route to `END`. `ToolNode` automatically executes the requested tools and returns results as `ToolMessage` objects.
-
-### create_react_agent
-
-For the simplest case, LangGraph provides a one-liner that builds the entire ReAct graph:
-
-```python
-from langgraph.prebuilt import create_react_agent
-
-agent = create_react_agent(
-    model=model,
-    tools=[search_tool, calculator_tool],
-    state_modifier="You are a helpful research assistant."  # system prompt
-)
-
-result = agent.invoke({"messages": [("user", "What's the population of Tokyo?")]})
-```
-
-This creates a compiled graph with the agent node, tool node, conditional routing, and message handling -- equivalent to the manual graph construction above but in one call.
-
-## Persistence and Checkpointing
-
-LangGraph's checkpointing system saves the graph state at every node, enabling pause/resume, fault tolerance, and time-travel debugging:
-
-```python
-from langgraph.checkpoint.memory import MemorySaver
-from langgraph.checkpoint.postgres import PostgresSaver
-
-# In-memory checkpointing (development)
-memory = MemorySaver()
-agent = graph.compile(checkpointer=memory)
-
-# PostgreSQL checkpointing (production)
-# postgres_saver = PostgresSaver.from_conn_string("postgresql://...")
-# agent = graph.compile(checkpointer=postgres_saver)
-
-# Every invocation with a thread_id gets persistent state
-config = {"configurable": {"thread_id": "user-session-42"}}
-result = agent.invoke({"messages": [("user", "Research quantum computing")]}, config=config)
-
-# Continue the same conversation later
-result2 = agent.invoke({"messages": [("user", "Now summarize your findings")]}, config=config)
-```
-
-### Time-Travel Debugging
-
-Checkpointing enables rewinding to any previous state and replaying from there -- invaluable for debugging agent failures:
-
-```python
-# Get the full state history for a thread
-history = list(agent.get_state_history(config))
-
-# Inspect state at any checkpoint
-for state in history:
-    print(f"Step: {state.metadata.get('step')}, Nodes: {state.metadata.get('source')}")
-    print(f"Messages: {len(state.values['messages'])}")
-
-# Resume from a specific checkpoint (time travel)
-old_config = history[3].config  # go back to step 3
-agent.invoke({"messages": [("user", "Try a different approach")]}, config=old_config)
-```
-
-## Cross-Thread Memory with BaseStore
-
-Checkpoints are *per-thread* — each `thread_id` gets its own isolated state history. For knowledge that should persist *across* threads (user preferences, learned facts, long-term summaries), LangGraph provides the `BaseStore` abstraction:
-
-```python
-from langgraph.store.memory import InMemoryStore
-from langgraph.store.postgres import AsyncPostgresStore
-from langgraph.types import RunnableConfig
-from langgraph.graph import StateGraph, START, END
-
-# Development: in-memory store
-store = InMemoryStore()
-
-# Production: PostgreSQL-backed store
-# store = AsyncPostgresStore.from_conn_string("postgresql://...")
-
-agent = graph.compile(checkpointer=memory, store=store)
-
-# In a node, access the store via the RunnableConfig
-def personalized_agent(state: AgentState, config: RunnableConfig) -> dict:
-    # store is injected via the config's get_store() accessor
-    store = config["configurable"].get("__store")
-    user_id = config["configurable"]["user_id"]
-
-    # Read user preferences from the cross-thread store
-    namespace = ("user_preferences", user_id)
-    prefs = store.get(namespace, "preferences")
-    user_prefs = prefs.value if prefs else {}
-
-    response = llm.invoke(build_prompt(state["messages"], user_prefs))
-
-    # Write a new preference learned during this conversation
-    if learned_preference := extract_preference(response):
-        store.put(namespace, "preferences", {**user_prefs, **learned_preference})
-
-    return {"messages": [response]}
-```
-
-Store namespaces are tuples of strings — they act like a hierarchical key space. Common patterns:
-- `("user_preferences", user_id)` — per-user settings
-- `("memories", user_id)` — episodic memory summaries
-- `("knowledge", "global")` — shared facts across all users
-
-The distinction between checkpoints and store:
-| | Checkpoint | Store |
-|---|---|---|
-| Scope | Single thread | Cross-thread |
-| Content | Full graph state at each step | Arbitrary key-value data |
-| Use case | Pause/resume, time-travel | Long-term memory, user profiles |
-| Lifecycle | Tied to thread_id | Independent of execution |
-
-## Human-in-the-Loop Patterns
-
-LangGraph supports interrupting graph execution at specific nodes, waiting for human input, and then resuming:
-
-### Interrupt Before/After
-
-```python
-from langgraph.types import interrupt
-
-def sensitive_action(state: State) -> dict:
-    """An action that requires human approval before executing."""
-    action_plan = plan_action(state)
-
-    # Pause execution and surface the plan to the human
-    approval = interrupt({"action": action_plan, "question": "Approve this action?"})
-
-    if approval.get("approved"):
-        result = execute_action(action_plan)
-        return {"messages": [{"role": "assistant", "content": f"Executed: {result}"}]}
-    else:
-        return {"messages": [{"role": "assistant", "content": "Action cancelled by user."}]}
-
-# Compile with interrupt_before to pause before the node executes
-agent = graph.compile(
-    checkpointer=memory,
-    interrupt_before=["sensitive_action"]
-)
-
-# First invocation runs until the interrupt point
-result = agent.invoke({"messages": [("user", "Delete all test data")]}, config=config)
-# Graph is now paused at "sensitive_action"
-
-# Resume with human input
-agent.invoke(Command(resume={"approved": True}), config=config)
-```
-
-This pattern is essential for production agent systems where certain actions (database writes, API calls, financial transactions) require human approval. The graph state is persisted at the interrupt point, so the human can take arbitrary time to respond.
-
-### Updating State Externally with `update_state()`
-
-Beyond `interrupt()` + `Command(resume=...)`, LangGraph lets you inject state changes into a paused or completed thread without resuming execution:
-
-```python
-# Inspect current state of a paused thread
-current_state = agent.get_state(config)
-print(current_state.values["messages"])
-print(current_state.next)  # which nodes will run next
-
-# Inject an external message into the state (e.g., webhook result)
-agent.update_state(
-    config,
-    {"messages": [{"role": "tool", "content": "Payment confirmed: $47.50", "tool_call_id": "tc_123"}]},
-    as_node="tools",  # attribute this update to the "tools" node
-)
-
-# Now resume — the graph sees the injected tool result as if the tools node ran
-agent.invoke(None, config=config)
-```
-
-`update_state()` is used when:
-- A human reviewer edits the agent's draft before continuing
-- An external system (webhook, queue) delivers an async result the graph was waiting on
-- You want to correct a mistake in state without replaying the full history
-
-The `as_node` parameter controls which node's reducers are applied to the update, and determines which node LangGraph considers "next" after the injection.
-
-## Subgraph Composition
-
-Complex workflows benefit from hierarchical organization -- subgraphs encapsulate self-contained behaviors that can be tested independently and composed into larger systems:
-
-```python
-# Define a research subgraph
-research_graph = StateGraph(ResearchState)
-research_graph.add_node("search", search_node)
-research_graph.add_node("summarize", summarize_node)
-research_graph.add_edge(START, "search")
-research_graph.add_edge("search", "summarize")
-research_graph.add_edge("summarize", END)
-research_subgraph = research_graph.compile()
-
-# Define a writing subgraph
-writing_graph = StateGraph(WritingState)
-writing_graph.add_node("draft", draft_node)
-writing_graph.add_node("edit", edit_node)
-writing_graph.add_edge(START, "draft")
-writing_graph.add_edge("draft", "edit")
-writing_graph.add_edge("edit", END)
-writing_subgraph = writing_graph.compile()
-
-# Compose into a parent graph
-parent_graph = StateGraph(ParentState)
-parent_graph.add_node("research", research_subgraph)
-parent_graph.add_node("write", writing_subgraph)
-parent_graph.add_node("review", review_node)
-
-parent_graph.add_edge(START, "research")
-parent_graph.add_edge("research", "write")
-parent_graph.add_edge("write", "review")
-parent_graph.add_conditional_edges("review", route_after_review)
-parent_graph.add_edge("publish", END)
-
-app = parent_graph.compile()
-```
-
-Subgraphs run with their own internal state, but LangGraph handles state mapping between parent and child graphs. This enables:
-- **Independent testing**: Each subgraph can be compiled and tested in isolation
-- **Team ownership**: Different teams own different subgraphs
-- **Reuse**: A research subgraph can be embedded in multiple parent workflows
-- **Encapsulation**: Internal implementation can change without affecting the parent graph
-
-## Runtime Configuration
-
-Graphs can be parameterized at runtime using the `configurable` dict in the config. This avoids hardcoding values like model names, system prompts, or feature flags into nodes:
-
-```python
-from langchain_core.runnables import RunnableConfig
-
-def call_model(state: AgentState, config: RunnableConfig) -> dict:
-    """A node that uses configurable parameters."""
-    configurable = config.get("configurable", {})
-
-    # Read runtime parameters with defaults
-    model_name = configurable.get("model", "claude-sonnet-4-6")
-    system_prompt = configurable.get("system_prompt", "You are a helpful assistant.")
-    temperature = configurable.get("temperature", 0.0)
-
-    model = ChatAnthropic(model=model_name, temperature=temperature)
-    response = model.invoke([SystemMessage(system_prompt)] + state["messages"])
-    return {"messages": [response]}
-
-# Pass configuration at invocation time
-result = agent.invoke(
-    {"messages": [("user", "Hello")]},
-    config={
-        "configurable": {
-            "thread_id": "user-123",           # checkpointer thread
-            "model": "claude-opus-4-6",        # override model
-            "system_prompt": "You are a concise assistant.",
-        }
-    }
-)
-```
-
-For structured configuration with validation, use `TypedDict` or Pydantic to define the configurable schema and annotate the graph with it:
-
-```python
-from typing import TypedDict, Optional
-
-class GraphConfig(TypedDict, total=False):
-    model: str
-    system_prompt: str
-    max_tokens: int
-    user_id: str
-
-# The graph's config_schema documents the expected configurable keys
-graph = StateGraph(AgentState, config_schema=GraphConfig)
-```
-
-## Error Handling in Nodes
-
-LangGraph does not automatically retry failed nodes. If a node raises an exception, the graph execution stops and the exception propagates to the caller. For resilient production graphs, handle errors explicitly:
-
-```python
-import traceback
-
-def robust_tool_node(state: AgentState) -> dict:
-    """A tool node with error handling."""
-    tool_call = state["messages"][-1].tool_calls[0]
-
-    try:
-        result = execute_tool(tool_call)
-        return {"messages": [ToolMessage(content=str(result), tool_call_id=tool_call["id"])]}
-    except TimeoutError:
-        return {"messages": [ToolMessage(
-            content="Tool timed out. Try with a simpler query.",
-            tool_call_id=tool_call["id"],
-        )]}
-    except Exception as e:
-        # Return the error as a tool message so the agent can recover
-        return {"messages": [ToolMessage(
-            content=f"Tool error: {type(e).__name__}: {str(e)}",
-            tool_call_id=tool_call["id"],
-        )]}
-
-def agent_node(state: AgentState) -> dict:
-    """An agent node that handles LLM errors."""
-    try:
-        response = llm.invoke(state["messages"])
-        return {"messages": [response]}
-    except RateLimitError:
-        # Back off and signal a retry
-        time.sleep(5)
-        response = llm.invoke(state["messages"])
-        return {"messages": [response]}
-```
-
-For transient errors (rate limits, network failures), LangGraph integrates with LangChain's retry logic:
-
-```python
-from langchain_anthropic import ChatAnthropic
-
-# Built-in retry with exponential backoff
-model = ChatAnthropic(
-    model="claude-sonnet-4-6",
-    max_retries=3,  # automatic retry on transient errors
-)
-```
-
-A common pattern for graceful degradation is a fallback node — if the primary node fails, a conditional edge routes to a simpler fallback:
-
-```python
-def should_fallback(state: AgentState) -> str:
-    last_msg = state["messages"][-1]
-    if getattr(last_msg, "error", None):
-        return "fallback"
-    return "continue"
-
-graph.add_conditional_edges("primary_agent", should_fallback, {
-    "fallback": "simple_agent",
-    "continue": END,
-})
-```
-
-## Streaming
-
-LangGraph supports fine-grained streaming for real-time user experiences:
-
-```python
-# Stream individual events as the graph executes
-async for event in agent.astream_events(
-    {"messages": [("user", "Analyze this dataset")]},
-    config=config,
-    version="v2"
-):
-    if event["event"] == "on_chat_model_stream":
-        # Token-by-token LLM output
-        print(event["data"]["chunk"].content, end="", flush=True)
-    elif event["event"] == "on_tool_start":
-        print(f"\nCalling tool: {event['name']}")
-    elif event["event"] == "on_tool_end":
-        print(f"Tool result: {event['data']['output'][:100]}")
-
-# Or stream node-level updates
-async for chunk in agent.astream(
-    {"messages": [("user", "Research and summarize")]},
-    config=config,
-    stream_mode="updates"
-):
-    for node_name, update in chunk.items():
-        print(f"Node '{node_name}' completed with: {list(update.keys())}")
-```
-
-Stream modes:
-- `"values"`: Stream the full state after each node
-- `"updates"`: Stream only the state updates (deltas) from each node
-- `"messages"`: Stream LLM messages token-by-token
-- Event-level streaming via `astream_events` for the most granular control
-
-### Async Nodes
-
-For I/O-heavy graphs (LLM calls, tool invocations, database reads), define nodes as async functions to run them concurrently:
-
-```python
-import asyncio
-
-async def async_search_node(state: AgentState) -> dict:
-    """Async node — doesn't block the event loop during I/O."""
-    results = await search_client.asearch(state["query"])
-    return {"context": "\n".join(results)}
-
-async def async_llm_node(state: AgentState) -> dict:
-    response = await model.ainvoke(state["messages"])
-    return {"messages": [response]}
-
-# For parallel I/O within a single node:
-async def parallel_fetch_node(state: AgentState) -> dict:
-    """Fetch from multiple sources concurrently."""
-    results = await asyncio.gather(
-        web_search.ainvoke(state["query"]),
-        vector_store.asearch(state["query"]),
-        knowledge_base.alookup(state["query"]),
+from langgraph.errors import NodeInterrupt
+
+def sensitive_action_node(state: AgentState) -> dict:
+    """Pause before executing a sensitive action."""
+    action = state["pending_action"]
+    raise NodeInterrupt(
+        f"Approve action: {action['type']} with params: {action['params']}"
     )
-    return {"context": "\n\n".join(str(r) for r in results)}
 
-# Use .ainvoke() and .astream() when nodes are async
-async def main():
-    result = await agent.ainvoke({"messages": [("user", "...")]}, config=config)
-
-    async for chunk in agent.astream(
-        {"messages": [("user", "...")]},
-        config=config,
-        stream_mode="updates",
-    ):
-        print(chunk)
+# In the frontend, resume with approved action
+app.update_state(
+    config,
+    {"approved_action": approved_action},
+    as_node="sensitive_action_node"
+)
 ```
 
-Async and sync nodes can coexist in the same graph — LangGraph handles the execution model internally.
-
-## Common Graph Patterns
-
-### ReAct Agent (Tool Loop)
-
-The most common pattern: an LLM that iteratively calls tools until it can answer.
-
-```
-START → [agent] → {has_tool_calls?} → [tools] → [agent] → ... → END
-```
-
-See the prebuilt `create_react_agent` above, or build it manually with `ToolNode` and `tools_condition`.
-
-### Corrective RAG (CRAG)
-
-Retrieve, evaluate quality, and re-retrieve if needed:
-
-```
-START → [retrieve] → [grade_documents] → {relevant?}
-    ├── yes → [generate] → [check_hallucination] → {faithful?}
-    │                           ├── yes → END
-    │                           └── no  → [generate] (retry)
-    └── no  → [rewrite_query] → [web_search] → [generate] → END
+```xyflow
+{
+  "direction": "TD",
+  "nodes": [
+    {"id": "llm", "label": "LLM decides action", "shape": "rect"},
+    {"id": "check", "label": "Needs approval?", "shape": "diamond"},
+    {"id": "pause", "label": "PAUSED: Awaiting human", "shape": "stadium"},
+    {"id": "execute", "label": "Execute action", "shape": "rect"},
+    {"id": "continue", "label": "Continue", "shape": "circle"}
+  ],
+  "edges": [
+    {"source": "llm", "target": "check"},
+    {"source": "check", "target": "pause", "label": "yes"},
+    {"source": "check", "target": "execute", "label": "no"},
+    {"source": "pause", "target": "execute", "label": "approve"},
+    {"source": "execute", "target": "continue"}
+  ]
+}
 ```
 
-For full CRAG implementation patterns, see [Advanced RAG](/advanced-rag).
+## Runtime Internals
 
-### Multi-Agent Pipeline
+### Pregel / BSP Superstep Model
 
-Sequential or branching execution across specialized agents:
+LangGraph's runtime is inspired by Google's Pregel system for large-scale graph processing. Execution proceeds in **supersteps**: in each superstep, all nodes that have incoming edges from the previous superstep execute in parallel. Nodes receive messages (state updates) from the previous superstep, process them, and send messages to the next superstep. This model enables deterministic, parallel execution with bounded memory.
 
-```
-START → [research_agent] → [writer_agent] → [reviewer_agent] → {approved?}
-                                     ↑                              |
-                                     └──────── no ─────────────────┘
-```
+### Channels and Message Passing
 
-For multi-agent patterns including supervisor, debate, and swarm architectures, see [Multi-Agent Systems](/multi-agent-systems).
+State keys are implemented as **channels** that buffer updates. When multiple nodes write to the same channel in one superstep, the reducer merges them. Different channel types handle different merge patterns:
 
-### Parallel Fan-Out/Fan-In
+- **LastValueChannel**: Keeps only the most recent value (default for simple fields)
+- **AppendChannel**: Accumulates values in a list (for `operator.add` reducers)
+- **Custom channels**: User-defined merge logic for complex data structures
 
-Process multiple items concurrently and collect results:
+### Deterministic Replay
 
-```
-START → [planner] → Send() → [worker_1] ─┐
-                            → [worker_2] ─┤──→ [aggregator] → END
-                            → [worker_N] ─┘
-```
-
-For a production example of fan-out in adversarial testing, see [Red-Teaming with LangGraph](/langgraph-red-teaming).
-
-## LangGraph Platform
-
-LangGraph Platform provides managed infrastructure for deploying LangGraph applications:
-
-- **LangGraph Server**: A server runtime that hosts compiled graphs as API endpoints with built-in persistence, task queuing, and streaming support
-- **LangGraph Studio**: A visual debugger and IDE for inspecting graph execution, viewing state at each node, and replaying executions
-- **LangGraph Cloud**: Fully managed hosting on LangChain's infrastructure
+Because state is checkpointed after every superstep, any execution can be replayed exactly. The checkpointer stores: thread_id, step number, and state snapshot. Replay loads the state at step N, then re-executes nodes from step N+1. This is critical for debugging, testing, and auditing production systems.
 
 ```python
-# Deploying a graph as an API endpoint
-# langgraph.json configuration:
-# {
-#   "graphs": {
-#     "my_agent": "./agent.py:graph"
-#   },
-#   "dependencies": ["langgraph", "langchain-openai"]
-# }
-
-# Client-side: interact with a deployed graph
-from langgraph_sdk import get_client
-
-client = get_client(url="http://localhost:8123")
-
-# Create a persistent thread
-thread = await client.threads.create()
-
-# Run the graph
-run = await client.runs.create(
-    thread["thread_id"],
-    "my_agent",
-    input={"messages": [{"role": "user", "content": "Hello"}]}
-)
-
-# Stream results
-async for event in client.runs.stream(thread["thread_id"], run["run_id"]):
+# Replay execution from step 5
+for event in app.stream(
+    None,
+    config,
+    stream_mode="values",
+    checkpoint_id="step_5_checkpoint_id"
+):
     print(event)
 ```
 
-## When to Use LangGraph
+### Thread and State Isolation
 
-LangGraph adds value when your application needs:
+Each `thread_id` gets its own state namespace in the checkpointer. Threads are completely isolated—no cross-thread state leakage. This enables multi-tenancy: one graph serving many users simultaneously without interference.
 
-| Need | Why LangGraph |
-|------|---------------|
-| Cycles and loops | Conditional edges naturally express retry/revision loops |
-| Persistent state | Built-in checkpointing across conversations |
-| Human-in-the-loop | First-class `interrupt()` support with resume |
-| Parallel execution | `Send()` primitive for map-reduce patterns |
-| Complex control flow | Branching, joining, subgraphs |
-| Streaming | Token-level, node-level, and event-level streaming |
-| Debugging | Time-travel debugging via checkpoint history |
+### Async Execution Model
 
-**When NOT to use LangGraph:**
-- Simple, linear chains (use direct function composition)
-- One-shot prompt → response (no state management needed)
-- Applications where the overhead of graph definition isn't justified
-- Teams that prefer minimal abstractions (consider OpenAI Swarm or raw function calls)
+LangGraph is fully async: nodes can be `async def` functions, and the runtime uses `asyncio.gather` for parallel node execution within a superstep. Checkpointer writes can be batched for performance in high-throughput scenarios.
 
-## LangGraph vs. Alternatives
+```python
+async def parallel_fetch(state: AgentState) -> dict:
+    """Fetch multiple URLs in parallel."""
+    urls = state["urls_to_fetch"]
+    async with aiohttp.ClientSession() as session:
+        tasks = [fetch_url(session, url) for url in urls]
+        results = await asyncio.gather(*tasks)
+    return {"fetched_data": results}
+```
 
-| Framework | Best For | Control Flow | State | Learning Curve |
-|-----------|----------|-------------|-------|----------------|
-| **LangGraph** | Complex stateful agents, production workflows | Graph-based | Explicit TypedDict | Medium-High |
-| **OpenAI Swarm** | Simple multi-agent handoffs, prototyping | Function returns | Implicit | Low |
-| **CrewAI** | Role-based team composition | Declarative | Managed | Low-Medium |
-| **AutoGen 0.4** | Event-driven multi-agent, research | Async events | Event-based | High |
-| **LlamaIndex Workflows** | RAG-heavy pipelines | Event-driven | Step-based | Medium |
-| **Custom code** | Full control, minimal dependencies | Your choice | Your choice | Varies |
+```xyflow
+{
+  "direction": "TD",
+  "nodes": [
+    {"id": "scheduler", "label": "Runtime Scheduler", "shape": "stadium"},
+    {"id": "superstep", "label": "Superstep N", "shape": "rect"},
+    {"id": "channel", "label": "Channel Buffer", "shape": "rect"},
+    {"id": "executor", "label": "Node Executor Pool", "shape": "rect"},
+    {"id": "checkpointer", "label": "Checkpointer", "shape": "rect"},
+    {"id": "reducer", "label": "Reducer", "shape": "rect"}
+  ],
+  "edges": [
+    {"source": "scheduler", "target": "superstep"},
+    {"source": "scheduler", "target": "channel"},
+    {"source": "superstep", "target": "executor"},
+    {"source": "channel", "target": "executor"},
+    {"source": "executor", "target": "checkpointer"},
+    {"source": "executor", "target": "reducer"},
+    {"source": "checkpointer", "target": "scheduler"},
+    {"source": "reducer", "target": "scheduler"}
+  ]
+}
+```
 
-For deeper comparison in the context of agent architectures, see [Agent Architectures](/agent-architectures). For orchestration framework comparisons in production, see [Production Patterns](/production-patterns).
+## Patterns
 
-## LangGraph Content Across This Series
+### Pattern 1: Supervisor Agent (Router)
 
-LangGraph appears throughout this knowledge base in domain-specific contexts:
+A supervisor LLM decides which sub-agent to call next. The state includes a `next_agent` field and a shared `messages` list. Structured output (Pydantic) ensures deterministic routing.
 
-- **[Agent Architectures](/agent-architectures)**: LangGraph as a state machine framework, comparison with Swarm and other approaches
-- **[Multi-Agent Systems](/multi-agent-systems)**: LangGraph for coordinating multiple specialized agents
-- **[Advanced RAG](/advanced-rag)**: LangGraph for corrective and agentic RAG pipelines
-- **[Red-Teaming with LangGraph](/langgraph-red-teaming)**: Graph-based adversarial testing with Send() fan-out and DeepTeam integration
-- **[LLM-as-Judge](/llm-as-judge)**: DeepEval's LangGraph callback handler for agent evaluation
-- **[Production Patterns](/production-patterns)**: LangGraph as orchestration infrastructure
-- **[AI Engineer Roadmap](/ai-engineer-roadmap)**: LangGraph in the AI engineer's toolkit
+```python
+from pydantic import BaseModel
+
+class RouterOutput(BaseModel):
+    next_agent: str  # "researcher", "coder", "data_analyst", or "done"
+    reasoning: str
+
+def supervisor_node(state: AgentState) -> Command:
+    """Supervisor decides which agent to call next."""
+    response = llm.with_structured_output(RouterOutput).invoke(
+        f"Current conversation: {state['messages']}\nDecide next agent:"
+    )
+    
+    if response.next_agent == "done":
+        return Command(goto=END, update={"next_agent": "done"})
+    else:
+        return Command(
+            goto=response.next_agent,
+            update={"next_agent": response.next_agent}
+        )
+```
+
+```xyflow
+{
+  "direction": "TD",
+  "nodes": [
+    {"id": "supervisor", "label": "Supervisor", "shape": "rect"},
+    {"id": "research", "label": "Research Agent", "shape": "rect"},
+    {"id": "coding", "label": "Coding Agent", "shape": "rect"},
+    {"id": "data", "label": "Data Agent", "shape": "rect"},
+    {"id": "final", "label": "Final Answer", "shape": "circle"}
+  ],
+  "edges": [
+    {"source": "supervisor", "target": "research", "label": "research"},
+    {"source": "supervisor", "target": "coding", "label": "code"},
+    {"source": "supervisor", "target": "data", "label": "data"},
+    {"source": "research", "target": "supervisor"},
+    {"source": "coding", "target": "supervisor"},
+    {"source": "data", "target": "supervisor"},
+    {"source": "supervisor", "target": "final", "label": "done"}
+  ]
+}
+```
+
+### Pattern 2: Parallel Tool Execution (Map-Reduce)
+
+Use the `Send` API to fan out to multiple identical tool nodes in parallel, then aggregate results.
+
+```python
+from langgraph.graph import Send
+
+def planner_node(state: AgentState) -> list[Send]:
+    """Fan out to fetch multiple URLs in parallel."""
+    urls = extract_urls(state["query"])
+    return [Send("fetch_url", {"url": url, "index": i}) for i, url in enumerate(urls)]
+
+def fetch_url_node(state: dict) -> dict:
+    """Fetch a single URL."""
+    content = requests.get(state["url"]).text
+    return {"fetched_pages": {state["index"]: content}}
+
+def aggregator_node(state: AgentState) -> dict:
+    """Combine all fetched content."""
+    all_content = "\n\n".join(state["fetched_pages"].values())
+    return {"combined_content": all_content}
+```
+
+```xyflow
+{
+  "direction": "TD",
+  "nodes": [
+    {"id": "planner", "label": "Planner", "shape": "rect"},
+    {"id": "fetch1", "label": "Fetch URL 1", "shape": "rect"},
+    {"id": "fetch2", "label": "Fetch URL 2", "shape": "rect"},
+    {"id": "fetch3", "label": "Fetch URL 3", "shape": "rect"},
+    {"id": "fetchN", "label": "Fetch URL N", "shape": "rect"},
+    {"id": "aggregator", "label": "Aggregator", "shape": "rect"}
+  ],
+  "edges": [
+    {"source": "planner", "target": "fetch1"},
+    {"source": "planner", "target": "fetch2"},
+    {"source": "planner", "target": "fetch3"},
+    {"source": "planner", "target": "fetchN"},
+    {"source": "fetch1", "target": "aggregator"},
+    {"source": "fetch2", "target": "aggregator"},
+    {"source": "fetch3", "target": "aggregator"},
+    {"source": "fetchN", "target": "aggregator"}
+  ]
+}
+```
+
+### Pattern 3: Human-in-the-Loop for Sensitive Actions
+
+Interrupt before dangerous tool calls (send_email, execute_sql, delete_data), then resume with human approval.
+
+```python
+# Compile with interrupt points
+app = builder.compile(
+    checkpointer=PostgresSaver(...),
+    interrupt_before=["send_email_node", "delete_data_node"]
+)
+
+# In production: frontend shows proposed action, human approves
+# Resume with approved action
+app.update_state(
+    config,
+    {"approved_email": {"to": "user@example.com", "subject": "Approved", "body": "..."}},
+    as_node="send_email_node"
+)
+```
+
+### Pattern 4: Persistent Memory with Summarization
+
+Use PostgresSaver for long-term persistence and add a summarization node to prevent context window overflow.
+
+```python
+def summarize_messages(state: AgentState) -> dict:
+    """Summarize old messages to prevent context overflow."""
+    if len(state["messages"]) > 20:
+        old_messages = state["messages"][:-10]
+        summary = llm.invoke(f"Summarize this conversation: {old_messages}")
+        return {
+            "messages": state["messages"][-10:],  # Keep last 10 messages
+            "summary": summary.content
+        }
+    return {}
+```
+
+### Pattern 5: Guardrails with Pre/Post Processing
+
+Add validation nodes before and after the main LLM to enforce safety policies.
+
+```python
+def validate_input(state: AgentState) -> Command:
+    """Check input for policy violations."""
+    if contains_pii(state["messages"][-1].content):
+        return Command(goto="reject", update={"error": "PII detected"})
+    return Command(goto="llm")
+
+def validate_output(state: AgentState) -> Command:
+    """Check output for policy violations."""
+    if contains_harmful_content(state["messages"][-1].content):
+        return Command(goto="rephrase")
+    return Command(goto=END)
+```
+
+```xyflow
+{
+  "direction": "TD",
+  "nodes": [
+    {"id": "input", "label": "User Input", "shape": "circle"},
+    {"id": "validate_in", "label": "Validate Input", "shape": "diamond"},
+    {"id": "reject", "label": "Reject", "shape": "rect"},
+    {"id": "llm", "label": "LLM Call", "shape": "rect"},
+    {"id": "validate_out", "label": "Validate Output", "shape": "diamond"},
+    {"id": "rephrase", "label": "Rephrase", "shape": "rect"},
+    {"id": "output", "label": "Final Output", "shape": "circle"}
+  ],
+  "edges": [
+    {"source": "input", "target": "validate_in"},
+    {"source": "validate_in", "target": "reject", "label": "invalid"},
+    {"source": "validate_in", "target": "llm", "label": "valid"},
+    {"source": "llm", "target": "validate_out"},
+    {"source": "validate_out", "target": "rephrase", "label": "violation"},
+    {"source": "validate_out", "target": "output", "label": "clean"},
+    {"source": "rephrase", "target": "validate_out"}
+  ]
+}
+```
+
+## Common Pitfalls
+
+### State Mutation Without Reducers
+
+**Problem**: Two nodes write to the same key; the second overwrites the first.  
+**Detection**: State missing expected data after parallel execution.  
+**Fix**: Always define reducers for list/dict fields.
+
+```python
+# Wrong: no reducer, last write wins
+class BadState(TypedDict):
+    messages: list  # Will be overwritten!
+
+# Correct: reducer appends
+class GoodState(TypedDict):
+    messages: Annotated[list, operator.add]  # Appends correctly
+```
+
+### Infinite Loops in Agent Executor
+
+**Problem**: LLM keeps calling tools without producing a final answer.  
+**Detection**: Graph hits recursion limit, hangs indefinitely.  
+**Fix**: Set `recursion_limit` and add a `max_iterations` node.
+
+```python
+app = builder.compile(recursion_limit=25)
+
+def check_iterations(state: AgentState) -> str:
+    if state["iteration_count"] >= 10:
+        return "force_final"
+    return "continue"
+```
+
+### Checkpointer Bottlenecks
+
+**Problem**: Using `MemorySaver` in production (state lost on restart).  
+**Problem**: High latency from checkpoint writes on every node.  
+**Fix**: Use `PostgresSaver`, batch checkpoint writes, use async.
+
+| Checkpointer | Latency | Persistence | Use Case |
+|---|---|---|---|
+| MemorySaver | ~0ms | None | Development |
+| SqliteSaver | ~5ms | Disk | Single server |
+| PostgresSaver | ~10ms | Database | Production |
+
+### Overly Complex Graph Topology
+
+**Problem**: 50+ nodes, 100+ edges, impossible to debug.  
+**Detection**: Visualizing the graph shows spaghetti.  
+**Fix**: Use subgraphs to encapsulate complex workflows.
+
+```python
+# Encapsulate research workflow as a subgraph
+research_subgraph = create_research_agent()
+builder.add_node("research", research_subgraph)
+```
+
+### Ignoring Token Limits in Shared State
+
+**Problem**: `messages` list grows unboundedly, causes context overflow.  
+**Detection**: LLM starts truncating or failing on long conversations.  
+**Fix**: Implement trimming/summarization node.
+
+### Conditional Edge Functions That Raise Exceptions
+
+**Problem**: Edge function crashes on unexpected state values.  
+**Detection**: Graph fails with obscure error during routing.  
+**Fix**: Add try/except in edge functions, return safe default.
+
+```python
+def safe_router(state: AgentState) -> str:
+    try:
+        return route_based_on_topic(state)
+    except Exception:
+        return "default_agent"  # Safe fallback
+```
+
+## Comparison
+
+### LangGraph vs. AutoGen
+
+| Aspect | LangGraph | AutoGen |
+|---|---|---|
+| **Architecture** | Explicit graph definition | Agent conversations |
+| **State management** | Built-in checkpointing | Conversation history |
+| **Control flow** | Fine-grained edge control | Agent-driven turn-taking |
+| **Best for** | Production systems needing reliability | Research prototyping |
+
+### LangGraph vs. CrewAI
+
+| Aspect | LangGraph | CrewAI |
+|---|---|---|
+| **Abstraction level** | Lower-level, more flexible | Higher-level, opinionated |
+| **State** | Explicit state management | Simpler context passing |
+| **Persistence** | Built-in checkpointing | Custom implementation required |
+| **Best for** | Complex, custom workflows | Rapid prototyping of standard patterns |
+
+### LangGraph vs. Semantic Kernel
+
+| Aspect | LangGraph | Semantic Kernel |
+|---|---|---|
+| **Ecosystem** | Python-first, LangChain ecosystem | .NET-first with Python support |
+| **Orchestration** | Both use graphs, richer state management | Graph-based orchestration |
+| **Integration** | LangSmith for observability | Azure AI integration |
+| **Best for** | Python-centric teams | .NET/Azure shops |
+
+### LangGraph vs. Custom Implementation
+
+| Aspect | LangGraph | Custom |
+|---|---|---|
+| **Time to market** | Battle-tested runtime out of the box | Full control, but build everything |
+| **Maintenance** | Actively maintained by LangChain team | Ongoing investment required |
+| **Best for** | Production systems | Research/experimental needs |
+
+## Cross-References
+
+- [Agent Architectures: ReAct, Plan-and-Execute & Cognitive Frameworks](/agent-architectures)
+- [Multi-Agent Systems: Orchestration, Delegation & Communication](/multi-agent-systems)
+- [Agent Orchestration: Routing, Handoffs & Supervisor Patterns](/agent-orchestration)
+- [Agent Memory: Short-term, Long-term & Episodic Memory Systems](/agent-memory)
+- [Agent Debugging & Observability: Tracing, Replay & Root Cause Analysis](/agent-debugging)
+- [Agent Evaluation: Reliability, Tool Use Accuracy & Trajectory Analysis](/agent-evaluation)
+- [Agent Harnesses: Event Loops, Permission Models & Tool Sandboxing](/agent-harnesses)
+- [Agent SDKs: Claude, OpenAI, Vercel AI SDK & Framework Comparison](/agent-sdks)
+- [Function Calling & Tool Integration: APIs, Schemas & Execution](/function-calling)
+- [Context Window Management: Token Budgets, Prioritization & Overflow Strategies](/context-window-management)
+- [Memory Architectures for LLM Systems: Working, Episodic & Semantic Memory](/memory-architectures)
+- [Production AI Patterns: Workflows, Pipelines & Architecture](/production-patterns)
+- [Observability: Tracing, Logging & LLM Monitoring](/observability)
+- [Red-Teaming LLM Applications with LangGraph: Graph-Based Adversarial Pipelines](/langgraph-red-teaming)
+- [Conversational AI: Chatbot Design, Dialogue Management & UX](/conversational-ai)
+- [Search & Recommendations with LLMs](/search-recommendations)
+- [Advanced RAG: Agentic, Graph-Based & Multi-Hop Retrieval](/advanced-rag)
+- [LlamaIndex](/llamaindex)
+- [The AI Engineer's Roadmap: Skills, Tools & Career Path (2025+)](/ai-engineer-roadmap)

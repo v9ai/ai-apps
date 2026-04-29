@@ -1516,3 +1516,89 @@ export const regimenAnalysis = pgTable(
     uniqueIndex("regimen_analysis_user_slug_unique").on(table.userId, table.slug),
   ],
 );
+
+// ── Tasks (merged from apps/todo) ───────────────────────────────────
+// user_id is the Neon Auth email string, matching every other research-thera table.
+
+export type TaskStatus = "inbox" | "active" | "completed" | "archived";
+export type EnergyLevel = "high" | "medium" | "low";
+
+export const tasks = pgTable(
+  "tasks",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id").notNull(),
+    title: text("title").notNull(),
+    description: text("description"),
+    status: text("status").notNull().default("inbox").$type<TaskStatus>(),
+    priorityScore: real("priority_score").default(0),
+    priorityManual: integer("priority_manual"),
+    dueDate: timestamp("due_date", { withTimezone: true }),
+    estimatedMinutes: integer("estimated_minutes"),
+    actualMinutes: integer("actual_minutes"),
+    energyPreference: text("energy_preference").$type<EnergyLevel>(),
+    parentTaskId: uuid("parent_task_id"),
+    position: integer("position").notNull().default(0),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("tasks_user_status_idx").on(table.userId, table.status),
+    index("tasks_parent_idx").on(table.parentTaskId),
+  ],
+);
+
+export const taskDependencies = pgTable(
+  "task_dependencies",
+  {
+    blockingTaskId: uuid("blocking_task_id")
+      .notNull()
+      .references(() => tasks.id, { onDelete: "cascade" }),
+    blockedTaskId: uuid("blocked_task_id")
+      .notNull()
+      .references(() => tasks.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.blockingTaskId, table.blockedTaskId] }),
+  ],
+);
+
+export const userStreaks = pgTable("user_streaks", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: text("user_id").notNull().unique(),
+  currentStreak: integer("current_streak").notNull().default(0),
+  longestStreak: integer("longest_streak").notNull().default(0),
+  lastCompletedDate: timestamp("last_completed_date", { withTimezone: true }),
+  freezeAvailable: integer("freeze_available").notNull().default(1),
+  streakOptIn: boolean("streak_opt_in").notNull().default(true),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const timeBlocks = pgTable("time_blocks", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: text("user_id").notNull(),
+  taskId: uuid("task_id").references(() => tasks.id, { onDelete: "set null" }),
+  startTime: timestamp("start_time", { withTimezone: true }).notNull(),
+  endTime: timestamp("end_time", { withTimezone: true }).notNull(),
+  bufferPercentage: integer("buffer_percentage").notNull().default(25),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const userPreferences = pgTable("user_preferences", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: text("user_id").notNull().unique(),
+  chronotype: text("chronotype").default("intermediate"),
+  energyPatterns: jsonb("energy_patterns").$type<Record<string, string>>(),
+  priorityWeights: jsonb("priority_weights").$type<{
+    deadlineUrgency: number;
+    userValue: number;
+    dependencyImpact: number;
+    projectWeight: number;
+  }>(),
+  chunkSize: integer("chunk_size").notNull().default(7),
+  gamificationEnabled: boolean("gamification_enabled").notNull().default(true),
+  bufferPercentage: integer("buffer_percentage").notNull().default(25),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});

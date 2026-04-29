@@ -156,6 +156,29 @@ export async function hideOpportunity(id: string): Promise<HideResult> {
   return { ok: true };
 }
 
+export async function markD1Applied(id: string): Promise<HideResult> {
+  const { isAdmin } = await checkIsAdmin();
+  if (!isAdmin) return { error: "Forbidden" };
+
+  const base = process.env.EDGE_WORKER_URL ?? "https://agenticleadgen-edge.eeeew.workers.dev";
+  const token = process.env.JOBS_D1_TOKEN;
+  if (!token) return { error: "JOBS_D1_TOKEN not configured" };
+
+  const res = await fetch(`${base.replace(/\/$/, "")}/api/jobs/d1/opportunities/status`, {
+    method: "POST",
+    headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+    body: JSON.stringify({ id, status: "applied" }),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    return { error: `worker ${res.status}${detail ? `: ${detail.slice(0, 200)}` : ""}` };
+  }
+
+  revalidatePath("/opportunities");
+  return { ok: true };
+}
+
 export async function hideD1Opportunity(id: string): Promise<HideResult> {
   const { isAdmin } = await checkIsAdmin();
   if (!isAdmin) return { error: "Forbidden" };

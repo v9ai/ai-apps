@@ -1,0 +1,16 @@
+mutation ParseTaskFromText($input: String!) {
+  parseTaskFromText(input: $input) {
+    title
+    dueDate
+    estimatedMinutes
+    energyPreference
+  }
+}
+
+mutation SuggestTaskCategorization($title: String!, $description: String) {
+  suggestTaskCategorization(title: $title, description: $description) {
+    priority
+    energyPreference
+    estimatedMinutes
+  }
+}

@@ -67,6 +67,14 @@ extend type Mutation {
   scoreContactsML(companyId: Int!): ScoreContactsMLResult!
   scoreContactLora(contactId: Int!): Contact!
   batchScoreContactsLora(companyId: Int!, limit: Int = 50): ScoreContactsLoraResult!
+  setRecruiterFit(
+    contactId: Int!
+    fitScore: Float!
+    tier: String!
+    specialty: String!
+    remoteGlobal: Boolean
+    reasons: [String!]
+  ): Contact!
   enrichAIContactProfile(contactId: Int!): EnrichAIContactResult!
   enrichAIContactsForCompany(companyId: Int!): EnrichAIContactsBulkResult!
   enrichContactPapersAndTags(contactId: Int!): EnrichContactPapersResult!
@@ -136,6 +144,13 @@ type Contact {
   loraTier: String
   loraReasons: [String!]!
   loraScoredAt: String
+  # Ideal-recruiter fit (output of score_recruiter_fit langgraph)
+  recruiterFitScore: Float
+  recruiterFitTier: String
+  recruiterFitSpecialty: String
+  recruiterFitRemoteGlobal: Boolean
+  recruiterFitReasons: [String!]!
+  recruiterFitScoredAt: String
   # Paper + tag enrichment (populated by enrichContactPapersAndTags)
   papers: [ContactPaper!]!
   papersEnrichedAt: String

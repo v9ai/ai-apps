@@ -82,19 +82,6 @@ export interface MemorizeGenerateResult {
   categories: MemorizeCategory[];
 }
 
-export interface ArticleGenerateResult {
-  final: string;
-  word_count: number;
-  revisions: number;
-  quality: {
-    ok: boolean;
-    issues: string[];
-    wordCount: number;
-    codeBlocks: number;
-    crossRefs: number;
-  };
-}
-
 export interface ExpertScore {
   score: number;
   reasoning: string;
@@ -178,35 +165,9 @@ export function runMemorizeGenerate(input: {
   );
 }
 
-/**
- * Generate a knowledge-base article end-to-end (research → outline → draft →
- * review → revise loop). The container has no repo access, so the caller
- * resolves catalog context (related_topics, existing_articles, style_sample,
- * category) via lib/catalog on the Next.js side and passes them in.
- *
- * Returns the final markdown plus quality metrics. The caller handles saving.
- */
-export function runArticleGenerate(input: {
-  slug: string;
-  topic: string;
-  category: string;
-  relatedTopics: string;
-  existingArticles: string;
-  styleSample: string;
-}): Promise<ArticleGenerateResult> {
-  return runGraph<ArticleGenerateResult>(
-    "article_generate",
-    {
-      slug: input.slug,
-      topic: input.topic,
-      category: input.category,
-      related_topics: input.relatedTopics,
-      existing_articles: input.existingArticles,
-      style_sample: input.styleSample,
-    },
-    { timeoutMs: 300_000 },
-  );
-}
+// Article generation does NOT go through this TS client.
+// It runs the Python LangGraph StateGraph directly via
+// `backend/scripts/generate_article.py` — see that file's docstring.
 
 /**
  * 10-expert course review: parallel fan-out + weighted aggregator. Input and

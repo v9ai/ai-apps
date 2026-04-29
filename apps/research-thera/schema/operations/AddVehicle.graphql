@@ -1,0 +1,9 @@
+mutation AddVehicle($input: AddVehicleInput!) {
+  addVehicle(input: $input) {
+    id
+    make
+    model
+    year
+    nickname
+  }
+}

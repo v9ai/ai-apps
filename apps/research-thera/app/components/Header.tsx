@@ -33,6 +33,7 @@ const NAV_LINKS = [
   { href: "/search", label: "Search" },
   { href: "/stories", label: "Stories" },
   { href: "/symptoms", label: "Symptoms" },
+  { href: "/tasks", label: "Tasks" },
   { href: "/trajectory", label: "Trajectory" },
 ];
 

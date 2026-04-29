@@ -506,6 +506,12 @@ export type Contact = {
   papersEnrichedAt: Maybe<Scalars['String']['output']>;
   position: Maybe<Scalars['String']['output']>;
   profile: Maybe<ContactProfile>;
+  recruiterFitReasons: Array<Scalars['String']['output']>;
+  recruiterFitRemoteGlobal: Maybe<Scalars['Boolean']['output']>;
+  recruiterFitScore: Maybe<Scalars['Float']['output']>;
+  recruiterFitScoredAt: Maybe<Scalars['String']['output']>;
+  recruiterFitSpecialty: Maybe<Scalars['String']['output']>;
+  recruiterFitTier: Maybe<Scalars['String']['output']>;
   scholarProfile: Maybe<Scalars['JSON']['output']>;
   seniority: Maybe<Scalars['String']['output']>;
   slug: Maybe<Scalars['String']['output']>;
@@ -1547,6 +1553,7 @@ export type Mutation = {
   sendOutreachEmail: SendOutreachEmailResult;
   sendScheduledEmailNow: SendNowResult;
   setProductPublished: Product;
+  setRecruiterFit: Contact;
   snoozeReminder: Reminder;
   syncResendEmails: SyncResendResult;
   /**
@@ -2009,6 +2016,16 @@ export type MutationSendScheduledEmailNowArgs = {
 export type MutationSetProductPublishedArgs = {
   id: Scalars['Int']['input'];
   published: Scalars['Boolean']['input'];
+};
+
+
+export type MutationSetRecruiterFitArgs = {
+  contactId: Scalars['Int']['input'];
+  fitScore: Scalars['Float']['input'];
+  reasons?: InputMaybe<Array<Scalars['String']['input']>>;
+  remoteGlobal?: InputMaybe<Scalars['Boolean']['input']>;
+  specialty: Scalars['String']['input'];
+  tier: Scalars['String']['input'];
 };
 
 
@@ -4932,6 +4949,12 @@ export type ContactResolvers<ContextType = GraphQLContext, ParentType extends Re
   papersEnrichedAt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   position?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   profile?: Resolver<Maybe<ResolversTypes['ContactProfile']>, ParentType, ContextType>;
+  recruiterFitReasons?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  recruiterFitRemoteGlobal?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  recruiterFitScore?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  recruiterFitScoredAt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  recruiterFitSpecialty?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  recruiterFitTier?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   scholarProfile?: Resolver<Maybe<ResolversTypes['JSON']>, ParentType, ContextType>;
   seniority?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   slug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -5721,6 +5744,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   sendOutreachEmail?: Resolver<ResolversTypes['SendOutreachEmailResult'], ParentType, ContextType, RequireFields<MutationSendOutreachEmailArgs, 'input'>>;
   sendScheduledEmailNow?: Resolver<ResolversTypes['SendNowResult'], ParentType, ContextType, RequireFields<MutationSendScheduledEmailNowArgs, 'resendId'>>;
   setProductPublished?: Resolver<ResolversTypes['Product'], ParentType, ContextType, RequireFields<MutationSetProductPublishedArgs, 'id' | 'published'>>;
+  setRecruiterFit?: Resolver<ResolversTypes['Contact'], ParentType, ContextType, RequireFields<MutationSetRecruiterFitArgs, 'contactId' | 'fitScore' | 'specialty' | 'tier'>>;
   snoozeReminder?: Resolver<ResolversTypes['Reminder'], ParentType, ContextType, RequireFields<MutationSnoozeReminderArgs, 'days' | 'id'>>;
   syncResendEmails?: Resolver<ResolversTypes['SyncResendResult'], ParentType, ContextType, Partial<MutationSyncResendEmailsArgs>>;
   syncVoyagerJobs?: Resolver<ResolversTypes['SyncVoyagerJobsResult'], ParentType, ContextType, RequireFields<MutationSyncVoyagerJobsArgs, 'input'>>;

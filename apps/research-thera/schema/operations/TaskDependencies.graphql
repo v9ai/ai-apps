@@ -1,0 +1,7 @@
+mutation AddTaskDependency($blockingTaskId: ID!, $blockedTaskId: ID!) {
+  addTaskDependency(blockingTaskId: $blockingTaskId, blockedTaskId: $blockedTaskId)
+}
+
+mutation RemoveTaskDependency($blockingTaskId: ID!, $blockedTaskId: ID!) {
+  removeTaskDependency(blockingTaskId: $blockingTaskId, blockedTaskId: $blockedTaskId)
+}
