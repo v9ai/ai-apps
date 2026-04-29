@@ -28,6 +28,7 @@ import {
 import { css } from "styled-system/css";
 import { updateOpportunityTags, deleteOpportunity } from "../actions";
 import { FollowUpEmailDialog } from "@/components/emails/follow-up-email-dialog";
+import { OpportunityEditDialog } from "./opportunity-edit-dialog";
 
 type OpportunityDetail = {
   id: string;
@@ -244,16 +245,18 @@ export function OpportunityDetailClient({
           )}
           {opp.source && <Badge variant="surface" color="gray" size="1">{opp.source}</Badge>}
           {opp.applied && <Badge color="orange" size="1">applied</Badge>}
-          <IconButton
-            size="2"
-            variant="soft"
-            color="red"
-            onClick={handleDelete}
-            disabled={isDeleting}
-            style={{ marginLeft: "auto" }}
-          >
-            <TrashIcon width={14} height={14} />
-          </IconButton>
+          <Flex gap="2" align="center" style={{ marginLeft: "auto" }}>
+            <OpportunityEditDialog opportunity={opp} />
+            <IconButton
+              size="2"
+              variant="soft"
+              color="red"
+              onClick={handleDelete}
+              disabled={isDeleting}
+            >
+              <TrashIcon width={14} height={14} />
+            </IconButton>
+          </Flex>
         </Flex>
       </Flex>
 

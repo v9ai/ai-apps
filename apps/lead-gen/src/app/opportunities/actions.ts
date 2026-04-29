@@ -41,6 +41,63 @@ export async function updateOpportunityTags(id: string, tags: string[]) {
   return { tags };
 }
 
+export type OpportunityEditableFields = {
+  title?: string;
+  url?: string | null;
+  source?: string | null;
+  status?: string;
+  reward_text?: string | null;
+  reward_usd?: number | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  deadline?: string | null;
+  applied?: boolean;
+  applied_at?: string | null;
+  application_status?: string | null;
+  application_notes?: string | null;
+  raw_context?: string | null;
+};
+
+export async function updateOpportunity(id: string, fields: OpportunityEditableFields) {
+  const { isAdmin } = await checkIsAdmin();
+  if (!isAdmin) return { error: "Forbidden" };
+
+  const patch: Record<string, unknown> = {};
+  for (const key of [
+    "title",
+    "url",
+    "source",
+    "status",
+    "reward_text",
+    "reward_usd",
+    "start_date",
+    "end_date",
+    "deadline",
+    "applied",
+    "applied_at",
+    "application_status",
+    "application_notes",
+    "raw_context",
+  ] as const) {
+    if (key in fields) patch[key] = fields[key];
+  }
+  if (Object.keys(patch).length === 0) return { error: "No fields to update" };
+
+  patch.updated_at = new Date().toISOString();
+
+  const rows = await db
+    .update(opportunities)
+    .set(patch)
+    .where(eq(opportunities.id, id))
+    .returning({ id: opportunities.id });
+
+  if (rows.length === 0) return { error: "Not found" };
+
+  revalidatePath(`/opportunities/${id}`);
+  revalidatePath("/opportunities");
+  return { ok: true };
+}
+
 type BlockResult = { ok: true; companyKey: string | null } | { error: string };
 
 export async function blockOpportunityCompany(id: string): Promise<BlockResult> {
