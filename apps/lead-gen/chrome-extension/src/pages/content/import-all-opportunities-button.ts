@@ -41,6 +41,22 @@ const COLOR_BUSY = "#1e3a8a";
 const COLOR_ERROR = "#dc2626";
 const COLOR_DONE = "#16a34a";
 
+const BASE_BOTTOM = 24;
+const STACK_GAP = 16;
+
+// Stack above the single-job "Import Opportunity" button when it's present
+// (both render together on /jobs/view/{id}). Measure its actual height instead
+// of hardcoding an offset — text wraps and state changes can resize it.
+function computeBottomOffset(): number {
+  const lower = document.querySelector<HTMLElement>(
+    "[data-lg-import-opportunity-btn]",
+  );
+  if (!lower) return BASE_BOTTOM;
+  const h = lower.getBoundingClientRect().height;
+  if (!h) return BASE_BOTTOM;
+  return BASE_BOTTOM + h + STACK_GAP;
+}
+
 function resetIdle(btn: HTMLButtonElement) {
   btn.disabled = false;
   btn.textContent = "Import all opportunities";
@@ -54,7 +70,6 @@ function createButton(): HTMLButtonElement {
   btn.title = "Scrape every page of this LinkedIn job-search and save to D1";
   btn.style.cssText = `
     position: fixed;
-    bottom: 100px;
     right: 24px;
     z-index: 9999;
     background-color: ${COLOR_IDLE};
@@ -72,6 +87,7 @@ function createButton(): HTMLButtonElement {
     text-overflow: ellipsis;
     white-space: nowrap;
   `;
+  btn.style.bottom = `${computeBottomOffset()}px`;
 
   btn.addEventListener("mouseenter", () => {
     if (!btn.disabled) btn.style.backgroundColor = COLOR_HOVER;
@@ -157,12 +173,14 @@ function sync() {
 
   if (document.querySelector(`[${BTN_ATTR}]`)) {
     importAllBtn = document.querySelector<HTMLButtonElement>(`[${BTN_ATTR}]`);
+    if (importAllBtn) importAllBtn.style.bottom = `${computeBottomOffset()}px`;
     return;
   }
 
   const btn = createButton();
   document.body.appendChild(btn);
   importAllBtn = btn;
+  importAllBtn.style.bottom = `${computeBottomOffset()}px`;
   console.log(`[ImportAllOpportunitiesBtn] injected on ${window.location.pathname}`);
 }
 
@@ -238,6 +256,11 @@ function init() {
     if (window.location.href === lastUrl) return;
     lastUrl = window.location.href;
     syncWithRetries();
+  });
+
+  window.addEventListener("resize", () => {
+    if (teardownIfDead()) return;
+    if (importAllBtn) importAllBtn.style.bottom = `${computeBottomOffset()}px`;
   });
 
   const urlPoll = setInterval(() => {
