@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { hub, template, devices, hasRemote, instructions, code } =
+  const { name, hub, template, devices, hasRemote, instructions, code } =
     await request.json();
 
   if (!hub || !template || !code) {
@@ -36,18 +36,29 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const [row] = await db
-    .insert(scripts)
-    .values({
-      userId: session.user.id,
-      hub,
-      template,
-      devices: devices ?? [],
-      hasRemote: hasRemote ? 1 : 0,
-      instructions: instructions ?? "",
-      code,
-    })
-    .returning();
+  const trimmedName = typeof name === "string" ? name.trim() : "";
+  const finalName = trimmedName || `script-${Date.now()}`;
 
-  return NextResponse.json({ success: true, id: row.id });
+  try {
+    const [row] = await db
+      .insert(scripts)
+      .values({
+        userId: session.user.id,
+        name: finalName,
+        hub,
+        template,
+        devices: devices ?? [],
+        hasRemote: hasRemote ? 1 : 0,
+        instructions: instructions ?? "",
+        code,
+      })
+      .returning();
+
+    return NextResponse.json({ success: true, id: row.id });
+  } catch (err: unknown) {
+    if (err && typeof err === "object" && "code" in err && (err as { code: string }).code === "23505") {
+      return NextResponse.json({ error: "Name already used" }, { status: 409 });
+    }
+    throw err;
+  }
 }

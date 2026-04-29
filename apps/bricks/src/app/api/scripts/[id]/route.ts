@@ -40,6 +40,13 @@ export async function PATCH(
   const body = await request.json();
 
   const updates: Record<string, unknown> = {};
+  if (body.name !== undefined) {
+    const trimmed = typeof body.name === "string" ? body.name.trim() : "";
+    if (!trimmed) {
+      return NextResponse.json({ error: "Name cannot be empty" }, { status: 400 });
+    }
+    updates.name = trimmed;
+  }
   if (body.hub !== undefined) updates.hub = body.hub;
   if (body.devices !== undefined) updates.devices = body.devices;
   if (body.instructions !== undefined) updates.instructions = body.instructions;
@@ -49,15 +56,22 @@ export async function PATCH(
     return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
   }
 
-  const [row] = await db
-    .update(scripts)
-    .set(updates)
-    .where(and(eq(scripts.id, Number(id)), eq(scripts.userId, session.user.id)))
-    .returning();
+  try {
+    const [row] = await db
+      .update(scripts)
+      .set(updates)
+      .where(and(eq(scripts.id, Number(id)), eq(scripts.userId, session.user.id)))
+      .returning();
 
-  if (!row) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    if (!row) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    return NextResponse.json(row);
+  } catch (err: unknown) {
+    if (err && typeof err === "object" && "code" in err && (err as { code: string }).code === "23505") {
+      return NextResponse.json({ error: "Name already used" }, { status: 409 });
+    }
+    throw err;
   }
-
-  return NextResponse.json(row);
 }

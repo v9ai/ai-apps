@@ -46,6 +46,12 @@ const LABELS = {
     confirmDelete: 'Delete "{name}"?',
     bleLabel: "BLE",
     comingSoon: "Coming soon",
+    addScript: "Add",
+    adding: "Adding…",
+    scriptNamePlaceholder: "Script name (e.g. car)",
+    nameTaken: "Name already used",
+    addFailed: "Could not add script",
+    yoursTag: "yours",
   },
   ro: {
     loading: "Se încarcă…",
@@ -66,6 +72,12 @@ const LABELS = {
     confirmDelete: 'Ștergi "{name}"?',
     bleLabel: "BLE",
     comingSoon: "În curând",
+    addScript: "Adaugă",
+    adding: "Se adaugă…",
+    scriptNamePlaceholder: "Nume script (ex. car)",
+    nameTaken: "Nume deja folosit",
+    addFailed: "Scriptul nu a putut fi adăugat",
+    yoursTag: "al tău",
   },
 } as const;
 
@@ -81,6 +93,12 @@ export default function HubPage() {
   const [hubScripts, setHubScripts] = useState<
     { slug: string; filename: string; title: string; titleRo: string | null; heroImage: string | null }[]
   >([]);
+  const [userScripts, setUserScripts] = useState<
+    { id: number; name: string; hub: string; createdAt: string }[]
+  >([]);
+  const [scriptName, setScriptName] = useState("");
+  const [adding, setAdding] = useState(false);
+  const [addError, setAddError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(`/api/hubs/${id}`)
@@ -98,10 +116,51 @@ export default function HubPage() {
 
   useEffect(() => {
     fetch(`/api/hubs/${id}/scripts`)
-      .then((r) => (r.ok ? r.json() : { scripts: [] }))
-      .then((data) => setHubScripts(data.scripts ?? []))
-      .catch(() => setHubScripts([]));
+      .then((r) => (r.ok ? r.json() : { scripts: [], userScripts: [] }))
+      .then((data) => {
+        setHubScripts(data.scripts ?? []);
+        setUserScripts(data.userScripts ?? []);
+      })
+      .catch(() => {
+        setHubScripts([]);
+        setUserScripts([]);
+      });
   }, [id]);
+
+  async function handleAddScript(e: React.FormEvent) {
+    e.preventDefault();
+    if (!hub) return;
+    const trimmed = scriptName.trim();
+    if (!trimmed) return;
+    setAdding(true);
+    setAddError(null);
+    try {
+      const res = await fetch("/api/scripts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: trimmed,
+          hub: hub.hubType,
+          template: "blank",
+          code: `# ${trimmed}\n`,
+        }),
+      });
+      if (res.status === 409) {
+        setAddError(t.nameTaken);
+        return;
+      }
+      if (!res.ok) {
+        setAddError(t.addFailed);
+        return;
+      }
+      const data = await res.json();
+      router.push(`/scripts/${data.id}`);
+    } catch {
+      setAddError(t.addFailed);
+    } finally {
+      setAdding(false);
+    }
+  }
 
   async function handleDelete() {
     if (!hub) return;
@@ -458,7 +517,88 @@ export default function HubPage() {
             {t.browseAll}
           </Link>
         </div>
-        {hubScripts.length === 0 ? (
+        <form
+          onSubmit={handleAddScript}
+          className={css({
+            mb: "4",
+            display: "flex",
+            gap: "2",
+            alignItems: "center",
+            flexWrap: "wrap",
+          })}
+        >
+          <input
+            type="text"
+            value={scriptName}
+            onChange={(e) => {
+              setScriptName(e.target.value);
+              if (addError) setAddError(null);
+            }}
+            placeholder={t.scriptNamePlaceholder}
+            disabled={adding}
+            className={css({
+              flex: 1,
+              minW: "180px",
+              maxW: "320px",
+              px: "3",
+              py: "2",
+              fontSize: "sm",
+              fontFamily: "body",
+              bg: "plate.surface",
+              color: "ink.primary",
+              border: "2px solid",
+              borderColor: "plate.border",
+              rounded: "brick",
+              outline: "none",
+              transition: "all 0.15s ease",
+              _focus: { borderColor: "lego.orange" },
+              _disabled: { opacity: 0.6 },
+            })}
+          />
+          <button
+            type="submit"
+            disabled={adding || !scriptName.trim()}
+            className={css({
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "2",
+              rounded: "brick",
+              bg: "lego.green",
+              px: "5",
+              py: "2",
+              fontSize: "sm",
+              fontWeight: "800",
+              fontFamily: "display",
+              color: "white",
+              border: "none",
+              cursor: "pointer",
+              transition: "all 0.15s ease",
+              _hover: {
+                bg: "#00A340",
+                transform: "translateY(-1px)",
+              },
+              _disabled: {
+                opacity: 0.5,
+                cursor: "not-allowed",
+                transform: "none",
+              },
+            })}
+          >
+            {adding ? t.adding : t.addScript}
+          </button>
+          {addError && (
+            <span
+              className={css({
+                fontSize: "xs",
+                fontWeight: "700",
+                color: "lego.red",
+              })}
+            >
+              {addError}
+            </span>
+          )}
+        </form>
+        {hubScripts.length === 0 && userScripts.length === 0 ? (
           <p className={css({ fontSize: "sm", color: "ink.faint" })}>{t.noScripts}</p>
         ) : (
           <div
@@ -468,6 +608,75 @@ export default function HubPage() {
               gap: "3",
             })}
           >
+            {userScripts.map((s) => (
+              <Link
+                key={`u-${s.id}`}
+                href={`/scripts/${s.id}`}
+                className={css({
+                  position: "relative",
+                  bg: "plate.surface",
+                  border: "1px solid",
+                  borderColor: "plate.border",
+                  rounded: "brick",
+                  boxShadow: "brick",
+                  p: "4",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "1",
+                  overflow: "hidden",
+                  textDecoration: "none",
+                  transition: "all 0.15s ease",
+                  _hover: {
+                    borderColor: "plate.borderHover",
+                    transform: "translateY(-1px)",
+                  },
+                })}
+              >
+                <div
+                  aria-hidden="true"
+                  className={css({
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    h: "3px",
+                  })}
+                  style={{ background: color }}
+                />
+                <span
+                  className={css({
+                    mt: "1",
+                    fontFamily: "display",
+                    fontWeight: "900",
+                    fontSize: "sm",
+                    color: "ink.primary",
+                    letterSpacing: "-0.01em",
+                    textTransform: "capitalize",
+                  })}
+                >
+                  {s.name}
+                </span>
+                <span
+                  className={css({
+                    display: "inline-block",
+                    alignSelf: "flex-start",
+                    mt: "1",
+                    px: "1.5",
+                    py: "0.5",
+                    rounded: "sm",
+                    fontSize: "10px",
+                    fontWeight: "800",
+                    fontFamily: "display",
+                    letterSpacing: "0.05em",
+                    textTransform: "uppercase",
+                    bg: "rgba(255, 138, 0, 0.12)",
+                    color: "lego.orange",
+                  })}
+                >
+                  {t.yoursTag}
+                </span>
+              </Link>
+            ))}
             {hubScripts.map((s) => (
               <Link
                 key={s.slug}

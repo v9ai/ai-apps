@@ -41,6 +41,7 @@ export const userParts = pgTable("user_parts", {
 export const scripts = pgTable("scripts", {
   id: serial("id").primaryKey(),
   userId: text("user_id").notNull(),
+  name: text("name").notNull(),
   hub: text("hub").notNull(),
   template: text("template").notNull(),
   devices: jsonb("devices").notNull().default([]),
@@ -48,7 +49,9 @@ export const scripts = pgTable("scripts", {
   instructions: text("instructions").notNull().default(""),
   code: text("code").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (t) => [
+  unique().on(t.userId, t.name),
+]);
 
 export const hubTypeDocs = pgTable("hub_type_docs", {
   hubType: text("hub_type").primaryKey(),

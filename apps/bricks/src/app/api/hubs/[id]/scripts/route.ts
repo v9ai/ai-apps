@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { userHubs } from "@/lib/schema";
-import { eq, and } from "drizzle-orm";
+import { userHubs, scripts as userScriptsTable } from "@/lib/schema";
+import { eq, and, desc } from "drizzle-orm";
 import { getAllScripts } from "@/lib/scripts";
 import { slugify } from "@/lib/parser";
 
@@ -49,5 +49,21 @@ export async function GET(
       heroImage: s.heroImage,
     }));
 
-  return NextResponse.json({ hubType: hubRow.hubType, scripts });
+  const userScripts = await db
+    .select({
+      id: userScriptsTable.id,
+      name: userScriptsTable.name,
+      hub: userScriptsTable.hub,
+      createdAt: userScriptsTable.createdAt,
+    })
+    .from(userScriptsTable)
+    .where(
+      and(
+        eq(userScriptsTable.userId, session.user.id),
+        eq(userScriptsTable.hub, hubRow.hubType),
+      ),
+    )
+    .orderBy(desc(userScriptsTable.createdAt));
+
+  return NextResponse.json({ hubType: hubRow.hubType, scripts, userScripts });
 }
