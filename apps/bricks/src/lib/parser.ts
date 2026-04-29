@@ -5,6 +5,18 @@ export type HubType =
   | "PrimeHub"
   | "CityHub";
 
+export const HUB_TYPE_SLUG: Record<HubType, string> = {
+  CityHub: "city",
+  TechnicHub: "technic",
+  MoveHub: "move",
+  PrimeHub: "prime",
+  EssentialHub: "essential",
+};
+
+export const HUB_SLUG_TO_TYPE: Record<string, HubType> = Object.fromEntries(
+  Object.entries(HUB_TYPE_SLUG).map(([k, v]) => [v, k as HubType]),
+) as Record<string, HubType>;
+
 export type DeviceType =
   | "Motor"
   | "DCMotor"
