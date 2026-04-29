@@ -28,7 +28,6 @@ import {
   useProductBySlugQuery,
   useProductLeadsPreviewQuery,
 } from "@/__generated__/hooks";
-import { useAuth } from "@/lib/auth-hooks";
 import type {
   PricingStrategyResult,
   GTMStrategyResult,
@@ -37,7 +36,6 @@ import type {
 import {
   LoadingShell,
   ErrorShell,
-  SignInGate,
   ProductNotFound,
 } from "./view-chrome";
 
@@ -78,22 +76,16 @@ function sectionIcon(title: string) {
 }
 
 export function ProductDetail({ slug }: { slug: string }) {
-  const { user, loading: authLoading } = useAuth();
-
   const { data, loading, error } = useProductBySlugQuery({
     variables: { slug },
     fetchPolicy: "cache-and-network",
-    skip: !user,
   });
 
   const { data: leadsPreviewData } = useProductLeadsPreviewQuery({
     variables: { slug },
     fetchPolicy: "cache-and-network",
-    skip: !user,
   });
 
-  if (authLoading) return <LoadingShell />;
-  if (!user) return <SignInGate />;
   if (loading && !data) return <LoadingShell />;
   if (error) return <ErrorShell message={error.message} />;
 
