@@ -30,7 +30,7 @@ export function Header() {
     const initial: Record<string, boolean> = {};
     for (const item of NAV_ITEMS) {
       if (item.kind === "group") {
-        initial[item.key] = isGroupActive(item.children);
+        initial[item.key] = true;
       }
     }
     return initial;
@@ -126,7 +126,7 @@ export function Header() {
                   return renderLeafButton(item);
                 }
                 const groupActive = isGroupActive(item.children);
-                const isOpen = openGroups[item.key] ?? false;
+                const isOpen = openGroups[item.key] ?? true;
                 const subnavId = `subnav-${item.key}`;
                 return (
                   <Flex key={item.key} direction="column" gap="1">
