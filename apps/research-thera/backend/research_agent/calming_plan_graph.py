@@ -1,23 +1,28 @@
-"""LangGraph: dedicated plant-based calming & behavior plan generator.
+"""LangGraph: dedicated plant-based calming & behavior plan generator (deep).
 
-Given a family_member_id (e.g. Bogdan) and user_email, this graph:
-  1. Loads the member profile (age, DOB, preferred_language) plus the latest
-     issues and most-recent deep_issue_analyses row.
-  2. Searches academic literature in-memory for non-pharmacologic / botanical
-     calming interventions matched to the member's age band — does NOT persist
-     papers to therapy_research, the cited sources are stored inline on the
-     calming_plans row.
-  3. Generates a structured day-shaped plan (morning / food & drinks /
-     movement / evening / supplements / red flags / weekly check-ins) via
-     DeepSeek JSON mode. Romanian by default for Bogdan; honors language
-     override.
-  4. Runs a second DeepSeek pass that re-reads the plan against the member's
-     age, current-medication status (none, per recent history), and known
-     issues — flags or replaces anything age-inappropriate or interaction-risky.
-  5. Persists to the `calming_plans` table (history-preserving).
+Seven-node multi-stage reasoning pipeline:
+  1. load_context        — member, issues, allergies, characteristics, deep analysis.
+  2. analyze_patterns    — cluster issues+characteristics into 3-5 behavioral patterns
+                           with hypothesized mechanisms.
+  3. search_research     — cluster-targeted literature search (per-pattern queries)
+                           plus base queries; in-memory only, sources stored inline.
+  4. generate_bundles    — per-cluster intervention bundle generation in parallel
+                           (one DeepSeek call per cluster); each bundle includes
+                           mechanism reasoning, interventions, trigger→response
+                           cards, and 1/4/12-week KPIs.
+  5. synthesize_plan     — assemble cluster bundles + global routines + stepped
+                           tiers (Tier 1 lifestyle / Tier 2 nutrition+supplements /
+                           Tier 3 escalation flags) into one coherent plan.
+  6. safety_review       — single audit pass against the synthesized plan with
+                           full allergy + age + interaction + coverage checks.
+  7. persist_plan        — INSERT the deep plan into calming_plans (history-preserving).
 
-Graph is "light" — single member, ~5 paper searches, two LLM calls. Concurrency
-in app.py defaults to 4.
+Romanian by default for Bogdan; honors language override.
+
+Graph runs N + 3 DeepSeek calls (analyze + per-cluster + synthesize + safety).
+Concurrency in app.py defaults to 4 — but per-cluster fan-out runs inside the
+graph via asyncio.gather, not LangGraph parallelism, so a single graph run
+issues bundle calls concurrently.
 """
 from __future__ import annotations
 
@@ -62,8 +67,10 @@ class CalmingPlanState(TypedDict, total=False):
     _allergies: list[dict]
     _characteristics: list[dict]
     _deep_analysis: Optional[dict]
+    _clusters: list[dict]          # from analyze_patterns
     _research: list[dict]
-    _plan_draft: dict
+    _cluster_bundles: list[dict]   # from generate_bundles (one per cluster)
+    _plan_draft: dict              # synthesized plan
     _safety_notes: str
 
     # Outputs
@@ -268,6 +275,175 @@ async def load_context(state: CalmingPlanState) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# Node: analyze_patterns
+#
+# Cluster the member's issues + characteristics into 3-5 behavioral patterns.
+# Each cluster names dominant issues, hypothesizes a mechanism, and proposes
+# the intervention axis (sensory / nutritional / sleep / social / cognitive /
+# arousal / co-regulation). Clusters drive the per-pattern literature search
+# and per-bundle plan generation downstream.
+# ---------------------------------------------------------------------------
+_CLUSTER_AXES = (
+    "sensory_regulation",
+    "sleep_arousal",
+    "nutritional_metabolic",
+    "social_communication",
+    "emotional_dysregulation",
+    "cognitive_attention",
+    "co_regulation_attachment",
+)
+
+
+async def analyze_patterns(state: CalmingPlanState) -> dict:
+    if state.get("error"):
+        return {}
+
+    member = state.get("_member") or {}
+    issues = state.get("_issues") or []
+    characteristics = state.get("_characteristics") or []
+    deep = state.get("_deep_analysis") or {}
+    language = state.get("language", "ro")
+
+    age = _resolve_age(member.get("age_years"), member.get("date_of_birth"))
+    if not issues and not characteristics:
+        # Nothing to cluster — return one generic well-being cluster.
+        return {
+            "_clusters": [
+                {
+                    "name": "general_wellbeing",
+                    "axis": "co_regulation_attachment",
+                    "dominant_issues": [],
+                    "hypothesized_mechanism": "No specific issues recorded; baseline calming routine.",
+                    "search_query": "child general wellbeing calming routine non-pharmacologic",
+                }
+            ]
+        }
+
+    issues_text = "\n".join(
+        f"- [{(i.get('severity') or '').upper()}] {i.get('title')} ({i.get('category')}): "
+        f"{(i.get('description') or '')[:160]}"
+        for i in issues[:20]
+    )
+    chars_text = "\n".join(
+        f"- [{(c.get('risk_tier') or 'NONE').upper()}] {c.get('title')} ({c.get('category')}): "
+        f"{(c.get('description') or '')[:160]}"
+        for c in characteristics
+    )
+    deep_summary = (deep.get("summary") or "")[:600]
+    pattern_clusters_existing = deep.get("pattern_clusters") or []
+    existing_clusters_text = "\n".join(
+        f"- {c.get('name', '')}: {(c.get('description') or '')[:160]}"
+        for c in pattern_clusters_existing[:5]
+    )
+
+    schema = """{
+  "clusters": [
+    {
+      "name": "string (snake_case, e.g. 'evening_dysregulation')",
+      "axis": "one of: sensory_regulation | sleep_arousal | nutritional_metabolic | social_communication | emotional_dysregulation | cognitive_attention | co_regulation_attachment",
+      "dominant_issues": ["exact issue title from input", "..."],
+      "hypothesized_mechanism": "string (1-2 sentences naming a plausible neurobiological / behavioral mechanism)",
+      "search_query": "string (an English literature query targeting this pattern; include 'children' and the relevant intervention class)"
+    }
+  ]
+}"""
+
+    lang_note = (
+        "Write `hypothesized_mechanism` in Romanian. Keep `name`, `axis`, and "
+        "`search_query` in English (axis must be one of the enum values, search_query "
+        "is for PubMed/Crossref so English is required)."
+        if language == "ro"
+        else "All strings in clear English."
+    )
+
+    prompt = "\n".join(
+        [
+            "You are a pediatric clinical-pattern analyst. Given the member's issues and "
+            "characteristics, identify 3-5 distinct behavioral PATTERNS (clusters). Each "
+            "pattern should group issues sharing a likely mechanism — do not just bucket "
+            "by category. Aim for clusters that map to actionable intervention axes.",
+            "",
+            f"## Member\nAge: {age if age is not None else 'unspecified'}",
+            "",
+            "## Issues",
+            issues_text or "(none)",
+            "",
+            "## Characteristics",
+            chars_text or "(none)",
+            "",
+            "## Existing deep-analysis pattern clusters (for reference only)",
+            existing_clusters_text or "(none)",
+            "",
+            "## Existing deep-analysis summary",
+            deep_summary or "(none)",
+            "",
+            "## Output rules",
+            "- 3 to 5 clusters. No more, no fewer unless input is sparse.",
+            "- Each cluster name must be snake_case and unique.",
+            "- `dominant_issues` must list issue titles VERBATIM from the input — do not invent.",
+            "- `axis` must be one of the enumerated values exactly.",
+            "- `hypothesized_mechanism` should reference a real mechanism (e.g. HPA-axis dysregulation, "
+            "dopaminergic signaling, sensory gating, parasympathetic withdrawal, gut-brain axis, etc.).",
+            "- `search_query` must be a focused English query suitable for PubMed/Crossref/OpenAlex.",
+            "",
+            f"## Language\n{lang_note}",
+            "",
+            "## Output schema (JSON only)",
+            schema,
+        ]
+    )
+
+    try:
+        result = await _deepseek_json(prompt, max_tokens=2000, temperature=0.3)
+    except Exception as exc:
+        # Fall back to one synthetic cluster so the pipeline can continue.
+        return {
+            "_clusters": [
+                {
+                    "name": "general_calming",
+                    "axis": "emotional_dysregulation",
+                    "dominant_issues": [i.get("title") for i in issues[:8]],
+                    "hypothesized_mechanism": f"analyze_patterns failed ({exc}); fallback cluster.",
+                    "search_query": "non-pharmacologic calming children behavior regulation",
+                }
+            ]
+        }
+
+    clusters = result.get("clusters") if isinstance(result, dict) else None
+    if not isinstance(clusters, list) or not clusters:
+        return {
+            "_clusters": [
+                {
+                    "name": "general_calming",
+                    "axis": "emotional_dysregulation",
+                    "dominant_issues": [i.get("title") for i in issues[:8]],
+                    "hypothesized_mechanism": "analyze_patterns returned empty; fallback cluster.",
+                    "search_query": "non-pharmacologic calming children behavior regulation",
+                }
+            ]
+        }
+
+    # Normalize: clip count, force valid axis, ensure search_query exists.
+    cleaned: list[dict] = []
+    for c in clusters[:5]:
+        if not isinstance(c, dict):
+            continue
+        axis = c.get("axis") or "emotional_dysregulation"
+        if axis not in _CLUSTER_AXES:
+            axis = "emotional_dysregulation"
+        cleaned.append(
+            {
+                "name": (c.get("name") or "cluster").strip()[:60],
+                "axis": axis,
+                "dominant_issues": c.get("dominant_issues") or [],
+                "hypothesized_mechanism": (c.get("hypothesized_mechanism") or "").strip()[:400],
+                "search_query": (c.get("search_query") or "").strip()[:200] or "non-pharmacologic calming children",
+            }
+        )
+    return {"_clusters": cleaned}
+
+
+# ---------------------------------------------------------------------------
 # Node: search_research
 # ---------------------------------------------------------------------------
 _BASE_QUERIES = [
@@ -287,8 +463,8 @@ async def search_research(state: CalmingPlanState) -> dict:
     member = state.get("_member") or {}
     age = _resolve_age(member.get("age_years"), member.get("date_of_birth"))
     band = _age_band(age)
+    clusters = state.get("_clusters") or []
 
-    # Sprinkle a band-specific qualifier so the search prefers age-relevant work.
     qualifier = {
         "early-childhood": "preschool early childhood",
         "school-age": "school age children",
@@ -297,23 +473,35 @@ async def search_research(state: CalmingPlanState) -> dict:
         "unspecified": "pediatric",
     }[band]
 
-    queries = [f"{q} {qualifier}" for q in _BASE_QUERIES]
+    # Cluster-targeted queries (one per cluster) get priority — they're tagged
+    # with the cluster name so generate_bundles can pull the right papers.
+    cluster_queries: list[tuple[str, str]] = [
+        (c.get("name") or "cluster", f"{c.get('search_query', '')} {qualifier}".strip())
+        for c in clusters
+        if c.get("search_query")
+    ]
+    base_queries: list[tuple[str, str]] = [("base", f"{q} {qualifier}") for q in _BASE_QUERIES]
 
+    all_queries = cluster_queries + base_queries
     s2_key = os.environ.get("SEMANTIC_SCHOLAR_API_KEY")
 
-    async def _one(q: str) -> list[dict]:
+    async def _one(tag: str, q: str) -> tuple[str, list[dict]]:
         try:
-            return await search_papers_with_fallback(q, limit=4, semantic_scholar_api_key=s2_key)
+            papers = await search_papers_with_fallback(
+                q, limit=4, semantic_scholar_api_key=s2_key
+            )
+            return tag, papers
         except Exception as exc:
             print(f"[calming_plan] paper search failed for '{q}': {exc}")
-            return []
+            return tag, []
 
-    results = await asyncio.gather(*[_one(q) for q in queries])
+    results = await asyncio.gather(*[_one(tag, q) for tag, q in all_queries])
 
-    # Dedup by DOI / title; keep up to 18 papers with abstracts.
+    # Dedup by DOI/title; keep up to 16 papers with usable abstracts. Tag each
+    # paper with the FIRST cluster (or 'base') that returned it.
     seen_keys: set[str] = set()
     deduped: list[dict] = []
-    for batch in results:
+    for tag, batch in results:
         for p in batch:
             key = (p.get("doi") or p.get("title") or "").strip().lower()
             if not key or key in seen_keys:
@@ -322,10 +510,12 @@ async def search_research(state: CalmingPlanState) -> dict:
             if not abstract or abstract in {"...", "None"} or len(abstract) < 80:
                 continue
             seen_keys.add(key)
-            deduped.append(p)
-            if len(deduped) >= 10:
+            paper_with_tag = dict(p)
+            paper_with_tag["cluster_tag"] = tag
+            deduped.append(paper_with_tag)
+            if len(deduped) >= 16:
                 break
-        if len(deduped) >= 10:
+        if len(deduped) >= 16:
             break
 
     return {"_research": deduped}
