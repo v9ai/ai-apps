@@ -1,0 +1,10 @@
+query CalmingPlans($familyMemberId: Int!) {
+  calmingPlans(familyMemberId: $familyMemberId) {
+    id
+    familyMemberId
+    language
+    planMarkdown
+    safetyNotes
+    generatedAt
+  }
+}

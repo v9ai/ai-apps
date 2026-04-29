@@ -926,6 +926,23 @@ type GenerateParentAdviceResult {
   parentAdvice: String
 }
 
+type CalmingPlan {
+  id: Int!
+  familyMemberId: Int!
+  language: String!
+  planJson: String!         # serialized JSON — clients parse client-side
+  planMarkdown: String!
+  sourcesJson: String!
+  safetyNotes: String
+  generatedAt: String!
+}
+
+type GenerateCalmingPlanResult {
+  success: Boolean!
+  message: String
+  plan: CalmingPlan
+}
+
 type GenerateAudioResult {
   success: Boolean!
   message: String
