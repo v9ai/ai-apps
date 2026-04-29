@@ -884,11 +884,23 @@ export const conditions = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     userId: text("user_id").notNull(),
+    familyMemberId: integer("family_member_id").references(
+      () => familyMembers.id,
+      { onDelete: "cascade" },
+    ),
+    diagnosingDoctorId: uuid("diagnosing_doctor_id").references(
+      () => doctors.id,
+      { onDelete: "set null" },
+    ),
     name: text("name").notNull(),
     notes: text("notes"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [index("conditions_user_idx").on(table.userId)],
+  (table) => [
+    index("conditions_user_idx").on(table.userId),
+    index("conditions_family_idx").on(table.familyMemberId),
+    index("conditions_diagnosing_doctor_idx").on(table.diagnosingDoctorId),
+  ],
 );
 
 export const medications = pgTable(
