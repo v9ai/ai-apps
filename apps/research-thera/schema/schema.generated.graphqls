@@ -2182,7 +2182,7 @@ type Query {
   userSettings: UserSettings!
   userStreak: UserStreak!
   vaultStatus: VaultStatus!
-  vehicle(id: ID!): Vehicle
+  vehicle(id: ID, slug: String): Vehicle
   vehicles: [Vehicle!]!
 }
 
@@ -2759,6 +2759,7 @@ type Vehicle {
   odometerMiles: Int
   photos: [VehiclePhoto!]
   serviceRecords: [VehicleServiceRecord!]
+  slug: String
   thumbnailUrl: String
   updatedAt: String!
   userId: String!

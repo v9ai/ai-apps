@@ -319,7 +319,7 @@ type Query {
 
   # Vehicles (merged from apps/my-car)
   vehicles: [Vehicle!]!
-  vehicle(id: ID!): Vehicle
+  vehicle(id: ID, slug: String): Vehicle
 }
 
 # (chat mutation lives under Mutation type below)
@@ -3047,6 +3047,7 @@ type TaskCategorization {
 type Vehicle {
   id: ID!
   userId: String!
+  slug: String
   make: String!
   model: String!
   year: Int!

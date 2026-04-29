@@ -25,6 +25,8 @@ export class ResearchTheraContainer extends Container {
       LANGCHAIN_TRACING_V2: env.LANGCHAIN_TRACING_V2 ?? "",
       LANGCHAIN_API_KEY: env.LANGCHAIN_API_KEY ?? "",
       LANGSMITH_PROJECT: env.LANGSMITH_PROJECT ?? "research-thera-agent",
+      LLAMA_CLOUD_API_KEY: env.LLAMA_CLOUD_API_KEY ?? "",
+      INTERNAL_API_KEY: env.INTERNAL_API_KEY ?? "",
       ENVIRONMENT: env.ENVIRONMENT ?? "",
     };
   }

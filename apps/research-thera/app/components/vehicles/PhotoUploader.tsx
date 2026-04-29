@@ -8,7 +8,13 @@ import {
   VehicleDocument,
 } from "../../__generated__/hooks";
 
-export function PhotoUploader({ vehicleId }: { vehicleId: string }) {
+export function PhotoUploader({
+  vehicleId,
+  vehicleSlug,
+}: {
+  vehicleId: string;
+  vehicleSlug: string;
+}) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [caption, setCaption] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -18,7 +24,7 @@ export function PhotoUploader({ vehicleId }: { vehicleId: string }) {
   const [requestUpload] = useRequestVehiclePhotoUploadMutation();
   const [addPhoto] = useAddVehiclePhotoMutation({
     refetchQueries: [
-      { query: VehicleDocument, variables: { id: vehicleId } },
+      { query: VehicleDocument, variables: { slug: vehicleSlug } },
     ],
   });
 

@@ -3469,7 +3469,8 @@ export type QuerytherapeuticQuestionsArgs = {
 
 
 export type QueryvehicleArgs = {
-  id: Scalars['ID']['input'];
+  id?: InputMaybe<Scalars['ID']['input']>;
+  slug?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type RecommendedBook = {
@@ -4083,6 +4084,7 @@ export type Vehicle = {
   odometerMiles?: Maybe<Scalars['Int']['output']>;
   photos?: Maybe<Array<VehiclePhoto>>;
   serviceRecords?: Maybe<Array<VehicleServiceRecord>>;
+  slug?: Maybe<Scalars['String']['output']>;
   thumbnailUrl?: Maybe<Scalars['String']['output']>;
   updatedAt: Scalars['String']['output'];
   userId: Scalars['String']['output'];
@@ -6476,7 +6478,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   userSettings?: Resolver<ResolversTypes['UserSettings'], ParentType, ContextType>;
   userStreak?: Resolver<ResolversTypes['UserStreak'], ParentType, ContextType>;
   vaultStatus?: Resolver<ResolversTypes['VaultStatus'], ParentType, ContextType>;
-  vehicle?: Resolver<Maybe<ResolversTypes['Vehicle']>, ParentType, ContextType, RequireFields<QueryvehicleArgs, 'id'>>;
+  vehicle?: Resolver<Maybe<ResolversTypes['Vehicle']>, ParentType, ContextType, Partial<QueryvehicleArgs>>;
   vehicles?: Resolver<Array<ResolversTypes['Vehicle']>, ParentType, ContextType>;
 };
 
@@ -6857,6 +6859,7 @@ export type VehicleResolvers<ContextType = GraphQLContext, ParentType extends Re
   odometerMiles?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   photos?: Resolver<Maybe<Array<ResolversTypes['VehiclePhoto']>>, ParentType, ContextType>;
   serviceRecords?: Resolver<Maybe<Array<ResolversTypes['VehicleServiceRecord']>>, ParentType, ContextType>;
+  slug?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   thumbnailUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   userId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;

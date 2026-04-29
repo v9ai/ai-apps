@@ -37,14 +37,18 @@ function formatDate(d: string): string {
 
 export function ServiceLog({
   vehicleId,
+  vehicleSlug,
   records,
 }: {
   vehicleId: string;
+  vehicleSlug: string;
   records: ServiceRecordView[];
 }) {
   const [error, setError] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const refetch = [{ query: VehicleDocument, variables: { id: vehicleId } }];
+  const refetch = [
+    { query: VehicleDocument, variables: { slug: vehicleSlug } },
+  ];
 
   const [addRecord, { loading: adding }] =
     useAddVehicleServiceRecordMutation({ refetchQueries: refetch });

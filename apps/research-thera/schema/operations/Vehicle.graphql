@@ -1,6 +1,7 @@
-query Vehicle($id: ID!) {
-  vehicle(id: $id) {
+query Vehicle($id: ID, $slug: String) {
+  vehicle(id: $id, slug: $slug) {
     id
+    slug
     make
     model
     year

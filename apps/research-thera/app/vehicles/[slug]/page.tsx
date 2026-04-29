@@ -1,9 +1,8 @@
 "use client";
 
-import { use } from "react";
+import { use, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import {
   AlertDialog,
   Badge,
@@ -29,23 +28,30 @@ import { ServiceLog } from "../../components/vehicles/ServiceLog";
 export default function VehicleDetailPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 }) {
-  const { id } = use(params);
+  const { slug } = use(params);
   return (
     <AuthGate
       pageName="Vehicle"
       description="Sign in to view this vehicle."
     >
-      <VehicleDetailContent id={id} />
+      <VehicleDetailContent slug={slug} />
     </AuthGate>
   );
 }
 
-function VehicleDetailContent({ id }: { id: string }) {
+function VehicleDetailContent({ slug }: { slug: string }) {
   const router = useRouter();
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const { data, loading, error } = useVehicleQuery({ variables: { id } });
+  // Pass the route param as both slug and id; the resolver tries slug first
+  // and falls back to id-lookup. This keeps UUID URLs working for vehicles
+  // that don't have a slug yet (e.g. just created).
+  const looksLikeUuid =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
+  const { data, loading, error } = useVehicleQuery({
+    variables: looksLikeUuid ? { id: slug } : { slug },
+  });
   const [deleteVehicle, { loading: deleting }] = useDeleteVehicleMutation({
     refetchQueries: [{ query: VehiclesDocument }],
   });
@@ -87,6 +93,7 @@ function VehicleDetailContent({ id }: { id: string }) {
     );
   }
 
+  const vehicleId = v.id;
   const title = v.nickname || `${v.year} ${v.make} ${v.model}`;
   const subtitle = v.nickname ? `${v.year} ${v.make} ${v.model}` : null;
   const photos = (v.photos ?? []).map((p) => ({
@@ -106,7 +113,7 @@ function VehicleDetailContent({ id }: { id: string }) {
 
   async function handleDelete() {
     try {
-      await deleteVehicle({ variables: { id } });
+      await deleteVehicle({ variables: { id: vehicleId } });
       router.push("/vehicles");
     } catch (err) {
       alert(err instanceof Error ? err.message : "Delete failed");
@@ -182,16 +189,24 @@ function VehicleDetailContent({ id }: { id: string }) {
             Photos
           </Heading>
           <Flex direction="column" gap="3">
-            <PhotosGrid vehicleId={id} photos={photos} />
+            <PhotosGrid
+              vehicleId={vehicleId}
+              vehicleSlug={slug}
+              photos={photos}
+            />
             <Card size="2">
-              <PhotoUploader vehicleId={id} />
+              <PhotoUploader vehicleId={vehicleId} vehicleSlug={slug} />
             </Card>
           </Flex>
         </Box>
 
         <Separator size="4" />
 
-        <ServiceLog vehicleId={id} records={records} />
+        <ServiceLog
+          vehicleId={vehicleId}
+          vehicleSlug={slug}
+          records={records}
+        />
       </Flex>
     </Box>
   );

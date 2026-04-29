@@ -1,59 +1,22 @@
 "use client";
 
-import { useState } from "react";
-import { Box, Flex, Heading, IconButton, Button, DropdownMenu } from "@radix-ui/themes";
+import { useEffect, useState } from "react";
+import { Box, Flex, Heading, IconButton, Button, DropdownMenu, Kbd, Text } from "@radix-ui/themes";
 import {
   ChevronDownIcon,
   ChevronRightIcon,
   GitHubLogoIcon,
   HamburgerMenuIcon,
+  MagnifyingGlassIcon,
 } from "@radix-ui/react-icons";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import UserMenu from "./UserMenu";
 import { SIDEBAR_WIDTH } from "./sidebar-constants";
+import { NAV_ITEMS, type NavLeaf } from "./nav-items";
+import { CommandPalette } from "./CommandPalette";
 
 export { SIDEBAR_WIDTH };
-
-type NavLeaf = { href: string; label: string };
-type NavItem =
-  | ({ kind: "link" } & NavLeaf)
-  | { kind: "group"; key: string; label: string; children: NavLeaf[] };
-
-const NAV_ITEMS: NavItem[] = [
-  { kind: "link", href: "/appointments", label: "Appointments" },
-  { kind: "link", href: "/books", label: "Books" },
-  { kind: "link", href: "/chat", label: "Chat" },
-  { kind: "link", href: "/dashboard", label: "Dashboard" },
-  { kind: "link", href: "/discussions", label: "Discuții" },
-  { kind: "link", href: "/family", label: "Family" },
-  { kind: "link", href: "/games", label: "Games" },
-  { kind: "link", href: "/goals", label: "Goals" },
-  {
-    kind: "group",
-    key: "health",
-    label: "Health",
-    children: [
-      { href: "/allergies", label: "Allergies & Intolerances" },
-      { href: "/blood-tests", label: "Blood Tests" },
-      { href: "/brain-memory", label: "Brain & Memory" },
-      { href: "/conditions", label: "Conditions" },
-      { href: "/doctors", label: "Doctors" },
-      { href: "/issues", label: "Issues" },
-      { href: "/medications", label: "Medications" },
-      { href: "/protocols", label: "Protocols" },
-      { href: "/symptoms", label: "Symptoms" },
-    ],
-  },
-  { kind: "link", href: "/habits", label: "Habits" },
-  { kind: "link", href: "/journal", label: "Journal" },
-  { kind: "link", href: "/notes", label: "Notes" },
-  { kind: "link", href: "/routines", label: "Routines" },
-  { kind: "link", href: "/search", label: "Search" },
-  { kind: "link", href: "/stories", label: "Stories" },
-  { kind: "link", href: "/tasks", label: "Tasks" },
-  { kind: "link", href: "/trajectory", label: "Trajectory" },
-];
 
 export function Header() {
   const pathname = usePathname();
@@ -72,6 +35,19 @@ export function Header() {
     }
     return initial;
   });
+
+  const [paletteOpen, setPaletteOpen] = useState(false);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setPaletteOpen((v) => !v);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   const renderLeafButton = (link: NavLeaf, indent = false) => {
     const isActive = isPathActive(link.href);
@@ -126,6 +102,22 @@ export function Header() {
               ResearchThera
             </Heading>
           </Link>
+
+          <Button
+            variant="soft"
+            color="gray"
+            size="2"
+            onClick={() => setPaletteOpen(true)}
+            style={{ justifyContent: "space-between" }}
+          >
+            <Flex align="center" gap="2">
+              <MagnifyingGlassIcon width="14" height="14" />
+              <Text size="2" color="gray">
+                Search…
+              </Text>
+            </Flex>
+            <Kbd size="1">⌘K</Kbd>
+          </Button>
 
           <nav aria-label="Main navigation" style={{ flex: 1 }}>
             <Flex direction="column" gap="2">
@@ -241,6 +233,13 @@ export function Header() {
                   </IconButton>
                 </DropdownMenu.Trigger>
                 <DropdownMenu.Content align="end">
+                  <DropdownMenu.Item onClick={() => setPaletteOpen(true)}>
+                    <Flex align="center" gap="2">
+                      <MagnifyingGlassIcon width="14" height="14" />
+                      Search…
+                    </Flex>
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Separator />
                   {NAV_ITEMS.map((item) => {
                     if (item.kind === "link") {
                       const isActive = isPathActive(item.href);
@@ -292,6 +291,8 @@ export function Header() {
           </Flex>
         </header>
       </Box>
+
+      <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
     </>
   );
 }

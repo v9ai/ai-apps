@@ -174,6 +174,7 @@ export type {
 import {
   listVehicles as _listVehicles,
   getVehicle as _getVehicle,
+  getVehicleBySlug as _getVehicleBySlug,
   assertOwnsVehicle as _assertOwnsVehicle,
   createVehicle as _createVehicle,
   updateVehicle as _updateVehicle,
@@ -190,6 +191,7 @@ import {
 export {
   _listVehicles as listVehicles,
   _getVehicle as getVehicle,
+  _getVehicleBySlug as getVehicleBySlug,
   _assertOwnsVehicle as assertOwnsVehicle,
   _createVehicle as createVehicle,
   _updateVehicle as updateVehicle,
@@ -4453,6 +4455,7 @@ export const db = {
   // Vehicles (merged from apps/my-car)
   listVehicles: _listVehicles,
   getVehicle: _getVehicle,
+  getVehicleBySlug: _getVehicleBySlug,
   assertOwnsVehicle: _assertOwnsVehicle,
   createVehicle: _createVehicle,
   updateVehicle: _updateVehicle,

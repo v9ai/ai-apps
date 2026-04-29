@@ -17,25 +17,29 @@ import { AuthGate } from "../../../../components/AuthGate";
 export default function VehiclePhotoPage({
   params,
 }: {
-  params: Promise<{ id: string; photoId: string }>;
+  params: Promise<{ slug: string; photoId: string }>;
 }) {
-  const { id, photoId } = use(params);
+  const { slug, photoId } = use(params);
   return (
     <AuthGate pageName="Photo" description="Sign in to view this photo.">
-      <PhotoContent vehicleId={id} photoId={photoId} />
+      <PhotoContent vehicleSlug={slug} photoId={photoId} />
     </AuthGate>
   );
 }
 
 function PhotoContent({
-  vehicleId,
+  vehicleSlug,
   photoId,
 }: {
-  vehicleId: string;
+  vehicleSlug: string;
   photoId: string;
 }) {
+  const looksLikeUuid =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      vehicleSlug,
+    );
   const { data, loading, error } = useVehicleQuery({
-    variables: { id: vehicleId },
+    variables: looksLikeUuid ? { id: vehicleSlug } : { slug: vehicleSlug },
   });
 
   if (loading) {
@@ -82,7 +86,7 @@ function PhotoContent({
           <Flex direction="column" gap="3">
             <Heading size="4">Photo not found</Heading>
             <Button asChild variant="soft">
-              <Link href={`/vehicles/${vehicleId}`}>Back to vehicle</Link>
+              <Link href={`/vehicles/${vehicleSlug}`}>Back to vehicle</Link>
             </Button>
           </Flex>
         </Card>
@@ -102,7 +106,7 @@ function PhotoContent({
       <Flex direction="column" gap="4">
         <Flex direction="column" gap="1">
           <Button asChild variant="ghost" color="gray" size="2">
-            <Link href={`/vehicles/${vehicleId}`}>← {vehicleTitle}</Link>
+            <Link href={`/vehicles/${vehicleSlug}`}>← {vehicleTitle}</Link>
           </Button>
           {vehicleSubtitle && (
             <Text size="2" color="gray">

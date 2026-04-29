@@ -7,6 +7,7 @@ import { sql as neonSql } from "./neon";
 export type Vehicle = {
   id: string;
   userId: string;
+  slug: string | null;
   make: string;
   model: string;
   year: number;
@@ -47,6 +48,7 @@ function toVehicle(r: Record<string, unknown>): Vehicle {
   return {
     id: r.id as string,
     userId: r.user_id as string,
+    slug: (r.slug as string | null) ?? null,
     make: r.make as string,
     model: r.model as string,
     year: Number(r.year),
@@ -112,7 +114,7 @@ function toServiceRecord(r: Record<string, unknown>): VehicleServiceRecord {
 
 export async function listVehicles(userId: string): Promise<Vehicle[]> {
   const rows = await neonSql`
-    SELECT id, user_id, make, model, year, vin, license_plate, nickname,
+    SELECT id, user_id, slug, make, model, year, vin, license_plate, nickname,
            odometer_miles, color, notes, created_at, updated_at
     FROM vehicles
     WHERE user_id = ${userId}
@@ -126,7 +128,7 @@ export async function getVehicle(
   userId: string,
 ): Promise<Vehicle | null> {
   const rows = await neonSql`
-    SELECT id, user_id, make, model, year, vin, license_plate, nickname,
+    SELECT id, user_id, slug, make, model, year, vin, license_plate, nickname,
            odometer_miles, color, notes, created_at, updated_at
     FROM vehicles
     WHERE id = ${id} AND user_id = ${userId}
@@ -165,10 +167,24 @@ export async function createVehicle(params: {
       (${params.userId}, ${params.make}, ${params.model}, ${params.year},
        ${params.vin}, ${params.licensePlate}, ${params.nickname},
        ${params.odometerMiles}, ${params.color}, ${params.notes})
-    RETURNING id, user_id, make, model, year, vin, license_plate, nickname,
+    RETURNING id, user_id, slug, make, model, year, vin, license_plate, nickname,
               odometer_miles, color, notes, created_at, updated_at
   `;
   return toVehicle(rows[0]);
+}
+
+export async function getVehicleBySlug(
+  slug: string,
+  userId: string,
+): Promise<Vehicle | null> {
+  const rows = await neonSql`
+    SELECT id, user_id, slug, make, model, year, vin, license_plate, nickname,
+           odometer_miles, color, notes, created_at, updated_at
+    FROM vehicles
+    WHERE slug = ${slug} AND user_id = ${userId}
+    LIMIT 1
+  `;
+  return rows.length === 0 ? null : toVehicle(rows[0]);
 }
 
 export async function updateVehicle(
@@ -210,7 +226,7 @@ export async function updateVehicle(
   const query =
     `UPDATE vehicles SET ${fields.join(", ")} ` +
     `WHERE id = ? AND user_id = ? ` +
-    `RETURNING id, user_id, make, model, year, vin, license_plate, nickname, ` +
+    `RETURNING id, user_id, slug, make, model, year, vin, license_plate, nickname, ` +
     `odometer_miles, color, notes, created_at, updated_at`;
   const pgQuery = query.replace(/\?/g, () => `$${++i}`);
 

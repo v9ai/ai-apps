@@ -30,6 +30,11 @@ def upload_file(key: str, body: bytes, content_type: str) -> None:
     )
 
 
+def get_file(key: str) -> bytes:
+    resp = _get_client().get_object(Bucket=settings.r2_bucket_name, Key=key)
+    return resp["Body"].read()
+
+
 def delete_file(key: str) -> None:
     _get_client().delete_object(
         Bucket=settings.r2_bucket_name,

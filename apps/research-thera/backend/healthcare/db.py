@@ -78,9 +78,35 @@ def get_blood_test_file_path(test_id: str) -> str | None:
     return row[0] if row else None
 
 
+def get_blood_test_row(test_id: str) -> dict | None:
+    with get_conn() as conn:
+        row = conn.execute(
+            "SELECT user_id, file_path, file_name, test_date FROM blood_tests WHERE id = %s",
+            (test_id,),
+        ).fetchone()
+    if not row:
+        return None
+    test_date = row[3].isoformat() if row[3] is not None and hasattr(row[3], "isoformat") else row[3]
+    return {
+        "user_id": row[0],
+        "file_path": row[1],
+        "file_name": row[2],
+        "test_date": test_date,
+    }
+
+
 def delete_blood_test(test_id: str) -> None:
     with get_conn() as conn:
         conn.execute("DELETE FROM blood_tests WHERE id = %s", (test_id,))
+
+
+def clear_blood_test_derived(test_id: str) -> None:
+    """Wipe all derived rows (markers + embeddings) for a test, leaving the blood_tests row."""
+    with get_conn() as conn:
+        conn.execute("DELETE FROM blood_marker_embeddings WHERE test_id = %s", (test_id,))
+        conn.execute("DELETE FROM blood_test_embeddings WHERE test_id = %s", (test_id,))
+        conn.execute("DELETE FROM health_state_embeddings WHERE test_id = %s", (test_id,))
+        conn.execute("DELETE FROM blood_markers WHERE test_id = %s", (test_id,))
 
 
 # ── blood_markers ─────────────────────────────────────────────────────

@@ -23,8 +23,10 @@ from llama_index.core.schema import BaseNode, MetadataMode, TextNode
 
 from ..config import settings
 from ..db import (
+    clear_blood_test_derived,
     delete_blood_test,
     get_blood_test_file_path,
+    get_blood_test_row,
     insert_blood_markers,
     insert_blood_test,
     update_blood_test_status,
@@ -41,7 +43,7 @@ from ..embeddings import (
 )
 from ..ingestion_pipeline import BloodTestNodeParser, build_ingestion_pipeline
 from ..parsers import parse_markers
-from ..storage import delete_file, upload_file
+from ..storage import delete_file, get_file, upload_file
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -318,3 +320,52 @@ async def delete_test(
             logger.warning("R2 cleanup failed for %s (non-blocking)", file_path)
 
     return DeleteResponse(deleted=True)
+
+
+@router.post("/blood-tests/{test_id}/reparse", response_model=UploadResponse)
+async def reparse_blood_test(
+    test_id: str,
+    background_tasks: BackgroundTasks,
+    x_api_key: str | None = Header(None),
+) -> UploadResponse:
+    """Re-run LlamaParse + marker extraction + ingestion against an existing blood_tests row.
+
+    Used to backfill rows that were inserted out-of-band (e.g. via a seed script that
+    only uploaded the file to R2 without going through `/upload`). Idempotent: clears
+    any existing markers/embeddings for the test before re-inserting.
+    """
+    _check_api_key(x_api_key)
+
+    row = get_blood_test_row(test_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="blood test not found")
+
+    update_blood_test_status(test_id, "processing")
+    try:
+        file_bytes = get_file(row["file_path"])
+        elements = _partition_pdf(file_bytes, row["file_name"])
+        markers = parse_markers(elements)
+
+        clear_blood_test_derived(test_id)
+        marker_ids = (
+            insert_blood_markers(test_id, [m.to_dict() for m in markers])
+            if markers
+            else []
+        )
+
+        update_blood_test_status(test_id, "done")
+
+        if markers:
+            background_tasks.add_task(
+                _run_ingestion,
+                elements, test_id, row["user_id"], row["file_name"],
+                row["test_date"], marker_ids,
+            )
+
+        return UploadResponse(test_id=test_id, markers_count=len(markers), status="done")
+
+    except HTTPException:
+        raise
+    except Exception as exc:
+        update_blood_test_status(test_id, "error", str(exc))
+        raise HTTPException(status_code=500, detail=str(exc))

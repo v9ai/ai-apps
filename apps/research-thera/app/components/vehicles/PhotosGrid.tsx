@@ -15,17 +15,19 @@ export interface PhotoItem {
 }
 
 export function PhotosGrid({
-  vehicleId,
+  vehicleId: _vehicleId,
+  vehicleSlug,
   photos,
 }: {
   vehicleId: string;
+  vehicleSlug: string;
   photos: PhotoItem[];
 }) {
   const [error, setError] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deletePhoto] = useDeleteVehiclePhotoMutation({
     refetchQueries: [
-      { query: VehicleDocument, variables: { id: vehicleId } },
+      { query: VehicleDocument, variables: { slug: vehicleSlug } },
     ],
   });
 
@@ -62,7 +64,7 @@ export function PhotosGrid({
           <Card key={p.id} size="1">
             <Flex direction="column" gap="2">
               <Link
-                href={`/vehicles/${vehicleId}/photos/${p.id}`}
+                href={`/vehicles/${vehicleSlug}/photos/${p.id}`}
                 style={{
                   textDecoration: "none",
                   color: "inherit",

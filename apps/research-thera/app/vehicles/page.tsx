@@ -78,10 +78,13 @@ function VehiclesContent() {
               const subtitle = v.nickname
                 ? `${v.year} ${v.make} ${v.model}`
                 : null;
+              const href = v.slug
+                ? `/vehicles/${v.slug}`
+                : `/vehicles/${v.id}`;
               return (
                 <Link
                   key={v.id}
-                  href={`/vehicles/${v.id}`}
+                  href={href}
                   style={{ textDecoration: "none", color: "inherit" }}
                 >
                   <Card size="2">

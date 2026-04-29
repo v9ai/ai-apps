@@ -3491,7 +3491,8 @@ export type QueryTherapeuticQuestionsArgs = {
 
 
 export type QueryVehicleArgs = {
-  id: Scalars['ID']['input'];
+  id?: InputMaybe<Scalars['ID']['input']>;
+  slug?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type RecommendedBook = {
@@ -4108,6 +4109,7 @@ export type Vehicle = {
   odometerMiles?: Maybe<Scalars['Int']['output']>;
   photos?: Maybe<Array<VehiclePhoto>>;
   serviceRecords?: Maybe<Array<VehicleServiceRecord>>;
+  slug?: Maybe<Scalars['String']['output']>;
   thumbnailUrl?: Maybe<Scalars['String']['output']>;
   updatedAt: Scalars['String']['output'];
   userId: Scalars['String']['output'];
@@ -5759,16 +5761,17 @@ export type VaultStatusQueryVariables = Exact<{ [key: string]: never; }>;
 export type VaultStatusQuery = { __typename?: 'Query', vaultStatus: { __typename?: 'VaultStatus', unlocked: boolean, available: boolean } };
 
 export type VehicleQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
+  id?: InputMaybe<Scalars['ID']['input']>;
+  slug?: InputMaybe<Scalars['String']['input']>;
 }>;
 
 
-export type VehicleQuery = { __typename?: 'Query', vehicle?: { __typename?: 'Vehicle', id: string, make: string, model: string, year: number, vin?: string | null, licensePlate?: string | null, nickname?: string | null, odometerMiles?: number | null, color?: string | null, notes?: string | null, createdAt: string, updatedAt: string, photos?: Array<{ __typename?: 'VehiclePhoto', id: string, r2Key: string, caption?: string | null, url?: string | null, createdAt: string }> | null, serviceRecords?: Array<{ __typename?: 'VehicleServiceRecord', id: string, type: string, serviceDate: string, odometerMiles?: number | null, costCents?: number | null, vendor?: string | null, notes?: string | null }> | null } | null };
+export type VehicleQuery = { __typename?: 'Query', vehicle?: { __typename?: 'Vehicle', id: string, slug?: string | null, make: string, model: string, year: number, vin?: string | null, licensePlate?: string | null, nickname?: string | null, odometerMiles?: number | null, color?: string | null, notes?: string | null, createdAt: string, updatedAt: string, photos?: Array<{ __typename?: 'VehiclePhoto', id: string, r2Key: string, caption?: string | null, url?: string | null, createdAt: string }> | null, serviceRecords?: Array<{ __typename?: 'VehicleServiceRecord', id: string, type: string, serviceDate: string, odometerMiles?: number | null, costCents?: number | null, vendor?: string | null, notes?: string | null }> | null } | null };
 
 export type VehiclesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type VehiclesQuery = { __typename?: 'Query', vehicles: Array<{ __typename?: 'Vehicle', id: string, make: string, model: string, year: number, nickname?: string | null, color?: string | null, licensePlate?: string | null, odometerMiles?: number | null, thumbnailUrl?: string | null }> };
+export type VehiclesQuery = { __typename?: 'Query', vehicles: Array<{ __typename?: 'Vehicle', id: string, slug?: string | null, make: string, model: string, year: number, nickname?: string | null, color?: string | null, licensePlate?: string | null, odometerMiles?: number | null, thumbnailUrl?: string | null }> };
 
 export const TaskFieldsFragmentDoc = gql`
     fragment TaskFields on Task {
@@ -16941,9 +16944,10 @@ export type VaultStatusLazyQueryHookResult = ReturnType<typeof useVaultStatusLaz
 export type VaultStatusSuspenseQueryHookResult = ReturnType<typeof useVaultStatusSuspenseQuery>;
 export type VaultStatusQueryResult = Apollo.QueryResult<VaultStatusQuery, VaultStatusQueryVariables>;
 export const VehicleDocument = gql`
-    query Vehicle($id: ID!) {
-  vehicle(id: $id) {
+    query Vehicle($id: ID, $slug: String) {
+  vehicle(id: $id, slug: $slug) {
     id
+    slug
     make
     model
     year
@@ -16988,10 +16992,11 @@ export const VehicleDocument = gql`
  * const { data, loading, error } = useVehicleQuery({
  *   variables: {
  *      id: // value for 'id'
+ *      slug: // value for 'slug'
  *   },
  * });
  */
-export function useVehicleQuery(baseOptions: Apollo.QueryHookOptions<VehicleQuery, VehicleQueryVariables> & ({ variables: VehicleQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+export function useVehicleQuery(baseOptions?: Apollo.QueryHookOptions<VehicleQuery, VehicleQueryVariables>) {
         const options = {...defaultOptions, ...baseOptions}
         return Apollo.useQuery<VehicleQuery, VehicleQueryVariables>(VehicleDocument, options);
       }
@@ -17014,6 +17019,7 @@ export const VehiclesDocument = gql`
     query Vehicles {
   vehicles {
     id
+    slug
     make
     model
     year

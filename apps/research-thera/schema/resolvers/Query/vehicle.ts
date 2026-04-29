@@ -8,5 +8,11 @@ export const vehicle: NonNullable<QueryResolvers['vehicle']> = async (
 ) => {
   const userEmail = ctx.userEmail;
   if (!userEmail) throw new Error("Authentication required");
-  return db.getVehicle(args.id, userEmail);
+  if (args.slug) {
+    const bySlug = await db.getVehicleBySlug(args.slug, userEmail);
+    if (bySlug) return bySlug;
+  }
+  if (args.id) return db.getVehicle(args.id, userEmail);
+  if (!args.slug && !args.id) throw new Error("vehicle requires id or slug");
+  return null;
 };
