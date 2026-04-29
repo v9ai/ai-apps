@@ -22,6 +22,12 @@ export type TaskRow = {
   updatedAt: string;
 };
 
+function toIso(v: unknown): string | null {
+  if (v == null) return null;
+  if (v instanceof Date) return v.toISOString();
+  return String(v);
+}
+
 function rowToTask(row: Record<string, unknown>): TaskRow {
   return {
     id: row.id as string,
@@ -31,15 +37,15 @@ function rowToTask(row: Record<string, unknown>): TaskRow {
     status: row.status as TaskStatus,
     priorityScore: Number(row.priority_score ?? 0),
     priorityManual: (row.priority_manual as number | null) ?? null,
-    dueDate: (row.due_date as string | null) ?? null,
+    dueDate: toIso(row.due_date),
     estimatedMinutes: (row.estimated_minutes as number | null) ?? null,
     actualMinutes: (row.actual_minutes as number | null) ?? null,
     energyPreference: (row.energy_preference as EnergyLevel | null) ?? null,
     parentTaskId: (row.parent_task_id as string | null) ?? null,
     position: Number(row.position ?? 0),
-    completedAt: (row.completed_at as string | null) ?? null,
-    createdAt: row.created_at as string,
-    updatedAt: row.updated_at as string,
+    completedAt: toIso(row.completed_at),
+    createdAt: toIso(row.created_at) ?? "",
+    updatedAt: toIso(row.updated_at) ?? "",
   };
 }
 

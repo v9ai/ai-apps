@@ -5,7 +5,7 @@ import { Box, Card, Checkbox, Flex, Text, Badge } from "@radix-ui/themes";
 import { useSortable } from "@dnd-kit/sortable";
 import { useDndMonitor } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import { format } from "date-fns";
+import { format, parseISO, isValid } from "date-fns";
 import { PriorityBadge } from "./PriorityBadge";
 import { Linkify } from "./Linkify";
 import { useUpdateTaskMutation, TaskStatus } from "@/app/__generated__/hooks";
@@ -171,11 +171,14 @@ export function TaskCard({
                 </Badge>
               )}
               <PriorityBadge score={task.priorityScore} manual={task.priorityManual} />
-              {task.dueDate && (
-                <Badge variant="outline" size="1">
-                  {format(new Date(task.dueDate), "MMM d")}
-                </Badge>
-              )}
+              {task.dueDate && (() => {
+                const d = parseISO(task.dueDate);
+                return isValid(d) ? (
+                  <Badge variant="outline" size="1">
+                    {format(d, "MMM d")}
+                  </Badge>
+                ) : null;
+              })()}
               {task.energyPreference && (
                 <Badge variant="soft" color="blue" size="1">
                   {task.energyPreference}

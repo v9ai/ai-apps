@@ -13,7 +13,21 @@ import {
   TextArea,
   Select,
 } from "@radix-ui/themes";
-import { format } from "date-fns";
+import { format, parseISO, isValid } from "date-fns";
+
+function safeParse(value: string | null | undefined): Date | null {
+  if (!value) return null;
+  const d = parseISO(value);
+  return isValid(d) ? d : null;
+}
+function toDateInput(value: string | null | undefined): string {
+  const d = safeParse(value);
+  return d ? format(d, "yyyy-MM-dd") : "";
+}
+function formatBadge(value: string | null | undefined, fmt: string): string | null {
+  const d = safeParse(value);
+  return d ? format(d, fmt) : null;
+}
 import { PriorityBadge } from "./PriorityBadge";
 import { Linkify } from "./Linkify";
 import { SubtaskList } from "./SubtaskList";
@@ -68,9 +82,7 @@ export function TaskDetailModal({
 
   const [editTitle, setEditTitle] = useState(task.title);
   const [editDescription, setEditDescription] = useState(task.description ?? "");
-  const [editDueDate, setEditDueDate] = useState(
-    task.dueDate ? format(new Date(task.dueDate), "yyyy-MM-dd") : "",
-  );
+  const [editDueDate, setEditDueDate] = useState(toDateInput(task.dueDate));
   const [editEnergy, setEditEnergy] = useState(task.energyPreference ?? "");
   const [editMinutes, setEditMinutes] = useState(task.estimatedMinutes?.toString() ?? "");
   const [editPriority, setEditPriority] = useState(
@@ -80,7 +92,7 @@ export function TaskDetailModal({
   useEffect(() => {
     setEditTitle(task.title);
     setEditDescription(task.description ?? "");
-    setEditDueDate(task.dueDate ? format(new Date(task.dueDate), "yyyy-MM-dd") : "");
+    setEditDueDate(toDateInput(task.dueDate));
     setEditEnergy(task.energyPreference ?? "");
     setEditMinutes(task.estimatedMinutes?.toString() ?? "");
     setEditPriority(task.priorityManual?.toString() ?? "none");
@@ -130,7 +142,7 @@ export function TaskDetailModal({
       saveField({ description: trimmed || null });
   }
   function handleDueDateBlur() {
-    const current = task.dueDate ? format(new Date(task.dueDate), "yyyy-MM-dd") : "";
+    const current = toDateInput(task.dueDate);
     if (editDueDate !== current)
       saveField({ dueDate: editDueDate ? new Date(editDueDate).toISOString() : null });
   }
@@ -189,11 +201,14 @@ export function TaskDetailModal({
 
           <Flex align="center" gap="2" wrap="wrap">
             <PriorityBadge score={task.priorityScore} manual={task.priorityManual} />
-            {task.dueDate && (
-              <Badge variant="outline" size="1">
-                {format(new Date(task.dueDate), "MMM d")}
-              </Badge>
-            )}
+            {(() => {
+              const d = formatBadge(task.dueDate, "MMM d");
+              return d ? (
+                <Badge variant="outline" size="1">
+                  {d}
+                </Badge>
+              ) : null;
+            })()}
             {task.energyPreference && (
               <Badge variant="soft" color="blue" size="1">
                 {task.energyPreference}
@@ -204,11 +219,14 @@ export function TaskDetailModal({
                 {task.estimatedMinutes}m
               </Badge>
             )}
-            {task.completedAt && (
-              <Badge variant="soft" color="green" size="1">
-                Done {format(new Date(task.completedAt), "MMM d")}
-              </Badge>
-            )}
+            {(() => {
+              const d = formatBadge(task.completedAt, "MMM d");
+              return d ? (
+                <Badge variant="soft" color="green" size="1">
+                  Done {d}
+                </Badge>
+              ) : null;
+            })()}
           </Flex>
 
           {isCompleted ? (
