@@ -707,7 +707,7 @@ const REFRESH_BATCH_SIZE_DEFAULT = 20;
 function createBrowseProfilesButton(): HTMLButtonElement {
   const btn = document.createElement("button");
   btn.setAttribute(BROWSE_PROFILES_BTN_ATTR, "true");
-  btn.textContent = "Refresh CRM Recruiters";
+  btn.textContent = "Browse Recruiters";
   btn.title = `Visit ${REFRESH_BATCH_SIZE_DEFAULT} recruiters from Neon (least-recently-visited first), refresh post + browsemap data, and re-score fit. Order is driven by the D1 contact_visits log so each click advances the cycle.`;
   btn.style.cssText = `
     position: fixed;
@@ -752,7 +752,7 @@ function createBrowseProfilesButton(): HTMLButtonElement {
           btn.textContent = "Error";
           btn.style.backgroundColor = "#dc2626";
           setTimeout(() => {
-            btn.textContent = "Refresh CRM Recruiters";
+            btn.textContent = "Browse Recruiters";
             btn.style.backgroundColor = "#7c3aed";
             btn.disabled = false;
           }, 2000);
@@ -959,7 +959,7 @@ chrome.runtime.onMessage.addListener((message) => {
         : `Done! ${message.saved} saved`;
       browseProfilesBtn.style.backgroundColor = message.error ? "#dc2626" : "#16a34a";
       setTimeout(() => {
-        browseProfilesBtn!.textContent = "Refresh CRM Recruiters";
+        browseProfilesBtn!.textContent = "Browse Recruiters";
         browseProfilesBtn!.style.backgroundColor = "#7c3aed";
         browseProfilesBtn!.disabled = false;
       }, 4000);
@@ -1572,6 +1572,7 @@ function extractProfileFromDOM(): {
   currentCompany: string;
   currentCompanyLinkedinUrl: string;
   currentPosition: string;
+  currentEmails: string[];
 } {
   // Debug: log all h1 elements to console
   const allH1 = document.querySelectorAll("h1");
@@ -1670,6 +1671,9 @@ function extractProfileFromDOM(): {
 
   console.log("[LG ImportProfile] company:", JSON.stringify(currentCompany), "url:", currentCompanyLinkedinUrl, "position:", JSON.stringify(currentPosition));
 
+  const currentEmails = extractEmailsFromAbout();
+  console.log("[LG ImportProfile] emails:", currentEmails);
+
   return {
     name,
     headline,
@@ -1678,6 +1682,7 @@ function extractProfileFromDOM(): {
     currentCompany,
     currentCompanyLinkedinUrl,
     currentPosition,
+    currentEmails,
   };
 }
 
