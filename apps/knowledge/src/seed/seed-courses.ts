@@ -219,6 +219,98 @@ const CATALOG: CourseEntry[] = [
     url: "https://www.udemy.com/course/the-complete-github-actions-and-workflows-guide/",
     slugs: ["ci-cd", "ci-cd-ai"],
   },
+  // ── Public Speaking (Udemy) — top reviewed from /topic/public-speaking/ ──
+  {
+    title: "2026 Complete Public Speaking Masterclass For Every Occasion",
+    provider: "Udemy",
+    description:
+      "Comprehensive public speaking masterclass — structure, delivery, and audience engagement for every occasion.",
+    level: "Intermediate",
+    isFree: false,
+    rating: 4.4,
+    reviewCount: 10203,
+    durationHours: 31.5,
+    url: "https://www.udemy.com/course/the-complete-public-speaking-masterclass-for-every-occasion/",
+    slugs: ["public-speaking"],
+  },
+  {
+    title: "How to Present Your Thoughts Smoothly, Clearly & Powerfully",
+    provider: "Udemy",
+    description:
+      "Present thoughts smoothly and clearly — practical techniques for clear, powerful delivery.",
+    level: "Intermediate",
+    isFree: false,
+    rating: 4.5,
+    reviewCount: 14527,
+    durationHours: 1.5,
+    url: "https://www.udemy.com/course/how-to-present-your-thoughts-smoothly-clearly-powerfully/",
+    slugs: ["public-speaking"],
+  },
+  {
+    title: "The Complete Presentation and Public Speaking/Speech Course",
+    provider: "Udemy",
+    description:
+      "Thorough presentation and public speaking course covering business and personal contexts.",
+    level: "Intermediate",
+    isFree: false,
+    rating: 4.4,
+    reviewCount: 20203,
+    durationHours: 32,
+    url: "https://www.udemy.com/course/the-complete-presentation-and-public-speaking-speech-course/",
+    slugs: ["public-speaking"],
+  },
+  {
+    title: "Speak Like a Pro: Public Speaking for Professionals",
+    provider: "Udemy",
+    description:
+      "Master presentation skills and impromptu speaking for professional contexts.",
+    level: "Intermediate",
+    isFree: false,
+    rating: 4.6,
+    reviewCount: 26147,
+    durationHours: 6,
+    url: "https://www.udemy.com/course/speak-like-a-pro-public-speaking-for-professionals/",
+    slugs: ["public-speaking"],
+  },
+  {
+    title: "Articulation Unleashed: Speak With Precision and Clarity",
+    provider: "Udemy",
+    description:
+      "Improve articulation and clarity of speech — vocal precision techniques for confident delivery.",
+    level: "Intermediate",
+    isFree: false,
+    rating: 4.6,
+    reviewCount: 1014,
+    durationHours: 2,
+    url: "https://www.udemy.com/course/articulation-unleashed-speak-with-precision-and-clarity/",
+    slugs: ["public-speaking"],
+  },
+  {
+    title: "Leadership Communication Skills for Influence and Impact",
+    provider: "Udemy",
+    description:
+      "Enhance leadership communication for influence and impact — communication skills for managers and leaders.",
+    level: "Intermediate",
+    isFree: false,
+    rating: 4.6,
+    reviewCount: 4413,
+    durationHours: 5,
+    url: "https://www.udemy.com/course/communication-skills-for-leadership-and-management-influence/",
+    slugs: ["public-speaking"],
+  },
+  {
+    title: "Public Speaking Training & Facilitator Certification",
+    provider: "Udemy",
+    description:
+      "Professional public speaking and facilitation training — workshop facilitator certification.",
+    level: "Intermediate",
+    isFree: false,
+    rating: 4.6,
+    reviewCount: 2383,
+    durationHours: 12,
+    url: "https://www.udemy.com/course/public-speaker-training-workshop-facilitator-certification/",
+    slugs: ["public-speaking"],
+  },
 ];
 
 // ---------------------------------------------------------------------------
