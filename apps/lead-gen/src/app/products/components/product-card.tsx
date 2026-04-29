@@ -300,18 +300,6 @@ export function ProductCard({
                   {p.domain ?? p.url}
                 </span>
               </a>
-              {p.intelReportAt && (
-                <>
-                  <span aria-hidden>·</span>
-                  <span>full intel {relativeTime(p.intelReportAt)}</span>
-                </>
-              )}
-              {!p.intelReportAt && p.icpAnalyzedAt && (
-                <>
-                  <span aria-hidden>·</span>
-                  <span>ICP {relativeTime(p.icpAnalyzedAt)}</span>
-                </>
-              )}
             </Flex>
           </div>
         </Flex>
@@ -558,14 +546,7 @@ function KindStatus({
     );
   }
 
-  // Success or stale-success: green + relative timestamp
-  const ts = analyzedAt ? relativeTime(analyzedAt) : null;
-  return (
-    <StatusBadge
-      status="success"
-      label={ts ? `${label} ${ts}` : `${label} success`}
-    />
-  );
+  return <StatusBadge status="success" label={`${label} success`} />;
 }
 
 export function DeleteProductDialog({
