@@ -9,6 +9,7 @@ import {
   safeSendMessage,
   showErrorToast,
 } from "./lifecycle";
+import { getSelfProfileSlug } from "../../services/self-profile";
 
 function clickDismiss(el: HTMLElement) {
   el.click();
@@ -611,13 +612,15 @@ function looksLikeRecruitmentCard(card: Element): boolean {
   return matchedRecruitmentPattern(text) !== null;
 }
 
-function getRecruitmentProfileLinks(): { links: string[]; scanned: number } {
+async function getRecruitmentProfileLinks(): Promise<{ links: string[]; scanned: number }> {
+  const selfSlug = await getSelfProfileSlug();
   const seen = new Set<string>();
   const links: string[] = [];
   const anchors = document.querySelectorAll<HTMLAnchorElement>('a[href*="/in/"]');
   let scanned = 0;
   let rejectedNoCard = 0;
   let rejectedNoMatch = 0;
+  let rejectedSelf = 0;
   const matchedSamples: { url: string; pattern: string; snippet: string }[] = [];
   const rejectedSamples: string[] = [];
   // When nothing matches we want the FULL rejected list to diagnose; cap at 50
@@ -626,7 +629,8 @@ function getRecruitmentProfileLinks(): { links: string[]; scanned: number } {
   const REJECTED_SAMPLE_CAP_VERBOSE = 50;
 
   console.log(
-    `[RecruitFilter] Scanning ${anchors.length} /in/ anchors on ${window.location.pathname}`,
+    `[RecruitFilter] Scanning ${anchors.length} /in/ anchors on ${window.location.pathname}` +
+      (selfSlug ? ` (excluding self: ${selfSlug})` : " (self slug not detected)"),
   );
 
   anchors.forEach((a) => {
@@ -638,7 +642,12 @@ function getRecruitmentProfileLinks(): { links: string[]; scanned: number } {
     }
     const match = url.pathname.match(/^\/in\/([^/]+)/);
     if (!match) return;
-    const profilePath = `/in/${match[1]}`;
+    const slug = match[1];
+    if (selfSlug && slug === selfSlug) {
+      rejectedSelf++;
+      return;
+    }
+    const profilePath = `/in/${slug}`;
     if (seen.has(profilePath)) return;
 
     const card = findCardContainer(a);
@@ -672,7 +681,7 @@ function getRecruitmentProfileLinks(): { links: string[]; scanned: number } {
   });
 
   console.log(
-    `[RecruitFilter] Result: kept ${links.length}, rejected ${rejectedNoMatch} (no recruiter signal), ${rejectedNoCard} skipped (no card container).`,
+    `[RecruitFilter] Result: kept ${links.length}, rejected ${rejectedNoMatch} (no recruiter signal), ${rejectedNoCard} skipped (no card container), ${rejectedSelf} excluded (self).`,
   );
   if (matchedSamples.length > 0) {
     console.log("[RecruitFilter] Matched samples:", matchedSamples);
@@ -693,11 +702,13 @@ function getRecruitmentProfileLinks(): { links: string[]; scanned: number } {
   return { links, scanned };
 }
 
+const REFRESH_BATCH_SIZE_DEFAULT = 20;
+
 function createBrowseProfilesButton(): HTMLButtonElement {
   const btn = document.createElement("button");
   btn.setAttribute(BROWSE_PROFILES_BTN_ATTR, "true");
-  btn.textContent = "Browse Recruiters";
-  btn.title = "Visit only recruitment-firm profiles in view (recruiters, talent agencies, headhunters, RPO, executive search) and save to CRM. Shift-click to bypass the 24h visit dedup and re-visit profiles seen recently.";
+  btn.textContent = "Refresh CRM Recruiters";
+  btn.title = `Visit ${REFRESH_BATCH_SIZE_DEFAULT} recruiters from Neon (least-recently-visited first), refresh post + browsemap data, and re-score fit. Order is driven by the D1 contact_visits log so each click advances the cycle.`;
   btn.style.cssText = `
     position: fixed;
     bottom: 80px;
@@ -726,54 +737,49 @@ function createBrowseProfilesButton(): HTMLButtonElement {
     e.preventDefault();
     e.stopPropagation();
 
-    const ignoreDedup = e.shiftKey;
-
-    const { links: profiles, scanned } = getRecruitmentProfileLinks();
-    if (profiles.length === 0) {
-      btn.textContent = scanned === 0 ? "No cards in view" : `0 of ${scanned} are recruiters`;
-      setTimeout(() => { btn.textContent = "Browse Recruiters"; }, 2500);
-      return;
-    }
-
     btn.disabled = true;
-    btn.textContent = ignoreDedup
-      ? `Starting (${profiles.length}/${scanned}, no dedup)...`
-      : `Starting (${profiles.length}/${scanned})...`;
+    btn.textContent = `Fetching from Neon…`;
     btn.style.backgroundColor = "#5b21b6";
 
-    safeSendMessage({
-      action: "startProfileBrowsing",
-      profiles,
-      returnUrl: window.location.href,
-      ignoreDedup,
-    }, (response) => {
-      if (!response?.success) {
-        btn.textContent = "Error";
-        btn.style.backgroundColor = "#dc2626";
-        setTimeout(() => {
-          btn.textContent = "Browse Recruiters";
-          btn.style.backgroundColor = "#7c3aed";
-          btn.disabled = false;
-        }, 2000);
-      }
-    });
+    safeSendMessage(
+      {
+        action: "refreshCrmRecruiters",
+        returnUrl: window.location.href,
+        batchSize: REFRESH_BATCH_SIZE_DEFAULT,
+      },
+      (response) => {
+        if (!response?.success) {
+          btn.textContent = "Error";
+          btn.style.backgroundColor = "#dc2626";
+          setTimeout(() => {
+            btn.textContent = "Refresh CRM Recruiters";
+            btn.style.backgroundColor = "#7c3aed";
+            btn.disabled = false;
+          }, 2000);
+        }
+      },
+    );
   });
 
   browseProfilesBtn = btn;
   return btn;
 }
 
-// Browse buttons are injected on people-search results AND on the feed
-// (so the user can kick off traversal from anywhere they happen to be).
+// Browse-All-Pages is search-context-bound (needs Voyager pagination from a
+// people-search URL). Refresh-CRM is not — it pulls URLs from Neon, so it's
+// useful from any LinkedIn page.
 function isOnBrowsableLinkedInPath(): boolean {
   if (!window.location.hostname.includes("linkedin.com")) return false;
   const p = window.location.pathname;
   return p.startsWith("/search/results/people") || p.startsWith("/feed");
 }
+function isOnAnyLinkedInPath(): boolean {
+  return window.location.hostname.includes("linkedin.com");
+}
 
 function syncBrowseButtonForPath() {
   if (!document.body) return;
-  if (isOnBrowsableLinkedInPath()) {
+  if (isOnAnyLinkedInPath()) {
     if (!document.querySelector(`[${BROWSE_PROFILES_BTN_ATTR}]`)) {
       document.body.appendChild(createBrowseProfilesButton());
     }
@@ -789,6 +795,10 @@ function injectBrowseProfilesButton() {
 
 function observeBrowseProfilesButton() {
   if (!window.location.hostname.includes("linkedin.com")) return;
+
+  // Warm the self-slug cache so background guards have a value to read
+  // before the user clicks Browse Recruiters.
+  void getSelfProfileSlug();
 
   setTimeout(syncBrowseButtonForPath, 1500);
 
@@ -949,7 +959,7 @@ chrome.runtime.onMessage.addListener((message) => {
         : `Done! ${message.saved} saved`;
       browseProfilesBtn.style.backgroundColor = message.error ? "#dc2626" : "#16a34a";
       setTimeout(() => {
-        browseProfilesBtn!.textContent = "Browse Recruiters";
+        browseProfilesBtn!.textContent = "Refresh CRM Recruiters";
         browseProfilesBtn!.style.backgroundColor = "#7c3aed";
         browseProfilesBtn!.disabled = false;
       }, 4000);
@@ -1373,6 +1383,88 @@ function removeProfileButton() {
 }
 
 /**
+ * Trigger lazy-rendered sections by scrolling through the page, then return
+ * to the top. Awaits the Experience section to be present in the DOM.
+ *
+ * Why: LinkedIn's profile page uses IntersectionObserver to mount sections
+ * (Experience, Education, Skills, …) only when scrolled into view. The
+ * Import Profile button is fixed bottom-right, so the user can click it
+ * without ever bringing those sections into view, and our DOM scrape sees
+ * an empty page. Force-scroll fixes that without changing the click UX.
+ */
+async function ensureLazySectionsRendered(): Promise<void> {
+  const initialY = window.scrollY;
+  const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+  // Step the scroll position down the document so every IntersectionObserver
+  // fires. A single scrollTo(bottom) often skips intermediate observers if the
+  // page is taller than ~3× viewport.
+  const docHeight = () =>
+    Math.max(
+      document.body.scrollHeight,
+      document.documentElement.scrollHeight,
+    );
+  const viewport = window.innerHeight;
+  for (let y = 0; y < docHeight(); y += Math.floor(viewport * 0.8)) {
+    window.scrollTo({ top: y, behavior: "auto" });
+    await sleep(120);
+  }
+  window.scrollTo({ top: docHeight(), behavior: "auto" });
+  await sleep(250);
+
+  // Wait up to 2s for the Experience section to be in the DOM.
+  for (let i = 0; i < 20; i++) {
+    if (
+      document.querySelector(
+        '[componentkey*="ExperienceTopLevelSection"], #experience',
+      )
+    ) {
+      break;
+    }
+    await sleep(100);
+  }
+
+  window.scrollTo({ top: initialY, behavior: "auto" });
+  // One frame for layout to settle before we querySelector.
+  await sleep(50);
+}
+
+/**
+ * Scan the About section for email addresses. Recruiters routinely paste
+ * their work email into the About text ("…feel free to email me at
+ * jane@acme.com"); this is the highest-yield place to find a contact email.
+ */
+function extractEmailsFromAbout(): string[] {
+  const aboutSection = document.querySelector(
+    '[componentkey*="profile.card."][componentkey$="About"], #about',
+  );
+  if (!aboutSection) {
+    console.log("[LG ImportProfile] about: section not found in DOM");
+    return [];
+  }
+  const textBox =
+    aboutSection.querySelector('[data-testid="expandable-text-box"]') ??
+    aboutSection;
+  // De-obfuscate "name (at) domain (dot) com" / "name [at] domain [dot] com".
+  const raw = (textBox.textContent || "")
+    .replace(/\s*[\(\[]\s*at\s*[\)\]]\s*/gi, "@")
+    .replace(/\s*[\(\[]\s*dot\s*[\)\]]\s*/gi, ".");
+  const matches = raw.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g);
+  if (!matches) return [];
+  // Dedup, lowercase, strip trailing punctuation.
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const m of matches) {
+    const cleaned = m.toLowerCase().replace(/[.,;:!?)]+$/, "");
+    if (!seen.has(cleaned)) {
+      seen.add(cleaned);
+      out.push(cleaned);
+    }
+  }
+  return out;
+}
+
+/**
  * Parse LinkedIn's SDUI Experience section and return the entry that's
  * marked "- Present", or the most recent entry if none is current.
  *
@@ -1389,7 +1481,10 @@ function extractCurrentRoleFromExperience(): {
   const sectionMatch = document.querySelector(
     '[componentkey*="ExperienceTopLevelSection"], #experience',
   );
-  if (!sectionMatch) return null;
+  if (!sectionMatch) {
+    console.log("[LG ImportProfile] experience: section not found in DOM (lazy-loaded? scroll the page first)");
+    return null;
+  }
   const section: Element =
     sectionMatch.id === "experience"
       ? sectionMatch.closest("section") ?? sectionMatch
@@ -1398,6 +1493,7 @@ function extractCurrentRoleFromExperience(): {
   const entries = section.querySelectorAll<HTMLElement>(
     '[componentkey^="entity-collection-item-"], li.artdeco-list__item',
   );
+  console.log("[LG ImportProfile] experience: section found, entries:", entries.length);
   if (entries.length === 0) return null;
 
   type Parsed = {
@@ -1614,23 +1710,33 @@ function createImportProfileButton(): HTMLButtonElement {
     if (!btn.disabled) btn.style.backgroundColor = "#0a66c2";
   });
 
-  btn.addEventListener("click", (e) => {
+  btn.addEventListener("click", async (e) => {
     // If showing an existing contact link, let the <a> navigate normally
     if (btn.dataset.existingContact) return;
 
     e.preventDefault();
     e.stopPropagation();
 
-    // Extract data directly from the DOM (no chrome.scripting.executeScript needed)
+    btn.disabled = true;
+    btn.textContent = "Loading sections…";
+
+    // LinkedIn lazy-renders profile sections (Experience, Education, etc.) as
+    // they enter the viewport. The Import Profile button is fixed bottom-right,
+    // so users typically click it from the top of the page — at which point
+    // the Experience section's DOM nodes don't exist and SDUI parsing returns
+    // nothing. Force a full-page scroll to trigger every IntersectionObserver,
+    // wait for the renders to settle, then extract.
+    await ensureLazySectionsRendered();
+
+    btn.textContent = "Importing...";
+
     const profileData = extractProfileFromDOM();
     if (!profileData.name) {
       btn.textContent = "No profile data found";
+      btn.disabled = false;
       setTimeout(() => { btn.textContent = "Import Profile"; }, 2000);
       return;
     }
-
-    btn.disabled = true;
-    btn.textContent = "Importing...";
 
     safeSendMessage(
       {

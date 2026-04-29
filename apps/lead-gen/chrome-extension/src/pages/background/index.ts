@@ -1,6 +1,7 @@
 // Background service worker — message listener & orchestrator
 import { browseContactPosts, scrapeAllPosts, cancelPostScraping, scrapeJobSearchPosts, runUnifiedPipeline, scrapeRecruiterPosts, scrapeContactPostsSingle } from "../../services/post-scraper";
 import { gqlRequest } from "../../services/graphql";
+import { fetchRecentVisitsMap } from "../../services/visit-tracker";
 import { importJobsToD1, type D1JobInput } from "../../services/jobs-d1-importer";
 import { startKeepAlive, stopKeepAlive, waitForTabLoad, clickSeeMore, randomDelay } from "./tab-utils";
 import { browseProfiles, setBrowseCancelled, extractFullProfileData, parseName, parseHeadline } from "./profile-browsing";
@@ -146,6 +147,104 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "stopProfileBrowsing") {
     setBrowseCancelled(true);
     sendResponse({ success: true });
+    return true;
+  }
+
+  // ── Refresh CRM Recruiters ──
+  // Pulls a batch of N already-tagged recruiters from Neon, orders by
+  // least-recently-visited (per the D1 contact_visits log), then runs the
+  // existing browseProfiles engine over them with ignoreDedup so the visit
+  // recorded by this run is the one used to order the next cycle.
+  if (message.action === "refreshCrmRecruiters") {
+    const { returnUrl, batchSize } = message as {
+      returnUrl: string;
+      batchSize?: number;
+    };
+    const tabId = sender.tab?.id;
+    if (!tabId) {
+      sendResponse({ success: false, error: "No tab ID" });
+      return true;
+    }
+    const limit = Math.max(1, Math.min(100, batchSize ?? 20));
+    sendResponse({ success: true });
+
+    (async () => {
+      startKeepAlive();
+      try {
+        // 1. Fetch tagged recruiter contacts from Neon. Cap at 5000 — that's
+        // ~2x the current 2,151 corpus, leaves headroom but bounds the
+        // payload. The query is paginated via `offset` if we ever need more.
+        console.log(
+          `[RefreshCrm] Fetching recruiter contacts (tag=ai-recruiter, batch=${limit})…`,
+        );
+        const queryResult = await gqlRequest(
+          `query RecruiterContactsForCycle($limit: Int!) {
+            contacts(tag: "ai-recruiter", limit: $limit) {
+              contacts { id linkedinUrl }
+            }
+          }`,
+          { limit: 5000 },
+        );
+        const allContacts = (queryResult.data?.contacts?.contacts ?? []) as Array<{
+          id: number | string;
+          linkedinUrl: string | null;
+        }>;
+        const allUrls = allContacts
+          .map((c) => c.linkedinUrl)
+          .filter((u): u is string => typeof u === "string" && u.length > 0)
+          // Normalize trailing slash so visit-tracker keys line up.
+          .map((u) => (u.endsWith("/") ? u : u + "/"));
+        console.log(
+          `[RefreshCrm] Pulled ${allContacts.length} recruiter contacts, ${allUrls.length} with linkedin_url`,
+        );
+
+        if (allUrls.length === 0) {
+          await chrome.tabs.sendMessage(tabId, {
+            action: "browseDone",
+            saved: 0,
+            error: "No recruiter contacts in Neon",
+          }).catch(() => {});
+          return;
+        }
+
+        // 2. Pull last-visited timestamps from D1 (90-day window so older
+        // visits still influence ordering).
+        const visitedMap = await fetchRecentVisitsMap(allUrls, 90);
+
+        // 3. Sort: never-visited (not in map) first, then oldest visited
+        // first. Stable lexicographic tiebreak so order is deterministic.
+        const sorted = [...allUrls].sort((a, b) => {
+          const va = visitedMap.get(a);
+          const vb = visitedMap.get(b);
+          if (!va && !vb) return a.localeCompare(b);
+          if (!va) return -1;
+          if (!vb) return 1;
+          return va.localeCompare(vb); // ISO timestamps sort chronologically
+        });
+        const batch = sorted.slice(0, limit);
+        const neverVisited = batch.filter((u) => !visitedMap.has(u)).length;
+        console.log(
+          `[RefreshCrm] Batch of ${batch.length}: ${neverVisited} never-visited, ${batch.length - neverVisited} stale-revisit`,
+        );
+
+        // 4. Run the existing browser loop. ignoreDedup=true because we
+        // explicitly want to revisit known contacts (the dedup window is
+        // for discovery-style re-saves, not refresh cycling).
+        await browseProfiles(tabId, batch, returnUrl, { ignoreDedup: true });
+      } catch (err) {
+        console.error(
+          `[RefreshCrm] Failed:`,
+          err instanceof Error ? err.message : String(err),
+        );
+        await chrome.tabs.sendMessage(tabId, {
+          action: "browseDone",
+          saved: 0,
+          error: err instanceof Error ? err.message : "refresh failed",
+        }).catch(() => {});
+      } finally {
+        stopKeepAlive();
+      }
+    })();
     return true;
   }
 

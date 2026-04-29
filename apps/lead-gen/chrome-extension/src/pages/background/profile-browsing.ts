@@ -11,6 +11,7 @@ import {
   getCachedSelfProfileSlug,
   slugFromLinkedInUrl,
 } from "../../services/self-profile";
+import { scoreAndPersistRecruiterFit } from "../../services/recruiter-fit";
 import { randomDelay, waitForTabLoad, clickSeeMore } from "./tab-utils";
 
 const VISIT_SKIP_WINDOW_DAYS = 1;
@@ -527,10 +528,35 @@ export async function browseProfiles(
           result.errors[0].message,
         );
       } else {
-        skippedSaveFailed++;
-        console.warn(
-          `[BrowseProfiles]   ✗ createContact returned no id (probably duplicate linkedin_url)`,
-        );
+        // No id returned → likely duplicate linkedin_url. Look up the
+        // existing contact so post-scrape + fit-scoring still run (this is
+        // the path the CRM-refresh flow always hits).
+        try {
+          const existing = await gqlRequest(
+            `query ContactByLinkedinUrl($url: String!) {
+              contactByLinkedinUrl(linkedinUrl: $url) { id firstName lastName }
+            }`,
+            { url: data.linkedinUrl },
+          );
+          const existingId = existing.data?.contactByLinkedinUrl?.id;
+          if (existingId) {
+            newContactId = Number(existingId);
+            console.log(
+              `[BrowseProfiles]   ↻ Existing contact id=${newContactId} (revisit): ${firstName} ${lastName}`,
+            );
+          } else {
+            skippedSaveFailed++;
+            console.warn(
+              `[BrowseProfiles]   ✗ createContact returned no id and contactByLinkedinUrl missed — skipping post-scrape`,
+            );
+          }
+        } catch (lookupErr) {
+          skippedSaveFailed++;
+          console.warn(
+            `[BrowseProfiles]   ✗ contactByLinkedinUrl threw:`,
+            lookupErr instanceof Error ? lookupErr.message : String(lookupErr),
+          );
+        }
       }
     } catch (err) {
       skippedSaveFailed++;
@@ -540,25 +566,35 @@ export async function browseProfiles(
       );
     }
 
+    // Grab the About section now, while we're still on the profile page.
+    // scrapeContactPostsSingle navigates away to /recent-activity/, after which
+    // re-fetching About would cost an extra navigation. Best-effort: empty
+    // about is fine — score_recruiter_fit handles missing fields.
+    const fullData = await extractFullProfileData(tabId).catch(() => null);
+    const about = fullData?.about ?? "";
+    const employer = fullData?.currentCompany || company;
+
     // Post-save: scrape recruiter's posts → D1 only (best effort, non-blocking).
     // scrapeContactPostsSingle() navigates to /recent-activity/all/, posts to
     // LINKEDIN_API/posts (Cloudflare Worker → D1), then pulls likes. If the
     // worker is unreachable, it bails early and we just continue the loop.
+    let scrapedPostTexts: string[] = [];
     if (newContactId !== null && !browseCancelled) {
       const postScrapeStart = Date.now();
       console.log(
         `[BrowseProfiles]   ↳ Scraping posts → D1 for contactId=${newContactId}…`,
       );
       try {
-        await scrapeContactPostsSingle(
+        const result = await scrapeContactPostsSingle(
           tabId,
           newContactId,
           data.linkedinUrl,
           `${firstName} ${lastName}`.trim(),
         );
+        scrapedPostTexts = result.postTexts;
         postsScraped++;
         console.log(
-          `[BrowseProfiles]   ✓ Post-scrape complete for contactId=${newContactId} in ${Date.now() - postScrapeStart}ms`,
+          `[BrowseProfiles]   ✓ Post-scrape complete for contactId=${newContactId} in ${Date.now() - postScrapeStart}ms (${scrapedPostTexts.length} posts retained for scoring)`,
         );
       } catch (err) {
         postsScrapeFailed++;
@@ -567,6 +603,26 @@ export async function browseProfiles(
           err instanceof Error ? err.message : String(err),
         );
       }
+    }
+
+    // Ideal-recruiter fit scoring against the just-saved profile. Runs
+    // fire-and-forget so the loop's pacing isn't bound by LLM latency; the
+    // verdict lands in D1 recruiter_fit_scores.
+    if (newContactId !== null && !browseCancelled) {
+      void scoreAndPersistRecruiterFit({
+        contactId: newContactId,
+        linkedinUrl: data.linkedinUrl,
+        name: `${firstName} ${lastName}`.trim() || data.name,
+        headline: data.headline,
+        employer,
+        about,
+        recentPosts: scrapedPostTexts,
+      }).catch((err) => {
+        console.warn(
+          `[BrowseProfiles]   ✗ Fit-score threw for ${data.name}:`,
+          err instanceof Error ? err.message : String(err),
+        );
+      });
     }
 
     // Audit: record the visit. ok=true if the contact landed; failures here
