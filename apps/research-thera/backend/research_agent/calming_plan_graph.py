@@ -31,6 +31,7 @@ from typing import Any, Optional, TypedDict
 
 from dotenv import load_dotenv
 from langgraph.graph import END, START, StateGraph
+from langgraph.types import RetryPolicy
 
 from research_agent import neon
 
@@ -763,12 +764,16 @@ async def persist_plan(state: CalmingPlanState) -> dict:
 # ---------------------------------------------------------------------------
 # Graph wiring
 # ---------------------------------------------------------------------------
+_LLM_RETRY = RetryPolicy(max_attempts=2, initial_interval=1.0, backoff_factor=2.0)
+_FETCH_RETRY = RetryPolicy(max_attempts=3, initial_interval=1.0, backoff_factor=2.0)
+
+
 def create_calming_plan_graph(checkpointer=None):
     builder = StateGraph(CalmingPlanState)
     builder.add_node("load_context", load_context)
-    builder.add_node("search_research", search_research)
-    builder.add_node("generate_plan", generate_plan)
-    builder.add_node("safety_review", safety_review)
+    builder.add_node("search_research", search_research, retry=_FETCH_RETRY)
+    builder.add_node("generate_plan", generate_plan, retry=_LLM_RETRY)
+    builder.add_node("safety_review", safety_review, retry=_LLM_RETRY)
     builder.add_node("persist_plan", persist_plan)
 
     builder.add_edge(START, "load_context")
