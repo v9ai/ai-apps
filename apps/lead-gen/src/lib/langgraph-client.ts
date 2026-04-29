@@ -282,6 +282,30 @@ export function composeEmail(input: {
   });
 }
 
+export interface EmailOpportunityResult extends EmailComposeResult {
+  contact_id: number | null;
+  contact_email: string;
+  contact_first_name: string;
+  contact_last_name: string;
+  company_name: string;
+  opportunity_title: string;
+  opportunity_applied: boolean;
+}
+
+export function composeOpportunityEmail(input: {
+  opportunityId: string;
+  additionalInstructions?: string;
+}): Promise<EmailOpportunityResult> {
+  return runGraph<EmailOpportunityResult>(
+    "email_opportunity",
+    {
+      opportunity_id: input.opportunityId,
+      additional_instructions: input.additionalInstructions ?? "",
+    },
+    { timeoutMs: 120_000 },
+  );
+}
+
 export function emailOutreach(input: {
   recipientName: string;
   recipientRole?: string;

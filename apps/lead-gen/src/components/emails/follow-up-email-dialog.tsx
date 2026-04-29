@@ -16,6 +16,7 @@ import {
   CopyIcon,
   ClockIcon,
   InfoCircledIcon,
+  MagicWandIcon,
 } from "@radix-ui/react-icons";
 import { button } from "@/recipes/button";
 
@@ -58,6 +59,8 @@ export function FollowUpEmailDialog({
   const [sending, setSending] = useState(false);
   const [sendResult, setSendResult] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [personalizing, setPersonalizing] = useState(false);
+  const [personalizeStage, setPersonalizeStage] = useState<"idle" | "draft" | "refined">("idle");
   const [customTime, setCustomTime] = useState("");
 
   const recipientName = `${contact.firstName} ${contact.lastName}`.trim();
@@ -96,6 +99,8 @@ Vadim`;
       setCopied(false);
       setCustomTime("");
       setIncludeResume(false);
+      setPersonalizing(false);
+      setPersonalizeStage("idle");
     }
   };
 
@@ -103,6 +108,64 @@ Vadim`;
     navigator.clipboard.writeText(`Subject: ${editSubject}\n\n${editBody}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handlePersonalize = async () => {
+    if (!appliedOpp?.id) return;
+    setPersonalizing(true);
+    setPersonalizeStage("idle");
+    setSendResult(null);
+    try {
+      const res = await fetch("/api/emails/generate-opportunity-stream", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ opportunityId: appliedOpp.id }),
+      });
+      if (!res.ok || !res.body) {
+        const text = await res.text().catch(() => "");
+        throw new Error(text || `Generate failed (${res.status})`);
+      }
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const events = buffer.split("\n\n");
+        buffer = events.pop() ?? "";
+        for (const evt of events) {
+          const line = evt.trim();
+          if (!line.startsWith("data:")) continue;
+          const json = line.slice(5).trim();
+          if (!json) continue;
+          let payload: { type: string; data?: { subject?: string; body?: string }; error?: string };
+          try {
+            payload = JSON.parse(json);
+          } catch {
+            continue;
+          }
+          if (payload.type === "draft" && payload.data) {
+            if (payload.data.subject) setEditSubject(payload.data.subject);
+            if (payload.data.body) setEditBody(payload.data.body);
+            setPersonalizeStage("draft");
+          } else if (payload.type === "refined" && payload.data) {
+            if (payload.data.subject) setEditSubject(payload.data.subject);
+            if (payload.data.body) setEditBody(payload.data.body);
+            setPersonalizeStage("refined");
+          } else if (payload.type === "error") {
+            throw new Error(payload.error || "Generate failed");
+          }
+        }
+      }
+    } catch (err: unknown) {
+      setSendResult({
+        type: "error",
+        message: err instanceof Error ? err.message : "Personalize failed",
+      });
+    } finally {
+      setPersonalizing(false);
+    }
   };
 
   const handleSend = async (scheduledAt?: string) => {
@@ -214,6 +277,21 @@ Vadim`;
               <button className={button({ variant: "ghost" })}>Cancel</button>
             </Dialog.Close>
             <Flex gap="2" align="center">
+              {appliedOpp?.id && (
+                <button
+                  className={button({ variant: "ghost" })}
+                  onClick={handlePersonalize}
+                  disabled={personalizing || sending}
+                  title="Generate a personalized draft from the opportunity context via LangGraph"
+                >
+                  <MagicWandIcon />
+                  {personalizing
+                    ? personalizeStage === "draft"
+                      ? "Refining…"
+                      : "Drafting…"
+                    : "Personalize"}
+                </button>
+              )}
               <button className={button({ variant: "ghost" })} onClick={handleCopy}>
                 <CopyIcon />
                 {copied ? "Copied!" : "Copy"}

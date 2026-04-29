@@ -48,7 +48,7 @@ function HouseContent() {
 
 export default function HousePage() {
   return (
-    <AuthGate>
+    <AuthGate pageName="House" description="Sign in to view the household.">
       <HouseContent />
     </AuthGate>
   );

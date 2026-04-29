@@ -79,6 +79,9 @@ from leadgen_agent.contact_enrich_sales_graph import (
 )
 from leadgen_agent.deep_icp_graph import build_graph as build_deep_icp
 from leadgen_agent.email_compose_graph import build_graph as build_email_compose
+from leadgen_agent.email_opportunity_graph import (
+    build_graph as build_email_opportunity,
+)
 from leadgen_agent.email_outreach_graph import build_graph as build_email_outreach
 from leadgen_agent.email_reply_graph import build_graph as build_email_reply
 from leadgen_agent.gtm_graph import build_graph as build_gtm
@@ -259,6 +262,7 @@ async def lifespan(app: FastAPI):
                 ),
                 "deep_icp": build_deep_icp(checkpointer),
                 "email_compose": build_email_compose(checkpointer),
+                "email_opportunity": build_email_opportunity(checkpointer),
                 "email_outreach": build_email_outreach(checkpointer),
                 "email_reply": build_email_reply(checkpointer),
                 "gtm": build_gtm(checkpointer),

@@ -2,7 +2,10 @@ import type { ComponentType, SVGProps } from "react";
 import { HomeIcon } from "@radix-ui/react-icons";
 
 export type NavIcon = ComponentType<
-  SVGProps<SVGSVGElement> & { width?: string | number; height?: string | number }
+  Omit<SVGProps<SVGSVGElement>, "children"> & {
+    width?: string | number;
+    height?: string | number;
+  }
 >;
 
 export type NavLeaf = { href: string; label: string; icon?: NavIcon };

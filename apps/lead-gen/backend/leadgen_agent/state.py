@@ -78,6 +78,47 @@ class EmailComposeState(TypedDict, total=False):
     graph_meta: Annotated[dict[str, Any], _merge_graph_meta]
 
 
+class EmailOpportunityState(TypedDict, total=False):
+    # input
+    opportunity_id: str
+    additional_instructions: str
+    # loaded from DB
+    opportunity_title: str
+    opportunity_url: str
+    opportunity_status: str
+    opportunity_raw_context: str
+    opportunity_applied: bool
+    opportunity_applied_at: str
+    opportunity_application_status: str
+    company_name: str
+    company_website: str
+    company_category: str
+    contact_first_name: str
+    contact_last_name: str
+    contact_email: str
+    contact_position: str
+    contact_linkedin_url: str
+    contact_id: int | None
+    prior_subjects: list[str]
+    # mirrors EmailComposeState — driven by reused gather_context/draft/refine
+    recipient_name: str
+    instructions: str
+    recipient_context: str
+    linkedin_post_content: str
+    context_summary: str
+    draft: str
+    draft_subject: str
+    draft_body: str
+    refine_attempts: int
+    prompt_version: str
+    model: str
+    prompt_tokens: int
+    completion_tokens: int
+    subject: str
+    body: str
+    graph_meta: Annotated[dict[str, Any], _merge_graph_meta]
+
+
 class EmailReplyState(TypedDict, total=False):
     # input
     original_email: str
