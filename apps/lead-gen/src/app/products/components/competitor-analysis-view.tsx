@@ -30,7 +30,6 @@ import { ADMIN_EMAIL } from "@/lib/constants";
 import {
   LoadingShell,
   ErrorShell,
-  SignInGate,
   ProductNotFound,
   SubpageBreadcrumb,
   SubpageHero,
@@ -431,17 +430,14 @@ function FeatureMatrix({ competitors }: { competitors: Competitor[] }) {
 // ─── Page ────────────────────────────────────────────────────────────
 
 export function ProductCompetitorsPage({ slug }: { slug: string }) {
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
   const isAdmin = user?.email === ADMIN_EMAIL;
 
   const { data, loading, error, refetch } = useProductCompetitorsBySlugQuery({
     variables: { slug },
     fetchPolicy: "cache-and-network",
-    skip: !user,
   });
 
-  if (authLoading) return <LoadingShell />;
-  if (!user) return <SignInGate />;
   if (loading && !data) return <LoadingShell />;
   if (error) return <ErrorShell message={error.message} />;
 
