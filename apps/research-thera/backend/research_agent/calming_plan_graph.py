@@ -295,6 +295,7 @@ _CLUSTER_AXES = (
 
 
 async def analyze_patterns(state: CalmingPlanState) -> dict:
+    print("[calming_plan] analyze_patterns: enter", flush=True)
     if state.get("error"):
         return {}
 
@@ -678,6 +679,7 @@ def _build_bundle_prompt(state: CalmingPlanState, cluster: dict) -> str:
 
 
 async def generate_bundles(state: CalmingPlanState) -> dict:
+    print(f"[calming_plan] generate_bundles: enter, clusters={len(state.get('_clusters') or [])}", flush=True)
     if state.get("error"):
         return {}
     clusters = state.get("_clusters") or []
@@ -850,6 +852,7 @@ def _build_synthesize_prompt(state: CalmingPlanState) -> str:
 
 
 async def synthesize_plan(state: CalmingPlanState) -> dict:
+    print(f"[calming_plan] synthesize_plan: enter, bundles={len(state.get('_cluster_bundles') or [])}", flush=True)
     if state.get("error"):
         return {}
     if not state.get("_cluster_bundles"):
