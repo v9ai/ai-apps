@@ -54,7 +54,7 @@ function createButton(): HTMLButtonElement {
   btn.title = "Scrape every page of this LinkedIn job-search and save to D1";
   btn.style.cssText = `
     position: fixed;
-    bottom: 80px;
+    bottom: 100px;
     right: 24px;
     z-index: 9999;
     background-color: ${COLOR_IDLE};
