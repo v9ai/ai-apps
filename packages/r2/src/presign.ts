@@ -4,12 +4,12 @@ import { getR2Client } from "./client";
 
 export async function getPresignedUrl(
   key: string,
-  expiresIn = 3600,
-  opts: { bucket?: string } = {},
+  expiresIn: number,
+  opts: { bucket: string },
 ): Promise<string> {
-  const { client, bucket } = getR2Client();
+  const { client } = getR2Client();
   const command = new PutObjectCommand({
-    Bucket: opts.bucket ?? bucket,
+    Bucket: opts.bucket,
     Key: key,
   });
   return getSignedUrl(

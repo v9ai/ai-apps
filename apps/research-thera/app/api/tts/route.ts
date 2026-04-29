@@ -8,6 +8,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const MAX_CHARS = 4000; // OpenAI limit is 4096, use 4000 to be safe
+const TTS_BUCKET = "longform-tts";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -124,6 +125,7 @@ export async function POST(request: NextRequest) {
           key,
           body: combined,
           contentType: `audio/${format}`,
+          bucket: TTS_BUCKET,
           metadata: {
             voice: selectedVoice,
             model: "gpt-4o-mini-tts",
@@ -226,6 +228,7 @@ export async function POST(request: NextRequest) {
         key,
         body: buffer,
         contentType: `audio/${format}`,
+        bucket: TTS_BUCKET,
         metadata: {
           voice: selectedVoice,
           model: "gpt-4o-mini-tts",

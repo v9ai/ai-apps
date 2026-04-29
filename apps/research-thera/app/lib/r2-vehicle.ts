@@ -1,7 +1,6 @@
 import { getPresignedUrl, deleteFromR2 } from "@ai-apps/r2";
 
 export const VEHICLE_R2_BUCKET = "research-thera";
-const VEHICLE_PUBLIC_DOMAIN = process.env.R2_PUBLIC_DOMAIN ?? null;
 
 export function generateVehiclePhotoKey(
   vehicleId: string,
@@ -26,18 +25,13 @@ export async function deleteVehiclePhotoFromR2(key: string): Promise<void> {
   await deleteFromR2(key, { bucket: VEHICLE_R2_BUCKET });
 }
 
-/**
- * Build a viewable URL for a vehicle photo.
- * Prefers the configured CDN domain; falls back to the auth-checked
- * streaming route at /api/vehicles/photo/[id].
- */
+// Vehicle photos always stream via the auth-checked API route — the
+// research-thera bucket has no public CDN, and the streaming route lets
+// us enforce ownership before returning bytes. r2Key is unused here; kept
+// in the signature so callers don't have to plumb it through differently.
 export function resolveVehiclePhotoUrl(
   photoId: string,
-  r2Key: string,
+  _r2Key: string,
 ): string {
-  if (VEHICLE_PUBLIC_DOMAIN) {
-    const base = VEHICLE_PUBLIC_DOMAIN.replace(/\/$/, "");
-    return `${base}/${r2Key}`;
-  }
   return `/api/vehicles/photo/${photoId}`;
 }

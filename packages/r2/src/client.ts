@@ -5,13 +5,11 @@ export interface R2Config {
   accountId: string;
   accessKeyId: string;
   secretAccessKey: string;
-  bucket?: string;
   publicDomain?: string | null;
 }
 
 export interface R2Context {
   client: S3Client;
-  bucket: string;
   publicDomain: string | null;
 }
 
@@ -26,7 +24,6 @@ export function createR2Client(config: R2Config): R2Context {
   });
   return {
     client,
-    bucket: config.bucket ?? "longform-tts",
     publicDomain: config.publicDomain ?? null,
   };
 }
@@ -40,7 +37,6 @@ export function getR2Client(): R2Context {
     accountId: env.accountId,
     accessKeyId: env.accessKeyId,
     secretAccessKey: env.secretAccessKey,
-    bucket: env.bucket,
     publicDomain: env.publicDomain,
   });
   return cached;

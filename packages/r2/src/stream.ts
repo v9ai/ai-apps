@@ -9,11 +9,11 @@ export interface FileStreamResult {
 
 export async function getR2FileStream(
   key: string,
-  opts: { bucket?: string } = {},
+  opts: { bucket: string },
 ): Promise<FileStreamResult> {
-  const { client, bucket } = getR2Client();
+  const { client } = getR2Client();
   const response = await client.send(
-    new GetObjectCommand({ Bucket: opts.bucket ?? bucket, Key: key }),
+    new GetObjectCommand({ Bucket: opts.bucket, Key: key }),
   );
   return {
     body: response.Body,

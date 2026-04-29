@@ -4,9 +4,9 @@ import { getR2Client } from "./client";
 export interface UploadOptions {
   key: string;
   body: Buffer | Uint8Array;
+  bucket: string;
   contentType?: string;
   metadata?: Record<string, string>;
-  bucket?: string;
 }
 
 export interface UploadResult {
@@ -23,9 +23,9 @@ export async function uploadToR2(
   const {
     key,
     body,
+    bucket,
     contentType = "application/octet-stream",
     metadata = {},
-    bucket = ctx.bucket,
   } = options;
 
   const uploadParams: PutObjectCommandInput = {

@@ -2,6 +2,8 @@ import type { QueryResolvers } from "./../../types.generated";
 import { GraphQLError } from "graphql";
 import { headR2Object } from "@ai-apps/r2";
 
+const TTS_BUCKET = "longform-tts";
+
 export const audioFromR2: NonNullable<QueryResolvers['audioFromR2']> = async (
   _parent,
   args,
@@ -26,7 +28,7 @@ export const audioFromR2: NonNullable<QueryResolvers['audioFromR2']> = async (
       };
     }
 
-    const { audioUrl, metadata: raw } = await headR2Object(key);
+    const { audioUrl, metadata: raw } = await headR2Object(key, { bucket: TTS_BUCKET });
 
     const metadata = raw
       ? {

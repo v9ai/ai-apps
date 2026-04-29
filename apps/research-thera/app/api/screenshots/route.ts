@@ -7,6 +7,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const MAX_SIZE = 10 * 1024 * 1024; // 10 MB
+const SCREENSHOTS_BUCKET = "longform-tts";
 
 export async function POST(request: Request) {
   const { data: session } = await auth.getSession();
@@ -38,6 +39,7 @@ export async function POST(request: Request) {
     key,
     body: buffer,
     contentType: file.type,
+    bucket: SCREENSHOTS_BUCKET,
   });
 
   const screenshot = await addIssueScreenshot({

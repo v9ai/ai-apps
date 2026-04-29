@@ -9,11 +9,11 @@ export interface HeadResult {
 
 export async function headR2Object(
   key: string,
-  opts: { bucket?: string } = {},
+  opts: { bucket: string },
 ): Promise<HeadResult> {
-  const { client, bucket, publicDomain } = getR2Client();
+  const { client, publicDomain } = getR2Client();
   const response = await client.send(
-    new HeadObjectCommand({ Bucket: opts.bucket ?? bucket, Key: key }),
+    new HeadObjectCommand({ Bucket: opts.bucket, Key: key }),
   );
   return {
     audioUrl: publicDomain ? `${publicDomain}/${key}` : null,
