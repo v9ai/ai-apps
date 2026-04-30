@@ -455,6 +455,7 @@ async def format_html(state: EmailOutreachState) -> dict:
 def build_graph(checkpointer: Any = None) -> Any:
     builder = StateGraph(EmailOutreachState)
     builder.add_node("lookup_contact", lookup_contact)
+    builder.add_node("check_stop_conditions", check_stop_conditions)
     builder.add_node("load_product_context", load_product_context)
     builder.add_node("match_persona", match_persona)
     builder.add_node("select_template", select_template)
@@ -462,7 +463,13 @@ def build_graph(checkpointer: Any = None) -> Any:
     builder.add_node("draft", draft)
     builder.add_node("format_html", format_html)
     builder.add_edge(START, "lookup_contact")
-    builder.add_edge("lookup_contact", "load_product_context")
+    builder.add_edge("lookup_contact", "check_stop_conditions")
+    # Short-circuit to END when skip_reason is set; otherwise continue normally.
+    builder.add_conditional_edges(
+        "check_stop_conditions",
+        _route_after_stop_check,
+        {"skip": END, "continue": "load_product_context"},
+    )
     builder.add_edge("load_product_context", "match_persona")
     builder.add_edge("match_persona", "select_template")
     builder.add_edge("select_template", "extract_hook")
