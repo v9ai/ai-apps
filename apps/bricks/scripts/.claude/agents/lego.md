@@ -26,7 +26,6 @@ Existing scripts to reference for patterns:
 - `train-remote.py` — EssentialHub + DCMotor + Remote (incremental speed, event-driven)
 - `omnidirectional.py` — PrimeHub + DriveBase + Remote (hold-based driving + steering)
 - `technic-42160-remote-no-light.py` — Car (steering motor + drive motors) + Remote
-- `movehub-square-drive.py` — MoveHub + DriveBase + ColorDistanceSensor (autonomous)
 
 pybricksdev install path: `/Users/vadimnicolai/Library/Python/3.9/bin/pybricksdev`
 
