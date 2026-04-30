@@ -31,6 +31,16 @@ import {
   SubpageBreadcrumb,
   SubpageHero,
 } from "./view-chrome";
+import {
+  DecisionMakersDialog,
+  type ContactRow,
+} from "./decision-makers-dialog";
+
+type Lead = NonNullable<
+  NonNullable<
+    ReturnType<typeof useProductLeadsQuery>["data"]
+  >["productLeads"]
+>["leads"][number];
 
 type TierFilter = "all" | "hot" | "warm" | "cold";
 
