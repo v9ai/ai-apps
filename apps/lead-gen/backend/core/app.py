@@ -79,6 +79,9 @@ from leadgen_agent.contact_enrich_sales_graph import (
 )
 from leadgen_agent.deep_icp_graph import build_graph as build_deep_icp
 from leadgen_agent.email_compose_graph import build_graph as build_email_compose
+from leadgen_agent.find_decision_maker_graph import (
+    build_graph as build_find_decision_maker,
+)
 from leadgen_agent.email_opportunity_graph import (
     build_graph as build_email_opportunity,
 )
@@ -231,12 +234,22 @@ async def lifespan(app: FastAPI):
         # share with the per-branch psycopg.connect calls inside graph nodes,
         # so keep the checkpointer pool conservative. open=False + explicit
         # pool.open() avoids the deprecation warning.
+        #
+        # ``check=AsyncConnectionPool.check_connection`` validates the connection
+        # on checkout (cheap ``SELECT 1``). Without it, Neon's pooler silently
+        # drops idle TCP connections after ~5 min, leaving stale entries in the
+        # pool — the next ``checkpointer.aget_tuple`` then fails with
+        # ``OperationalError: consuming input failed: SSL error: unexpected eof
+        # while reading`` (observed against /runs/wait on the cold path).
+        # ``max_idle=180`` recycles conns proactively before the pooler does.
         async with AsyncConnectionPool(
             db_url,
             min_size=1,
             max_size=8,
             open=False,
             kwargs={"autocommit": True, "prepare_threshold": 0},
+            check=AsyncConnectionPool.check_connection,
+            max_idle=180,
         ) as pool:
             await pool.open(wait=True, timeout=15)
             checkpointer = AsyncPostgresSaver(pool)
@@ -265,6 +278,7 @@ async def lifespan(app: FastAPI):
                 "email_opportunity": build_email_opportunity(checkpointer),
                 "email_outreach": build_email_outreach(checkpointer),
                 "email_reply": build_email_reply(checkpointer),
+                "find_decision_maker": build_find_decision_maker(checkpointer),
                 "gtm": build_gtm(checkpointer),
                 "icp_team": build_icp_team(checkpointer),
                 "lead_gen_team": build_lead_gen_team(checkpointer),

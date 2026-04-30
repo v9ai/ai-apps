@@ -288,6 +288,7 @@ export type CompanyFilterInput = {
   min_ai_tier?: InputMaybe<Scalars['Int']['input']>;
   min_score?: InputMaybe<Scalars['Float']['input']>;
   service_taxonomy_any?: InputMaybe<Array<Scalars['String']['input']>>;
+  tags_any?: InputMaybe<Array<Scalars['String']['input']>>;
   text?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -837,6 +838,20 @@ export type DataQualityScore = {
   staleFields: Array<Scalars['String']['output']>;
 };
 
+export type DecisionMakerCandidate = {
+  __typename: 'DecisionMakerCandidate';
+  authorityScore: Scalars['Float']['output'];
+  department: Maybe<Scalars['String']['output']>;
+  dmReasons: Array<Scalars['String']['output']>;
+  firstName: Scalars['String']['output'];
+  id: Scalars['Int']['output'];
+  isDecisionMaker: Scalars['Boolean']['output'];
+  lastName: Scalars['String']['output'];
+  position: Maybe<Scalars['String']['output']>;
+  rankScore: Scalars['Float']['output'];
+  seniority: Maybe<Scalars['String']['output']>;
+};
+
 export type DeleteCampaignResult = {
   __typename: 'DeleteCampaignResult';
   message: Maybe<Scalars['String']['output']>;
@@ -1138,6 +1153,19 @@ export type FindContactEmailResult = {
   message: Scalars['String']['output'];
   success: Scalars['Boolean']['output'];
   verified: Maybe<Scalars['Boolean']['output']>;
+};
+
+export type FindDecisionMakerResponse = {
+  __typename: 'FindDecisionMakerResponse';
+  classifyCount: Scalars['Int']['output'];
+  companyId: Maybe<Scalars['Int']['output']>;
+  companyKey: Maybe<Scalars['String']['output']>;
+  decisionMakers: Array<DecisionMakerCandidate>;
+  message: Maybe<Scalars['String']['output']>;
+  ranked: Array<DecisionMakerCandidate>;
+  success: Scalars['Boolean']['output'];
+  summary: Maybe<Scalars['String']['output']>;
+  topDecisionMaker: Maybe<DecisionMakerCandidate>;
 };
 
 export type FollowUpBatchInput = {
@@ -1515,6 +1543,7 @@ export type Mutation = {
   enrichOpportunityCandidates: EnrichAiContactsBulkResult;
   findCompanyEmails: EnhanceAllContactsResult;
   findContactEmail: FindContactEmailResult;
+  findDecisionMaker: FindDecisionMakerResponse;
   flagContactsForDeletion: BatchOperationResult;
   /** Generate and store embeddings for companies missing them. Admin only. */
   generateCompanyEmbeddings: GenerateEmbeddingsResult;
@@ -1833,6 +1862,12 @@ export type MutationFindCompanyEmailsArgs = {
 
 export type MutationFindContactEmailArgs = {
   contactId: Scalars['Int']['input'];
+};
+
+
+export type MutationFindDecisionMakerArgs = {
+  id?: InputMaybe<Scalars['Int']['input']>;
+  key?: InputMaybe<Scalars['String']['input']>;
 };
 
 

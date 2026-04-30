@@ -240,6 +240,7 @@ input CompanyFilterInput {
   min_ai_tier: Int
   min_score: Float
   service_taxonomy_any: [String!]
+  tags_any: [String!]
   text: String
 }
 
@@ -767,6 +768,19 @@ type DataQualityScore {
 
 scalar DateTime
 
+type DecisionMakerCandidate {
+  authorityScore: Float!
+  department: String
+  dmReasons: [String!]!
+  firstName: String!
+  id: Int!
+  isDecisionMaker: Boolean!
+  lastName: String!
+  position: String
+  rankScore: Float!
+  seniority: String
+}
+
 type DeleteCampaignResult {
   message: String
   success: Boolean!
@@ -1044,6 +1058,18 @@ type FindContactEmailResult {
   message: String!
   success: Boolean!
   verified: Boolean
+}
+
+type FindDecisionMakerResponse {
+  classifyCount: Int!
+  companyId: Int
+  companyKey: String
+  decisionMakers: [DecisionMakerCandidate!]!
+  message: String
+  ranked: [DecisionMakerCandidate!]!
+  success: Boolean!
+  summary: String
+  topDecisionMaker: DecisionMakerCandidate
 }
 
 input FollowUpBatchInput {
@@ -1402,6 +1428,7 @@ type Mutation {
   enrichOpportunityCandidates(opportunityId: String!): EnrichAIContactsBulkResult!
   findCompanyEmails(companyId: Int!): EnhanceAllContactsResult!
   findContactEmail(contactId: Int!): FindContactEmailResult!
+  findDecisionMaker(id: Int, key: String): FindDecisionMakerResponse!
   flagContactsForDeletion(threshold: Float): BatchOperationResult!
   """Generate and store embeddings for companies missing them. Admin only."""
   generateCompanyEmbeddings(batchSize: Int, companyIds: [Int!]): GenerateEmbeddingsResult!

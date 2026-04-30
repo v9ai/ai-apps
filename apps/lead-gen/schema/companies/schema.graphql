@@ -60,6 +60,7 @@ extend type Mutation {
 
   enhanceCompany(id: Int, key: String): EnhanceCompanyResponse!
   analyzeCompany(id: Int, key: String): AnalyzeCompanyResponse!
+  findDecisionMaker(id: Int, key: String): FindDecisionMakerResponse!
   blockCompany(id: Int!): Company!
   unblockCompany(id: Int!): Company!
 }
@@ -278,6 +279,7 @@ input CompanyFilterInput {
   category: CompanyCategory
   min_score: Float
   service_taxonomy_any: [String!]
+  tags_any: [String!]
   min_ai_tier: Int
 }
 
@@ -298,6 +300,31 @@ type AnalyzeCompanyResponse {
   message: String
   companyId: Int
   companyKey: String
+}
+
+type DecisionMakerCandidate {
+  id: Int!
+  firstName: String!
+  lastName: String!
+  position: String
+  seniority: String
+  department: String
+  isDecisionMaker: Boolean!
+  authorityScore: Float!
+  dmReasons: [String!]!
+  rankScore: Float!
+}
+
+type FindDecisionMakerResponse {
+  success: Boolean!
+  message: String
+  companyId: Int
+  companyKey: String
+  topDecisionMaker: DecisionMakerCandidate
+  decisionMakers: [DecisionMakerCandidate!]!
+  ranked: [DecisionMakerCandidate!]!
+  classifyCount: Int!
+  summary: String
 }
 
 type MergeCompaniesResult {

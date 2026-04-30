@@ -290,6 +290,7 @@ export type CompanyFilterInput = {
   min_ai_tier?: InputMaybe<Scalars['Int']['input']>;
   min_score?: InputMaybe<Scalars['Float']['input']>;
   service_taxonomy_any?: InputMaybe<Array<Scalars['String']['input']>>;
+  tags_any?: InputMaybe<Array<Scalars['String']['input']>>;
   text?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -839,6 +840,20 @@ export type DataQualityScore = {
   staleFields: Array<Scalars['String']['output']>;
 };
 
+export type DecisionMakerCandidate = {
+  __typename: 'DecisionMakerCandidate';
+  authorityScore: Scalars['Float']['output'];
+  department: Maybe<Scalars['String']['output']>;
+  dmReasons: Array<Scalars['String']['output']>;
+  firstName: Scalars['String']['output'];
+  id: Scalars['Int']['output'];
+  isDecisionMaker: Scalars['Boolean']['output'];
+  lastName: Scalars['String']['output'];
+  position: Maybe<Scalars['String']['output']>;
+  rankScore: Scalars['Float']['output'];
+  seniority: Maybe<Scalars['String']['output']>;
+};
+
 export type DeleteCampaignResult = {
   __typename: 'DeleteCampaignResult';
   message: Maybe<Scalars['String']['output']>;
@@ -1140,6 +1155,19 @@ export type FindContactEmailResult = {
   message: Scalars['String']['output'];
   success: Scalars['Boolean']['output'];
   verified: Maybe<Scalars['Boolean']['output']>;
+};
+
+export type FindDecisionMakerResponse = {
+  __typename: 'FindDecisionMakerResponse';
+  classifyCount: Scalars['Int']['output'];
+  companyId: Maybe<Scalars['Int']['output']>;
+  companyKey: Maybe<Scalars['String']['output']>;
+  decisionMakers: Array<DecisionMakerCandidate>;
+  message: Maybe<Scalars['String']['output']>;
+  ranked: Array<DecisionMakerCandidate>;
+  success: Scalars['Boolean']['output'];
+  summary: Maybe<Scalars['String']['output']>;
+  topDecisionMaker: Maybe<DecisionMakerCandidate>;
 };
 
 export type FollowUpBatchInput = {
@@ -1517,6 +1545,7 @@ export type Mutation = {
   enrichOpportunityCandidates: EnrichAiContactsBulkResult;
   findCompanyEmails: EnhanceAllContactsResult;
   findContactEmail: FindContactEmailResult;
+  findDecisionMaker: FindDecisionMakerResponse;
   flagContactsForDeletion: BatchOperationResult;
   /** Generate and store embeddings for companies missing them. Admin only. */
   generateCompanyEmbeddings: GenerateEmbeddingsResult;
@@ -1835,6 +1864,12 @@ export type MutationFindCompanyEmailsArgs = {
 
 export type MutationFindContactEmailArgs = {
   contactId: Scalars['Int']['input'];
+};
+
+
+export type MutationFindDecisionMakerArgs = {
+  id?: InputMaybe<Scalars['Int']['input']>;
+  key?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -4135,6 +4170,14 @@ export type AnalyzeCompanyMutationVariables = Exact<{
 
 export type AnalyzeCompanyMutation = { __typename: 'Mutation', analyzeCompany: { __typename: 'AnalyzeCompanyResponse', success: boolean, message: string | null, companyId: number | null, companyKey: string | null } };
 
+export type FindDecisionMakerMutationVariables = Exact<{
+  id?: InputMaybe<Scalars['Int']['input']>;
+  key?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type FindDecisionMakerMutation = { __typename: 'Mutation', findDecisionMaker: { __typename: 'FindDecisionMakerResponse', success: boolean, message: string | null, companyId: number | null, companyKey: string | null, summary: string | null, classifyCount: number, topDecisionMaker: { __typename: 'DecisionMakerCandidate', id: number, firstName: string, lastName: string, position: string | null, seniority: string | null, department: string | null, isDecisionMaker: boolean, authorityScore: number, dmReasons: Array<string>, rankScore: number } | null, decisionMakers: Array<{ __typename: 'DecisionMakerCandidate', id: number, firstName: string, lastName: string, position: string | null, seniority: string | null, department: string | null, isDecisionMaker: boolean, authorityScore: number, dmReasons: Array<string>, rankScore: number }>, ranked: Array<{ __typename: 'DecisionMakerCandidate', id: number, firstName: string, lastName: string, position: string | null, seniority: string | null, department: string | null, isDecisionMaker: boolean, authorityScore: number, dmReasons: Array<string>, rankScore: number }> } };
+
 export type ImportCompaniesMutationVariables = Exact<{
   companies: Array<CompanyImportInput> | CompanyImportInput;
 }>;
@@ -5086,6 +5129,7 @@ export const DeleteCompaniesDocument = {"kind":"Document","definitions":[{"kind"
 export const ImportCompanyWithContactsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"ImportCompanyWithContacts"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ImportCompanyWithContactsInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"importCompanyWithContacts"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"success"}},{"kind":"Field","name":{"kind":"Name","value":"company"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"key"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"contactsImported"}},{"kind":"Field","name":{"kind":"Name","value":"contactsSkipped"}},{"kind":"Field","name":{"kind":"Name","value":"errors"}}]}}]}}]} as unknown as DocumentNode<ImportCompanyWithContactsMutation, ImportCompanyWithContactsMutationVariables>;
 export const EnhanceCompanyDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"EnhanceCompany"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"key"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"enhanceCompany"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}},{"kind":"Argument","name":{"kind":"Name","value":"key"},"value":{"kind":"Variable","name":{"kind":"Name","value":"key"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"success"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"companyId"}},{"kind":"Field","name":{"kind":"Name","value":"companyKey"}}]}}]}}]} as unknown as DocumentNode<EnhanceCompanyMutation, EnhanceCompanyMutationVariables>;
 export const AnalyzeCompanyDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"AnalyzeCompany"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"key"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"analyzeCompany"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}},{"kind":"Argument","name":{"kind":"Name","value":"key"},"value":{"kind":"Variable","name":{"kind":"Name","value":"key"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"success"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"companyId"}},{"kind":"Field","name":{"kind":"Name","value":"companyKey"}}]}}]}}]} as unknown as DocumentNode<AnalyzeCompanyMutation, AnalyzeCompanyMutationVariables>;
+export const FindDecisionMakerDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"FindDecisionMaker"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"key"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"findDecisionMaker"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}},{"kind":"Argument","name":{"kind":"Name","value":"key"},"value":{"kind":"Variable","name":{"kind":"Name","value":"key"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"success"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"companyId"}},{"kind":"Field","name":{"kind":"Name","value":"companyKey"}},{"kind":"Field","name":{"kind":"Name","value":"summary"}},{"kind":"Field","name":{"kind":"Name","value":"classifyCount"}},{"kind":"Field","name":{"kind":"Name","value":"topDecisionMaker"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"firstName"}},{"kind":"Field","name":{"kind":"Name","value":"lastName"}},{"kind":"Field","name":{"kind":"Name","value":"position"}},{"kind":"Field","name":{"kind":"Name","value":"seniority"}},{"kind":"Field","name":{"kind":"Name","value":"department"}},{"kind":"Field","name":{"kind":"Name","value":"isDecisionMaker"}},{"kind":"Field","name":{"kind":"Name","value":"authorityScore"}},{"kind":"Field","name":{"kind":"Name","value":"dmReasons"}},{"kind":"Field","name":{"kind":"Name","value":"rankScore"}}]}},{"kind":"Field","name":{"kind":"Name","value":"decisionMakers"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"firstName"}},{"kind":"Field","name":{"kind":"Name","value":"lastName"}},{"kind":"Field","name":{"kind":"Name","value":"position"}},{"kind":"Field","name":{"kind":"Name","value":"seniority"}},{"kind":"Field","name":{"kind":"Name","value":"department"}},{"kind":"Field","name":{"kind":"Name","value":"isDecisionMaker"}},{"kind":"Field","name":{"kind":"Name","value":"authorityScore"}},{"kind":"Field","name":{"kind":"Name","value":"dmReasons"}},{"kind":"Field","name":{"kind":"Name","value":"rankScore"}}]}},{"kind":"Field","name":{"kind":"Name","value":"ranked"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"firstName"}},{"kind":"Field","name":{"kind":"Name","value":"lastName"}},{"kind":"Field","name":{"kind":"Name","value":"position"}},{"kind":"Field","name":{"kind":"Name","value":"seniority"}},{"kind":"Field","name":{"kind":"Name","value":"department"}},{"kind":"Field","name":{"kind":"Name","value":"isDecisionMaker"}},{"kind":"Field","name":{"kind":"Name","value":"authorityScore"}},{"kind":"Field","name":{"kind":"Name","value":"dmReasons"}},{"kind":"Field","name":{"kind":"Name","value":"rankScore"}}]}}]}}]}}]} as unknown as DocumentNode<FindDecisionMakerMutation, FindDecisionMakerMutationVariables>;
 export const ImportCompaniesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"ImportCompanies"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"companies"}},"type":{"kind":"NonNullType","type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CompanyImportInput"}}}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"importCompanies"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"companies"},"value":{"kind":"Variable","name":{"kind":"Name","value":"companies"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"success"}},{"kind":"Field","name":{"kind":"Name","value":"imported"}},{"kind":"Field","name":{"kind":"Name","value":"failed"}},{"kind":"Field","name":{"kind":"Name","value":"errors"}}]}}]}}]} as unknown as DocumentNode<ImportCompaniesMutation, ImportCompaniesMutationVariables>;
 export const BlockCompanyDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"BlockCompany"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"blockCompany"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"key"}},{"kind":"Field","name":{"kind":"Name","value":"blocked"}}]}}]}}]} as unknown as DocumentNode<BlockCompanyMutation, BlockCompanyMutationVariables>;
 export const UnblockCompanyDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UnblockCompany"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"unblockCompany"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"key"}},{"kind":"Field","name":{"kind":"Name","value":"blocked"}}]}}]}}]} as unknown as DocumentNode<UnblockCompanyMutation, UnblockCompanyMutationVariables>;

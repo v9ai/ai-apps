@@ -7,6 +7,7 @@ import {
   useGetCompanyScrapedPostsQuery,
   useEnhanceCompanyMutation,
   useAnalyzeCompanyMutation,
+  useFindDecisionMakerMutation,
   useUpdateCompanyMutation,
   useCreateContactMutation,
   useDeleteCompanyMutation,
@@ -22,17 +23,16 @@ import { formatDistanceToNow, isValid, parseISO } from "date-fns";
 import { useAuth } from "@/lib/auth-hooks";
 import { ADMIN_EMAIL } from "@/lib/constants";
 import { CompanyContactsClient } from "@/app/companies/[key]/contacts/contacts-client";
+import { css } from "styled-system/css";
 import {
   AlertDialog,
   Avatar,
   Badge,
   Blockquote,
   Box,
-  Button,
   Callout,
   Card,
   Code,
-  Container,
   Dialog,
   Em,
   Flex,
@@ -43,11 +43,11 @@ import {
   Skeleton,
   Spinner,
   Strong,
-  TabNav,
   Text,
   TextArea,
   TextField,
 } from "@radix-ui/themes";
+import { Button } from "@/components/ui";
 import {
   CheckCircledIcon,
   ExternalLinkIcon,
@@ -60,6 +60,7 @@ import {
   Link2Icon,
   CrossCircledIcon,
   Pencil1Icon,
+  PersonIcon,
   TrashIcon,
 } from "@radix-ui/react-icons";
 
@@ -137,7 +138,7 @@ function SectionCard({
             size="2"
             color="gray"
             weight="medium"
-            style={{ letterSpacing: '0.1em' }}
+            className={css({ letterSpacing: "0.1em" })}
           >
             {title.toUpperCase()}
           </Text>
@@ -199,7 +200,7 @@ function CollapsibleChips({
           <Button
             type="button"
             variant="ghost"
-            color="gray"
+            size="sm"
             onClick={() => setExpanded((v) => !v)}
           >
             {expanded ? <ChevronUpIcon /> : <ChevronDownIcon />}
@@ -450,7 +451,7 @@ function LinkedInLeadDialog({
   return (
     <Dialog.Root open={open} onOpenChange={handleOpenChange}>
       <Dialog.Trigger>
-        <Button variant="ghost" color="gray">
+        <Button variant="ghost" size="sm">
           <Link2Icon />
           Import Lead
         </Button>
@@ -472,7 +473,7 @@ function LinkedInLeadDialog({
             </Callout.Root>
             <Flex justify="end">
               <Dialog.Close>
-                <Button variant="ghost" color="gray">
+                <Button variant="ghost" size="sm">
                   Close
                 </Button>
               </Dialog.Close>
@@ -514,13 +515,13 @@ function LinkedInLeadDialog({
 
             <Flex justify="end" gap="2">
               <Dialog.Close>
-                <Button variant="ghost" color="gray">
+                <Button variant="ghost" size="sm">
                   Cancel
                 </Button>
               </Dialog.Close>
               <Button
-                variant="ghost"
-                color="gray"
+                variant="solid"
+                size="sm"
                 onClick={handleExtract}
                 disabled={!rawText.trim()}
               >
@@ -584,18 +585,19 @@ function LinkedInLeadDialog({
             <Flex justify="end" gap="2">
               <Button
                 variant="ghost"
-                color="gray"
+                size="sm"
                 onClick={() => setPhase("paste")}
               >
                 Back
               </Button>
               <Button
-                variant="ghost"
-                color="gray"
+                variant="solid"
+                size="sm"
                 onClick={handleSave}
-                disabled={saving}
+                loading={saving}
+                loadingText="Saving..."
               >
-                {saving ? "Saving..." : "Create contact"}
+                Create contact
               </Button>
             </Flex>
           </Flex>
@@ -688,7 +690,7 @@ function CompanyEditDialog({ company, onSaved }: EditDialogProps) {
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Trigger>
-        <Button variant="ghost" color="gray" onClick={handleOpen}>
+        <Button variant="ghost" size="sm" onClick={handleOpen}>
           <Pencil1Icon />
           Edit
         </Button>
@@ -816,17 +818,18 @@ function CompanyEditDialog({ company, onSaved }: EditDialogProps) {
 
         <Flex gap="3" mt="5" justify="end">
           <Dialog.Close>
-            <Button variant="ghost" color="gray">
+            <Button variant="ghost" size="sm">
               Cancel
             </Button>
           </Dialog.Close>
           <Button
-            variant="ghost"
-            color="gray"
+            variant="solid"
+            size="sm"
             onClick={handleSave}
-            disabled={loading}
+            loading={loading}
+            loadingText="Saving…"
           >
-            {loading ? "Saving…" : "Save"}
+            Save
           </Button>
         </Flex>
       </Dialog.Content>
@@ -882,6 +885,20 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
       setAnalyzeError(err.message || "Analysis failed.");
     },
   });
+
+  const [dmDialogOpen, setDmDialogOpen] = useState(false);
+  const [dmError, setDmError] = useState<string | null>(null);
+  const [findDecisionMaker, { data: dmData, loading: isFindingDm }] =
+    useFindDecisionMakerMutation({
+      onCompleted: (res) => {
+        setDmError(res.findDecisionMaker.success ? null : (res.findDecisionMaker.message || "Failed to find decision maker."));
+        setDmDialogOpen(true);
+      },
+      onError: (err) => {
+        setDmError(err.message || "Failed to find decision maker.");
+        setDmDialogOpen(true);
+      },
+    });
 
   const [updateCompanyDirect] = useUpdateCompanyMutation();
   const [linkedInFetchError, setLinkedInFetchError] = useState<string | null>(null);
@@ -953,6 +970,18 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
     }
   }, [company, analyzeCompany]);
 
+  const handleFindDecisionMaker = useCallback(async () => {
+    if (!company) return;
+    setDmError(null);
+    try {
+      await findDecisionMaker({
+        variables: { id: company.id, key: company.key },
+      });
+    } catch (e) {
+      console.error("Find decision maker error:", e);
+    }
+  }, [company, findDecisionMaker]);
+
   const handleFetchLinkedIn = useCallback(async () => {
     if (!company?.linkedin_url) return;
     setIsLinkedInFetching(true);
@@ -1009,53 +1038,46 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
 
   if (loading) {
     return (
-      <Container size="3" p={{ initial: "4", md: "6" }}>
-        <Flex direction="column" gap="4">
-          <Flex gap="4" align="center">
-            <Skeleton width="52px" height="52px" />
-            <Flex direction="column" gap="2" flexGrow="1">
-              <Skeleton height="28px" width="60%" />
-              <Skeleton height="16px" width="40%" />
-            </Flex>
+      <Flex direction="column" gap="4">
+        <Flex gap="4" align="center">
+          <Skeleton width="52px" height="52px" />
+          <Flex direction="column" gap="2" flexGrow="1">
+            <Skeleton height="28px" width="60%" />
+            <Skeleton height="16px" width="40%" />
           </Flex>
-          <Skeleton height="120px" />
-          <Skeleton height="80px" />
         </Flex>
-      </Container>
+        <Skeleton height="120px" />
+        <Skeleton height="80px" />
+      </Flex>
     );
   }
 
   if (error) {
     return (
-      <Container size="3" p={{ initial: "4", md: "6" }}>
-        <Callout.Root color="red">
-          <Callout.Icon>
-            <InfoCircledIcon />
-          </Callout.Icon>
-          <Callout.Text>
-            <Strong>Error loading company:</Strong> {error.message}
-          </Callout.Text>
-        </Callout.Root>
-      </Container>
+      <Callout.Root color="red">
+        <Callout.Icon>
+          <InfoCircledIcon />
+        </Callout.Icon>
+        <Callout.Text>
+          <Strong>Error loading company:</Strong> {error.message}
+        </Callout.Text>
+      </Callout.Root>
     );
   }
 
   if (!company) {
     return (
-      <Container size="3" p={{ initial: "4", md: "6" }}>
-        <Callout.Root>
-          <Callout.Icon>
-            <InfoCircledIcon />
-          </Callout.Icon>
-          <Callout.Text>Company not found.</Callout.Text>
-        </Callout.Root>
-      </Container>
+      <Callout.Root>
+        <Callout.Icon>
+          <InfoCircledIcon />
+        </Callout.Icon>
+        <Callout.Text>Company not found.</Callout.Text>
+      </Callout.Root>
     );
   }
 
   return (
-    <Container size="3" p={{ initial: "4", md: "6" }}>
-      <Flex direction="column" gap="5">
+    <Flex direction="column" gap="5">
         {/* Alerts */}
         {enhanceError && (
           <Callout.Root color="red">
@@ -1213,51 +1235,75 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                 )}
                 {isAdmin && (
                   <Button
-                    variant="soft"
+                    variant="outline"
+                    size="sm"
                     onClick={handleEnhance}
-                    disabled={isEnhancing}
+                    loading={isEnhancing}
+                    loadingText="Enhancing…"
                   >
                     <MagicWandIcon />
-                    {isEnhancing ? "Enhancing…" : "Enhance"}
+                    Enhance
                   </Button>
                 )}
                 {isAdmin && company.linkedin_url && (
                   <Button
-                    variant="soft"
+                    variant="outline"
+                    size="sm"
                     onClick={handleFetchLinkedIn}
-                    disabled={isLinkedInFetching}
+                    loading={isLinkedInFetching}
+                    loadingText="Fetching…"
                   >
                     <LinkedInLogoIcon />
-                    {isLinkedInFetching ? "Fetching…" : "Fetch LinkedIn"}
+                    Fetch LinkedIn
                   </Button>
                 )}
                 {isAdmin && company.website && (
                   <Button
-                    variant="soft"
+                    variant="outline"
+                    size="sm"
                     onClick={handleAnalyze}
-                    disabled={isAnalyzing}
+                    loading={isAnalyzing}
+                    loadingText="Analyzing…"
                   >
                     <MagicWandIcon />
-                    {isAnalyzing ? "Analyzing…" : company.deep_analysis ? "Re-analyze" : "Deep Analysis"}
+                    {company.deep_analysis ? "Re-analyze" : "Deep Analysis"}
                   </Button>
                 )}
                 {isAdmin && (
                   <Button
-                    variant={company?.blocked ? "solid" : "ghost"}
-                    color={company?.blocked ? "red" : "gray"}
+                    variant="outline"
+                    size="sm"
+                    onClick={handleFindDecisionMaker}
+                    loading={isFindingDm}
+                    loadingText="Finding…"
+                  >
+                    <PersonIcon />
+                    Find decision maker
+                  </Button>
+                )}
+                {isAdmin && (
+                  <Button
+                    variant={company?.blocked ? "solidRed" : "ghost"}
+                    size="sm"
                     onClick={handleToggleBlock}
-                    disabled={isBlocking || isUnblocking}
+                    loading={isBlocking || isUnblocking}
+                    loadingText="Updating…"
                   >
                     <CrossCircledIcon />
-                    {isBlocking || isUnblocking ? "Updating…" : company?.blocked ? "Blocked" : "Block"}
+                    {company?.blocked ? "Blocked" : "Block"}
                   </Button>
                 )}
                 {isAdmin && (
                   <AlertDialog.Root>
                     <AlertDialog.Trigger>
-                      <Button variant="ghost" color="gray" disabled={isDeleting}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        loading={isDeleting}
+                        loadingText="Deleting…"
+                      >
                         <TrashIcon />
-                        {isDeleting ? "Deleting…" : "Delete"}
+                        Delete
                       </Button>
                     </AlertDialog.Trigger>
                     <AlertDialog.Content maxWidth="400px">
@@ -1267,10 +1313,10 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                       </AlertDialog.Description>
                       <Flex gap="3" mt="4" justify="end">
                         <AlertDialog.Cancel>
-                          <Button variant="ghost" color="gray">Cancel</Button>
+                          <Button variant="ghost" size="sm">Cancel</Button>
                         </AlertDialog.Cancel>
                         <AlertDialog.Action>
-                          <Button variant="ghost" color="gray" onClick={handleDelete}>Delete</Button>
+                          <Button variant="solidRed" size="sm" onClick={handleDelete}>Delete</Button>
                         </AlertDialog.Action>
                       </Flex>
                     </AlertDialog.Content>
@@ -1280,26 +1326,6 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
             </Flex>
           </Box>
         </Card>
-
-        {/* Tab nav */}
-        <TabNav.Root>
-          <TabNav.Link active>Overview</TabNav.Link>
-          {isAdmin && (
-            <TabNav.Link asChild>
-              <Link href={`/companies/${effectiveKey}/contacts`}>Contacts</Link>
-            </TabNav.Link>
-          )}
-          {isAdmin && (
-            <TabNav.Link asChild>
-              <Link href={`/companies/${effectiveKey}/emails`}>Emails</Link>
-            </TabNav.Link>
-          )}
-          {isAdmin && (
-            <TabNav.Link asChild>
-              <Link href={`/companies/${effectiveKey}/posts`}>Posts</Link>
-            </TabNav.Link>
-          )}
-        </TabNav.Root>
 
         {/* Overview */}
         <Flex direction="column" gap="5" pt="4">
@@ -1313,17 +1339,43 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
             crawlMeta={crawlMeta}
           />
 
-          {/* Industries + Tags — only when deep analysis is missing (otherwise it duplicates the markdown body) */}
-          {!hasDeepAnalysis && (company.industries?.length || (company.tags ?? []).some((t: string) => !t.startsWith('leadgen-'))) && (
-            <Flex gap="2" wrap="wrap" align="center">
-              {(company.industries ?? []).map((ind) => (
-                <Badge key={ind} color="blue" variant="soft" size="1">{ind}</Badge>
-              ))}
-              {(company.tags ?? []).filter((t: string) => !t.startsWith('leadgen-')).map((tag) => (
-                <Badge key={tag} color="gray" variant="surface" size="1">{tag}</Badge>
-              ))}
-            </Flex>
-          )}
+          {/* Industries + Tags — all clickable, link to filtered list */}
+          {(() => {
+            const META_TAG_PREFIXES = ["leadgen-", "pricing:", "market:", "funding:", "remote:"];
+            const industries = company.industries ?? [];
+            const cleanTags = (company.tags ?? []).filter((t: string) => {
+              if (!t || META_TAG_PREFIXES.some((p) => t.startsWith(p))) return false;
+              if (t.length > 28) return false;
+              return !industries.includes(t);
+            });
+            if (industries.length === 0 && cleanTags.length === 0) return null;
+            return (
+              <Flex gap="2" wrap="wrap" align="center">
+                {industries.map((ind) => (
+                  <Link
+                    key={`ind-${ind}`}
+                    href={`/companies?tag=${encodeURIComponent(ind)}`}
+                    style={{ textDecoration: "none" }}
+                  >
+                    <Badge color="blue" variant="soft" size="1" style={{ cursor: "pointer" }}>
+                      {ind}
+                    </Badge>
+                  </Link>
+                ))}
+                {cleanTags.map((tag) => (
+                  <Link
+                    key={`tag-${tag}`}
+                    href={`/companies?tag=${encodeURIComponent(tag)}`}
+                    style={{ textDecoration: "none" }}
+                  >
+                    <Badge color="gray" variant="surface" size="1" style={{ cursor: "pointer" }}>
+                      {tag}
+                    </Badge>
+                  </Link>
+                ))}
+              </Flex>
+            );
+          })()}
 
           {/* Opportunities */}
           {company.opportunities && company.opportunities.length > 0 && (
@@ -1381,7 +1433,7 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                     }
                   }
                   return (
-                    <Flex key={p.postUrl ?? idx} align="start" gap="2" py="1" style={{ borderBottom: "1px solid var(--gray-3)" }}>
+                    <Flex key={p.postUrl ?? idx} align="start" gap="2" py="1" className={css({ borderBottom: "1px solid", borderColor: "gray.3" })}>
                       <Text size="1" weight="medium" style={{ whiteSpace: "nowrap", flexShrink: 0 }}>
                         {name}
                       </Text>
@@ -1518,7 +1570,7 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
             <SectionCard title="Score breakdown">
               <Flex direction="column" gap="2">
                 {company.score_reasons.map((reason: string, idx: number) => (
-                  <Box key={`${idx}-${reason}`} px="3" py="1" style={{ background: 'var(--gray-2)' }}><Text size="2" color="gray">{reason}</Text></Box>
+                  <Box key={`${idx}-${reason}`} px="3" py="1" className={css({ bg: "gray.2" })}><Text size="2" color="gray">{reason}</Text></Box>
                 ))}
               </Flex>
             </SectionCard>
@@ -1529,7 +1581,153 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
             <CompanyContactsClient companyKey={effectiveKey} embedded />
           )}
         </Flex>
-      </Flex>
-    </Container>
+
+        <DecisionMakerDialog
+          open={dmDialogOpen}
+          onOpenChange={setDmDialogOpen}
+          loading={isFindingDm}
+          error={dmError}
+          result={dmData?.findDecisionMaker ?? null}
+        />
+    </Flex>
+  );
+}
+
+function DecisionMakerDialog({
+  open,
+  onOpenChange,
+  loading,
+  error,
+  result,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  loading: boolean;
+  error: string | null;
+  result:
+    | {
+        summary?: string | null;
+        classifyCount: number;
+        topDecisionMaker?: {
+          firstName: string;
+          lastName: string;
+          position?: string | null;
+          seniority?: string | null;
+          department?: string | null;
+          authorityScore: number;
+          dmReasons: string[];
+        } | null;
+        ranked: Array<{
+          id: number;
+          firstName: string;
+          lastName: string;
+          position?: string | null;
+          seniority?: string | null;
+          department?: string | null;
+          isDecisionMaker: boolean;
+          authorityScore: number;
+          rankScore: number;
+        }>;
+      }
+    | null;
+}) {
+  const top = result?.topDecisionMaker ?? null;
+  const ranked = result?.ranked ?? [];
+  return (
+    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+      <Dialog.Content maxWidth="640px">
+        <Dialog.Title>Decision maker</Dialog.Title>
+        <Dialog.Description size="2" color="gray">
+          Ranked from existing contacts on file.
+        </Dialog.Description>
+
+        <Box mt="4">
+          {loading && <Text size="2" color="gray">Classifying contacts…</Text>}
+
+          {!loading && error && (
+            <Callout.Root color="red">
+              <Callout.Icon><InfoCircledIcon /></Callout.Icon>
+              <Callout.Text>{error}</Callout.Text>
+            </Callout.Root>
+          )}
+
+          {!loading && !error && result && (
+            <Flex direction="column" gap="3">
+              {result.summary && (
+                <Callout.Root color={top ? "green" : "amber"}>
+                  <Callout.Icon><CheckCircledIcon /></Callout.Icon>
+                  <Callout.Text>{result.summary}</Callout.Text>
+                </Callout.Root>
+              )}
+
+              {top && (
+                <Card>
+                  <Flex direction="column" gap="2">
+                    <Heading size="3">
+                      {top.firstName} {top.lastName}
+                    </Heading>
+                    <Text size="2" color="gray">
+                      {top.position || "—"}
+                      {top.seniority ? ` · ${top.seniority}` : ""}
+                      {top.department ? ` · ${top.department}` : ""}
+                    </Text>
+                    <Flex gap="2" align="center">
+                      <Badge color="green">DM</Badge>
+                      <Badge color="gray">
+                        authority {top.authorityScore.toFixed(2)}
+                      </Badge>
+                    </Flex>
+                    {top.dmReasons.length > 0 && (
+                      <Box>
+                        <Text size="1" color="gray" weight="bold">Reasons</Text>
+                        <ul>
+                          {top.dmReasons.map((r, i) => (
+                            <li key={i}><Text size="2">{r}</Text></li>
+                          ))}
+                        </ul>
+                      </Box>
+                    )}
+                  </Flex>
+                </Card>
+              )}
+
+              {ranked.length > 1 && (
+                <Box>
+                  <Text size="1" color="gray" weight="bold">
+                    Full ranking ({ranked.length})
+                    {result.classifyCount > 0
+                      ? ` · classified ${result.classifyCount} just now`
+                      : ""}
+                  </Text>
+                  <Flex direction="column" gap="1" mt="2">
+                    {ranked.map((c) => (
+                      <Flex key={c.id} justify="between" align="center" gap="3">
+                        <Text size="2">
+                          {c.isDecisionMaker ? "★ " : "  "}
+                          {c.firstName} {c.lastName}
+                          <Text size="1" color="gray">
+                            {" — "}
+                            {c.position || c.seniority || "?"}
+                          </Text>
+                        </Text>
+                        <Text size="1" color="gray">
+                          {c.rankScore.toFixed(2)}
+                        </Text>
+                      </Flex>
+                    ))}
+                  </Flex>
+                </Box>
+              )}
+            </Flex>
+          )}
+        </Box>
+
+        <Flex justify="end" mt="4">
+          <Dialog.Close>
+            <Button variant="ghost">Close</Button>
+          </Dialog.Close>
+        </Flex>
+      </Dialog.Content>
+    </Dialog.Root>
   );
 }

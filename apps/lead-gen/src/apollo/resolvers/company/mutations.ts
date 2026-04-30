@@ -19,7 +19,12 @@ import type {
 import { eq, and, inArray, ilike, sql } from "drizzle-orm";
 import type { GraphQLContext } from "../../context";
 import { isAdminEmail } from "@/lib/admin";
-import { enrichCompany } from "@/lib/langgraph-client";
+import {
+  enrichCompany,
+  findDecisionMaker as runFindDecisionMaker,
+  LangGraphError,
+  type DecisionMakerCandidate as DecisionMakerCandidateResult,
+} from "@/lib/langgraph-client";
 import type {
   MutationCreateCompanyArgs,
   MutationUpdateCompanyArgs,
@@ -32,6 +37,7 @@ import type {
   MutationImportCompaniesArgs,
   MutationEnhanceCompanyArgs,
   MutationAnalyzeCompanyArgs,
+  MutationFindDecisionMakerArgs,
   MutationBlockCompanyArgs,
   MutationUnblockCompanyArgs,
 } from "@/__generated__/resolvers-types";
@@ -774,6 +780,100 @@ export const companyMutations = {
         message: err instanceof Error ? err.message : String(err),
         companyId: resolved.id,
         companyKey: resolved.key,
+      };
+    }
+  },
+
+  async findDecisionMaker(
+    _parent: unknown,
+    args: MutationFindDecisionMakerArgs,
+    context: GraphQLContext,
+  ) {
+    requireAdmin(context);
+    const resolved = await resolveCompanyIdKey(
+      context,
+      args.id ?? null,
+      args.key ?? null,
+    );
+    if (!resolved) {
+      return {
+        success: false,
+        message: "Company not found.",
+        companyId: args.id ?? null,
+        companyKey: args.key ?? null,
+        topDecisionMaker: null,
+        decisionMakers: [],
+        ranked: [],
+        classifyCount: 0,
+        summary: null,
+      };
+    }
+    try {
+      const result = await runFindDecisionMaker({ companyId: resolved.id });
+      const shape = (c: DecisionMakerCandidateResult) => ({
+        id: c.id,
+        firstName: c.first_name,
+        lastName: c.last_name,
+        position: c.position,
+        seniority: c.seniority,
+        department: c.department,
+        isDecisionMaker: c.is_decision_maker,
+        authorityScore: c.authority_score,
+        dmReasons: c.dm_reasons ?? [],
+        rankScore: c.rank_score,
+      });
+      return {
+        success: !result.error,
+        message: result.error ?? null,
+        companyId: resolved.id,
+        companyKey: resolved.key,
+        topDecisionMaker: result.top_decision_maker
+          ? shape(result.top_decision_maker)
+          : null,
+        decisionMakers: (result.decision_makers ?? []).map(shape),
+        ranked: (result.ranked ?? []).map(shape),
+        classifyCount: result.classify_count ?? 0,
+        summary: result.summary ?? null,
+      };
+    } catch (err) {
+      let message: string;
+      if (err instanceof LangGraphError) {
+        console.error("[findDecisionMaker]", err.kind, "failure", {
+          status: err.status,
+          assistantId: err.assistantId,
+          bodyText: err.bodyText,
+          companyId: resolved.id,
+          companyKey: resolved.key,
+        });
+        switch (err.kind) {
+          case "auth":
+            message =
+              "Decision-maker analysis is temporarily unavailable. The team has been notified.";
+            break;
+          case "timeout":
+            message = "Decision-maker analysis took too long. Try again.";
+            break;
+          case "backend":
+            message =
+              "Decision-maker backend is unavailable. Please retry shortly.";
+            break;
+          default:
+            message = err.bodyText || err.message;
+        }
+      } else {
+        console.error("[findDecisionMaker] unexpected failure", err);
+        message = err instanceof Error ? err.message : String(err);
+      }
+      return {
+        success: false,
+        message,
+        companyId: resolved.id,
+        companyKey: resolved.key,
+        topDecisionMaker: null,
+        decisionMakers: [],
+        ranked: [],
+        classifyCount: 0,
+        summary: null,
       };
     }
   },

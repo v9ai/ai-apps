@@ -291,6 +291,7 @@ export type CompanyFilterInput = {
   min_ai_tier?: InputMaybe<Scalars['Int']['input']>;
   min_score?: InputMaybe<Scalars['Float']['input']>;
   service_taxonomy_any?: InputMaybe<Array<Scalars['String']['input']>>;
+  tags_any?: InputMaybe<Array<Scalars['String']['input']>>;
   text?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -840,6 +841,20 @@ export type DataQualityScore = {
   staleFields: Array<Scalars['String']['output']>;
 };
 
+export type DecisionMakerCandidate = {
+  __typename?: 'DecisionMakerCandidate';
+  authorityScore: Scalars['Float']['output'];
+  department: Maybe<Scalars['String']['output']>;
+  dmReasons: Array<Scalars['String']['output']>;
+  firstName: Scalars['String']['output'];
+  id: Scalars['Int']['output'];
+  isDecisionMaker: Scalars['Boolean']['output'];
+  lastName: Scalars['String']['output'];
+  position: Maybe<Scalars['String']['output']>;
+  rankScore: Scalars['Float']['output'];
+  seniority: Maybe<Scalars['String']['output']>;
+};
+
 export type DeleteCampaignResult = {
   __typename?: 'DeleteCampaignResult';
   message: Maybe<Scalars['String']['output']>;
@@ -1141,6 +1156,19 @@ export type FindContactEmailResult = {
   message: Scalars['String']['output'];
   success: Scalars['Boolean']['output'];
   verified: Maybe<Scalars['Boolean']['output']>;
+};
+
+export type FindDecisionMakerResponse = {
+  __typename?: 'FindDecisionMakerResponse';
+  classifyCount: Scalars['Int']['output'];
+  companyId: Maybe<Scalars['Int']['output']>;
+  companyKey: Maybe<Scalars['String']['output']>;
+  decisionMakers: Array<DecisionMakerCandidate>;
+  message: Maybe<Scalars['String']['output']>;
+  ranked: Array<DecisionMakerCandidate>;
+  success: Scalars['Boolean']['output'];
+  summary: Maybe<Scalars['String']['output']>;
+  topDecisionMaker: Maybe<DecisionMakerCandidate>;
 };
 
 export type FollowUpBatchInput = {
@@ -1518,6 +1546,7 @@ export type Mutation = {
   enrichOpportunityCandidates: EnrichAiContactsBulkResult;
   findCompanyEmails: EnhanceAllContactsResult;
   findContactEmail: FindContactEmailResult;
+  findDecisionMaker: FindDecisionMakerResponse;
   flagContactsForDeletion: BatchOperationResult;
   /** Generate and store embeddings for companies missing them. Admin only. */
   generateCompanyEmbeddings: GenerateEmbeddingsResult;
@@ -1836,6 +1865,12 @@ export type MutationFindCompanyEmailsArgs = {
 
 export type MutationFindContactEmailArgs = {
   contactId: Scalars['Int']['input'];
+};
+
+
+export type MutationFindDecisionMakerArgs = {
+  id?: InputMaybe<Scalars['Int']['input']>;
+  key?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -4118,6 +4153,14 @@ export type AnalyzeCompanyMutationVariables = Exact<{
 
 export type AnalyzeCompanyMutation = { __typename?: 'Mutation', analyzeCompany: { __typename?: 'AnalyzeCompanyResponse', success: boolean, message: string | null, companyId: number | null, companyKey: string | null } };
 
+export type FindDecisionMakerMutationVariables = Exact<{
+  id?: InputMaybe<Scalars['Int']['input']>;
+  key?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type FindDecisionMakerMutation = { __typename?: 'Mutation', findDecisionMaker: { __typename?: 'FindDecisionMakerResponse', success: boolean, message: string | null, companyId: number | null, companyKey: string | null, summary: string | null, classifyCount: number, topDecisionMaker: { __typename?: 'DecisionMakerCandidate', id: number, firstName: string, lastName: string, position: string | null, seniority: string | null, department: string | null, isDecisionMaker: boolean, authorityScore: number, dmReasons: Array<string>, rankScore: number } | null, decisionMakers: Array<{ __typename?: 'DecisionMakerCandidate', id: number, firstName: string, lastName: string, position: string | null, seniority: string | null, department: string | null, isDecisionMaker: boolean, authorityScore: number, dmReasons: Array<string>, rankScore: number }>, ranked: Array<{ __typename?: 'DecisionMakerCandidate', id: number, firstName: string, lastName: string, position: string | null, seniority: string | null, department: string | null, isDecisionMaker: boolean, authorityScore: number, dmReasons: Array<string>, rankScore: number }> } };
+
 export type ImportCompaniesMutationVariables = Exact<{
   companies: Array<CompanyImportInput> | CompanyImportInput;
 }>;
@@ -5721,6 +5764,81 @@ export function useAnalyzeCompanyMutation(baseOptions?: Apollo.MutationHookOptio
 export type AnalyzeCompanyMutationHookResult = ReturnType<typeof useAnalyzeCompanyMutation>;
 export type AnalyzeCompanyMutationResult = Apollo.MutationResult<AnalyzeCompanyMutation>;
 export type AnalyzeCompanyMutationOptions = Apollo.BaseMutationOptions<AnalyzeCompanyMutation, AnalyzeCompanyMutationVariables>;
+export const FindDecisionMakerDocument = gql`
+    mutation FindDecisionMaker($id: Int, $key: String) {
+  findDecisionMaker(id: $id, key: $key) {
+    success
+    message
+    companyId
+    companyKey
+    summary
+    classifyCount
+    topDecisionMaker {
+      id
+      firstName
+      lastName
+      position
+      seniority
+      department
+      isDecisionMaker
+      authorityScore
+      dmReasons
+      rankScore
+    }
+    decisionMakers {
+      id
+      firstName
+      lastName
+      position
+      seniority
+      department
+      isDecisionMaker
+      authorityScore
+      dmReasons
+      rankScore
+    }
+    ranked {
+      id
+      firstName
+      lastName
+      position
+      seniority
+      department
+      isDecisionMaker
+      authorityScore
+      dmReasons
+      rankScore
+    }
+  }
+}
+    `;
+export type FindDecisionMakerMutationFn = Apollo.MutationFunction<FindDecisionMakerMutation, FindDecisionMakerMutationVariables>;
+
+/**
+ * __useFindDecisionMakerMutation__
+ *
+ * To run a mutation, you first call `useFindDecisionMakerMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useFindDecisionMakerMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [findDecisionMakerMutation, { data, loading, error }] = useFindDecisionMakerMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      key: // value for 'key'
+ *   },
+ * });
+ */
+export function useFindDecisionMakerMutation(baseOptions?: Apollo.MutationHookOptions<FindDecisionMakerMutation, FindDecisionMakerMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<FindDecisionMakerMutation, FindDecisionMakerMutationVariables>(FindDecisionMakerDocument, options);
+      }
+export type FindDecisionMakerMutationHookResult = ReturnType<typeof useFindDecisionMakerMutation>;
+export type FindDecisionMakerMutationResult = Apollo.MutationResult<FindDecisionMakerMutation>;
+export type FindDecisionMakerMutationOptions = Apollo.BaseMutationOptions<FindDecisionMakerMutation, FindDecisionMakerMutationVariables>;
 export const ImportCompaniesDocument = gql`
     mutation ImportCompanies($companies: [CompanyImportInput!]!) {
   importCompanies(companies: $companies) {

@@ -410,6 +410,25 @@ class ContactEnrichSalesState(TypedDict, total=False):
     error: str | None
 
 
+class FindDecisionMakerState(TypedDict, total=False):
+    # input — caller passes one of these
+    company_key: str
+    company_id: int
+    # populated by load_company
+    company: dict[str, Any]
+    # populated by load_contacts
+    contacts: list[dict[str, Any]]
+    # populated by classify_unclassified — count of contacts re-classified via LLM
+    classify_count: int
+    # populated by rank
+    ranked: list[dict[str, Any]]
+    decision_makers: list[dict[str, Any]]
+    top_decision_maker: dict[str, Any] | None
+    summary: str
+    # output
+    error: str | None
+
+
 class DeepICPState(TypedDict, total=False):
     # input
     product_id: int

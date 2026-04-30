@@ -291,6 +291,7 @@ export type CompanyFilterInput = {
   min_ai_tier?: InputMaybe<Scalars['Int']['input']>;
   min_score?: InputMaybe<Scalars['Float']['input']>;
   service_taxonomy_any?: InputMaybe<Array<Scalars['String']['input']>>;
+  tags_any?: InputMaybe<Array<Scalars['String']['input']>>;
   text?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -840,6 +841,20 @@ export type DataQualityScore = {
   staleFields: Array<Scalars['String']['output']>;
 };
 
+export type DecisionMakerCandidate = {
+  __typename?: 'DecisionMakerCandidate';
+  authorityScore: Scalars['Float']['output'];
+  department: Maybe<Scalars['String']['output']>;
+  dmReasons: Array<Scalars['String']['output']>;
+  firstName: Scalars['String']['output'];
+  id: Scalars['Int']['output'];
+  isDecisionMaker: Scalars['Boolean']['output'];
+  lastName: Scalars['String']['output'];
+  position: Maybe<Scalars['String']['output']>;
+  rankScore: Scalars['Float']['output'];
+  seniority: Maybe<Scalars['String']['output']>;
+};
+
 export type DeleteCampaignResult = {
   __typename?: 'DeleteCampaignResult';
   message: Maybe<Scalars['String']['output']>;
@@ -1141,6 +1156,19 @@ export type FindContactEmailResult = {
   message: Scalars['String']['output'];
   success: Scalars['Boolean']['output'];
   verified: Maybe<Scalars['Boolean']['output']>;
+};
+
+export type FindDecisionMakerResponse = {
+  __typename?: 'FindDecisionMakerResponse';
+  classifyCount: Scalars['Int']['output'];
+  companyId: Maybe<Scalars['Int']['output']>;
+  companyKey: Maybe<Scalars['String']['output']>;
+  decisionMakers: Array<DecisionMakerCandidate>;
+  message: Maybe<Scalars['String']['output']>;
+  ranked: Array<DecisionMakerCandidate>;
+  success: Scalars['Boolean']['output'];
+  summary: Maybe<Scalars['String']['output']>;
+  topDecisionMaker: Maybe<DecisionMakerCandidate>;
 };
 
 export type FollowUpBatchInput = {
@@ -1518,6 +1546,7 @@ export type Mutation = {
   enrichOpportunityCandidates: EnrichAiContactsBulkResult;
   findCompanyEmails: EnhanceAllContactsResult;
   findContactEmail: FindContactEmailResult;
+  findDecisionMaker: FindDecisionMakerResponse;
   flagContactsForDeletion: BatchOperationResult;
   /** Generate and store embeddings for companies missing them. Admin only. */
   generateCompanyEmbeddings: GenerateEmbeddingsResult;
@@ -1836,6 +1865,12 @@ export type MutationFindCompanyEmailsArgs = {
 
 export type MutationFindContactEmailArgs = {
   contactId: Scalars['Int']['input'];
+};
+
+
+export type MutationFindDecisionMakerArgs = {
+  id?: InputMaybe<Scalars['Int']['input']>;
+  key?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -4135,6 +4170,7 @@ export type ResolversTypes = {
   DailyJobCount: ResolverTypeWrapper<Partial<DailyJobCount>>;
   DataQualityScore: ResolverTypeWrapper<Partial<DataQualityScore>>;
   DateTime: ResolverTypeWrapper<Partial<Scalars['DateTime']['output']>>;
+  DecisionMakerCandidate: ResolverTypeWrapper<Partial<DecisionMakerCandidate>>;
   DeleteCampaignResult: ResolverTypeWrapper<Partial<DeleteCampaignResult>>;
   DeleteCompaniesResult: ResolverTypeWrapper<Partial<DeleteCompaniesResult>>;
   DeleteCompanyResponse: ResolverTypeWrapper<Partial<DeleteCompanyResponse>>;
@@ -4165,6 +4201,7 @@ export type ResolversTypes = {
   ExtractedSkill: ResolverTypeWrapper<Partial<ExtractedSkill>>;
   FindCompanyResult: ResolverTypeWrapper<Partial<FindCompanyResult>>;
   FindContactEmailResult: ResolverTypeWrapper<Partial<FindContactEmailResult>>;
+  FindDecisionMakerResponse: ResolverTypeWrapper<Partial<FindDecisionMakerResponse>>;
   Float: ResolverTypeWrapper<Partial<Scalars['Float']['output']>>;
   FollowUpBatchInput: ResolverTypeWrapper<Partial<FollowUpBatchInput>>;
   FollowUpBatchResult: ResolverTypeWrapper<Partial<FollowUpBatchResult>>;
@@ -4394,6 +4431,7 @@ export type ResolversParentTypes = {
   DailyJobCount: Partial<DailyJobCount>;
   DataQualityScore: Partial<DataQualityScore>;
   DateTime: Partial<Scalars['DateTime']['output']>;
+  DecisionMakerCandidate: Partial<DecisionMakerCandidate>;
   DeleteCampaignResult: Partial<DeleteCampaignResult>;
   DeleteCompaniesResult: Partial<DeleteCompaniesResult>;
   DeleteCompanyResponse: Partial<DeleteCompanyResponse>;
@@ -4423,6 +4461,7 @@ export type ResolversParentTypes = {
   ExtractedSkill: Partial<ExtractedSkill>;
   FindCompanyResult: Partial<FindCompanyResult>;
   FindContactEmailResult: Partial<FindContactEmailResult>;
+  FindDecisionMakerResponse: Partial<FindDecisionMakerResponse>;
   Float: Partial<Scalars['Float']['output']>;
   FollowUpBatchInput: Partial<FollowUpBatchInput>;
   FollowUpBatchResult: Partial<FollowUpBatchResult>;
@@ -5162,6 +5201,19 @@ export interface DateTimeScalarConfig extends GraphQLScalarTypeConfig<ResolversT
   name: 'DateTime';
 }
 
+export type DecisionMakerCandidateResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DecisionMakerCandidate'] = ResolversParentTypes['DecisionMakerCandidate']> = {
+  authorityScore?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  department?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  dmReasons?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  firstName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  isDecisionMaker?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  lastName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  position?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  rankScore?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  seniority?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+};
+
 export type DeleteCampaignResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DeleteCampaignResult'] = ResolversParentTypes['DeleteCampaignResult']> = {
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
@@ -5419,6 +5471,18 @@ export type FindContactEmailResultResolvers<ContextType = GraphQLContext, Parent
   message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   verified?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+};
+
+export type FindDecisionMakerResponseResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['FindDecisionMakerResponse'] = ResolversParentTypes['FindDecisionMakerResponse']> = {
+  classifyCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  companyId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  companyKey?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  decisionMakers?: Resolver<Array<ResolversTypes['DecisionMakerCandidate']>, ParentType, ContextType>;
+  message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  ranked?: Resolver<Array<ResolversTypes['DecisionMakerCandidate']>, ParentType, ContextType>;
+  success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  summary?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  topDecisionMaker?: Resolver<Maybe<ResolversTypes['DecisionMakerCandidate']>, ParentType, ContextType>;
 };
 
 export type FollowUpBatchResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['FollowUpBatchResult'] = ResolversParentTypes['FollowUpBatchResult']> = {
@@ -5710,6 +5774,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   enrichOpportunityCandidates?: Resolver<ResolversTypes['EnrichAIContactsBulkResult'], ParentType, ContextType, RequireFields<MutationEnrichOpportunityCandidatesArgs, 'opportunityId'>>;
   findCompanyEmails?: Resolver<ResolversTypes['EnhanceAllContactsResult'], ParentType, ContextType, RequireFields<MutationFindCompanyEmailsArgs, 'companyId'>>;
   findContactEmail?: Resolver<ResolversTypes['FindContactEmailResult'], ParentType, ContextType, RequireFields<MutationFindContactEmailArgs, 'contactId'>>;
+  findDecisionMaker?: Resolver<ResolversTypes['FindDecisionMakerResponse'], ParentType, ContextType, Partial<MutationFindDecisionMakerArgs>>;
   flagContactsForDeletion?: Resolver<ResolversTypes['BatchOperationResult'], ParentType, ContextType, Partial<MutationFlagContactsForDeletionArgs>>;
   generateCompanyEmbeddings?: Resolver<ResolversTypes['GenerateEmbeddingsResult'], ParentType, ContextType, Partial<MutationGenerateCompanyEmbeddingsArgs>>;
   generateDraftsForPending?: Resolver<ResolversTypes['GenerateDraftsBatchResult'], ParentType, ContextType>;
@@ -6845,6 +6910,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   DailyJobCount?: DailyJobCountResolvers<ContextType>;
   DataQualityScore?: DataQualityScoreResolvers<ContextType>;
   DateTime?: GraphQLScalarType;
+  DecisionMakerCandidate?: DecisionMakerCandidateResolvers<ContextType>;
   DeleteCampaignResult?: DeleteCampaignResultResolvers<ContextType>;
   DeleteCompaniesResult?: DeleteCompaniesResultResolvers<ContextType>;
   DeleteCompanyResponse?: DeleteCompanyResponseResolvers<ContextType>;
@@ -6873,6 +6939,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ExtractedSkill?: ExtractedSkillResolvers<ContextType>;
   FindCompanyResult?: FindCompanyResultResolvers<ContextType>;
   FindContactEmailResult?: FindContactEmailResultResolvers<ContextType>;
+  FindDecisionMakerResponse?: FindDecisionMakerResponseResolvers<ContextType>;
   FollowUpBatchResult?: FollowUpBatchResultResolvers<ContextType>;
   FollowUpEmail?: FollowUpEmailResolvers<ContextType>;
   FollowUpEmailsResult?: FollowUpEmailsResultResolvers<ContextType>;
