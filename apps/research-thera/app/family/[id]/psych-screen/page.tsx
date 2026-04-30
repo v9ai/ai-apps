@@ -21,7 +21,7 @@ import {
   ExclamationTriangleIcon,
   InfoCircledIcon,
 } from "@radix-ui/react-icons";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import NextLink from "next/link";
 import { format } from "date-fns";
 import { ro } from "date-fns/locale";
@@ -74,7 +74,6 @@ function citationHref(c: { doi?: string | null }): string | undefined {
 
 function PsychScreenContent() {
   const params = useParams();
-  const router = useRouter();
   const familySlug = params.id as string;
   const isNumeric = /^\d+$/.test(familySlug);
   const familyMemberIdFromRoute = isNumeric ? parseInt(familySlug, 10) : NaN;

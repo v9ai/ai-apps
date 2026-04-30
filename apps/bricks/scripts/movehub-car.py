@@ -7,8 +7,8 @@ from pybricks.tools import wait
 # Drive: ports A + B run as a tank-style pair (one inverted).
 # Steering: optional motor on port D, autocalibrates at boot by hitting both
 # end-stops, then uses the measured half-range as the steer limit.
-DRIVE_SPEED = 1000        # deg/s for drive motors
-STEER_SPEED = 500         # deg/s for steering motor
+DRIVE_SPEED = 10000       # deg/s for drive motors (clamped to hardware max)
+STEER_SPEED = 1000        # deg/s for steering motor
 
 CALIBRATE_SPEED = 200     # deg/s for autocal sweeps — slow / gentle
 CALIBRATE_DUTY = 30       # max % torque during stall detection — protects gears
