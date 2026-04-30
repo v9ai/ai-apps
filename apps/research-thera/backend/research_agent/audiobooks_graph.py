@@ -32,6 +32,21 @@ _VALID_CATEGORIES = {"emotional-development", "similar-to"}
 # audiobook subscription service).
 BOGDAN_FAMILY_MEMBER_ID = 2
 
+# Real Voxa kids' audiobook catalog, harvested from
+# https://voxa.ro/sitemap.xml → sitemap_books_ro.xml.gz (kids' heuristic filter).
+# Loaded once at module import. The graph passes the catalog to DeepSeek as the
+# ONLY allowed pick set, and the coerce step rejects any title whose URL isn't
+# in this set — so picks can't be hallucinated.
+_VOXA_CATALOG_PATH = Path(__file__).resolve().parent / "data" / "voxa_kids_catalog.json"
+try:
+    with open(_VOXA_CATALOG_PATH, encoding="utf-8") as _f:
+        _VOXA_CATALOG = json.load(_f).get("audiobooks", [])
+except Exception as _exc:
+    print(f"[audiobooks] failed to load voxa catalog: {_exc}")
+    _VOXA_CATALOG = []
+_VOXA_URL_SET = {entry["url"] for entry in _VOXA_CATALOG if entry.get("url")}
+_VOXA_SLUG_SET = {entry["slug"] for entry in _VOXA_CATALOG if entry.get("slug")}
+
 ROMANIAN_INSTRUCTION = (
     "IMPORTANT: Respond entirely in Romanian for all free-text fields "
     "(description, whyRecommended). Audiobook titles and author/narrator names "
@@ -446,29 +461,38 @@ async def collect_context(state: AudiobooksState) -> dict:
             "of the named concerns or evidence-based techniques."
         )
 
+    # Build the Voxa catalog block — DeepSeek must pick ONLY from these URLs.
+    catalog_lines: list[str] = []
+    for entry in _VOXA_CATALOG:
+        catalog_lines.append(f"- [{entry['title_hint']}] {entry['url']}")
+    catalog_block = (
+        f"## Voxa Kids' Catalog ({len(_VOXA_CATALOG)} real audiobook URLs)\n"
+        "These are the ONLY audiobooks you may recommend. Each line is "
+        "[title-hint-from-slug] <url>. The title-hint is auto-derived; pick the "
+        "Romanian title you actually know matches that URL/slug. NEVER invent a URL "
+        "or use one not in this list.\n\n"
+        + "\n".join(catalog_lines)
+    )
+
     prompt_parts = [
         ROMANIAN_INSTRUCTION,
         "",
         (
             "You are a clinical child-development bibliotherapist with deep knowledge of "
-            "Romanian and translated children's audiobook catalogs. Curate a personalized "
-            "audiobook list. Recommend ONLY real, published audiobooks you are confident "
-            "are present in the voxa.ro catalog (https://voxa.ro). Do NOT invent titles. "
-            "If unsure whether a title is on Voxa, OMIT it rather than guess."
+            "the voxa.ro Romanian audiobook catalog. Curate a personalized audiobook list "
+            "for the subject below. Pick ONLY from the Voxa catalog provided at the end "
+            "of this prompt — every voxaUrl MUST be a verbatim URL from that list."
         ),
         "",
         (
-            "PLATFORM CONSTRAINT (HARD): every recommended audiobook MUST be available on "
-            "voxa.ro. Voxa is the Romanian-language audiobook subscription service "
-            "(https://voxa.ro/audiobooks/copii for the kids' section). Do NOT include "
-            "titles only available on Audible, Storytel, Libro.fm, or anywhere else. "
-            "If you cannot place a title confidently on Voxa, OMIT it."
+            "PLATFORM CONSTRAINT (HARD): every voxaUrl MUST be one of the URLs listed in "
+            "the 'Voxa Kids' Catalog' section below — no exceptions, no hallucinations, "
+            "no slug-guessing. If none of the catalog URLs fits a slot, OMIT that slot."
         ),
         "",
         (
-            "LANGUAGE CONSTRAINT (HARD): every audiobook MUST have a Romanian-language "
-            "narration on Voxa. Set `language` to \"ro\" for every entry. If a title only "
-            "exists in English/French/etc on Voxa, OMIT it."
+            "LANGUAGE CONSTRAINT (HARD): every audiobook MUST have Romanian narration on "
+            "Voxa. Set `language` to \"ro\" for every entry."
         ),
         "",
         category_block,
@@ -509,6 +533,8 @@ async def collect_context(state: AudiobooksState) -> dict:
         ),
         "",
         f"## Category tag\nUse category = \"{category}\" for every entry (added by the server, do not include in JSON).",
+        "",
+        catalog_block,
     ]
 
     if job_id:
@@ -590,11 +616,13 @@ def _coerce_audiobook(raw: dict) -> Optional[dict]:
 
     voxa_url = raw.get("voxaUrl") or raw.get("voxa_url")
     if isinstance(voxa_url, str) and voxa_url.strip():
-        voxa_url = voxa_url.strip()
-        if "voxa.ro" not in voxa_url:
-            voxa_url = None
+        voxa_url = voxa_url.strip().rstrip("/")
     else:
         voxa_url = None
+    # HARD: reject any pick whose URL isn't in the verified Voxa catalog. Without
+    # this guard the model still fabricates plausible-looking voxa.ro slugs.
+    if not voxa_url or voxa_url not in _VOXA_URL_SET:
+        return None
 
     cover_url = raw.get("coverUrl") or raw.get("cover_url")
     if not isinstance(cover_url, str) or not cover_url.strip():
