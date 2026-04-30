@@ -88,6 +88,7 @@ _GRAPH_PATHS: dict[str, str] = {
     "medication_deep_research": "research_agent.medication_deep_research_graph:graph",
     "me_regimen": "research_agent.me_regimen_graph:graph",
     "parent_advice": "research_agent.parent_advice_graph:graph",
+    "psych_screen": "research_agent.psych_screen_graph:graph",
     "research": "research_agent.graph:graph",
     "routine_analysis": "research_agent.routine_analysis_graph:graph",
     "story": "research_agent.story_graph:graph",
