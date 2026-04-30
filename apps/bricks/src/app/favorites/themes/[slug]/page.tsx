@@ -256,6 +256,192 @@ export default function ThemeDetailPage() {
         /{theme.slug} · {items.length} {items.length === 1 ? "item" : "items"}
       </p>
 
+      {/* Discover via LangGraph */}
+      <div className={css({ mt: "5", display: "flex", alignItems: "center", gap: "3" })}>
+        <button
+          onClick={handleDiscover}
+          disabled={discovering}
+          className={css({
+            rounded: "brick",
+            bg: "lego.green",
+            px: "4",
+            py: "2",
+            fontSize: "sm",
+            fontWeight: "800",
+            fontFamily: "display",
+            color: "white",
+            cursor: "pointer",
+            transition: "all 0.15s ease",
+            border: "none",
+            boxShadow:
+              "inset 0 1px 0 rgba(255,255,255,0.2), 0 2px 0 #005A1E, 0 3px 6px rgba(0,0,0,0.3)",
+            _hover: { bg: "#00A036", transform: "translateY(-1px)" },
+            _disabled: { opacity: 0.5, cursor: "not-allowed" },
+          })}
+        >
+          {discovering ? "Discovering..." : `Discover MOCs related to "${theme.name}"`}
+        </button>
+        {discoveryError && (
+          <span className={css({ fontSize: "sm", color: "#FF6B6B" })}>{discoveryError}</span>
+        )}
+      </div>
+
+      {discovery && (
+        <section
+          className={css({
+            mt: "4",
+            bg: "plate.surface",
+            rounded: "brick",
+            border: "2px solid",
+            borderColor: "plate.border",
+            p: "4",
+            boxShadow: "plate",
+          })}
+        >
+          {discovery.summary && (
+            <p className={css({ fontSize: "sm", color: "ink.secondary", mb: "3" })}>
+              {discovery.summary}
+            </p>
+          )}
+          {discovery.relatedKeywords.length > 0 && (
+            <div className={css({ display: "flex", flexWrap: "wrap", gap: "1.5", mb: "4" })}>
+              {discovery.relatedKeywords.map((k) => (
+                <span
+                  key={k}
+                  className={css({
+                    fontSize: "xs",
+                    fontWeight: "700",
+                    px: "2",
+                    py: "1",
+                    rounded: "brick",
+                    bg: "plate.raised",
+                    color: "ink.secondary",
+                    border: "1px solid",
+                    borderColor: "plate.border",
+                  })}
+                >
+                  {k}
+                </span>
+              ))}
+            </div>
+          )}
+          <div className={css({ display: "flex", flexDir: "column", gap: "2" })}>
+            {discovery.mocs.map((m) => {
+              const already = existingRefs.has(m.moc_id);
+              return (
+                <div
+                  key={m.moc_id}
+                  className={css({
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "3",
+                    bg: "plate.base",
+                    rounded: "brick",
+                    border: "1.5px solid",
+                    borderColor: "plate.border",
+                    px: "3",
+                    py: "2",
+                  })}
+                >
+                  <div className={css({ flex: 1, minW: 0 })}>
+                    <div
+                      className={css({
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "2",
+                        flexWrap: "wrap",
+                      })}
+                    >
+                      <span
+                        className={css({
+                          fontSize: "sm",
+                          fontWeight: "700",
+                          fontFamily: "display",
+                          color: "ink.primary",
+                        })}
+                      >
+                        {m.name}
+                      </span>
+                      {m.top_pick && (
+                        <span
+                          className={css({
+                            fontSize: "2xs",
+                            fontWeight: "800",
+                            px: "1.5",
+                            py: "0.5",
+                            rounded: "brick",
+                            bg: "lego.yellow",
+                            color: "lego.black",
+                          })}
+                        >
+                          TOP PICK
+                        </span>
+                      )}
+                      {m.sub_theme && (
+                        <span
+                          className={css({
+                            fontSize: "2xs",
+                            fontWeight: "700",
+                            color: "ink.muted",
+                          })}
+                        >
+                          · {m.sub_theme}
+                        </span>
+                      )}
+                    </div>
+                    <span
+                      className={css({
+                        display: "block",
+                        fontSize: "xs",
+                        color: "ink.muted",
+                        mt: "0.5",
+                      })}
+                    >
+                      by {m.designer} · {m.moc_id}
+                      {m.year ? ` · ${m.year}` : ""}
+                      {m.num_parts ? ` · ${m.num_parts} pcs` : ""}
+                    </span>
+                    {m.description && (
+                      <p
+                        className={css({
+                          mt: "1",
+                          fontSize: "xs",
+                          color: "ink.secondary",
+                        })}
+                      >
+                        {m.description}
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => handleAdoptDiscovered(m)}
+                    disabled={already || adoptingId === m.moc_id}
+                    className={css({
+                      flexShrink: 0,
+                      fontSize: "xs",
+                      fontWeight: "800",
+                      fontFamily: "display",
+                      px: "3",
+                      py: "1.5",
+                      rounded: "brick",
+                      bg: "lego.blue",
+                      color: "white",
+                      border: "none",
+                      cursor: "pointer",
+                      transition: "all 0.15s ease",
+                      _hover: { bg: "#0080D0" },
+                      _disabled: { opacity: 0.5, cursor: "not-allowed", bg: "plate.raised" },
+                    })}
+                  >
+                    {already ? "Added" : adoptingId === m.moc_id ? "Adding..." : "Add"}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
       {/* Add form */}
       <div
         className={css({

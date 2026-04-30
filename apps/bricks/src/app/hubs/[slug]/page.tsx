@@ -82,7 +82,7 @@ const LABELS = {
 } as const;
 
 export default function HubPage() {
-  const { id } = useParams<{ id: string }>();
+  const { slug } = useParams<{ slug: string }>();
   const router = useRouter();
   const { language } = useLanguage();
   const t = LABELS[language === "ro" ? "ro" : "en"];
@@ -101,7 +101,7 @@ export default function HubPage() {
   const [addError, setAddError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(`/api/hubs/${id}`)
+    fetch(`/api/hubs/${slug}`)
       .then(async (res) => {
         if (!res.ok) {
           const data = await res.json();
@@ -112,10 +112,10 @@ export default function HubPage() {
       .then(setHub)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [slug]);
 
   useEffect(() => {
-    fetch(`/api/hubs/${id}/scripts`)
+    fetch(`/api/hubs/${slug}/scripts`)
       .then((r) => (r.ok ? r.json() : { scripts: [], userScripts: [] }))
       .then((data) => {
         setHubScripts(data.scripts ?? []);
@@ -125,7 +125,7 @@ export default function HubPage() {
         setHubScripts([]);
         setUserScripts([]);
       });
-  }, [id]);
+  }, [slug]);
 
   async function handleAddScript(e: React.FormEvent) {
     e.preventDefault();
@@ -166,7 +166,7 @@ export default function HubPage() {
     if (!hub) return;
     if (!confirm(t.confirmDelete.replace("{name}", hub.name))) return;
     setDeleting(true);
-    const res = await fetch(`/api/hubs/${hub.id}`, { method: "DELETE" });
+    const res = await fetch(`/api/hubs/${slug}`, { method: "DELETE" });
     if (res.ok) {
       router.push("/my-parts");
     } else {

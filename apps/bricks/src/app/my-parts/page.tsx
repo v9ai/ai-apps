@@ -737,7 +737,7 @@ export default function MyPartsPage() {
                 })}
               >
                 <Link
-                  href={`/hubs/${HUB_TYPE_SLUG[hub.hubType as HubType] ?? hub.id}`}
+                  href={`/hubs/${HUB_TYPE_SLUG[hub.hubType as HubType]}`}
                   className={css({
                     display: "flex",
                     alignItems: "center",
