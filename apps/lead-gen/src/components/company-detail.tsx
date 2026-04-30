@@ -1727,6 +1727,23 @@ function DecisionMakerDialog({
                         </ul>
                       </Box>
                     )}
+                    <Flex justify="end" gap="2">
+                      <Button
+                        size="2"
+                        disabled={!top.email || drafting}
+                        title={top.email ? undefined : "No email on file for this contact"}
+                        onClick={() => {
+                          if (!top.email) return;
+                          void onDraftCampaign({
+                            firstName: top.firstName,
+                            lastName: top.lastName,
+                            email: top.email,
+                          });
+                        }}
+                      >
+                        {drafting ? "Drafting…" : "Draft campaign"}
+                      </Button>
+                    </Flex>
                   </Flex>
                 </Card>
               )}

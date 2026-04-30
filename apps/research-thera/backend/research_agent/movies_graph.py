@@ -514,11 +514,12 @@ async def collect_context(state: MoviesState) -> dict:
             '  - description: 1-2 sentence plot synopsis\n'
             '  - whyRecommended: 2-3 sentences. The FIRST sentence MUST quote or paraphrase a '
             "SPECIFIC item from the Subject Profile (an issue title, a priority-concern phrase, "
-            "a journal incident, a teacher observation, a goal title) and explain how this film "
-            "models the skill or perspective that addresses it. The second sentence names the "
-            "concrete moment, scene, or arc in the film that does the modeling. Generic "
-            "endorsements ('great family movie', 'teaches kindness') are NOT acceptable — "
-            "if you can't tie the pick to a named profile item, omit it instead."
+            "a journal incident, a teacher observation, a goal title) AND/OR cite a specific "
+            "Research Paper finding or technique (e.g. \"the Bridges et al. CPS finding that "
+            "collaborative problem-solving reduces oppositional episodes\"). The second sentence "
+            "names the concrete moment, scene, or arc in the film that models that skill. "
+            "Generic endorsements ('great family movie', 'teaches kindness') are NOT acceptable "
+            "— if you can't tie the pick to a named profile item or research finding, omit it."
         ),
         "",
         f"## Category tag\nUse category = \"{category}\" for every entry (added by the server, do not include in JSON).",

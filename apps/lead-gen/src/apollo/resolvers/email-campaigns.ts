@@ -401,7 +401,7 @@ export const emailCampaignResolvers = {
       }
 
       const recipients = parseJsonArray(campaign.recipient_emails);
-      const sequence: Array<{ subject: string; html: string; text?: string }> = campaign.sequence
+      const rawSequence: Array<Record<string, unknown>> = campaign.sequence
         ? JSON.parse(campaign.sequence)
         : [];
       const delayDays: number[] = campaign.delay_days ? JSON.parse(campaign.delay_days) : [];
@@ -409,42 +409,75 @@ export const emailCampaignResolvers = {
       if (recipients.length === 0) {
         throw new Error("Campaign has no recipients");
       }
-      if (sequence.length === 0) {
+      if (rawSequence.length === 0) {
         throw new Error("Campaign has no email sequence");
       }
+
+      const isPersonaKeyed = rawSequence.every(
+        (s) =>
+          typeof s.persona_title === "string" &&
+          Array.isArray((s as { recipient_emails?: unknown }).recipient_emails),
+      );
 
       let sent = 0;
       let scheduled = 0;
       let failed = 0;
+      let totalDispatches = 0;
 
-      for (const recipientEmail of recipients) {
-        for (let stepIdx = 0; stepIdx < sequence.length; stepIdx++) {
-          const step = sequence[stepIdx];
-          const delay = stepIdx > 0 ? (delayDays[stepIdx - 1] ?? stepIdx) : 0;
+      if (isPersonaKeyed) {
+        for (const block of rawSequence as Array<{
+          subject: string;
+          html: string;
+          text?: string;
+          recipient_emails: string[];
+        }>) {
+          for (const recipientEmail of block.recipient_emails) {
+            totalDispatches++;
+            const result = await resend.instance.send({
+              to: recipientEmail,
+              subject: block.subject,
+              html: block.html,
+              text: block.text,
+              from: campaign.from_email ?? undefined,
+              replyTo: campaign.reply_to ?? undefined,
+            });
 
-          let scheduledAt: string | undefined;
-          if (delay > 0) {
-            const sendDate = new Date();
-            sendDate.setDate(sendDate.getDate() + delay);
-            scheduledAt = sendDate.toISOString();
+            if (result.error) failed++;
+            else sent++;
           }
+        }
+      } else {
+        const sequence = rawSequence as Array<{ subject: string; html: string; text?: string }>;
+        for (const recipientEmail of recipients) {
+          for (let stepIdx = 0; stepIdx < sequence.length; stepIdx++) {
+            const step = sequence[stepIdx];
+            const delay = stepIdx > 0 ? (delayDays[stepIdx - 1] ?? stepIdx) : 0;
 
-          const result = await resend.instance.send({
-            to: recipientEmail,
-            subject: step.subject,
-            html: step.html,
-            text: step.text,
-            from: campaign.from_email ?? undefined,
-            replyTo: campaign.reply_to ?? undefined,
-            scheduledAt,
-          });
+            let scheduledAt: string | undefined;
+            if (delay > 0) {
+              const sendDate = new Date();
+              sendDate.setDate(sendDate.getDate() + delay);
+              scheduledAt = sendDate.toISOString();
+            }
 
-          if (result.error) {
-            failed++;
-          } else if (scheduledAt) {
-            scheduled++;
-          } else {
-            sent++;
+            totalDispatches++;
+            const result = await resend.instance.send({
+              to: recipientEmail,
+              subject: step.subject,
+              html: step.html,
+              text: step.text,
+              from: campaign.from_email ?? undefined,
+              replyTo: campaign.reply_to ?? undefined,
+              scheduledAt,
+            });
+
+            if (result.error) {
+              failed++;
+            } else if (scheduledAt) {
+              scheduled++;
+            } else {
+              sent++;
+            }
           }
         }
       }
@@ -452,7 +485,7 @@ export const emailCampaignResolvers = {
       const updatedRows = await context.db
         .update(emailCampaigns)
         .set({
-          status: failed === recipients.length * sequence.length ? "failed" : "running",
+          status: totalDispatches > 0 && failed === totalDispatches ? "failed" : "running",
           emails_sent: sent,
           emails_scheduled: scheduled,
           emails_failed: failed,
@@ -460,6 +493,157 @@ export const emailCampaignResolvers = {
           updated_at: new Date().toISOString(),
         })
         .where(eq(emailCampaigns.id, args.id))
+        .returning();
+
+      return mapCampaign(updatedRows[0]);
+    },
+
+    async generateCampaignSequence(
+      _parent: unknown,
+      args: { campaignId: string; personaMatchThreshold?: number | null },
+      context: GraphQLContext,
+    ) {
+      if (!context.userId || !isAdminEmail(context.userEmail)) {
+        throw new Error("Forbidden");
+      }
+
+      const [campaign] = await context.db
+        .select()
+        .from(emailCampaigns)
+        .where(eq(emailCampaigns.id, args.campaignId))
+        .limit(1);
+      if (!campaign) throw new Error("Campaign not found");
+      if (campaign.status !== "draft" && campaign.status !== "pending") {
+        throw new Error(`Cannot generate for ${campaign.status} campaign`);
+      }
+      if (!campaign.product_id) {
+        throw new Error("Campaign has no product — persona matching requires a product");
+      }
+
+      const threshold =
+        args.personaMatchThreshold ?? campaign.persona_match_threshold ?? 0.55;
+
+      const recipientEmails = parseJsonArray(campaign.recipient_emails)
+        .map((e) => e.toLowerCase().trim())
+        .filter(Boolean);
+      if (recipientEmails.length === 0) {
+        throw new Error("Campaign has no recipients");
+      }
+
+      const contactRows = await context.db
+        .select({
+          id: contacts.id,
+          email: contacts.email,
+          first_name: contacts.first_name,
+          last_name: contacts.last_name,
+          position: contacts.position,
+          email_verified: contacts.email_verified,
+          do_not_contact: contacts.do_not_contact,
+        })
+        .from(contacts)
+        .where(
+          and(
+            inArray(sql`lower(${contacts.email})`, recipientEmails),
+            eq(contacts.email_verified, true),
+            or(eq(contacts.do_not_contact, false), isNull(contacts.do_not_contact)),
+          ),
+        );
+
+      if (contactRows.length === 0) {
+        throw new Error("No verified, contactable recipients found");
+      }
+
+      const scoreRows = await context.db
+        .select()
+        .from(contactPersonaScores)
+        .where(
+          and(
+            inArray(
+              contactPersonaScores.contact_id,
+              contactRows.map((c) => c.id),
+            ),
+            eq(contactPersonaScores.product_id, campaign.product_id),
+            gte(contactPersonaScores.score, threshold),
+          ),
+        )
+        .orderBy(desc(contactPersonaScores.score));
+
+      const topByContact = new Map<number, typeof scoreRows[number]>();
+      for (const row of scoreRows) {
+        if (!topByContact.has(row.contact_id)) topByContact.set(row.contact_id, row);
+      }
+
+      const grouped = new Map<
+        string,
+        { score: typeof scoreRows[number]; contacts: typeof contactRows }
+      >();
+      for (const c of contactRows) {
+        const top = topByContact.get(c.id);
+        if (!top) continue;
+        const key = top.persona_title;
+        const bucket = grouped.get(key);
+        if (bucket) {
+          bucket.contacts.push(c);
+          if (top.score > bucket.score.score) bucket.score = top;
+        } else {
+          grouped.set(key, { score: top, contacts: [c] });
+        }
+      }
+
+      if (grouped.size === 0) {
+        throw new Error(
+          `No contacts meet persona threshold ${threshold.toFixed(2)} — try lowering or run match_persona first`,
+        );
+      }
+
+      const blocks: Array<{
+        persona_title: string;
+        subject: string;
+        html: string;
+        text: string;
+        recipient_emails: string[];
+      }> = [];
+      const allEmails: string[] = [];
+
+      for (const [personaTitle, { contacts: groupContacts }] of grouped.entries()) {
+        const groupScores = groupContacts
+          .map((c) => ({ c, score: topByContact.get(c.id)?.score ?? 0 }))
+          .sort((a, b) => b.score - a.score);
+        const rep = groupScores[0].c;
+
+        const generated = await emailOutreach({
+          recipientName: `${rep.first_name ?? ""} ${rep.last_name ?? ""}`.trim() || "there",
+          recipientRole: rep.position ?? "",
+          recipientEmail: rep.email ?? "",
+          postText: "",
+          productId: campaign.product_id,
+          personaMatchThreshold: threshold,
+        });
+
+        const groupEmails = groupContacts
+          .map((c) => (c.email ?? "").toLowerCase())
+          .filter(Boolean);
+
+        blocks.push({
+          persona_title: personaTitle,
+          subject: generated.subject,
+          html: generated.html,
+          text: generated.text,
+          recipient_emails: groupEmails,
+        });
+        allEmails.push(...groupEmails);
+      }
+
+      const updatedRows = await context.db
+        .update(emailCampaigns)
+        .set({
+          sequence: JSON.stringify(blocks),
+          recipient_emails: JSON.stringify(allEmails),
+          total_recipients: allEmails.length,
+          persona_match_threshold: threshold,
+          updated_at: new Date().toISOString(),
+        })
+        .where(eq(emailCampaigns.id, args.campaignId))
         .returning();
 
       return mapCampaign(updatedRows[0]);
