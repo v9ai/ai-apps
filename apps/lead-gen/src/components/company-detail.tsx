@@ -986,6 +986,30 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
     }
   }, [company, findDecisionMaker]);
 
+  const handleDraftCampaignForDm = useCallback(
+    async (dm: { firstName: string; lastName: string; email: string }) => {
+      if (!company || !effectiveKey) return;
+      setDmError(null);
+      try {
+        await createDraftCampaign({
+          variables: {
+            input: {
+              name: `Decision maker — ${dm.firstName} ${dm.lastName}`.trim(),
+              companyId: company.id,
+              recipientEmails: [dm.email],
+            },
+          },
+        });
+        setDmDialogOpen(false);
+        router.push(`/companies/${effectiveKey}/campaigns`);
+      } catch (e) {
+        console.error("Draft campaign error:", e);
+        setDmError(e instanceof Error ? e.message : "Failed to draft campaign.");
+      }
+    },
+    [company, effectiveKey, createDraftCampaign, router],
+  );
+
   const handleFetchLinkedIn = useCallback(async () => {
     if (!company?.linkedin_url) return;
     setIsLinkedInFetching(true);
@@ -1592,6 +1616,8 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
           loading={isFindingDm}
           error={dmError}
           result={dmData?.findDecisionMaker ?? null}
+          drafting={isDraftingCampaign}
+          onDraftCampaign={handleDraftCampaignForDm}
         />
     </Flex>
   );
@@ -1603,6 +1629,8 @@ function DecisionMakerDialog({
   loading,
   error,
   result,
+  drafting,
+  onDraftCampaign,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -1615,6 +1643,7 @@ function DecisionMakerDialog({
         topDecisionMaker?: {
           firstName: string;
           lastName: string;
+          email?: string | null;
           position?: string | null;
           seniority?: string | null;
           department?: string | null;
@@ -1625,6 +1654,7 @@ function DecisionMakerDialog({
           id: number;
           firstName: string;
           lastName: string;
+          email?: string | null;
           position?: string | null;
           seniority?: string | null;
           department?: string | null;
@@ -1634,6 +1664,12 @@ function DecisionMakerDialog({
         }>;
       }
     | null;
+  drafting: boolean;
+  onDraftCampaign: (dm: {
+    firstName: string;
+    lastName: string;
+    email: string;
+  }) => void | Promise<void>;
 }) {
   const top = result?.topDecisionMaker ?? null;
   const ranked = result?.ranked ?? [];

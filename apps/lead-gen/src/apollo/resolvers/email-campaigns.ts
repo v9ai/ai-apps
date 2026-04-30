@@ -1,5 +1,5 @@
-import { emailCampaigns, emailTemplates, contactEmails, contacts } from "@/db/schema";
-import { eq, and, or, count, desc, gte, isNotNull, isNull, gt, inArray } from "drizzle-orm";
+import { emailCampaigns, emailTemplates, contactEmails, contacts, contactPersonaScores } from "@/db/schema";
+import { eq, and, or, count, desc, gte, isNotNull, isNull, gt, inArray, sql } from "drizzle-orm";
 import { addMinutes, startOfDay, startOfWeek, startOfMonth } from "date-fns";
 import type { GraphQLContext } from "../context";
 import { isAdminEmail } from "@/lib/admin";

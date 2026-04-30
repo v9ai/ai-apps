@@ -356,6 +356,85 @@ async def collect_context(state: MoviesState) -> dict:
                     context_lines.append(
                         f"### Active Goals ({len(goal_rows)})\n" + "\n".join(lines)
                     )
+
+                # ---- Research papers tied to Bogdan ----
+                # therapy_research links via goal_id / issue_id / journal_entry_id.
+                # Pull the top-relevance papers across all three linkages so the
+                # picks can ground themselves in the same evidence base the rest
+                # of the app uses (CBT for anxiety, PCIT, emotion-coaching, etc.)
+                research_rows: list[tuple] = []
+                try:
+                    await cur.execute(
+                        """
+                        SELECT DISTINCT ON (tr.id)
+                               tr.title, tr.authors, tr.year, tr.abstract,
+                               tr.key_findings, tr.therapeutic_techniques,
+                               tr.evidence_level, tr.relevance_score,
+                               tr.therapeutic_goal_type
+                        FROM therapy_research tr
+                        WHERE
+                            tr.goal_id IN (
+                                SELECT id FROM goals WHERE family_member_id = %s AND user_id = %s
+                            )
+                            OR tr.issue_id IN (
+                                SELECT id FROM issues
+                                WHERE (family_member_id = %s OR related_family_member_id = %s)
+                                AND user_id = %s
+                            )
+                            OR tr.journal_entry_id IN (
+                                SELECT id FROM journal_entries WHERE family_member_id = %s AND user_id = %s
+                            )
+                        ORDER BY tr.id, tr.relevance_score DESC NULLS LAST
+                        """,
+                        (
+                            fm_id_for_lang, user_email,
+                            fm_id_for_lang, fm_id_for_lang, user_email,
+                            fm_id_for_lang, user_email,
+                        ),
+                    )
+                    research_rows = await cur.fetchall()
+                except Exception:
+                    research_rows = []
+
+                # Re-rank in Python (DISTINCT ON forces an ORDER BY id, so the
+                # outer ranking by relevance_score is lost in the SQL).
+                research_rows.sort(
+                    key=lambda r: (r[7] or 0),  # relevance_score
+                    reverse=True,
+                )
+                research_rows = research_rows[:15]
+
+                if research_rows:
+                    lines = []
+                    for idx, row in enumerate(research_rows, 1):
+                        r_title, r_authors, r_year, r_abstract, r_kf_raw, r_tt_raw, r_ev, _r_rel, r_goal_type = row
+                        head_parts = [f'[{idx}] "{r_title}"']
+                        if r_year:
+                            head_parts.append(f"({r_year})")
+                        if r_ev:
+                            head_parts.append(f"[evidence: {r_ev}]")
+                        if r_goal_type:
+                            head_parts.append(f"[goal-type: {r_goal_type}]")
+                        block = [" ".join(head_parts)]
+                        if r_abstract:
+                            block.append(f"  Abstract: {r_abstract[:240]}")
+                        try:
+                            kf = json.loads(r_kf_raw) if r_kf_raw else []
+                        except Exception:
+                            kf = []
+                        if kf:
+                            block.append(f"  Key findings: {'; '.join(str(k) for k in kf[:3])}")
+                        try:
+                            tt = json.loads(r_tt_raw) if r_tt_raw else []
+                        except Exception:
+                            tt = []
+                        if tt:
+                            block.append(f"  Techniques: {'; '.join(str(t) for t in tt[:3])}")
+                        lines.append("\n".join(block))
+                    context_lines.append(
+                        f"### Research Papers ({len(research_rows)} — grounding evidence)\n"
+                        + "\n\n".join(lines)
+                    )
     except Exception as exc:
         return {"error": f"collect_context failed: {exc}"}
 
@@ -372,16 +451,21 @@ async def collect_context(state: MoviesState) -> dict:
             f"{subject_label} needs based on the Subject Profile below. Don't pick generic "
             "'good values' films — every recommendation must map to a named issue, priority "
             "concern, support need, recent journal incident, behavior observation, teacher "
-            "observation, or active goal. If a film doesn't tie back to a specific item in "
-            "the profile, OMIT it. Avoid violence-driven plots and mature romantic themes. "
-            "Aim for a mix of well-known and less-obvious picks."
+            "observation, active goal, OR a finding/technique from the Research Papers section. "
+            "Treat the research papers as the EVIDENCE BASE: when a paper recommends a "
+            "specific therapeutic technique (e.g. emotion-coaching, exposure with response "
+            "prevention, CPS, gradual desensitization), prefer films whose narrative arc "
+            "models that exact technique. If a film doesn't tie back to a specific item in "
+            "the profile or a research finding, OMIT it. Avoid violence-driven plots and "
+            "mature romantic themes. Aim for a mix of well-known and less-obvious picks."
         )
     else:
         category_block = (
             "Goal: pick movies SIMILAR to the reference described in the goal — same tone, "
             "themes, and emotional register. ALSO weight each candidate by how well its "
-            "themes happen to address an item in the Subject Profile below; prefer matches "
-            "that double as gentle modeling for one of the named concerns."
+            "themes happen to address an item in the Subject Profile or a Research Paper "
+            "finding below; prefer matches that double as gentle modeling for one of the "
+            "named concerns or evidence-based techniques."
         )
 
     prompt_parts = [
