@@ -1348,7 +1348,7 @@ export async function cleanupStaleJobs(minutes = 15): Promise<void> {
 export async function createGenerationJob(
   id: string,
   userId: string,
-  type: "AUDIO" | "RESEARCH" | "QUESTIONS" | "LONGFORM" | "DEEP_ANALYSIS" | "RECOMMENDED_BOOKS" | "RECOMMENDED_MOVIES" | "DISCUSSION_GUIDE" | "ROUTINE_ANALYSIS" | "BOGDAN_DISCUSSION" | "MEDICATION_DEEP_RESEARCH" | "CONDITION_DEEP_RESEARCH" | "REGIMEN_INTERACTION_SCREEN",
+  type: "AUDIO" | "RESEARCH" | "QUESTIONS" | "LONGFORM" | "DEEP_ANALYSIS" | "RECOMMENDED_BOOKS" | "RECOMMENDED_MOVIES" | "RECOMMENDED_AUDIOBOOKS" | "DISCUSSION_GUIDE" | "ROUTINE_ANALYSIS" | "BOGDAN_DISCUSSION" | "MEDICATION_DEEP_RESEARCH" | "CONDITION_DEEP_RESEARCH" | "REGIMEN_INTERACTION_SCREEN",
   goalId?: number | null,
   storyId?: number,
 ) {
@@ -1794,6 +1794,106 @@ export async function deleteRecommendedMovies(options: {
       : goalId != null
         ? await neonSql`DELETE FROM recommended_movies WHERE goal_id = ${goalId} RETURNING id`
         : await neonSql`DELETE FROM recommended_movies WHERE family_member_id = ${familyMemberId} RETURNING id`;
+  return rows.length;
+}
+
+type RecommendedAudiobookRow = {
+  id: number;
+  goalId: number | null;
+  familyMemberId: number | null;
+  title: string;
+  authors: string[];
+  narrators: string[];
+  year: number | null;
+  lengthMinutes: number | null;
+  language: string;
+  ageBand: string | null;
+  voxaUrl: string | null;
+  coverUrl: string | null;
+  description: string;
+  whyRecommended: string;
+  category: string;
+  generatedAt: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+function _parseJsonArray(raw: unknown): string[] {
+  if (typeof raw !== "string" || raw.length === 0) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter((x): x is string => typeof x === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+function mapRecommendedAudiobook(row: Record<string, unknown>): RecommendedAudiobookRow {
+  return {
+    id: row.id as number,
+    goalId: (row.goal_id as number) || null,
+    familyMemberId: (row.family_member_id as number) || null,
+    title: row.title as string,
+    authors: _parseJsonArray(row.authors),
+    narrators: _parseJsonArray(row.narrators),
+    year: (row.year as number) || null,
+    lengthMinutes: (row.length_minutes as number) || null,
+    language: (row.language as string) || "ro",
+    ageBand: (row.age_band as string) || null,
+    voxaUrl: (row.voxa_url as string) || null,
+    coverUrl: (row.cover_url as string) || null,
+    description: row.description as string,
+    whyRecommended: row.why_recommended as string,
+    category: row.category as string,
+    generatedAt: row.generated_at as string,
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+  };
+}
+
+export async function listAllRecommendedAudiobooks(options?: {
+  category?: string;
+  familyMemberId?: number;
+}) {
+  const { category, familyMemberId } = options ?? {};
+  const rows =
+    category && familyMemberId != null
+      ? await neonSql`
+          SELECT * FROM recommended_audiobooks
+          WHERE category = ${category} AND family_member_id = ${familyMemberId}
+          ORDER BY category ASC, created_at DESC
+        `
+      : category
+        ? await neonSql`
+            SELECT * FROM recommended_audiobooks
+            WHERE category = ${category}
+            ORDER BY category ASC, created_at DESC
+          `
+        : familyMemberId != null
+          ? await neonSql`
+              SELECT * FROM recommended_audiobooks
+              WHERE family_member_id = ${familyMemberId}
+              ORDER BY category ASC, created_at DESC
+            `
+          : await neonSql`
+              SELECT * FROM recommended_audiobooks
+              ORDER BY category ASC, created_at DESC
+            `;
+  return rows.map(mapRecommendedAudiobook);
+}
+
+export async function deleteRecommendedAudiobooks(options: {
+  goalId?: number;
+  familyMemberId?: number;
+}) {
+  const { goalId, familyMemberId } = options;
+  if (goalId == null && familyMemberId == null) return 0;
+  const rows =
+    goalId != null && familyMemberId != null
+      ? await neonSql`DELETE FROM recommended_audiobooks WHERE goal_id = ${goalId} AND family_member_id = ${familyMemberId} RETURNING id`
+      : goalId != null
+        ? await neonSql`DELETE FROM recommended_audiobooks WHERE goal_id = ${goalId} RETURNING id`
+        : await neonSql`DELETE FROM recommended_audiobooks WHERE family_member_id = ${familyMemberId} RETURNING id`;
   return rows.length;
 }
 

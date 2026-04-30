@@ -178,6 +178,31 @@ export const recommendedBooks = pgTable("recommended_books", {
     .default(sql`NOW()`),
 });
 
+export const recommendedAudiobooks = pgTable("recommended_audiobooks", {
+  id: serial("id").primaryKey(),
+  goalId: integer("goal_id"),
+  familyMemberId: integer("family_member_id"),
+  title: text("title").notNull(),
+  authors: text("authors").notNull(), // JSON array
+  narrators: text("narrators"), // JSON array
+  year: integer("year"),
+  lengthMinutes: integer("length_minutes"),
+  language: text("language").notNull().default("ro"),
+  ageBand: text("age_band"),
+  voxaUrl: text("voxa_url"),
+  coverUrl: text("cover_url"),
+  description: text("description").notNull(),
+  whyRecommended: text("why_recommended").notNull(),
+  category: text("category").notNull(),
+  generatedAt: text("generated_at").notNull(),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`NOW()`),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`NOW()`),
+});
+
 export const recommendedMovies = pgTable("recommended_movies", {
   id: serial("id").primaryKey(),
   goalId: integer("goal_id"),

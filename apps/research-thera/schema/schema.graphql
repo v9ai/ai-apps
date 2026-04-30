@@ -169,6 +169,7 @@ type Query {
   recommendedBooks(goalId: Int, journalEntryId: Int): [RecommendedBook!]!
   allRecommendedBooks(category: String): [RecommendedBook!]!
   allRecommendedMovies(category: String, familyMemberId: Int): [RecommendedMovie!]!
+  allRecommendedAudiobooks(category: String, familyMemberId: Int): [RecommendedAudiobook!]!
   notes(entityId: Int!, entityType: String!): [Note!]!
   allNotes: [Note!]!
   note(id: Int, slug: String): Note
@@ -350,6 +351,8 @@ type Mutation {
   deleteRecommendedBooks(goalId: Int, journalEntryId: Int): DeleteRecommendedBooksResult!
   generateRecommendedMovies(goalId: Int, familyMemberId: Int): GenerateRecommendedMoviesResult!
   deleteRecommendedMovies(goalId: Int, familyMemberId: Int): DeleteRecommendedMoviesResult!
+  generateRecommendedAudiobooks(goalId: Int, familyMemberId: Int): GenerateRecommendedAudiobooksResult!
+  deleteRecommendedAudiobooks(goalId: Int, familyMemberId: Int): DeleteRecommendedAudiobooksResult!
   generateLongFormText(
     goalId: Int
     issueId: Int
