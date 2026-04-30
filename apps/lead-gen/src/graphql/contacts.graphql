@@ -286,6 +286,7 @@ query GetContacts($companyId: Int, $search: String, $tag: String, $limit: Int, $
       department
       isDecisionMaker
       authorityScore
+      dmReasons
       nextTouchScore
       lastContactedAt
     }

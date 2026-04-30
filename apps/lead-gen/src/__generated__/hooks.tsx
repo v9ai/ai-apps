@@ -4403,7 +4403,7 @@ export type GetContactsQueryVariables = Exact<{
 }>;
 
 
-export type GetContactsQuery = { __typename?: 'Query', contacts: { __typename?: 'ContactsResult', totalCount: number, contacts: Array<{ __typename?: 'Contact', id: number, slug: string | null, firstName: string, lastName: string, email: string | null, bouncedEmails: Array<string>, linkedinUrl: string | null, position: string | null, company: string | null, companyId: number | null, githubHandle: string | null, telegramHandle: string | null, emailVerified: boolean | null, doNotContact: boolean, nbResult: string | null, tags: Array<string>, notes: string | null, createdAt: string, seniority: string | null, department: string | null, isDecisionMaker: boolean | null, authorityScore: number | null, nextTouchScore: number | null, lastContactedAt: string | null }> } };
+export type GetContactsQuery = { __typename?: 'Query', contacts: { __typename?: 'ContactsResult', totalCount: number, contacts: Array<{ __typename?: 'Contact', id: number, slug: string | null, firstName: string, lastName: string, email: string | null, bouncedEmails: Array<string>, linkedinUrl: string | null, position: string | null, company: string | null, companyId: number | null, githubHandle: string | null, telegramHandle: string | null, emailVerified: boolean | null, doNotContact: boolean, nbResult: string | null, tags: Array<string>, notes: string | null, createdAt: string, seniority: string | null, department: string | null, isDecisionMaker: boolean | null, authorityScore: number | null, dmReasons: Array<string>, nextTouchScore: number | null, lastContactedAt: string | null }> } };
 
 export type ImportContactsMutationVariables = Exact<{
   contacts: Array<ContactInput> | ContactInput;
@@ -7245,6 +7245,7 @@ export const GetContactsDocument = gql`
       department
       isDecisionMaker
       authorityScore
+      dmReasons
       nextTouchScore
       lastContactedAt
     }

@@ -7,14 +7,13 @@ import {
   useGetCompanyScrapedPostsQuery,
   useEnhanceCompanyMutation,
   useAnalyzeCompanyMutation,
-  useFindDecisionMakerMutation,
   useUpdateCompanyMutation,
   useCreateContactMutation,
-  useCreateDraftCampaignMutation,
   useDeleteCompanyMutation,
   useBlockCompanyMutation,
   useUnblockCompanyMutation,
 } from "@/__generated__/hooks";
+import { DecisionMakersPanel } from "@/components/company-detail/decision-makers-panel";
 import { useRouter } from "next/navigation";
 import type { CompanyCategory } from "@/__generated__/graphql";
 import ReactMarkdown from "react-markdown";
@@ -887,23 +886,6 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
     },
   });
 
-  const [dmDialogOpen, setDmDialogOpen] = useState(false);
-  const [dmError, setDmError] = useState<string | null>(null);
-  const [findDecisionMaker, { data: dmData, loading: isFindingDm }] =
-    useFindDecisionMakerMutation({
-      onCompleted: (res) => {
-        setDmError(res.findDecisionMaker.success ? null : (res.findDecisionMaker.message || "Failed to find decision maker."));
-        setDmDialogOpen(true);
-      },
-      onError: (err) => {
-        setDmError(err.message || "Failed to find decision maker.");
-        setDmDialogOpen(true);
-      },
-    });
-
-  const [createDraftCampaign, { loading: isDraftingCampaign }] =
-    useCreateDraftCampaignMutation();
-
   const [updateCompanyDirect] = useUpdateCompanyMutation();
   const [linkedInFetchError, setLinkedInFetchError] = useState<string | null>(null);
   const [linkedInFetchSuccess, setLinkedInFetchSuccess] = useState<string | null>(null);
@@ -973,42 +955,6 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
       console.error("Analysis error:", e);
     }
   }, [company, analyzeCompany]);
-
-  const handleFindDecisionMaker = useCallback(async () => {
-    if (!company) return;
-    setDmError(null);
-    try {
-      await findDecisionMaker({
-        variables: { id: company.id, key: company.key },
-      });
-    } catch (e) {
-      console.error("Find decision maker error:", e);
-    }
-  }, [company, findDecisionMaker]);
-
-  const handleDraftCampaignForDm = useCallback(
-    async (dm: { firstName: string; lastName: string; email: string }) => {
-      if (!company || !effectiveKey) return;
-      setDmError(null);
-      try {
-        await createDraftCampaign({
-          variables: {
-            input: {
-              name: `Decision maker — ${dm.firstName} ${dm.lastName}`.trim(),
-              companyId: company.id,
-              recipientEmails: [dm.email],
-            },
-          },
-        });
-        setDmDialogOpen(false);
-        router.push(`/companies/${effectiveKey}/campaigns`);
-      } catch (e) {
-        console.error("Draft campaign error:", e);
-        setDmError(e instanceof Error ? e.message : "Failed to draft campaign.");
-      }
-    },
-    [company, effectiveKey, createDraftCampaign, router],
-  );
 
   const handleFetchLinkedIn = useCallback(async () => {
     if (!company?.linkedin_url) return;
@@ -1299,18 +1245,6 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                 )}
                 {isAdmin && (
                   <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleFindDecisionMaker}
-                    loading={isFindingDm}
-                    loadingText="Finding…"
-                  >
-                    <PersonIcon />
-                    Find decision maker
-                  </Button>
-                )}
-                {isAdmin && (
-                  <Button
                     variant={company?.blocked ? "solidRed" : "ghost"}
                     size="sm"
                     onClick={handleToggleBlock}
@@ -1354,6 +1288,17 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
             </Flex>
           </Box>
         </Card>
+
+        {/* Decision makers — top-of-page panel */}
+        {isAdmin && company.id && effectiveKey && (
+          <Box pt="4">
+            <DecisionMakersPanel
+              companyId={company.id}
+              companyKey={effectiveKey}
+              isAdmin={isAdmin}
+            />
+          </Box>
+        )}
 
         {/* Overview */}
         <Flex direction="column" gap="5" pt="4">
@@ -1610,15 +1555,6 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
           )}
         </Flex>
 
-        <DecisionMakerDialog
-          open={dmDialogOpen}
-          onOpenChange={setDmDialogOpen}
-          loading={isFindingDm}
-          error={dmError}
-          result={dmData?.findDecisionMaker ?? null}
-          drafting={isDraftingCampaign}
-          onDraftCampaign={handleDraftCampaignForDm}
-        />
     </Flex>
   );
 }

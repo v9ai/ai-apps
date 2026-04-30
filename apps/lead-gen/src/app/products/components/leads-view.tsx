@@ -144,7 +144,12 @@ export function ProductLeadsPage({ slug }: { slug: string }) {
         },
         fetchPolicy: "network-only",
       });
-      setPreviewContacts(res.data?.contacts?.contacts ?? []);
+      if (res.error) {
+        setPreviewError(res.error.message);
+        setPreviewContacts([]);
+      } else {
+        setPreviewContacts(res.data?.contacts?.contacts ?? []);
+      }
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Failed to load contacts";
       setPreviewError(msg);
