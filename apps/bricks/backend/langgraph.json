@@ -6,7 +6,8 @@
     "research_topic": "bricks_agent.topic_graph:topic_graph",
     "part_mocs": "bricks_agent.part_mocs_graph:part_mocs_graph",
     "moc_parts": "bricks_agent.moc_parts_graph:moc_parts_graph",
-    "part_info": "bricks_agent.part_info_graph:part_info_graph"
+    "part_info": "bricks_agent.part_info_graph:part_info_graph",
+    "theme_mocs": "bricks_agent.theme_mocs_graph:theme_mocs_graph"
   },
   "env": ".env"
 }

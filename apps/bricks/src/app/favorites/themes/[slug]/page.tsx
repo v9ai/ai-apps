@@ -26,6 +26,24 @@ interface ThemeItem {
   addedAt: string;
 }
 
+interface DiscoveredMoc {
+  moc_id: string;
+  name: string;
+  designer: string;
+  year: number | null;
+  num_parts: number;
+  description: string;
+  top_pick?: boolean;
+  sub_theme?: string;
+}
+
+interface DiscoveryResult {
+  themeSummary: string;
+  relatedKeywords: string[];
+  mocs: DiscoveredMoc[];
+  summary: string;
+}
+
 export default function ThemeDetailPage() {
   const { slug } = useParams<{ slug: string }>();
   const { data: session, isPending: authPending } = useSession();
@@ -37,6 +55,11 @@ export default function ThemeDetailPage() {
   const [input, setInput] = useState("");
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [discovering, setDiscovering] = useState(false);
+  const [discovery, setDiscovery] = useState<DiscoveryResult | null>(null);
+  const [discoveryError, setDiscoveryError] = useState<string | null>(null);
+  const [adoptingId, setAdoptingId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -103,6 +126,45 @@ export default function ThemeDetailPage() {
     });
     load();
   }
+
+  async function handleDiscover() {
+    setDiscovering(true);
+    setDiscoveryError(null);
+    try {
+      const res = await fetch(`/api/themes/${slug}/discover-mocs`, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) {
+        setDiscoveryError(data.error || "Discovery failed");
+      } else {
+        setDiscovery(data);
+      }
+    } catch {
+      setDiscoveryError("Network error");
+    } finally {
+      setDiscovering(false);
+    }
+  }
+
+  async function handleAdoptDiscovered(m: DiscoveredMoc) {
+    setAdoptingId(m.moc_id);
+    try {
+      await fetch(`/api/themes/${slug}/items`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          kind: "moc",
+          refId: m.moc_id,
+          name: m.name,
+          designer: m.designer,
+        }),
+      });
+      load();
+    } finally {
+      setAdoptingId(null);
+    }
+  }
+
+  const existingRefs = new Set(items.filter((i) => i.kind === "moc").map((i) => i.refId));
 
   if (authPending) {
     return (
