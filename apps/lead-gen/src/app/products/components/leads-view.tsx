@@ -36,11 +36,11 @@ import {
   type ContactRow,
 } from "./decision-makers-dialog";
 
-type Lead = NonNullable<
-  NonNullable<
-    ReturnType<typeof useProductLeadsQuery>["data"]
-  >["productLeads"]
->["leads"][number];
+type PreviewLead = {
+  companyId: number;
+  companyKey: string;
+  companyName: string;
+};
 
 type TierFilter = "all" | "hot" | "warm" | "cold";
 
@@ -91,8 +91,13 @@ function extractSignalHighlights(signals: unknown): string[] {
 
 export function ProductLeadsPage({ slug }: { slug: string }) {
   const [tier, setTier] = useState<TierFilter>("all");
-  const [creatingForCompanyId, setCreatingForCompanyId] = useState<number | null>(null);
+  const [openingForCompanyId, setOpeningForCompanyId] = useState<number | null>(null);
   const [campaignError, setCampaignError] = useState<string | null>(null);
+  const [previewLead, setPreviewLead] = useState<PreviewLead | null>(null);
+  const [previewContacts, setPreviewContacts] = useState<ContactRow[]>([]);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
 
   const { data: productData, loading: productLoading } = useProductBySlugQuery({
@@ -117,12 +122,21 @@ export function ProductLeadsPage({ slug }: { slug: string }) {
   const conn = leadsData?.productLeads;
   const leads = useMemo(() => conn?.leads ?? [], [conn]);
 
-  const handleStartCampaign = async (lead: (typeof leads)[number]) => {
+  const handleOpenPreview = async (lead: (typeof leads)[number]) => {
     if (!product) return;
     setCampaignError(null);
-    setCreatingForCompanyId(lead.companyId);
+    setPreviewError(null);
+    setPreviewContacts([]);
+    setOpeningForCompanyId(lead.companyId);
+    const minimalLead: PreviewLead = {
+      companyId: lead.companyId,
+      companyKey: lead.companyKey,
+      companyName: lead.companyName,
+    };
+    setPreviewLead(minimalLead);
+    setPreviewLoading(true);
     try {
-      const contactsResult = await fetchContacts({
+      const res = await fetchContacts({
         variables: {
           companyId: lead.companyId,
           includeFlagged: false,
@@ -130,33 +144,52 @@ export function ProductLeadsPage({ slug }: { slug: string }) {
         },
         fetchPolicy: "network-only",
       });
-      const recipientEmails = (contactsResult.data?.contacts?.contacts ?? [])
-        .filter((c) => c.emailVerified && !c.doNotContact && c.email)
-        .map((c) => c.email as string);
+      setPreviewContacts(res.data?.contacts?.contacts ?? []);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed to load contacts";
+      setPreviewError(msg);
+    } finally {
+      setPreviewLoading(false);
+      setOpeningForCompanyId(null);
+    }
+  };
 
+  const handleConfirmCampaign = async (selectedEmails: string[]) => {
+    if (!product || !previewLead) return;
+    setSubmitting(true);
+    try {
       const result = await createDraftCampaign({
         variables: {
           input: {
-            name: `${product.name} → ${lead.companyName}`,
-            companyId: lead.companyId,
+            name: `${product.name} → ${previewLead.companyName}`,
+            companyId: previewLead.companyId,
             productId: product.id,
             productAwareMode: true,
             personaMatchThreshold: 0.55,
-            recipientEmails,
+            recipientEmails: selectedEmails,
           },
         },
       });
-
       const newId = result.data?.createDraftCampaign?.id;
       if (!newId) {
         throw new Error("Campaign created but no id returned");
       }
-      router.push(`/companies/${lead.companyKey}/campaigns?edit=${encodeURIComponent(newId)}`);
+      router.push(
+        `/companies/${previewLead.companyKey}/campaigns?edit=${encodeURIComponent(newId)}`,
+      );
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Failed to create campaign";
-      setCampaignError(`${lead.companyName}: ${msg}`);
-      setCreatingForCompanyId(null);
+      setCampaignError(`${previewLead.companyName}: ${msg}`);
+      setSubmitting(false);
     }
+  };
+
+  const handleDialogOpenChange = (open: boolean) => {
+    if (open) return;
+    if (submitting) return;
+    setPreviewLead(null);
+    setPreviewContacts([]);
+    setPreviewError(null);
   };
 
   if (productLoading && !productData) return <LoadingShell />;
@@ -321,8 +354,8 @@ export function ProductLeadsPage({ slug }: { slug: string }) {
               const tierKey = lead.tier ?? "";
               const tierColor = tierKey ? tierBadgeColor[tierKey] ?? "gray" : "gray";
               const railToken = tierKey ? tierRailToken[tierKey] : undefined;
-              const isSelf = creatingForCompanyId === lead.companyId;
-              const isSiblingBusy = creatingForCompanyId !== null && !isSelf;
+              const isSelf = openingForCompanyId === lead.companyId;
+              const isSiblingBusy = openingForCompanyId !== null && !isSelf;
               return (
                 <article key={lead.companyId} className={leadCardCls}>
                   {/* Left tier-color rail — token-driven so we stay on palette */}
@@ -470,12 +503,12 @@ export function ProductLeadsPage({ slug }: { slug: string }) {
                       )}
                       <button
                         type="button"
-                        onClick={() => handleStartCampaign(lead)}
-                        disabled={creatingForCompanyId !== null}
+                        onClick={() => handleOpenPreview(lead)}
+                        disabled={openingForCompanyId !== null}
                         aria-busy={isSelf}
                         aria-label={
                           isSelf
-                            ? `Starting campaign for ${lead.companyName}`
+                            ? `Loading contacts for ${lead.companyName}`
                             : `Start campaign for ${lead.companyName}`
                         }
                         className={cx(
@@ -490,7 +523,7 @@ export function ProductLeadsPage({ slug }: { slug: string }) {
                       >
                         {isSelf ? <Spinner size="1" /> : <PaperPlaneIcon aria-hidden />}
                         {isSelf
-                          ? "Starting…"
+                          ? "Loading…"
                           : isSiblingBusy
                           ? "Queued"
                           : "Start campaign"}
@@ -504,6 +537,17 @@ export function ProductLeadsPage({ slug }: { slug: string }) {
         )}
       </Flex>
       </main>
+      <DecisionMakersDialog
+        open={previewLead !== null}
+        onOpenChange={handleDialogOpenChange}
+        companyName={previewLead?.companyName ?? ""}
+        productName={product.name}
+        contacts={previewContacts}
+        loading={previewLoading}
+        submitting={submitting}
+        error={previewError}
+        onConfirm={handleConfirmCampaign}
+      />
     </Container>
   );
 }
