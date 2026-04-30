@@ -80,7 +80,9 @@ export default function AudiobooksPage() {
           Audiobooks pentru Bogdan
         </Heading>
         <Text size="2" color="gray" style={{ lineHeight: 1.6 }}>
-          Audiobook-uri în limba română, disponibile pe{" "}
+          Audiobook-uri în limba română, alese pe baza problemelor curente, observațiilor
+          profesorilor și a articolelor de cercetare clinică legate de Bogdan. Titlurile sunt
+          generate de AI — căutarea linkează direct în catalogul{" "}
           <a
             href="https://voxa.ro"
             target="_blank"
@@ -88,9 +90,8 @@ export default function AudiobooksPage() {
             style={{ color: "var(--indigo-11)" }}
           >
             voxa.ro
-          </a>
-          , alese pe baza problemelor curente, observațiilor profesorilor și a articolelor
-          de cercetare clinică legate de Bogdan.
+          </a>{" "}
+          ca să verifici dacă titlul există acolo.
         </Text>
       </Box>
 
@@ -206,12 +207,12 @@ export default function AudiobooksPage() {
 
                     <Flex gap="3" align="center" wrap="wrap">
                       <a
-                        href={ab.voxaUrl ?? voxaSearchUrl(ab.title)}
+                        href={voxaSearchUrl(ab.title)}
                         target="_blank"
                         rel="noopener noreferrer"
                         style={{ fontSize: 12, color: "var(--indigo-11)" }}
                       >
-                        Voxa ↗
+                        Caută pe Voxa ↗
                       </a>
                       <Separator orientation="vertical" style={{ height: 12 }} />
                       <a
