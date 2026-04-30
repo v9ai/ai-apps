@@ -1,0 +1,2146 @@
+{
+  "count": 428,
+  "source": "sitemap_books_ro.xml.gz (filtered kids heuristic)",
+  "audiobooks": [
+    {
+      "slug": "1001-nopti-de-cazare-intr-un-singur-candidat",
+      "url": "https://voxa.ro/audiobooks/1001-nopti-de-cazare-intr-un-singur-candidat",
+      "title_hint": "1001 Nopti De Cazare Intr Un Singur Candidat"
+    },
+    {
+      "slug": "11-octombrie-in-cautarea-lui-mickey-de-cristal",
+      "url": "https://voxa.ro/audiobooks/11-octombrie-in-cautarea-lui-mickey-de-cristal",
+      "title_hint": "11 Octombrie In Cautarea Lui Mickey De Cristal"
+    },
+    {
+      "slug": "12-august-aventura-in-spatiu",
+      "url": "https://voxa.ro/audiobooks/12-august-aventura-in-spatiu",
+      "title_hint": "12 August Aventura In Spatiu"
+    },
+    {
+      "slug": "17-iulie-aripa-zanei",
+      "url": "https://voxa.ro/audiobooks/17-iulie-aripa-zanei",
+      "title_hint": "17 Iulie Aripa Zanei"
+    },
+    {
+      "slug": "17-septembrie-intoarcerea-lui-peter-pan",
+      "url": "https://voxa.ro/audiobooks/17-septembrie-intoarcerea-lui-peter-pan",
+      "title_hint": "17 Septembrie Intoarcerea Lui Peter Pan"
+    },
+    {
+      "slug": "2-aprilie-mickey-si-oul-fermecat",
+      "url": "https://voxa.ro/audiobooks/2-aprilie-mickey-si-oul-fermecat",
+      "title_hint": "2 Aprilie Mickey Si Oul Fermecat"
+    },
+    {
+      "slug": "2-noiembrie-superaventura-lui-mickey",
+      "url": "https://voxa.ro/audiobooks/2-noiembrie-superaventura-lui-mickey",
+      "title_hint": "2 Noiembrie Superaventura Lui Mickey"
+    },
+    {
+      "slug": "20-iunie-matusa-aventuroasa",
+      "url": "https://voxa.ro/audiobooks/20-iunie-matusa-aventuroasa",
+      "title_hint": "20 Iunie Matusa Aventuroasa"
+    },
+    {
+      "slug": "20-septembrie-ferma-lui-mickey-si-donald",
+      "url": "https://voxa.ro/audiobooks/20-septembrie-ferma-lui-mickey-si-donald",
+      "title_hint": "20 Septembrie Ferma Lui Mickey Si Donald"
+    },
+    {
+      "slug": "23-octombrie-expozitia-de-arta-a-lui-mickey",
+      "url": "https://voxa.ro/audiobooks/23-octombrie-expozitia-de-arta-a-lui-mickey",
+      "title_hint": "23 Octombrie Expozitia De Arta A Lui Mickey"
+    },
+    {
+      "slug": "24-decembrie-mickey-il-salveaza-pe-mos-craciun",
+      "url": "https://voxa.ro/audiobooks/24-decembrie-mickey-il-salveaza-pe-mos-craciun",
+      "title_hint": "24 Decembrie Mickey Il Salveaza Pe Mos Craciun"
+    },
+    {
+      "slug": "25-aprilie-cometa-lui-mickey",
+      "url": "https://voxa.ro/audiobooks/25-aprilie-cometa-lui-mickey",
+      "title_hint": "25 Aprilie Cometa Lui Mickey"
+    },
+    {
+      "slug": "26-aprilie-hook-scufita-rosie",
+      "url": "https://voxa.ro/audiobooks/26-aprilie-hook-scufita-rosie",
+      "title_hint": "26 Aprilie Hook Scufita Rosie"
+    },
+    {
+      "slug": "26-noiembrie-aventura-gainii-de-la-club",
+      "url": "https://voxa.ro/audiobooks/26-noiembrie-aventura-gainii-de-la-club",
+      "title_hint": "26 Noiembrie Aventura Gainii De La Club"
+    },
+    {
+      "slug": "27-martie-mesajul-lui-mickey-de-pe-marte",
+      "url": "https://voxa.ro/audiobooks/27-martie-mesajul-lui-mickey-de-pe-marte",
+      "title_hint": "27 Martie Mesajul Lui Mickey De Pe Marte"
+    },
+    {
+      "slug": "29-octombrie-marele-concert-al-trupei-lui-mickey",
+      "url": "https://voxa.ro/audiobooks/29-octombrie-marele-concert-al-trupei-lui-mickey",
+      "title_hint": "29 Octombrie Marele Concert Al Trupei Lui Mickey"
+    },
+    {
+      "slug": "3-iunie-mickey-merge-la-pescuit",
+      "url": "https://voxa.ro/audiobooks/3-iunie-mickey-merge-la-pescuit",
+      "title_hint": "3 Iunie Mickey Merge La Pescuit"
+    },
+    {
+      "slug": "3-mai-mainile-ajutatoare-ale-lui-mickey",
+      "url": "https://voxa.ro/audiobooks/3-mai-mainile-ajutatoare-ale-lui-mickey",
+      "title_hint": "3 Mai Mainile Ajutatoare Ale Lui Mickey"
+    },
+    {
+      "slug": "3-martie-mickey-in-tara-minunilor",
+      "url": "https://voxa.ro/audiobooks/3-martie-mickey-in-tara-minunilor",
+      "title_hint": "3 Martie Mickey In Tara Minunilor"
+    },
+    {
+      "slug": "3-octombrie-scufita-rosie-minnie",
+      "url": "https://voxa.ro/audiobooks/3-octombrie-scufita-rosie-minnie",
+      "title_hint": "3 Octombrie Scufita Rosie Minnie"
+    },
+    {
+      "slug": "31-decembrie-aventura-lui-donald-la-patinoar",
+      "url": "https://voxa.ro/audiobooks/31-decembrie-aventura-lui-donald-la-patinoar",
+      "title_hint": "31 Decembrie Aventura Lui Donald La Patinoar"
+    },
+    {
+      "slug": "31-ianuarie-slujba-cea-mare-a-lui-mickey",
+      "url": "https://voxa.ro/audiobooks/31-ianuarie-slujba-cea-mare-a-lui-mickey",
+      "title_hint": "31 Ianuarie Slujba Cea Mare A Lui Mickey"
+    },
+    {
+      "slug": "31-iulie-trenuletul-lui-mickey",
+      "url": "https://voxa.ro/audiobooks/31-iulie-trenuletul-lui-mickey",
+      "title_hint": "31 Iulie Trenuletul Lui Mickey"
+    },
+    {
+      "slug": "4-50-from-paddington",
+      "url": "https://voxa.ro/audiobooks/4-50-from-paddington",
+      "title_hint": "4 50 From Paddington"
+    },
+    {
+      "slug": "4-50-from-paddington-2",
+      "url": "https://voxa.ro/audiobooks/4-50-from-paddington-2",
+      "title_hint": "4 50 From Paddington 2"
+    },
+    {
+      "slug": "4-50-from-paddington-3",
+      "url": "https://voxa.ro/audiobooks/4-50-from-paddington-3",
+      "title_hint": "4 50 From Paddington 3"
+    },
+    {
+      "slug": "6-octombrie-drumetia-lui-mickey",
+      "url": "https://voxa.ro/audiobooks/6-octombrie-drumetia-lui-mickey",
+      "title_hint": "6 Octombrie Drumetia Lui Mickey"
+    },
+    {
+      "slug": "6-septembrie-mickey-si-vrejul-de-fasole",
+      "url": "https://voxa.ro/audiobooks/6-septembrie-mickey-si-vrejul-de-fasole",
+      "title_hint": "6 Septembrie Mickey Si Vrejul De Fasole"
+    },
+    {
+      "slug": "7-iulie-aventuri-in-tabara",
+      "url": "https://voxa.ro/audiobooks/7-iulie-aventuri-in-tabara",
+      "title_hint": "7 Iulie Aventuri In Tabara"
+    },
+    {
+      "slug": "9-iunie-mickey-la-vanatoare-de-comori",
+      "url": "https://voxa.ro/audiobooks/9-iunie-mickey-la-vanatoare-de-comori",
+      "title_hint": "9 Iunie Mickey La Vanatoare De Comori"
+    },
+    {
+      "slug": "a-bear-called-paddington",
+      "url": "https://voxa.ro/audiobooks/a-bear-called-paddington",
+      "title_hint": "A Bear Called Paddington"
+    },
+    {
+      "slug": "a-single-breath-2",
+      "url": "https://voxa.ro/audiobooks/a-single-breath-2",
+      "title_hint": "A Single Breath 2"
+    },
+    {
+      "slug": "a-single-thread",
+      "url": "https://voxa.ro/audiobooks/a-single-thread",
+      "title_hint": "A Single Thread"
+    },
+    {
+      "slug": "a-stitch-in-time",
+      "url": "https://voxa.ro/audiobooks/a-stitch-in-time",
+      "title_hint": "A Stitch In Time"
+    },
+    {
+      "slug": "a-tragic-kind-of-wonderful",
+      "url": "https://voxa.ro/audiobooks/a-tragic-kind-of-wonderful",
+      "title_hint": "A Tragic Kind Of Wonderful"
+    },
+    {
+      "slug": "a-year-of-being-single",
+      "url": "https://voxa.ro/audiobooks/a-year-of-being-single",
+      "title_hint": "A Year Of Being Single"
+    },
+    {
+      "slug": "actioneaza-si-gandeste-ca-micul-print-liber-visator-curios-altruist-fermecator-onest-bland-ingenuu",
+      "url": "https://voxa.ro/audiobooks/actioneaza-si-gandeste-ca-micul-print-liber-visator-curios-altruist-fermecator-onest-bland-ingenuu",
+      "title_hint": "Actioneaza Si Gandeste Ca Micul Print Liber Visator Curios Altruist Fermecator Onest Bland Ingenuu"
+    },
+    {
+      "slug": "ajuta-ti-copilul-sa-creasca-prin-metoda-montessori",
+      "url": "https://voxa.ro/audiobooks/ajuta-ti-copilul-sa-creasca-prin-metoda-montessori",
+      "title_hint": "Ajuta Ti Copilul Sa Creasca Prin Metoda Montessori"
+    },
+    {
+      "slug": "ajuta-ti-copilul-sa-se-concentreze-si-sa-se-linisteasca",
+      "url": "https://voxa.ro/audiobooks/ajuta-ti-copilul-sa-se-concentreze-si-sa-se-linisteasca",
+      "title_hint": "Ajuta Ti Copilul Sa Se Concentreze Si Sa Se Linisteasca"
+    },
+    {
+      "slug": "ajuta-ti-copilul-sa-se-dezvolte-prin-metoda-montessori-de-la-0-la-3-ani",
+      "url": "https://voxa.ro/audiobooks/ajuta-ti-copilul-sa-se-dezvolte-prin-metoda-montessori-de-la-0-la-3-ani",
+      "title_hint": "Ajuta Ti Copilul Sa Se Dezvolte Prin Metoda Montessori De La 0 La 3 Ani"
+    },
+    {
+      "slug": "ajuta-ti-copilul-sa-se-vindece-de-trauma-ghidul-parintilor-pentru-sustinerea-mecanismelor-naturale-de-vindecare-a-copilului-prin-joc-si-conectare",
+      "url": "https://voxa.ro/audiobooks/ajuta-ti-copilul-sa-se-vindece-de-trauma-ghidul-parintilor-pentru-sustinerea-mecanismelor-naturale-de-vindecare-a-copilului-prin-joc-si-conectare",
+      "title_hint": "Ajuta Ti Copilul Sa Se Vindece De Trauma Ghidul Parintilor Pentru Sustinerea Mecanismelor Naturale De Vindecare A Copilului Prin Joc Si Conectare"
+    },
+    {
+      "slug": "ajuta-ti-copilul-sa-si-dezvolte-increderea-in-sine-3",
+      "url": "https://voxa.ro/audiobooks/ajuta-ti-copilul-sa-si-dezvolte-increderea-in-sine-3",
+      "title_hint": "Ajuta Ti Copilul Sa Si Dezvolte Increderea In Sine 3"
+    },
+    {
+      "slug": "ajuta-ti-copilul-sa-si-gestioneze-mai-bine-emotiile-2",
+      "url": "https://voxa.ro/audiobooks/ajuta-ti-copilul-sa-si-gestioneze-mai-bine-emotiile-2",
+      "title_hint": "Ajuta Ti Copilul Sa Si Gestioneze Mai Bine Emotiile 2"
+    },
+    {
+      "slug": "aladdin-and-his-wonderful-lamp",
+      "url": "https://voxa.ro/audiobooks/aladdin-and-his-wonderful-lamp",
+      "title_hint": "Aladdin And His Wonderful Lamp"
+    },
+    {
+      "slug": "aladdin-and-the-magic-lamp-2",
+      "url": "https://voxa.ro/audiobooks/aladdin-and-the-magic-lamp-2",
+      "title_hint": "Aladdin And The Magic Lamp 2"
+    },
+    {
+      "slug": "aladdin-and-the-princess-2",
+      "url": "https://voxa.ro/audiobooks/aladdin-and-the-princess-2",
+      "title_hint": "Aladdin And The Princess 2"
+    },
+    {
+      "slug": "aladdin-and-the-wonderful-lamp",
+      "url": "https://voxa.ro/audiobooks/aladdin-and-the-wonderful-lamp",
+      "title_hint": "Aladdin And The Wonderful Lamp"
+    },
+    {
+      "slug": "alba-ca-zapada",
+      "url": "https://voxa.ro/audiobooks/alba-ca-zapada",
+      "title_hint": "Alba Ca Zapada"
+    },
+    {
+      "slug": "ali-baba-and-his-brother-2",
+      "url": "https://voxa.ro/audiobooks/ali-baba-and-his-brother-2",
+      "title_hint": "Ali Baba And His Brother 2"
+    },
+    {
+      "slug": "ali-baba-and-the-forty-thieves",
+      "url": "https://voxa.ro/audiobooks/ali-baba-and-the-forty-thieves",
+      "title_hint": "Ali Baba And The Forty Thieves"
+    },
+    {
+      "slug": "ali-in-wonderland",
+      "url": "https://voxa.ro/audiobooks/ali-in-wonderland",
+      "title_hint": "Ali In Wonderland"
+    },
+    {
+      "slug": "alice-in-tara-minunilor-disney-audiobook",
+      "url": "https://voxa.ro/audiobooks/alice-in-tara-minunilor-disney-audiobook",
+      "title_hint": "Alice In Tara Minunilor Disney Audiobook"
+    },
+    {
+      "slug": "alice-in-wonderland-2",
+      "url": "https://voxa.ro/audiobooks/alice-in-wonderland-2",
+      "title_hint": "Alice In Wonderland 2"
+    },
+    {
+      "slug": "alice-in-wonderland-3",
+      "url": "https://voxa.ro/audiobooks/alice-in-wonderland-3",
+      "title_hint": "Alice In Wonderland 3"
+    },
+    {
+      "slug": "alice-in-wonderland-4",
+      "url": "https://voxa.ro/audiobooks/alice-in-wonderland-4",
+      "title_hint": "Alice In Wonderland 4"
+    },
+    {
+      "slug": "alice-s-adventures-in-wonderland",
+      "url": "https://voxa.ro/audiobooks/alice-s-adventures-in-wonderland",
+      "title_hint": "Alice S Adventures In Wonderland"
+    },
+    {
+      "slug": "alice-s-adventures-in-wonderland-12",
+      "url": "https://voxa.ro/audiobooks/alice-s-adventures-in-wonderland-12",
+      "title_hint": "Alice S Adventures In Wonderland 12"
+    },
+    {
+      "slug": "alice-s-adventures-in-wonderland-14",
+      "url": "https://voxa.ro/audiobooks/alice-s-adventures-in-wonderland-14",
+      "title_hint": "Alice S Adventures In Wonderland 14"
+    },
+    {
+      "slug": "alice-s-adventures-in-wonderland-and-through-the-looking-glass-2",
+      "url": "https://voxa.ro/audiobooks/alice-s-adventures-in-wonderland-and-through-the-looking-glass-2",
+      "title_hint": "Alice S Adventures In Wonderland And Through The Looking Glass 2"
+    },
+    {
+      "slug": "alice-s-adventures-in-wonderland-golden-deer-classics",
+      "url": "https://voxa.ro/audiobooks/alice-s-adventures-in-wonderland-golden-deer-classics",
+      "title_hint": "Alice S Adventures In Wonderland Golden Deer Classics"
+    },
+    {
+      "slug": "amintiri-din-copilarie-adaptare",
+      "url": "https://voxa.ro/audiobooks/amintiri-din-copilarie-adaptare",
+      "title_hint": "Amintiri Din Copilarie Adaptare"
+    },
+    {
+      "slug": "anger-releasing",
+      "url": "https://voxa.ro/audiobooks/anger-releasing",
+      "title_hint": "Anger Releasing"
+    },
+    {
+      "slug": "anna-karenina-mari-opere-din-literatura-rusa-povestite-copiilor",
+      "url": "https://voxa.ro/audiobooks/anna-karenina-mari-opere-din-literatura-rusa-povestite-copiilor",
+      "title_hint": "Anna Karenina Mari Opere Din Literatura Rusa Povestite Copiilor"
+    },
+    {
+      "slug": "arabian-nights-aladdin-and-the-magic-lamp-easy-classics-2",
+      "url": "https://voxa.ro/audiobooks/arabian-nights-aladdin-and-the-magic-lamp-easy-classics-2",
+      "title_hint": "Arabian Nights Aladdin And The Magic Lamp Easy Classics 2"
+    },
+    {
+      "slug": "arabian-nights-ali-baba-and-the-forty-thieves-easy-classics-2",
+      "url": "https://voxa.ro/audiobooks/arabian-nights-ali-baba-and-the-forty-thieves-easy-classics-2",
+      "title_hint": "Arabian Nights Ali Baba And The Forty Thieves Easy Classics 2"
+    },
+    {
+      "slug": "ariciul-aramis-si-aventurile-lui-de-alina-chirila-1",
+      "url": "https://voxa.ro/audiobooks/ariciul-aramis-si-aventurile-lui-de-alina-chirila-1",
+      "title_hint": "Ariciul Aramis Si Aventurile Lui De Alina Chirila 1"
+    },
+    {
+      "slug": "ariciul-aramis-si-aventurile-lui-de-alina-chirila-2",
+      "url": "https://voxa.ro/audiobooks/ariciul-aramis-si-aventurile-lui-de-alina-chirila-2",
+      "title_hint": "Ariciul Aramis Si Aventurile Lui De Alina Chirila 2"
+    },
+    {
+      "slug": "ariciul-aramis-si-aventurile-lui-de-alina-chirila-3",
+      "url": "https://voxa.ro/audiobooks/ariciul-aramis-si-aventurile-lui-de-alina-chirila-3",
+      "title_hint": "Ariciul Aramis Si Aventurile Lui De Alina Chirila 3"
+    },
+    {
+      "slug": "aurora-si-dragonul-cel-folositor-alba-ca-zapada-si-magia-prieteniei",
+      "url": "https://voxa.ro/audiobooks/aurora-si-dragonul-cel-folositor-alba-ca-zapada-si-magia-prieteniei",
+      "title_hint": "Aurora Si Dragonul Cel Folositor Alba Ca Zapada Si Magia Prieteniei"
+    },
+    {
+      "slug": "aventura-intergalactica-a-lui-jamie-drake",
+      "url": "https://voxa.ro/audiobooks/aventura-intergalactica-a-lui-jamie-drake",
+      "title_hint": "Aventura Intergalactica A Lui Jamie Drake"
+    },
+    {
+      "slug": "aventuri-cu-pettson-si-findus",
+      "url": "https://voxa.ro/audiobooks/aventuri-cu-pettson-si-findus",
+      "title_hint": "Aventuri Cu Pettson Si Findus"
+    },
+    {
+      "slug": "aventuri-in-tren-crima-din-safari-star",
+      "url": "https://voxa.ro/audiobooks/aventuri-in-tren-crima-din-safari-star",
+      "title_hint": "Aventuri In Tren Crima Din Safari Star"
+    },
+    {
+      "slug": "aventuri-in-tren-hotul-din-highland-falcon",
+      "url": "https://voxa.ro/audiobooks/aventuri-in-tren-hotul-din-highland-falcon",
+      "title_hint": "Aventuri In Tren Hotul Din Highland Falcon"
+    },
+    {
+      "slug": "aventuri-in-tren-rapirea-din-california",
+      "url": "https://voxa.ro/audiobooks/aventuri-in-tren-rapirea-din-california",
+      "title_hint": "Aventuri In Tren Rapirea Din California"
+    },
+    {
+      "slug": "aventuri-la-ham-hotel-cheryl-certareata",
+      "url": "https://voxa.ro/audiobooks/aventuri-la-ham-hotel-cheryl-certareata",
+      "title_hint": "Aventuri La Ham Hotel Cheryl Certareata"
+    },
+    {
+      "slug": "aventuri-la-ham-hotel-cooper-curajosul",
+      "url": "https://voxa.ro/audiobooks/aventuri-la-ham-hotel-cooper-curajosul",
+      "title_hint": "Aventuri La Ham Hotel Cooper Curajosul"
+    },
+    {
+      "slug": "aventuri-la-ham-hotel-marley-cel-murdar",
+      "url": "https://voxa.ro/audiobooks/aventuri-la-ham-hotel-marley-cel-murdar",
+      "title_hint": "Aventuri La Ham Hotel Marley Cel Murdar"
+    },
+    {
+      "slug": "aventuri-la-ham-hotel-moody-cea-murdara",
+      "url": "https://voxa.ro/audiobooks/aventuri-la-ham-hotel-moody-cea-murdara",
+      "title_hint": "Aventuri La Ham Hotel Moody Cea Murdara"
+    },
+    {
+      "slug": "aventuri-la-ham-hotel-pookie-puiul-mamei",
+      "url": "https://voxa.ro/audiobooks/aventuri-la-ham-hotel-pookie-puiul-mamei",
+      "title_hint": "Aventuri La Ham Hotel Pookie Puiul Mamei"
+    },
+    {
+      "slug": "aventuri-la-miau-motel-arly-artagoasa",
+      "url": "https://voxa.ro/audiobooks/aventuri-la-miau-motel-arly-artagoasa",
+      "title_hint": "Aventuri La Miau Motel Arly Artagoasa"
+    },
+    {
+      "slug": "aventuri-la-miau-motel-marty-magicianul",
+      "url": "https://voxa.ro/audiobooks/aventuri-la-miau-motel-marty-magicianul",
+      "title_hint": "Aventuri La Miau Motel Marty Magicianul"
+    },
+    {
+      "slug": "aventurile-lui-huckleberry-finn-2",
+      "url": "https://voxa.ro/audiobooks/aventurile-lui-huckleberry-finn-2",
+      "title_hint": "Aventurile Lui Huckleberry Finn 2"
+    },
+    {
+      "slug": "aventurile-lui-huckleberry-finn-3",
+      "url": "https://voxa.ro/audiobooks/aventurile-lui-huckleberry-finn-3",
+      "title_hint": "Aventurile Lui Huckleberry Finn 3"
+    },
+    {
+      "slug": "aventurile-lui-pinocchio",
+      "url": "https://voxa.ro/audiobooks/aventurile-lui-pinocchio",
+      "title_hint": "Aventurile Lui Pinocchio"
+    },
+    {
+      "slug": "aventurile-lui-robin-hood-2",
+      "url": "https://voxa.ro/audiobooks/aventurile-lui-robin-hood-2",
+      "title_hint": "Aventurile Lui Robin Hood 2"
+    },
+    {
+      "slug": "aventurile-lui-sherlock-holmes",
+      "url": "https://voxa.ro/audiobooks/aventurile-lui-sherlock-holmes",
+      "title_hint": "Aventurile Lui Sherlock Holmes"
+    },
+    {
+      "slug": "aventurile-lui-sindbad-marinarul",
+      "url": "https://voxa.ro/audiobooks/aventurile-lui-sindbad-marinarul",
+      "title_hint": "Aventurile Lui Sindbad Marinarul"
+    },
+    {
+      "slug": "aventurile-lui-tom-sawyer",
+      "url": "https://voxa.ro/audiobooks/aventurile-lui-tom-sawyer",
+      "title_hint": "Aventurile Lui Tom Sawyer"
+    },
+    {
+      "slug": "aventurile-lui-tom-sawyer-3",
+      "url": "https://voxa.ro/audiobooks/aventurile-lui-tom-sawyer-3",
+      "title_hint": "Aventurile Lui Tom Sawyer 3"
+    },
+    {
+      "slug": "aventurile-lui-tom-sawyer-4",
+      "url": "https://voxa.ro/audiobooks/aventurile-lui-tom-sawyer-4",
+      "title_hint": "Aventurile Lui Tom Sawyer 4"
+    },
+    {
+      "slug": "aventurile-lui-tom-sawyer-adaptare",
+      "url": "https://voxa.ro/audiobooks/aventurile-lui-tom-sawyer-adaptare",
+      "title_hint": "Aventurile Lui Tom Sawyer Adaptare"
+    },
+    {
+      "slug": "baba-yaga-2",
+      "url": "https://voxa.ro/audiobooks/baba-yaga-2",
+      "title_hint": "Baba Yaga 2"
+    },
+    {
+      "slug": "baba-yaga-s-winter-escape-2",
+      "url": "https://voxa.ro/audiobooks/baba-yaga-s-winter-escape-2",
+      "title_hint": "Baba Yaga S Winter Escape 2"
+    },
+    {
+      "slug": "bambi",
+      "url": "https://voxa.ro/audiobooks/bambi",
+      "title_hint": "Bambi"
+    },
+    {
+      "slug": "bambi-on-ice-2",
+      "url": "https://voxa.ro/audiobooks/bambi-on-ice-2",
+      "title_hint": "Bambi On Ice 2"
+    },
+    {
+      "slug": "bastet-goes-missing-2",
+      "url": "https://voxa.ro/audiobooks/bastet-goes-missing-2",
+      "title_hint": "Bastet Goes Missing 2"
+    },
+    {
+      "slug": "bebelusul-meu-intelege-tot-cum-sa-crestem-copii-sanatosi-prin-parentaj-constient",
+      "url": "https://voxa.ro/audiobooks/bebelusul-meu-intelege-tot-cum-sa-crestem-copii-sanatosi-prin-parentaj-constient",
+      "title_hint": "Bebelusul Meu Intelege Tot Cum Sa Crestem Copii Sanatosi Prin Parentaj Constient"
+    },
+    {
+      "slug": "betrayal",
+      "url": "https://voxa.ro/audiobooks/betrayal",
+      "title_hint": "Betrayal"
+    },
+    {
+      "slug": "betrayal-of-trust",
+      "url": "https://voxa.ro/audiobooks/betrayal-of-trust",
+      "title_hint": "Betrayal Of Trust"
+    },
+    {
+      "slug": "betrayal-of-trust-2",
+      "url": "https://voxa.ro/audiobooks/betrayal-of-trust-2",
+      "title_hint": "Betrayal Of Trust 2"
+    },
+    {
+      "slug": "blabababa",
+      "url": "https://voxa.ro/audiobooks/blabababa",
+      "title_hint": "Blabababa"
+    },
+    {
+      "slug": "black-water-rising",
+      "url": "https://voxa.ro/audiobooks/black-water-rising",
+      "title_hint": "Black Water Rising"
+    },
+    {
+      "slug": "blood-of-wonderland",
+      "url": "https://voxa.ro/audiobooks/blood-of-wonderland",
+      "title_hint": "Blood Of Wonderland"
+    },
+    {
+      "slug": "caldura-cuibului-parintesc-educa-ti-copilul-cu-blandete-si-ajuta-l-sa-devina-independent-2",
+      "url": "https://voxa.ro/audiobooks/caldura-cuibului-parintesc-educa-ti-copilul-cu-blandete-si-ajuta-l-sa-devina-independent-2",
+      "title_hint": "Caldura Cuibului Parintesc Educa Ti Copilul Cu Blandete Si Ajuta L Sa Devina Independent 2"
+    },
+    {
+      "slug": "caleb-s-crossing",
+      "url": "https://voxa.ro/audiobooks/caleb-s-crossing",
+      "title_hint": "Caleb S Crossing"
+    },
+    {
+      "slug": "capra-cu-trei-iezi",
+      "url": "https://voxa.ro/audiobooks/capra-cu-trei-iezi",
+      "title_hint": "Capra Cu Trei Iezi"
+    },
+    {
+      "slug": "cartea-copiilor-pierduti",
+      "url": "https://voxa.ro/audiobooks/cartea-copiilor-pierduti",
+      "title_hint": "Cartea Copiilor Pierduti"
+    },
+    {
+      "slug": "cartea-junglei-disney",
+      "url": "https://voxa.ro/audiobooks/cartea-junglei-disney",
+      "title_hint": "Cartea Junglei Disney"
+    },
+    {
+      "slug": "cele-cinci-limbaje-de-iubire-ale-copiilor",
+      "url": "https://voxa.ro/audiobooks/cele-cinci-limbaje-de-iubire-ale-copiilor",
+      "title_hint": "Cele Cinci Limbaje De Iubire Ale Copiilor"
+    },
+    {
+      "slug": "cenusareasa",
+      "url": "https://voxa.ro/audiobooks/cenusareasa",
+      "title_hint": "Cenusareasa"
+    },
+    {
+      "slug": "cenusareasa-la-petrecerea-craciunului-tiana-si-magia-sarbatorilor",
+      "url": "https://voxa.ro/audiobooks/cenusareasa-la-petrecerea-craciunului-tiana-si-magia-sarbatorilor",
+      "title_hint": "Cenusareasa La Petrecerea Craciunului Tiana Si Magia Sarbatorilor"
+    },
+    {
+      "slug": "chasing-harry-winston",
+      "url": "https://voxa.ro/audiobooks/chasing-harry-winston",
+      "title_hint": "Chasing Harry Winston"
+    },
+    {
+      "slug": "chasing-redbird",
+      "url": "https://voxa.ro/audiobooks/chasing-redbird",
+      "title_hint": "Chasing Redbird"
+    },
+    {
+      "slug": "chasing-the-light",
+      "url": "https://voxa.ro/audiobooks/chasing-the-light",
+      "title_hint": "Chasing The Light"
+    },
+    {
+      "slug": "chasing-the-moon",
+      "url": "https://voxa.ro/audiobooks/chasing-the-moon",
+      "title_hint": "Chasing The Moon"
+    },
+    {
+      "slug": "chasing-the-sun",
+      "url": "https://voxa.ro/audiobooks/chasing-the-sun",
+      "title_hint": "Chasing The Sun"
+    },
+    {
+      "slug": "choosing-to-stay",
+      "url": "https://voxa.ro/audiobooks/choosing-to-stay",
+      "title_hint": "Choosing To Stay"
+    },
+    {
+      "slug": "cinci-motive-pentru-care-sa-lasi-copiii-sa-se-plictiseasca-in-vacanta",
+      "url": "https://voxa.ro/audiobooks/cinci-motive-pentru-care-sa-lasi-copiii-sa-se-plictiseasca-in-vacanta",
+      "title_hint": "Cinci Motive Pentru Care Sa Lasi Copiii Sa Se Plictiseasca In Vacanta"
+    },
+    {
+      "slug": "cleansing-the-mind-of-the-accumulation-of-time",
+      "url": "https://voxa.ro/audiobooks/cleansing-the-mind-of-the-accumulation-of-time",
+      "title_hint": "Cleansing The Mind Of The Accumulation Of Time"
+    },
+    {
+      "slug": "cleansing-the-subconscious",
+      "url": "https://voxa.ro/audiobooks/cleansing-the-subconscious",
+      "title_hint": "Cleansing The Subconscious"
+    },
+    {
+      "slug": "closing-costs",
+      "url": "https://voxa.ro/audiobooks/closing-costs",
+      "title_hint": "Closing Costs"
+    },
+    {
+      "slug": "conecteaza-te-cu-copilul-tau",
+      "url": "https://voxa.ro/audiobooks/conecteaza-te-cu-copilul-tau",
+      "title_hint": "Conecteaza Te Cu Copilul Tau"
+    },
+    {
+      "slug": "copiii-adulti-ai-parintilor-imaturi-emotional-cum-te-poti-vindeca-de-parintii-distanti-lipsiti-de-empatie-egoisti",
+      "url": "https://voxa.ro/audiobooks/copiii-adulti-ai-parintilor-imaturi-emotional-cum-te-poti-vindeca-de-parintii-distanti-lipsiti-de-empatie-egoisti",
+      "title_hint": "Copiii Adulti Ai Parintilor Imaturi Emotional Cum Te Poti Vindeca De Parintii Distanti Lipsiti De Empatie Egoisti"
+    },
+    {
+      "slug": "copiii-capitanului-grant-in-america-de-sud",
+      "url": "https://voxa.ro/audiobooks/copiii-capitanului-grant-in-america-de-sud",
+      "title_hint": "Copiii Capitanului Grant In America De Sud"
+    },
+    {
+      "slug": "copiii-capitanului-grant-in-australia",
+      "url": "https://voxa.ro/audiobooks/copiii-capitanului-grant-in-australia",
+      "title_hint": "Copiii Capitanului Grant In Australia"
+    },
+    {
+      "slug": "copiii-capitanului-grant-in-oceanul-pacific",
+      "url": "https://voxa.ro/audiobooks/copiii-capitanului-grant-in-oceanul-pacific",
+      "title_hint": "Copiii Capitanului Grant In Oceanul Pacific"
+    },
+    {
+      "slug": "copiii-de-pe-volga-audiobook",
+      "url": "https://voxa.ro/audiobooks/copiii-de-pe-volga-audiobook",
+      "title_hint": "Copiii De Pe Volga Audiobook"
+    },
+    {
+      "slug": "copiii-in-fata-ecranelor-cum-ii-protejam-2",
+      "url": "https://voxa.ro/audiobooks/copiii-in-fata-ecranelor-cum-ii-protejam-2",
+      "title_hint": "Copiii In Fata Ecranelor Cum Ii Protejam 2"
+    },
+    {
+      "slug": "copiii-noptii-2",
+      "url": "https://voxa.ro/audiobooks/copiii-noptii-2",
+      "title_hint": "Copiii Noptii 2"
+    },
+    {
+      "slug": "copilul-care-a-supravietuit-2",
+      "url": "https://voxa.ro/audiobooks/copilul-care-a-supravietuit-2",
+      "title_hint": "Copilul Care A Supravietuit 2"
+    },
+    {
+      "slug": "copilul-din-fiecare",
+      "url": "https://voxa.ro/audiobooks/copilul-din-fiecare",
+      "title_hint": "Copilul Din Fiecare"
+    },
+    {
+      "slug": "copilul-invizibil-editie-actualizata-si-revizuita",
+      "url": "https://voxa.ro/audiobooks/copilul-invizibil-editie-actualizata-si-revizuita",
+      "title_hint": "Copilul Invizibil Editie Actualizata Si Revizuita"
+    },
+    {
+      "slug": "copilul-meu-are-personalitate",
+      "url": "https://voxa.ro/audiobooks/copilul-meu-are-personalitate",
+      "title_hint": "Copilul Meu Are Personalitate"
+    },
+    {
+      "slug": "copilul-meu-cel-mare-este-gelos",
+      "url": "https://voxa.ro/audiobooks/copilul-meu-cel-mare-este-gelos",
+      "title_hint": "Copilul Meu Cel Mare Este Gelos"
+    },
+    {
+      "slug": "copilul-meu-nu-vrea-sa-mearga-la-scoala",
+      "url": "https://voxa.ro/audiobooks/copilul-meu-nu-vrea-sa-mearga-la-scoala",
+      "title_hint": "Copilul Meu Nu Vrea Sa Mearga La Scoala"
+    },
+    {
+      "slug": "corpul-nu-minte-niciodata-vindecarea-traumelor-copilului-interior",
+      "url": "https://voxa.ro/audiobooks/corpul-nu-minte-niciodata-vindecarea-traumelor-copilului-interior",
+      "title_hint": "Corpul Nu Minte Niciodata Vindecarea Traumelor Copilului Interior"
+    },
+    {
+      "slug": "creierul-copilului-tau",
+      "url": "https://voxa.ro/audiobooks/creierul-copilului-tau",
+      "title_hint": "Creierul Copilului Tau"
+    },
+    {
+      "slug": "cromwell-s-blessing",
+      "url": "https://voxa.ro/audiobooks/cromwell-s-blessing",
+      "title_hint": "Cromwell S Blessing"
+    },
+    {
+      "slug": "cum-ii-ajutam-pe-copii-sa-faca-fata-traumelor",
+      "url": "https://voxa.ro/audiobooks/cum-ii-ajutam-pe-copii-sa-faca-fata-traumelor",
+      "title_hint": "Cum Ii Ajutam Pe Copii Sa Faca Fata Traumelor"
+    },
+    {
+      "slug": "cum-sa-fii-un-parinte-mai-bun-ajuta-ti-copilul-sa-invete-din-greseli",
+      "url": "https://voxa.ro/audiobooks/cum-sa-fii-un-parinte-mai-bun-ajuta-ti-copilul-sa-invete-din-greseli",
+      "title_hint": "Cum Sa Fii Un Parinte Mai Bun Ajuta Ti Copilul Sa Invete Din Greseli"
+    },
+    {
+      "slug": "cum-sa-le-vorbim-copiilor-astfel-incat-sa-ne-asculte-ghid-de-supravietuire-pentru-parinti-cu-copii-de-2-7-ani",
+      "url": "https://voxa.ro/audiobooks/cum-sa-le-vorbim-copiilor-astfel-incat-sa-ne-asculte-ghid-de-supravietuire-pentru-parinti-cu-copii-de-2-7-ani",
+      "title_hint": "Cum Sa Le Vorbim Copiilor Astfel Incat Sa Ne Asculte Ghid De Supravietuire Pentru Parinti Cu Copii De 2 7 Ani"
+    },
+    {
+      "slug": "cum-sa-te-gestionezi-singur-ce-este-un-lider",
+      "url": "https://voxa.ro/audiobooks/cum-sa-te-gestionezi-singur-ce-este-un-lider",
+      "title_hint": "Cum Sa Te Gestionezi Singur Ce Este Un Lider"
+    },
+    {
+      "slug": "cuvinte-pe-care-sa-nu-le-spui-niciodata-copilului-tau",
+      "url": "https://voxa.ro/audiobooks/cuvinte-pe-care-sa-nu-le-spui-niciodata-copilului-tau",
+      "title_hint": "Cuvinte Pe Care Sa Nu Le Spui Niciodata Copilului Tau"
+    },
+    {
+      "slug": "daca-spui-cuiva-o-poveste-adevarata-despre-crima-secrete-de-familie-si-unitatea-de-nezdruncinat-a-unor-copii-2",
+      "url": "https://voxa.ro/audiobooks/daca-spui-cuiva-o-poveste-adevarata-despre-crima-secrete-de-familie-si-unitatea-de-nezdruncinat-a-unor-copii-2",
+      "title_hint": "Daca Spui Cuiva O Poveste Adevarata Despre Crima Secrete De Familie Si Unitatea De Nezdruncinat A Unor Copii 2"
+    },
+    {
+      "slug": "dana-budeanu-pentru-prea-multi-copii-mama-este-facebook-si-tata-e-tiktok-pe-drept-cuvant-16",
+      "url": "https://voxa.ro/audiobooks/dana-budeanu-pentru-prea-multi-copii-mama-este-facebook-si-tata-e-tiktok-pe-drept-cuvant-16",
+      "title_hint": "Dana Budeanu Pentru Prea Multi Copii Mama Este Facebook Si Tata E Tiktok Pe Drept Cuvant 16"
+    },
+    {
+      "slug": "daruieste-iubirea-care-vindeca-cum-sa-reconstruiesti-conexiunea-cu-copilul-tau-devenind-un-parinte-constient-terapia-imago",
+      "url": "https://voxa.ro/audiobooks/daruieste-iubirea-care-vindeca-cum-sa-reconstruiesti-conexiunea-cu-copilul-tau-devenind-un-parinte-constient-terapia-imago",
+      "title_hint": "Daruieste Iubirea Care Vindeca Cum Sa Reconstruiesti Conexiunea Cu Copilul Tau Devenind Un Parinte Constient Terapia Imago"
+    },
+    {
+      "slug": "descopera-aptitudinile-copilului-tau-inteligenta-multipla",
+      "url": "https://voxa.ro/audiobooks/descopera-aptitudinile-copilului-tau-inteligenta-multipla",
+      "title_hint": "Descopera Aptitudinile Copilului Tau Inteligenta Multipla"
+    },
+    {
+      "slug": "descopera-psihologia-psihologia-copilului",
+      "url": "https://voxa.ro/audiobooks/descopera-psihologia-psihologia-copilului",
+      "title_hint": "Descopera Psihologia Psihologia Copilului"
+    },
+    {
+      "slug": "destinul-lupului-singuratic-3",
+      "url": "https://voxa.ro/audiobooks/destinul-lupului-singuratic-3",
+      "title_hint": "Destinul Lupului Singuratic 3"
+    },
+    {
+      "slug": "dezvoltare-personala-pe-intelesul-copiilor-i-imi-dezvolt-forta-mentala-si-invat-din-fiecare-experienta-noua",
+      "url": "https://voxa.ro/audiobooks/dezvoltare-personala-pe-intelesul-copiilor-i-imi-dezvolt-forta-mentala-si-invat-din-fiecare-experienta-noua",
+      "title_hint": "Dezvoltare Personala Pe Intelesul Copiilor I Imi Dezvolt Forta Mentala Si Invat Din Fiecare Experienta Noua"
+    },
+    {
+      "slug": "dezvoltare-personala-pe-intelesul-copiilor-ii-gandesc-pozitiv-si-depasesc-toate-provocarile",
+      "url": "https://voxa.ro/audiobooks/dezvoltare-personala-pe-intelesul-copiilor-ii-gandesc-pozitiv-si-depasesc-toate-provocarile",
+      "title_hint": "Dezvoltare Personala Pe Intelesul Copiilor Ii Gandesc Pozitiv Si Depasesc Toate Provocarile"
+    },
+    {
+      "slug": "dezvoltare-personala-pe-intelesul-copiilor-iii-imi-aleg-obiectivele-si-le-indeplinesc",
+      "url": "https://voxa.ro/audiobooks/dezvoltare-personala-pe-intelesul-copiilor-iii-imi-aleg-obiectivele-si-le-indeplinesc",
+      "title_hint": "Dezvoltare Personala Pe Intelesul Copiilor Iii Imi Aleg Obiectivele Si Le Indeplinesc"
+    },
+    {
+      "slug": "din-calatoriile-unei-femei-cu-suflet-de-copil",
+      "url": "https://voxa.ro/audiobooks/din-calatoriile-unei-femei-cu-suflet-de-copil",
+      "title_hint": "Din Calatoriile Unei Femei Cu Suflet De Copil"
+    },
+    {
+      "slug": "dirk-bones-and-the-mystery-of-the-missing-books",
+      "url": "https://voxa.ro/audiobooks/dirk-bones-and-the-mystery-of-the-missing-books",
+      "title_hint": "Dirk Bones And The Mystery Of The Missing Books"
+    },
+    {
+      "slug": "disney-alice-in-tara-minunilor",
+      "url": "https://voxa.ro/audiobooks/disney-alice-in-tara-minunilor",
+      "title_hint": "Disney Alice In Tara Minunilor"
+    },
+    {
+      "slug": "disney-clubul-lui-mickey-mouse-invitatie-la-picnic-biblioteca-magica",
+      "url": "https://voxa.ro/audiobooks/disney-clubul-lui-mickey-mouse-invitatie-la-picnic-biblioteca-magica",
+      "title_hint": "Disney Clubul Lui Mickey Mouse Invitatie La Picnic Biblioteca Magica"
+    },
+    {
+      "slug": "disney-frumoasa-si-bestia",
+      "url": "https://voxa.ro/audiobooks/disney-frumoasa-si-bestia",
+      "title_hint": "Disney Frumoasa Si Bestia"
+    },
+    {
+      "slug": "disney-garda-felina",
+      "url": "https://voxa.ro/audiobooks/disney-garda-felina",
+      "title_hint": "Disney Garda Felina"
+    },
+    {
+      "slug": "disney-in-cautarea-lui-dory-biblioteca-magica-2",
+      "url": "https://voxa.ro/audiobooks/disney-in-cautarea-lui-dory-biblioteca-magica-2",
+      "title_hint": "Disney In Cautarea Lui Dory Biblioteca Magica 2"
+    },
+    {
+      "slug": "disney-junior-7-povesti-pentru-toata-saptamana",
+      "url": "https://voxa.ro/audiobooks/disney-junior-7-povesti-pentru-toata-saptamana",
+      "title_hint": "Disney Junior 7 Povesti Pentru Toata Saptamana"
+    },
+    {
+      "slug": "disney-masini-3",
+      "url": "https://voxa.ro/audiobooks/disney-masini-3",
+      "title_hint": "Disney Masini 3"
+    },
+    {
+      "slug": "disney-primele-mele-povesti-de-noapte-buna-in-asteptarea-lui-mos-craciun",
+      "url": "https://voxa.ro/audiobooks/disney-primele-mele-povesti-de-noapte-buna-in-asteptarea-lui-mos-craciun",
+      "title_hint": "Disney Primele Mele Povesti De Noapte Buna In Asteptarea Lui Mos Craciun"
+    },
+    {
+      "slug": "disney-printese-povesti-despre-prietenie-biblioteca-magica",
+      "url": "https://voxa.ro/audiobooks/disney-printese-povesti-despre-prietenie-biblioteca-magica",
+      "title_hint": "Disney Printese Povesti Despre Prietenie Biblioteca Magica"
+    },
+    {
+      "slug": "disney-regatul-de-gheata-biblioteca-magica",
+      "url": "https://voxa.ro/audiobooks/disney-regatul-de-gheata-biblioteca-magica",
+      "title_hint": "Disney Regatul De Gheata Biblioteca Magica"
+    },
+    {
+      "slug": "disney-regatul-de-gheata-ii-povestea-filmului",
+      "url": "https://voxa.ro/audiobooks/disney-regatul-de-gheata-ii-povestea-filmului",
+      "title_hint": "Disney Regatul De Gheata Ii Povestea Filmului"
+    },
+    {
+      "slug": "disney-vaiana-biblioteca-magica",
+      "url": "https://voxa.ro/audiobooks/disney-vaiana-biblioteca-magica",
+      "title_hint": "Disney Vaiana Biblioteca Magica"
+    },
+    {
+      "slug": "doar-copiii-care-mor-mai-pot-scoate-parlamentul-romaniei-din-teroarea-ong-urilor",
+      "url": "https://voxa.ro/audiobooks/doar-copiii-care-mor-mai-pot-scoate-parlamentul-romaniei-din-teroarea-ong-urilor",
+      "title_hint": "Doar Copiii Care Mor Mai Pot Scoate Parlamentul Romaniei Din Teroarea Ong Urilor"
+    },
+    {
+      "slug": "doris-the-singing-cow-2",
+      "url": "https://voxa.ro/audiobooks/doris-the-singing-cow-2",
+      "title_hint": "Doris The Singing Cow 2"
+    },
+    {
+      "slug": "dosarele-criminalilor-in-serie",
+      "url": "https://voxa.ro/audiobooks/dosarele-criminalilor-in-serie",
+      "title_hint": "Dosarele Criminalilor In Serie"
+    },
+    {
+      "slug": "drama-copilului-interior-prizonieri-ai-copilariei-in-cautarea-adevaratului-sine",
+      "url": "https://voxa.ro/audiobooks/drama-copilului-interior-prizonieri-ai-copilariei-in-cautarea-adevaratului-sine",
+      "title_hint": "Drama Copilului Interior Prizonieri Ai Copilariei In Cautarea Adevaratului Sine"
+    },
+    {
+      "slug": "dumbo",
+      "url": "https://voxa.ro/audiobooks/dumbo",
+      "title_hint": "Dumbo"
+    },
+    {
+      "slug": "e10-alba-ca-zapada-si-cei-sapte-pitici",
+      "url": "https://voxa.ro/audiobooks/e10-alba-ca-zapada-si-cei-sapte-pitici",
+      "title_hint": "E10 Alba Ca Zapada Si Cei Sapte Pitici"
+    },
+    {
+      "slug": "e12-bambi",
+      "url": "https://voxa.ro/audiobooks/e12-bambi",
+      "title_hint": "E12 Bambi"
+    },
+    {
+      "slug": "e14-pinocchio",
+      "url": "https://voxa.ro/audiobooks/e14-pinocchio",
+      "title_hint": "E14 Pinocchio"
+    },
+    {
+      "slug": "e17-dumbo",
+      "url": "https://voxa.ro/audiobooks/e17-dumbo",
+      "title_hint": "E17 Dumbo"
+    },
+    {
+      "slug": "e32-star-o-pisicuta-singura-in-noapte",
+      "url": "https://voxa.ro/audiobooks/e32-star-o-pisicuta-singura-in-noapte",
+      "title_hint": "E32 Star O Pisicuta Singura In Noapte"
+    },
+    {
+      "slug": "e33-charlie-pisoiul-singuratic",
+      "url": "https://voxa.ro/audiobooks/e33-charlie-pisoiul-singuratic",
+      "title_hint": "E33 Charlie Pisoiul Singuratic"
+    },
+    {
+      "slug": "e35-oscar-se-simte-singur",
+      "url": "https://voxa.ro/audiobooks/e35-oscar-se-simte-singur",
+      "title_hint": "E35 Oscar Se Simte Singur"
+    },
+    {
+      "slug": "e40-micii-eroi-astrid-lindgren",
+      "url": "https://voxa.ro/audiobooks/e40-micii-eroi-astrid-lindgren",
+      "title_hint": "E40 Micii Eroi Astrid Lindgren"
+    },
+    {
+      "slug": "e42-puiul-de-lup-singuratic",
+      "url": "https://voxa.ro/audiobooks/e42-puiul-de-lup-singuratic",
+      "title_hint": "E42 Puiul De Lup Singuratic"
+    },
+    {
+      "slug": "e44-tiger-un-pisoi-dornic-de-aventura",
+      "url": "https://voxa.ro/audiobooks/e44-tiger-un-pisoi-dornic-de-aventura",
+      "title_hint": "E44 Tiger Un Pisoi Dornic De Aventura"
+    },
+    {
+      "slug": "e6-peter-pan",
+      "url": "https://voxa.ro/audiobooks/e6-peter-pan",
+      "title_hint": "E6 Peter Pan"
+    },
+    {
+      "slug": "e7-jess-catelusa-singuratica",
+      "url": "https://voxa.ro/audiobooks/e7-jess-catelusa-singuratica",
+      "title_hint": "E7 Jess Catelusa Singuratica"
+    },
+    {
+      "slug": "e8-cenusareasa",
+      "url": "https://voxa.ro/audiobooks/e8-cenusareasa",
+      "title_hint": "E8 Cenusareasa"
+    },
+    {
+      "slug": "eliberarea-copilului-interior-cum-sa-identifici-si-sa-vindeci-traumele-copilariei-2",
+      "url": "https://voxa.ro/audiobooks/eliberarea-copilului-interior-cum-sa-identifici-si-sa-vindeci-traumele-copilariei-2",
+      "title_hint": "Eliberarea Copilului Interior Cum Sa Identifici Si Sa Vindeci Traumele Copilariei 2"
+    },
+    {
+      "slug": "eliberarea-copilului-interior-cum-sa-identifici-si-sa-vindeci-traumele-copilariei-enhanced-experience",
+      "url": "https://voxa.ro/audiobooks/eliberarea-copilului-interior-cum-sa-identifici-si-sa-vindeci-traumele-copilariei-enhanced-experience",
+      "title_hint": "Eliberarea Copilului Interior Cum Sa Identifici Si Sa Vindeci Traumele Copilariei Enhanced Experience"
+    },
+    {
+      "slug": "erasing-someone-from-your-mind-hypnosis-subliminal-sleep-programming",
+      "url": "https://voxa.ro/audiobooks/erasing-someone-from-your-mind-hypnosis-subliminal-sleep-programming",
+      "title_hint": "Erasing Someone From Your Mind Hypnosis Subliminal Sleep Programming"
+    },
+    {
+      "slug": "essential-doris-lessing",
+      "url": "https://voxa.ro/audiobooks/essential-doris-lessing",
+      "title_hint": "Essential Doris Lessing"
+    },
+    {
+      "slug": "evadarea-din-ghetou-uimitoarea-poveste-a-copilului-care-a-fugit-de-nazisti-2",
+      "url": "https://voxa.ro/audiobooks/evadarea-din-ghetou-uimitoarea-poveste-a-copilului-care-a-fugit-de-nazisti-2",
+      "title_hint": "Evadarea Din Ghetou Uimitoarea Poveste A Copilului Care A Fugit De Nazisti 2"
+    },
+    {
+      "slug": "even-more-funny-paddington-stories",
+      "url": "https://voxa.ro/audiobooks/even-more-funny-paddington-stories",
+      "title_hint": "Even More Funny Paddington Stories"
+    },
+    {
+      "slug": "fara-copii",
+      "url": "https://voxa.ro/audiobooks/fara-copii",
+      "title_hint": "Fara Copii"
+    },
+    {
+      "slug": "farewell-to-manzanar",
+      "url": "https://voxa.ro/audiobooks/farewell-to-manzanar",
+      "title_hint": "Farewell To Manzanar"
+    },
+    {
+      "slug": "fat-frumos-din-lacrima",
+      "url": "https://voxa.ro/audiobooks/fat-frumos-din-lacrima",
+      "title_hint": "Fat Frumos Din Lacrima"
+    },
+    {
+      "slug": "favourite-paddington-stories",
+      "url": "https://voxa.ro/audiobooks/favourite-paddington-stories",
+      "title_hint": "Favourite Paddington Stories"
+    },
+    {
+      "slug": "felicitari-pentru-absolvirea-gradinitei",
+      "url": "https://voxa.ro/audiobooks/felicitari-pentru-absolvirea-gradinitei",
+      "title_hint": "Felicitari Pentru Absolvirea Gradinitei"
+    },
+    {
+      "slug": "fii-prietenul-tau-cel-mai-bun-pentru-copii",
+      "url": "https://voxa.ro/audiobooks/fii-prietenul-tau-cel-mai-bun-pentru-copii",
+      "title_hint": "Fii Prietenul Tau Cel Mai Bun Pentru Copii"
+    },
+    {
+      "slug": "fireborn-twelve-and-the-frozen-forest",
+      "url": "https://voxa.ro/audiobooks/fireborn-twelve-and-the-frozen-forest",
+      "title_hint": "Fireborn Twelve And The Frozen Forest"
+    },
+    {
+      "slug": "five-days-missing",
+      "url": "https://voxa.ro/audiobooks/five-days-missing",
+      "title_hint": "Five Days Missing"
+    },
+    {
+      "slug": "focusing-concentration",
+      "url": "https://voxa.ro/audiobooks/focusing-concentration",
+      "title_hint": "Focusing Concentration"
+    },
+    {
+      "slug": "fram-ursul-polar",
+      "url": "https://voxa.ro/audiobooks/fram-ursul-polar",
+      "title_hint": "Fram Ursul Polar"
+    },
+    {
+      "slug": "fram-ursul-polar-adaptare",
+      "url": "https://voxa.ro/audiobooks/fram-ursul-polar-adaptare",
+      "title_hint": "Fram Ursul Polar Adaptare"
+    },
+    {
+      "slug": "fratii-karamazov-mari-opere-din-literatura-rusa-povestite-copiilor-nivelul-6",
+      "url": "https://voxa.ro/audiobooks/fratii-karamazov-mari-opere-din-literatura-rusa-povestite-copiilor-nivelul-6",
+      "title_hint": "Fratii Karamazov Mari Opere Din Literatura Rusa Povestite Copiilor Nivelul 6"
+    },
+    {
+      "slug": "frica-si-anxietatea-copilului-solutii-practice-pentru-a-l-ajuta-sa-le-depaseasca-2",
+      "url": "https://voxa.ro/audiobooks/frica-si-anxietatea-copilului-solutii-practice-pentru-a-l-ajuta-sa-le-depaseasca-2",
+      "title_hint": "Frica Si Anxietatea Copilului Solutii Practice Pentru A L Ajuta Sa Le Depaseasca 2"
+    },
+    {
+      "slug": "funny-paddington-stories",
+      "url": "https://voxa.ro/audiobooks/funny-paddington-stories",
+      "title_hint": "Funny Paddington Stories"
+    },
+    {
+      "slug": "great-bazaar-and-brayan-s-gold",
+      "url": "https://voxa.ro/audiobooks/great-bazaar-and-brayan-s-gold",
+      "title_hint": "Great Bazaar And Brayan S Gold"
+    },
+    {
+      "slug": "henny-penny-and-the-wonderfood-2",
+      "url": "https://voxa.ro/audiobooks/henny-penny-and-the-wonderfood-2",
+      "title_hint": "Henny Penny And The Wonderfood 2"
+    },
+    {
+      "slug": "her-last-betrayal",
+      "url": "https://voxa.ro/audiobooks/her-last-betrayal",
+      "title_hint": "Her Last Betrayal"
+    },
+    {
+      "slug": "her-last-betrayal-2",
+      "url": "https://voxa.ro/audiobooks/her-last-betrayal-2",
+      "title_hint": "Her Last Betrayal 2"
+    },
+    {
+      "slug": "hero-rising",
+      "url": "https://voxa.ro/audiobooks/hero-rising",
+      "title_hint": "Hero Rising"
+    },
+    {
+      "slug": "how-to-play-golf-the-natural-way-using-your-mind-and-body",
+      "url": "https://voxa.ro/audiobooks/how-to-play-golf-the-natural-way-using-your-mind-and-body",
+      "title_hint": "How To Play Golf The Natural Way Using Your Mind And Body"
+    },
+    {
+      "slug": "identificarea-starii-emotionale-pentru-copii",
+      "url": "https://voxa.ro/audiobooks/identificarea-starii-emotionale-pentru-copii",
+      "title_hint": "Identificarea Starii Emotionale Pentru Copii"
+    },
+    {
+      "slug": "increasing-communication",
+      "url": "https://voxa.ro/audiobooks/increasing-communication",
+      "title_hint": "Increasing Communication"
+    },
+    {
+      "slug": "inteligenta-emotionala-pe-intelesul-copiilor-eliza-nu-se-da-batuta",
+      "url": "https://voxa.ro/audiobooks/inteligenta-emotionala-pe-intelesul-copiilor-eliza-nu-se-da-batuta",
+      "title_hint": "Inteligenta Emotionala Pe Intelesul Copiilor Eliza Nu Se Da Batuta"
+    },
+    {
+      "slug": "inteligenta-emotionala-pe-intelesul-copiilor-rebeca-invinge-ingrijorarea",
+      "url": "https://voxa.ro/audiobooks/inteligenta-emotionala-pe-intelesul-copiilor-rebeca-invinge-ingrijorarea",
+      "title_hint": "Inteligenta Emotionala Pe Intelesul Copiilor Rebeca Invinge Ingrijorarea"
+    },
+    {
+      "slug": "inteligenta-emotionala-pe-intelesul-copiilor-robert-nu-se-mai-enerveaza",
+      "url": "https://voxa.ro/audiobooks/inteligenta-emotionala-pe-intelesul-copiilor-robert-nu-se-mai-enerveaza",
+      "title_hint": "Inteligenta Emotionala Pe Intelesul Copiilor Robert Nu Se Mai Enerveaza"
+    },
+    {
+      "slug": "intre-parinte-si-copil-audiobook",
+      "url": "https://voxa.ro/audiobooks/intre-parinte-si-copil-audiobook",
+      "title_hint": "Intre Parinte Si Copil Audiobook"
+    },
+    {
+      "slug": "istoria-lumii-pentru-copii-al-doilea-razboi-mondial",
+      "url": "https://voxa.ro/audiobooks/istoria-lumii-pentru-copii-al-doilea-razboi-mondial",
+      "title_hint": "Istoria Lumii Pentru Copii Al Doilea Razboi Mondial"
+    },
+    {
+      "slug": "istoria-lumii-pentru-copii-cucerirea-spatiului",
+      "url": "https://voxa.ro/audiobooks/istoria-lumii-pentru-copii-cucerirea-spatiului",
+      "title_hint": "Istoria Lumii Pentru Copii Cucerirea Spatiului"
+    },
+    {
+      "slug": "istoria-lumii-pentru-copii-razboiul-de-secesiune-si-cucerirea-vestului",
+      "url": "https://voxa.ro/audiobooks/istoria-lumii-pentru-copii-razboiul-de-secesiune-si-cucerirea-vestului",
+      "title_hint": "Istoria Lumii Pentru Copii Razboiul De Secesiune Si Cucerirea Vestului"
+    },
+    {
+      "slug": "istoria-lumii-pentru-copii-revolutia-rusa",
+      "url": "https://voxa.ro/audiobooks/istoria-lumii-pentru-copii-revolutia-rusa",
+      "title_hint": "Istoria Lumii Pentru Copii Revolutia Rusa"
+    },
+    {
+      "slug": "it-s-a-wonderful-life",
+      "url": "https://voxa.ro/audiobooks/it-s-a-wonderful-life",
+      "title_hint": "It S A Wonderful Life"
+    },
+    {
+      "slug": "jasmine-petitoarea-cenusareasa",
+      "url": "https://voxa.ro/audiobooks/jasmine-petitoarea-cenusareasa",
+      "title_hint": "Jasmine Petitoarea Cenusareasa"
+    },
+    {
+      "slug": "jean-piaget-limbajul-si-gandirea-copilului",
+      "url": "https://voxa.ro/audiobooks/jean-piaget-limbajul-si-gandirea-copilului",
+      "title_hint": "Jean Piaget Limbajul Si Gandirea Copilului"
+    },
+    {
+      "slug": "jocul-atasamentului-rezolvarea-problemelor-de-comportament-ale-copilului-prin-joaca-ras-si-conectare",
+      "url": "https://voxa.ro/audiobooks/jocul-atasamentului-rezolvarea-problemelor-de-comportament-ale-copilului-prin-joaca-ras-si-conectare",
+      "title_hint": "Jocul Atasamentului Rezolvarea Problemelor De Comportament Ale Copilului Prin Joaca Ras Si Conectare"
+    },
+    {
+      "slug": "kamdev-singh",
+      "url": "https://voxa.ro/audiobooks/kamdev-singh",
+      "title_hint": "Kamdev Singh"
+    },
+    {
+      "slug": "krondor-the-betrayal",
+      "url": "https://voxa.ro/audiobooks/krondor-the-betrayal",
+      "title_hint": "Krondor The Betrayal"
+    },
+    {
+      "slug": "lee-s-lieutenants-singapore-s-old-guard",
+      "url": "https://voxa.ro/audiobooks/lee-s-lieutenants-singapore-s-old-guard",
+      "title_hint": "Lee S Lieutenants Singapore S Old Guard"
+    },
+    {
+      "slug": "libera-un-copil-si-o-tara-la-sfarsitul-istoriei-2",
+      "url": "https://voxa.ro/audiobooks/libera-un-copil-si-o-tara-la-sfarsitul-istoriei-2",
+      "title_hint": "Libera Un Copil Si O Tara La Sfarsitul Istoriei 2"
+    },
+    {
+      "slug": "lies-we-sing-to-the-sea",
+      "url": "https://voxa.ro/audiobooks/lies-we-sing-to-the-sea",
+      "title_hint": "Lies We Sing To The Sea"
+    },
+    {
+      "slug": "liniste-si-calm-pentru-copii",
+      "url": "https://voxa.ro/audiobooks/liniste-si-calm-pentru-copii",
+      "title_hint": "Liniste Si Calm Pentru Copii"
+    },
+    {
+      "slug": "local-woman-missing",
+      "url": "https://voxa.ro/audiobooks/local-woman-missing",
+      "title_hint": "Local Woman Missing"
+    },
+    {
+      "slug": "losing-it",
+      "url": "https://voxa.ro/audiobooks/losing-it",
+      "title_hint": "Losing It"
+    },
+    {
+      "slug": "losing-it-2",
+      "url": "https://voxa.ro/audiobooks/losing-it-2",
+      "title_hint": "Losing It 2"
+    },
+    {
+      "slug": "losing-juliet",
+      "url": "https://voxa.ro/audiobooks/losing-juliet",
+      "title_hint": "Losing Juliet"
+    },
+    {
+      "slug": "losing-young",
+      "url": "https://voxa.ro/audiobooks/losing-young",
+      "title_hint": "Losing Young"
+    },
+    {
+      "slug": "love-from-paddington",
+      "url": "https://voxa.ro/audiobooks/love-from-paddington",
+      "title_hint": "Love From Paddington"
+    },
+    {
+      "slug": "maya-and-the-rising-dark",
+      "url": "https://voxa.ro/audiobooks/maya-and-the-rising-dark",
+      "title_hint": "Maya And The Rising Dark"
+    },
+    {
+      "slug": "mica-sirena-in-cautarea-darurilor-aurora-si-surprizele-craciunului",
+      "url": "https://voxa.ro/audiobooks/mica-sirena-in-cautarea-darurilor-aurora-si-surprizele-craciunului",
+      "title_hint": "Mica Sirena In Cautarea Darurilor Aurora Si Surprizele Craciunului"
+    },
+    {
+      "slug": "micul-print",
+      "url": "https://voxa.ro/audiobooks/micul-print",
+      "title_hint": "Micul Print"
+    },
+    {
+      "slug": "micul-print-2",
+      "url": "https://voxa.ro/audiobooks/micul-print-2",
+      "title_hint": "Micul Print 2"
+    },
+    {
+      "slug": "micul-print-4",
+      "url": "https://voxa.ro/audiobooks/micul-print-4",
+      "title_hint": "Micul Print 4"
+    },
+    {
+      "slug": "mindfulness-pentru-copii",
+      "url": "https://voxa.ro/audiobooks/mindfulness-pentru-copii",
+      "title_hint": "Mindfulness Pentru Copii"
+    },
+    {
+      "slug": "minnie-and-winnie-2",
+      "url": "https://voxa.ro/audiobooks/minnie-and-winnie-2",
+      "title_hint": "Minnie And Winnie 2"
+    },
+    {
+      "slug": "missing-2",
+      "url": "https://voxa.ro/audiobooks/missing-2",
+      "title_hint": "Missing 2"
+    },
+    {
+      "slug": "missing-presumed",
+      "url": "https://voxa.ro/audiobooks/missing-presumed",
+      "title_hint": "Missing Presumed"
+    },
+    {
+      "slug": "missing-sisters",
+      "url": "https://voxa.ro/audiobooks/missing-sisters",
+      "title_hint": "Missing Sisters"
+    },
+    {
+      "slug": "mitul-copilului-rasfatat-de-la-educatia-prin-pedepse-si-recompense-la-arta-de-a-creste-un-copil-cu-stima-de-sine-responsabil-si-empatic-cu-cei-din-jur",
+      "url": "https://voxa.ro/audiobooks/mitul-copilului-rasfatat-de-la-educatia-prin-pedepse-si-recompense-la-arta-de-a-creste-un-copil-cu-stima-de-sine-responsabil-si-empatic-cu-cei-din-jur",
+      "title_hint": "Mitul Copilului Rasfatat De La Educatia Prin Pedepse Si Recompense La Arta De A Creste Un Copil Cu Stima De Sine Responsabil Si Empatic Cu Cei Din Jur"
+    },
+    {
+      "slug": "more-about-paddington",
+      "url": "https://voxa.ro/audiobooks/more-about-paddington",
+      "title_hint": "More About Paddington"
+    },
+    {
+      "slug": "more-funny-paddington-stories",
+      "url": "https://voxa.ro/audiobooks/more-funny-paddington-stories",
+      "title_hint": "More Funny Paddington Stories"
+    },
+    {
+      "slug": "mowgli-all-of-the-mowgli-stories-from-the-jungle-books",
+      "url": "https://voxa.ro/audiobooks/mowgli-all-of-the-mowgli-stories-from-the-jungle-books",
+      "title_hint": "Mowgli All Of The Mowgli Stories From The Jungle Books"
+    },
+    {
+      "slug": "mrs-mohr-goes-missing",
+      "url": "https://voxa.ro/audiobooks/mrs-mohr-goes-missing",
+      "title_hint": "Mrs Mohr Goes Missing"
+    },
+    {
+      "slug": "my-sister-is-missing",
+      "url": "https://voxa.ro/audiobooks/my-sister-is-missing",
+      "title_hint": "My Sister Is Missing"
+    },
+    {
+      "slug": "nathalia-buttface-and-the-embarrassing-camp-catastrophe",
+      "url": "https://voxa.ro/audiobooks/nathalia-buttface-and-the-embarrassing-camp-catastrophe",
+      "title_hint": "Nathalia Buttface And The Embarrassing Camp Catastrophe"
+    },
+    {
+      "slug": "nathalia-buttface-and-the-most-embarrassing-dad-in-the-world",
+      "url": "https://voxa.ro/audiobooks/nathalia-buttface-and-the-most-embarrassing-dad-in-the-world",
+      "title_hint": "Nathalia Buttface And The Most Embarrassing Dad In The World"
+    },
+    {
+      "slug": "nathalia-buttface-and-the-most-embarrassing-five-minutes-of-fame-ever",
+      "url": "https://voxa.ro/audiobooks/nathalia-buttface-and-the-most-embarrassing-five-minutes-of-fame-ever",
+      "title_hint": "Nathalia Buttface And The Most Embarrassing Five Minutes Of Fame Ever"
+    },
+    {
+      "slug": "nathalia-buttface-and-the-most-epically-embarrassing-trip-ever",
+      "url": "https://voxa.ro/audiobooks/nathalia-buttface-and-the-most-epically-embarrassing-trip-ever",
+      "title_hint": "Nathalia Buttface And The Most Epically Embarrassing Trip Ever"
+    },
+    {
+      "slug": "nathalia-buttface-and-the-totally-embarrassing-bridesmaid-disaster",
+      "url": "https://voxa.ro/audiobooks/nathalia-buttface-and-the-totally-embarrassing-bridesmaid-disaster",
+      "title_hint": "Nathalia Buttface And The Totally Embarrassing Bridesmaid Disaster"
+    },
+    {
+      "slug": "naughtiest-unicorn-on-holiday-and-winter-wonderland",
+      "url": "https://voxa.ro/audiobooks/naughtiest-unicorn-on-holiday-and-winter-wonderland",
+      "title_hint": "Naughtiest Unicorn On Holiday And Winter Wonderland"
+    },
+    {
+      "slug": "noi-copiii-din-bahnhof-zoo-audiobook",
+      "url": "https://voxa.ro/audiobooks/noi-copiii-din-bahnhof-zoo-audiobook",
+      "title_hint": "Noi Copiii Din Bahnhof Zoo Audiobook"
+    },
+    {
+      "slug": "o-aventura-italiana-2",
+      "url": "https://voxa.ro/audiobooks/o-aventura-italiana-2",
+      "title_hint": "O Aventura Italiana 2"
+    },
+    {
+      "slug": "paddington",
+      "url": "https://voxa.ro/audiobooks/paddington",
+      "title_hint": "Paddington"
+    },
+    {
+      "slug": "paddington-abroad",
+      "url": "https://voxa.ro/audiobooks/paddington-abroad",
+      "title_hint": "Paddington Abroad"
+    },
+    {
+      "slug": "paddington-and-the-busy-day",
+      "url": "https://voxa.ro/audiobooks/paddington-and-the-busy-day",
+      "title_hint": "Paddington And The Busy Day"
+    },
+    {
+      "slug": "paddington-and-the-christmas-surprise",
+      "url": "https://voxa.ro/audiobooks/paddington-and-the-christmas-surprise",
+      "title_hint": "Paddington And The Christmas Surprise"
+    },
+    {
+      "slug": "paddington-and-the-grand-tour",
+      "url": "https://voxa.ro/audiobooks/paddington-and-the-grand-tour",
+      "title_hint": "Paddington And The Grand Tour"
+    },
+    {
+      "slug": "paddington-and-the-marmalade-maze",
+      "url": "https://voxa.ro/audiobooks/paddington-and-the-marmalade-maze",
+      "title_hint": "Paddington And The Marmalade Maze"
+    },
+    {
+      "slug": "paddington-and-the-tutti-frutti-rainbow",
+      "url": "https://voxa.ro/audiobooks/paddington-and-the-tutti-frutti-rainbow",
+      "title_hint": "Paddington And The Tutti Frutti Rainbow"
+    },
+    {
+      "slug": "paddington-at-large",
+      "url": "https://voxa.ro/audiobooks/paddington-at-large",
+      "title_hint": "Paddington At Large"
+    },
+    {
+      "slug": "paddington-at-st-paul-s",
+      "url": "https://voxa.ro/audiobooks/paddington-at-st-paul-s",
+      "title_hint": "Paddington At St Paul S"
+    },
+    {
+      "slug": "paddington-at-the-carnival",
+      "url": "https://voxa.ro/audiobooks/paddington-at-the-carnival",
+      "title_hint": "Paddington At The Carnival"
+    },
+    {
+      "slug": "paddington-at-the-circus",
+      "url": "https://voxa.ro/audiobooks/paddington-at-the-circus",
+      "title_hint": "Paddington At The Circus"
+    },
+    {
+      "slug": "paddington-at-the-fair",
+      "url": "https://voxa.ro/audiobooks/paddington-at-the-fair",
+      "title_hint": "Paddington At The Fair"
+    },
+    {
+      "slug": "paddington-at-the-palace",
+      "url": "https://voxa.ro/audiobooks/paddington-at-the-palace",
+      "title_hint": "Paddington At The Palace"
+    },
+    {
+      "slug": "paddington-at-the-zoo",
+      "url": "https://voxa.ro/audiobooks/paddington-at-the-zoo",
+      "title_hint": "Paddington At The Zoo"
+    },
+    {
+      "slug": "paddington-at-work",
+      "url": "https://voxa.ro/audiobooks/paddington-at-work",
+      "title_hint": "Paddington At Work"
+    },
+    {
+      "slug": "paddington-goes-for-gold",
+      "url": "https://voxa.ro/audiobooks/paddington-goes-for-gold",
+      "title_hint": "Paddington Goes For Gold"
+    },
+    {
+      "slug": "paddington-goes-to-hospital",
+      "url": "https://voxa.ro/audiobooks/paddington-goes-to-hospital",
+      "title_hint": "Paddington Goes To Hospital"
+    },
+    {
+      "slug": "paddington-goes-to-town",
+      "url": "https://voxa.ro/audiobooks/paddington-goes-to-town",
+      "title_hint": "Paddington Goes To Town"
+    },
+    {
+      "slug": "paddington-helps-out",
+      "url": "https://voxa.ro/audiobooks/paddington-helps-out",
+      "title_hint": "Paddington Helps Out"
+    },
+    {
+      "slug": "paddington-here-and-now",
+      "url": "https://voxa.ro/audiobooks/paddington-here-and-now",
+      "title_hint": "Paddington Here And Now"
+    },
+    {
+      "slug": "paddington-in-hot-water",
+      "url": "https://voxa.ro/audiobooks/paddington-in-hot-water",
+      "title_hint": "Paddington In Hot Water"
+    },
+    {
+      "slug": "paddington-in-the-garden",
+      "url": "https://voxa.ro/audiobooks/paddington-in-the-garden",
+      "title_hint": "Paddington In The Garden"
+    },
+    {
+      "slug": "paddington-marches-on",
+      "url": "https://voxa.ro/audiobooks/paddington-marches-on",
+      "title_hint": "Paddington Marches On"
+    },
+    {
+      "slug": "paddington-minds-the-house",
+      "url": "https://voxa.ro/audiobooks/paddington-minds-the-house",
+      "title_hint": "Paddington Minds The House"
+    },
+    {
+      "slug": "paddington-on-top",
+      "url": "https://voxa.ro/audiobooks/paddington-on-top",
+      "title_hint": "Paddington On Top"
+    },
+    {
+      "slug": "paddington-races-ahead",
+      "url": "https://voxa.ro/audiobooks/paddington-races-ahead",
+      "title_hint": "Paddington Races Ahead"
+    },
+    {
+      "slug": "paddington-s-easter-egg-hunt",
+      "url": "https://voxa.ro/audiobooks/paddington-s-easter-egg-hunt",
+      "title_hint": "Paddington S Easter Egg Hunt"
+    },
+    {
+      "slug": "paddington-s-finest-hour",
+      "url": "https://voxa.ro/audiobooks/paddington-s-finest-hour",
+      "title_hint": "Paddington S Finest Hour"
+    },
+    {
+      "slug": "paddington-s-party-tricks",
+      "url": "https://voxa.ro/audiobooks/paddington-s-party-tricks",
+      "title_hint": "Paddington S Party Tricks"
+    },
+    {
+      "slug": "paddington-s-trick-or-treat",
+      "url": "https://voxa.ro/audiobooks/paddington-s-trick-or-treat",
+      "title_hint": "Paddington S Trick Or Treat"
+    },
+    {
+      "slug": "paddington-takes-the-air",
+      "url": "https://voxa.ro/audiobooks/paddington-takes-the-air",
+      "title_hint": "Paddington Takes The Air"
+    },
+    {
+      "slug": "paddington-takes-the-test",
+      "url": "https://voxa.ro/audiobooks/paddington-takes-the-test",
+      "title_hint": "Paddington Takes The Test"
+    },
+    {
+      "slug": "paddington-the-artist",
+      "url": "https://voxa.ro/audiobooks/paddington-the-artist",
+      "title_hint": "Paddington The Artist"
+    },
+    {
+      "slug": "paddington-turns-detective-and-other-funny-stories",
+      "url": "https://voxa.ro/audiobooks/paddington-turns-detective-and-other-funny-stories",
+      "title_hint": "Paddington Turns Detective And Other Funny Stories"
+    },
+    {
+      "slug": "parintele-constient-cum-sa-ne-transformam-pe-noi-pentru-a-avea-copii-puternici-2",
+      "url": "https://voxa.ro/audiobooks/parintele-constient-cum-sa-ne-transformam-pe-noi-pentru-a-avea-copii-puternici-2",
+      "title_hint": "Parintele Constient Cum Sa Ne Transformam Pe Noi Pentru A Avea Copii Puternici 2"
+    },
+    {
+      "slug": "peter-pan",
+      "url": "https://voxa.ro/audiobooks/peter-pan",
+      "title_hint": "Peter Pan"
+    },
+    {
+      "slug": "peter-pan-4",
+      "url": "https://voxa.ro/audiobooks/peter-pan-4",
+      "title_hint": "Peter Pan 4"
+    },
+    {
+      "slug": "peter-pan-5",
+      "url": "https://voxa.ro/audiobooks/peter-pan-5",
+      "title_hint": "Peter Pan 5"
+    },
+    {
+      "slug": "phoenix-rising",
+      "url": "https://voxa.ro/audiobooks/phoenix-rising",
+      "title_hint": "Phoenix Rising"
+    },
+    {
+      "slug": "pinocchio",
+      "url": "https://voxa.ro/audiobooks/pinocchio",
+      "title_hint": "Pinocchio"
+    },
+    {
+      "slug": "pinocchio-8",
+      "url": "https://voxa.ro/audiobooks/pinocchio-8",
+      "title_hint": "Pinocchio 8"
+    },
+    {
+      "slug": "pisces-rising",
+      "url": "https://voxa.ro/audiobooks/pisces-rising",
+      "title_hint": "Pisces Rising"
+    },
+    {
+      "slug": "pisicuta-alba-ca-zapada-2",
+      "url": "https://voxa.ro/audiobooks/pisicuta-alba-ca-zapada-2",
+      "title_hint": "Pisicuta Alba Ca Zapada 2"
+    },
+    {
+      "slug": "povesti-corecte-politic-de-adormit-copiii-audiobook",
+      "url": "https://voxa.ro/audiobooks/povesti-corecte-politic-de-adormit-copiii-audiobook",
+      "title_hint": "Povesti Corecte Politic De Adormit Copiii Audiobook"
+    },
+    {
+      "slug": "povesti-cu-femei-maritate",
+      "url": "https://voxa.ro/audiobooks/povesti-cu-femei-maritate",
+      "title_hint": "Povesti Cu Femei Maritate"
+    },
+    {
+      "slug": "povestile-de-aur-ale-copilariei",
+      "url": "https://voxa.ro/audiobooks/povestile-de-aur-ale-copilariei",
+      "title_hint": "Povestile De Aur Ale Copilariei"
+    },
+    {
+      "slug": "primele-mele-povesti-scufita-rosie-si-alte-cinci-povesti-minunate",
+      "url": "https://voxa.ro/audiobooks/primele-mele-povesti-scufita-rosie-si-alte-cinci-povesti-minunate",
+      "title_hint": "Primele Mele Povesti Scufita Rosie Si Alte Cinci Povesti Minunate"
+    },
+    {
+      "slug": "printesele-rosii-femei-si-barbati-parinti-si-copii-in-ideologia-si-cotidianul-comunist",
+      "url": "https://voxa.ro/audiobooks/printesele-rosii-femei-si-barbati-parinti-si-copii-in-ideologia-si-cotidianul-comunist",
+      "title_hint": "Printesele Rosii Femei Si Barbati Parinti Si Copii In Ideologia Si Cotidianul Comunist"
+    },
+    {
+      "slug": "punguta-cu-doi-bani",
+      "url": "https://voxa.ro/audiobooks/punguta-cu-doi-bani",
+      "title_hint": "Punguta Cu Doi Bani"
+    },
+    {
+      "slug": "punguta-cu-doi-bani-ursul-pacalit-de-vulpe",
+      "url": "https://voxa.ro/audiobooks/punguta-cu-doi-bani-ursul-pacalit-de-vulpe",
+      "title_hint": "Punguta Cu Doi Bani Ursul Pacalit De Vulpe"
+    },
+    {
+      "slug": "race-to-the-frozen-north",
+      "url": "https://voxa.ro/audiobooks/race-to-the-frozen-north",
+      "title_hint": "Race To The Frozen North"
+    },
+    {
+      "slug": "rain-rising",
+      "url": "https://voxa.ro/audiobooks/rain-rising",
+      "title_hint": "Rain Rising"
+    },
+    {
+      "slug": "raising-boys",
+      "url": "https://voxa.ro/audiobooks/raising-boys",
+      "title_hint": "Raising Boys"
+    },
+    {
+      "slug": "raising-boys-in-the-21st-century",
+      "url": "https://voxa.ro/audiobooks/raising-boys-in-the-21st-century",
+      "title_hint": "Raising Boys In The 21st Century"
+    },
+    {
+      "slug": "raising-girls",
+      "url": "https://voxa.ro/audiobooks/raising-girls",
+      "title_hint": "Raising Girls"
+    },
+    {
+      "slug": "raising-them-right",
+      "url": "https://voxa.ro/audiobooks/raising-them-right",
+      "title_hint": "Raising Them Right"
+    },
+    {
+      "slug": "rattlesnake-crossing",
+      "url": "https://voxa.ro/audiobooks/rattlesnake-crossing",
+      "title_hint": "Rattlesnake Crossing"
+    },
+    {
+      "slug": "razboi-si-pace-mari-opere-din-literatura-rusa-povestite-copiilor",
+      "url": "https://voxa.ro/audiobooks/razboi-si-pace-mari-opere-din-literatura-rusa-povestite-copiilor",
+      "title_hint": "Razboi Si Pace Mari Opere Din Literatura Rusa Povestite Copiilor"
+    },
+    {
+      "slug": "razboi-si-pace-mari-opere-din-literatura-rusa-povestite-copiilor-2",
+      "url": "https://voxa.ro/audiobooks/razboi-si-pace-mari-opere-din-literatura-rusa-povestite-copiilor-2",
+      "title_hint": "Razboi Si Pace Mari Opere Din Literatura Rusa Povestite Copiilor 2"
+    },
+    {
+      "slug": "razboiul-prin-ochii-unui-copil-2",
+      "url": "https://voxa.ro/audiobooks/razboiul-prin-ochii-unui-copil-2",
+      "title_hint": "Razboiul Prin Ochii Unui Copil 2"
+    },
+    {
+      "slug": "redactia-lupilor-singuratici",
+      "url": "https://voxa.ro/audiobooks/redactia-lupilor-singuratici",
+      "title_hint": "Redactia Lupilor Singuratici"
+    },
+    {
+      "slug": "relaxare-pentru-copii-prin-sunet-si-ascultare",
+      "url": "https://voxa.ro/audiobooks/relaxare-pentru-copii-prin-sunet-si-ascultare",
+      "title_hint": "Relaxare Pentru Copii Prin Sunet Si Ascultare"
+    },
+    {
+      "slug": "rising-star",
+      "url": "https://voxa.ro/audiobooks/rising-star",
+      "title_hint": "Rising Star"
+    },
+    {
+      "slug": "rising-storm",
+      "url": "https://voxa.ro/audiobooks/rising-storm",
+      "title_hint": "Rising Storm"
+    },
+    {
+      "slug": "risingtidefallingstar",
+      "url": "https://voxa.ro/audiobooks/risingtidefallingstar",
+      "title_hint": "Risingtidefallingstar"
+    },
+    {
+      "slug": "rx-17-series-rising-above-negativity",
+      "url": "https://voxa.ro/audiobooks/rx-17-series-rising-above-negativity",
+      "title_hint": "Rx 17 Series Rising Above Negativity"
+    },
+    {
+      "slug": "saptamana-analfabetului-functional-si-ipocrizia-liberalilor",
+      "url": "https://voxa.ro/audiobooks/saptamana-analfabetului-functional-si-ipocrizia-liberalilor",
+      "title_hint": "Saptamana Analfabetului Functional Si Ipocrizia Liberalilor"
+    },
+    {
+      "slug": "scars-of-my-guardian-angel",
+      "url": "https://voxa.ro/audiobooks/scars-of-my-guardian-angel",
+      "title_hint": "Scars Of My Guardian Angel"
+    },
+    {
+      "slug": "schoolgirl-missing",
+      "url": "https://voxa.ro/audiobooks/schoolgirl-missing",
+      "title_hint": "Schoolgirl Missing"
+    },
+    {
+      "slug": "scorpion-betrayal",
+      "url": "https://voxa.ro/audiobooks/scorpion-betrayal",
+      "title_hint": "Scorpion Betrayal"
+    },
+    {
+      "slug": "scrisoare-pentru-renul-mosului-de-mihaela-mocanu",
+      "url": "https://voxa.ro/audiobooks/scrisoare-pentru-renul-mosului-de-mihaela-mocanu",
+      "title_hint": "Scrisoare Pentru Renul Mosului De Mihaela Mocanu"
+    },
+    {
+      "slug": "sea-witch-rising",
+      "url": "https://voxa.ro/audiobooks/sea-witch-rising",
+      "title_hint": "Sea Witch Rising"
+    },
+    {
+      "slug": "secretul-succesului-de-ce-unii-copii-vor-reusi-in-viata-iar-altii-vor-esua",
+      "url": "https://voxa.ro/audiobooks/secretul-succesului-de-ce-unii-copii-vor-reusi-in-viata-iar-altii-vor-esua",
+      "title_hint": "Secretul Succesului De Ce Unii Copii Vor Reusi In Viata Iar Altii Vor Esua"
+    },
+    {
+      "slug": "shaman-s-crossing",
+      "url": "https://voxa.ro/audiobooks/shaman-s-crossing",
+      "title_hint": "Shaman S Crossing"
+    },
+    {
+      "slug": "sidney-sheldon-s-chasing-tomorrow",
+      "url": "https://voxa.ro/audiobooks/sidney-sheldon-s-chasing-tomorrow",
+      "title_hint": "Sidney Sheldon S Chasing Tomorrow"
+    },
+    {
+      "slug": "sing",
+      "url": "https://voxa.ro/audiobooks/sing",
+      "title_hint": "Sing"
+    },
+    {
+      "slug": "sing-a-song-of-sixpence",
+      "url": "https://voxa.ro/audiobooks/sing-a-song-of-sixpence",
+      "title_hint": "Sing A Song Of Sixpence"
+    },
+    {
+      "slug": "sing-me-forgotten",
+      "url": "https://voxa.ro/audiobooks/sing-me-forgotten",
+      "title_hint": "Sing Me Forgotten"
+    },
+    {
+      "slug": "sing-your-name-out-loud",
+      "url": "https://voxa.ro/audiobooks/sing-your-name-out-loud",
+      "title_hint": "Sing Your Name Out Loud"
+    },
+    {
+      "slug": "single-carefree-mellow",
+      "url": "https://voxa.ro/audiobooks/single-carefree-mellow",
+      "title_hint": "Single Carefree Mellow"
+    },
+    {
+      "slug": "singularity",
+      "url": "https://voxa.ro/audiobooks/singularity",
+      "title_hint": "Singularity"
+    },
+    {
+      "slug": "singuratate",
+      "url": "https://voxa.ro/audiobooks/singuratate",
+      "title_hint": "Singuratate"
+    },
+    {
+      "slug": "smartphone-ul-copilariei",
+      "url": "https://voxa.ro/audiobooks/smartphone-ul-copilariei",
+      "title_hint": "Smartphone Ul Copilariei"
+    },
+    {
+      "slug": "solo-cum-sa-lucrezi-singur-si-sa-nu-iti-pierzi-mintile",
+      "url": "https://voxa.ro/audiobooks/solo-cum-sa-lucrezi-singur-si-sa-nu-iti-pierzi-mintile",
+      "title_hint": "Solo Cum Sa Lucrezi Singur Si Sa Nu Iti Pierzi Mintile"
+    },
+    {
+      "slug": "splat-the-cat-splat-the-cat-sings-flat",
+      "url": "https://voxa.ro/audiobooks/splat-the-cat-splat-the-cat-sings-flat",
+      "title_hint": "Splat The Cat Splat The Cat Sings Flat"
+    },
+    {
+      "slug": "state-of-wonder",
+      "url": "https://voxa.ro/audiobooks/state-of-wonder",
+      "title_hint": "State Of Wonder"
+    },
+    {
+      "slug": "steve-biddulph-s-raising-boys",
+      "url": "https://voxa.ro/audiobooks/steve-biddulph-s-raising-boys",
+      "title_hint": "Steve Biddulph S Raising Boys"
+    },
+    {
+      "slug": "tales-of-wonder",
+      "url": "https://voxa.ro/audiobooks/tales-of-wonder",
+      "title_hint": "Tales Of Wonder"
+    },
+    {
+      "slug": "tantra-meditations-for-couples-and-singles",
+      "url": "https://voxa.ro/audiobooks/tantra-meditations-for-couples-and-singles",
+      "title_hint": "Tantra Meditations For Couples And Singles"
+    },
+    {
+      "slug": "tarzan-and-the-golden-lion",
+      "url": "https://voxa.ro/audiobooks/tarzan-and-the-golden-lion",
+      "title_hint": "Tarzan And The Golden Lion"
+    },
+    {
+      "slug": "tatal-celuilalt-copil-2",
+      "url": "https://voxa.ro/audiobooks/tatal-celuilalt-copil-2",
+      "title_hint": "Tatal Celuilalt Copil 2"
+    },
+    {
+      "slug": "the-adventures-of-paddington",
+      "url": "https://voxa.ro/audiobooks/the-adventures-of-paddington",
+      "title_hint": "The Adventures Of Paddington"
+    },
+    {
+      "slug": "the-adventures-of-paddington-first-halloween",
+      "url": "https://voxa.ro/audiobooks/the-adventures-of-paddington-first-halloween",
+      "title_hint": "The Adventures Of Paddington First Halloween"
+    },
+    {
+      "slug": "the-adventures-of-paddington-first-snow",
+      "url": "https://voxa.ro/audiobooks/the-adventures-of-paddington-first-snow",
+      "title_hint": "The Adventures Of Paddington First Snow"
+    },
+    {
+      "slug": "the-adventures-of-paddington-love-day",
+      "url": "https://voxa.ro/audiobooks/the-adventures-of-paddington-love-day",
+      "title_hint": "The Adventures Of Paddington Love Day"
+    },
+    {
+      "slug": "the-adventures-of-paddington-summer-games",
+      "url": "https://voxa.ro/audiobooks/the-adventures-of-paddington-summer-games",
+      "title_hint": "The Adventures Of Paddington Summer Games"
+    },
+    {
+      "slug": "the-adventures-of-paddington-the-christmas-wish",
+      "url": "https://voxa.ro/audiobooks/the-adventures-of-paddington-the-christmas-wish",
+      "title_hint": "The Adventures Of Paddington The Christmas Wish"
+    },
+    {
+      "slug": "the-adventures-of-paddington-the-wrong-list",
+      "url": "https://voxa.ro/audiobooks/the-adventures-of-paddington-the-wrong-list",
+      "title_hint": "The Adventures Of Paddington The Wrong List"
+    },
+    {
+      "slug": "the-adventures-of-pinocchio",
+      "url": "https://voxa.ro/audiobooks/the-adventures-of-pinocchio",
+      "title_hint": "The Adventures Of Pinocchio"
+    },
+    {
+      "slug": "the-adventures-of-pinocchio-2",
+      "url": "https://voxa.ro/audiobooks/the-adventures-of-pinocchio-2",
+      "title_hint": "The Adventures Of Pinocchio 2"
+    },
+    {
+      "slug": "the-adventures-of-pinocchio-3",
+      "url": "https://voxa.ro/audiobooks/the-adventures-of-pinocchio-3",
+      "title_hint": "The Adventures Of Pinocchio 3"
+    },
+    {
+      "slug": "the-alice-behind-wonderland",
+      "url": "https://voxa.ro/audiobooks/the-alice-behind-wonderland",
+      "title_hint": "The Alice Behind Wonderland"
+    },
+    {
+      "slug": "the-bear-and-the-trolls-2",
+      "url": "https://voxa.ro/audiobooks/the-bear-and-the-trolls-2",
+      "title_hint": "The Bear And The Trolls 2"
+    },
+    {
+      "slug": "the-betrayal-2",
+      "url": "https://voxa.ro/audiobooks/the-betrayal-2",
+      "title_hint": "The Betrayal 2"
+    },
+    {
+      "slug": "the-betrayal-of-anne-frank",
+      "url": "https://voxa.ro/audiobooks/the-betrayal-of-anne-frank",
+      "title_hint": "The Betrayal Of Anne Frank"
+    },
+    {
+      "slug": "the-book-of-hidden-wonders",
+      "url": "https://voxa.ro/audiobooks/the-book-of-hidden-wonders",
+      "title_hint": "The Book Of Hidden Wonders"
+    },
+    {
+      "slug": "the-book-of-wonders",
+      "url": "https://voxa.ro/audiobooks/the-book-of-wonders",
+      "title_hint": "The Book Of Wonders"
+    },
+    {
+      "slug": "the-chronicles-of-narnia-complete-audio-collection",
+      "url": "https://voxa.ro/audiobooks/the-chronicles-of-narnia-complete-audio-collection",
+      "title_hint": "The Chronicles Of Narnia Complete Audio Collection"
+    },
+    {
+      "slug": "the-classic-children-s-singalong-collection-apusskidu",
+      "url": "https://voxa.ro/audiobooks/the-classic-children-s-singalong-collection-apusskidu",
+      "title_hint": "The Classic Children S Singalong Collection Apusskidu"
+    },
+    {
+      "slug": "the-complete-alice-in-wonderland-collection",
+      "url": "https://voxa.ro/audiobooks/the-complete-alice-in-wonderland-collection",
+      "title_hint": "The Complete Alice In Wonderland Collection"
+    },
+    {
+      "slug": "the-first-tarzan-of-the-apes-collection",
+      "url": "https://voxa.ro/audiobooks/the-first-tarzan-of-the-apes-collection",
+      "title_hint": "The First Tarzan Of The Apes Collection"
+    },
+    {
+      "slug": "the-helsingor-sewing-club",
+      "url": "https://voxa.ro/audiobooks/the-helsingor-sewing-club",
+      "title_hint": "The Helsingor Sewing Club"
+    },
+    {
+      "slug": "the-house-of-frozen-dreams",
+      "url": "https://voxa.ro/audiobooks/the-house-of-frozen-dreams",
+      "title_hint": "The House Of Frozen Dreams"
+    },
+    {
+      "slug": "the-jungle-book-8",
+      "url": "https://voxa.ro/audiobooks/the-jungle-book-8",
+      "title_hint": "The Jungle Book 8"
+    },
+    {
+      "slug": "the-jungle-book-9",
+      "url": "https://voxa.ro/audiobooks/the-jungle-book-9",
+      "title_hint": "The Jungle Book 9"
+    },
+    {
+      "slug": "the-jungle-books",
+      "url": "https://voxa.ro/audiobooks/the-jungle-books",
+      "title_hint": "The Jungle Books"
+    },
+    {
+      "slug": "the-kissing-game",
+      "url": "https://voxa.ro/audiobooks/the-kissing-game",
+      "title_hint": "The Kissing Game"
+    },
+    {
+      "slug": "the-little-singing-frog-2",
+      "url": "https://voxa.ro/audiobooks/the-little-singing-frog-2",
+      "title_hint": "The Little Singing Frog 2"
+    },
+    {
+      "slug": "the-missing",
+      "url": "https://voxa.ro/audiobooks/the-missing",
+      "title_hint": "The Missing"
+    },
+    {
+      "slug": "the-missing-and-the-dead",
+      "url": "https://voxa.ro/audiobooks/the-missing-and-the-dead",
+      "title_hint": "The Missing And The Dead"
+    },
+    {
+      "slug": "the-missing-attorney",
+      "url": "https://voxa.ro/audiobooks/the-missing-attorney",
+      "title_hint": "The Missing Attorney"
+    },
+    {
+      "slug": "the-missing-husband",
+      "url": "https://voxa.ro/audiobooks/the-missing-husband",
+      "title_hint": "The Missing Husband"
+    },
+    {
+      "slug": "the-missing-twin",
+      "url": "https://voxa.ro/audiobooks/the-missing-twin",
+      "title_hint": "The Missing Twin"
+    },
+    {
+      "slug": "the-missing-wife",
+      "url": "https://voxa.ro/audiobooks/the-missing-wife",
+      "title_hint": "The Missing Wife"
+    },
+    {
+      "slug": "the-missing-wife-2",
+      "url": "https://voxa.ro/audiobooks/the-missing-wife-2",
+      "title_hint": "The Missing Wife 2"
+    },
+    {
+      "slug": "the-paddington-mystery",
+      "url": "https://voxa.ro/audiobooks/the-paddington-mystery",
+      "title_hint": "The Paddington Mystery"
+    },
+    {
+      "slug": "the-queen-s-rising",
+      "url": "https://voxa.ro/audiobooks/the-queen-s-rising",
+      "title_hint": "The Queen S Rising"
+    },
+    {
+      "slug": "the-raising-of-a-rebel",
+      "url": "https://voxa.ro/audiobooks/the-raising-of-a-rebel",
+      "title_hint": "The Raising Of A Rebel"
+    },
+    {
+      "slug": "the-rift-uprising",
+      "url": "https://voxa.ro/audiobooks/the-rift-uprising",
+      "title_hint": "The Rift Uprising"
+    },
+    {
+      "slug": "the-sing-of-the-shore",
+      "url": "https://voxa.ro/audiobooks/the-sing-of-the-shore",
+      "title_hint": "The Sing Of The Shore"
+    },
+    {
+      "slug": "the-singing-seamstress-2",
+      "url": "https://voxa.ro/audiobooks/the-singing-seamstress-2",
+      "title_hint": "The Singing Seamstress 2"
+    },
+    {
+      "slug": "the-singing-tortoise-2",
+      "url": "https://voxa.ro/audiobooks/the-singing-tortoise-2",
+      "title_hint": "The Singing Tortoise 2"
+    },
+    {
+      "slug": "the-single-girl-s-to-do-list",
+      "url": "https://voxa.ro/audiobooks/the-single-girl-s-to-do-list",
+      "title_hint": "The Single Girl S To Do List"
+    },
+    {
+      "slug": "the-singles-game",
+      "url": "https://voxa.ro/audiobooks/the-singles-game",
+      "title_hint": "The Singles Game"
+    },
+    {
+      "slug": "the-wind-singer",
+      "url": "https://voxa.ro/audiobooks/the-wind-singer",
+      "title_hint": "The Wind Singer"
+    },
+    {
+      "slug": "the-wonder-games-2",
+      "url": "https://voxa.ro/audiobooks/the-wonder-games-2",
+      "title_hint": "The Wonder Games 2"
+    },
+    {
+      "slug": "the-wonder-of-it-all",
+      "url": "https://voxa.ro/audiobooks/the-wonder-of-it-all",
+      "title_hint": "The Wonder Of It All"
+    },
+    {
+      "slug": "the-wonder-of-it-all-2",
+      "url": "https://voxa.ro/audiobooks/the-wonder-of-it-all-2",
+      "title_hint": "The Wonder Of It All 2"
+    },
+    {
+      "slug": "the-wonderful-adventures-of-nils",
+      "url": "https://voxa.ro/audiobooks/the-wonderful-adventures-of-nils",
+      "title_hint": "The Wonderful Adventures Of Nils"
+    },
+    {
+      "slug": "the-wonderful-garden",
+      "url": "https://voxa.ro/audiobooks/the-wonderful-garden",
+      "title_hint": "The Wonderful Garden"
+    },
+    {
+      "slug": "the-wonderful-sheep-2",
+      "url": "https://voxa.ro/audiobooks/the-wonderful-sheep-2",
+      "title_hint": "The Wonderful Sheep 2"
+    },
+    {
+      "slug": "the-wonderful-visit",
+      "url": "https://voxa.ro/audiobooks/the-wonderful-visit",
+      "title_hint": "The Wonderful Visit"
+    },
+    {
+      "slug": "the-wonderful-visit-2",
+      "url": "https://voxa.ro/audiobooks/the-wonderful-visit-2",
+      "title_hint": "The Wonderful Visit 2"
+    },
+    {
+      "slug": "the-wonderful-wizard-of-oz",
+      "url": "https://voxa.ro/audiobooks/the-wonderful-wizard-of-oz",
+      "title_hint": "The Wonderful Wizard Of Oz"
+    },
+    {
+      "slug": "the-wonderful-wizard-of-oz-2",
+      "url": "https://voxa.ro/audiobooks/the-wonderful-wizard-of-oz-2",
+      "title_hint": "The Wonderful Wizard Of Oz 2"
+    },
+    {
+      "slug": "the-wonderful-wizard-of-oz-8",
+      "url": "https://voxa.ro/audiobooks/the-wonderful-wizard-of-oz-8",
+      "title_hint": "The Wonderful Wizard Of Oz 8"
+    },
+    {
+      "slug": "the-wonders-we-seek-thirty-incredible-muslims-who-helped-shape-the-world-unabr",
+      "url": "https://voxa.ro/audiobooks/the-wonders-we-seek-thirty-incredible-muslims-who-helped-shape-the-world-unabr",
+      "title_hint": "The Wonders We Seek Thirty Incredible Muslims Who Helped Shape The World Unabr"
+    },
+    {
+      "slug": "tibetan-singing-bowls-singing-bowl-meditation",
+      "url": "https://voxa.ro/audiobooks/tibetan-singing-bowls-singing-bowl-meditation",
+      "title_hint": "Tibetan Singing Bowls Singing Bowl Meditation"
+    },
+    {
+      "slug": "tibetan-singing-bowls-with-ocean-waves-for-meditation-and-well-being-deep-sleep-healing-hypnosis-chakra-balancing",
+      "url": "https://voxa.ro/audiobooks/tibetan-singing-bowls-with-ocean-waves-for-meditation-and-well-being-deep-sleep-healing-hypnosis-chakra-balancing",
+      "title_hint": "Tibetan Singing Bowls With Ocean Waves For Meditation And Well Being Deep Sleep Healing Hypnosis Chakra Balancing"
+    },
+    {
+      "slug": "tibetan-sound-healing-tibetan-singing-bowls-singing-bowl-meditation",
+      "url": "https://voxa.ro/audiobooks/tibetan-sound-healing-tibetan-singing-bowls-singing-bowl-meditation",
+      "title_hint": "Tibetan Sound Healing Tibetan Singing Bowls Singing Bowl Meditation"
+    },
+    {
+      "slug": "tine-ti-copiii-aproape-de-ce-parintii-trebuie-sa-conteze-mai-mult-decat-anturajul-2",
+      "url": "https://voxa.ro/audiobooks/tine-ti-copiii-aproape-de-ce-parintii-trebuie-sa-conteze-mai-mult-decat-anturajul-2",
+      "title_hint": "Tine Ti Copiii Aproape De Ce Parintii Trebuie Sa Conteze Mai Mult Decat Anturajul 2"
+    },
+    {
+      "slug": "tis-the-season-to-be-single",
+      "url": "https://voxa.ro/audiobooks/tis-the-season-to-be-single",
+      "title_hint": "Tis The Season To Be Single"
+    },
+    {
+      "slug": "totul-pentru-un-singur-om-totul-pentru-victorie",
+      "url": "https://voxa.ro/audiobooks/totul-pentru-un-singur-om-totul-pentru-victorie",
+      "title_hint": "Totul Pentru Un Singur Om Totul Pentru Victorie"
+    },
+    {
+      "slug": "totul-pentru-un-singur-om-totul-pentru-victorie-2",
+      "url": "https://voxa.ro/audiobooks/totul-pentru-un-singur-om-totul-pentru-victorie-2",
+      "title_hint": "Totul Pentru Un Singur Om Totul Pentru Victorie 2"
+    },
+    {
+      "slug": "un-singur-lucru",
+      "url": "https://voxa.ro/audiobooks/un-singur-lucru",
+      "title_hint": "Un Singur Lucru"
+    },
+    {
+      "slug": "unexpected-blessings",
+      "url": "https://voxa.ro/audiobooks/unexpected-blessings",
+      "title_hint": "Unexpected Blessings"
+    },
+    {
+      "slug": "vampire-kisses-2-kissing-coffins",
+      "url": "https://voxa.ro/audiobooks/vampire-kisses-2-kissing-coffins",
+      "title_hint": "Vampire Kisses 2 Kissing Coffins"
+    },
+    {
+      "slug": "viata-si-moartea-copiilor-nostri",
+      "url": "https://voxa.ro/audiobooks/viata-si-moartea-copiilor-nostri",
+      "title_hint": "Viata Si Moartea Copiilor Nostri"
+    },
+    {
+      "slug": "where-the-seals-sing",
+      "url": "https://voxa.ro/audiobooks/where-the-seals-sing",
+      "title_hint": "Where The Seals Sing"
+    },
+    {
+      "slug": "william-walker-si-aventurierii-sai",
+      "url": "https://voxa.ro/audiobooks/william-walker-si-aventurierii-sai",
+      "title_hint": "William Walker Si Aventurierii Sai"
+    },
+    {
+      "slug": "winnie-nelson",
+      "url": "https://voxa.ro/audiobooks/winnie-nelson",
+      "title_hint": "Winnie Nelson"
+    },
+    {
+      "slug": "wonderful-nature-gentle-nature-sounds-without-music",
+      "url": "https://voxa.ro/audiobooks/wonderful-nature-gentle-nature-sounds-without-music",
+      "title_hint": "Wonderful Nature Gentle Nature Sounds Without Music"
+    },
+    {
+      "slug": "year-of-wonder",
+      "url": "https://voxa.ro/audiobooks/year-of-wonder",
+      "title_hint": "Year Of Wonder"
+    },
+    {
+      "slug": "year-of-wonders",
+      "url": "https://voxa.ro/audiobooks/year-of-wonders",
+      "title_hint": "Year Of Wonders"
+    },
+    {
+      "slug": "zana-maseluta",
+      "url": "https://voxa.ro/audiobooks/zana-maseluta",
+      "title_hint": "Zana Maseluta"
+    },
+    {
+      "slug": "zana-portocala",
+      "url": "https://voxa.ro/audiobooks/zana-portocala",
+      "title_hint": "Zana Portocala"
+    },
+    {
+      "slug": "zana-zorilor-si-alte-povesti",
+      "url": "https://voxa.ro/audiobooks/zana-zorilor-si-alte-povesti",
+      "title_hint": "Zana Zorilor Si Alte Povesti"
+    },
+    {
+      "slug": "zoe-la-zoo-puiul-de-leu-singuratic",
+      "url": "https://voxa.ro/audiobooks/zoe-la-zoo-puiul-de-leu-singuratic",
+      "title_hint": "Zoe La Zoo Puiul De Leu Singuratic"
+    }
+  ]
+}
