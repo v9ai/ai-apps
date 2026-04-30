@@ -17,8 +17,7 @@ export function ProductsEmptyState({ isAdmin }: { isAdmin: boolean }) {
       })}
     >
       <div
-        className={pipelineCard({})}
-        style={{ maxWidth: 520, width: "100%", textAlign: "center" }}
+        className={`${pipelineCard({})} ${css({ maxWidth: "520px", width: "100%", textAlign: "center" })}`}
       >
         <div
           className={css({
@@ -30,8 +29,7 @@ export function ProductsEmptyState({ isAdmin }: { isAdmin: boolean }) {
         >
           <span
             aria-hidden="true"
-            className={iconHolder({ size: "md" })}
-            style={{ width: 56, height: 56 }}
+            className={`${iconHolder({ size: "md" })} ${css({ width: "56px", height: "56px" })}`}
           >
             <CubeIcon width="28" height="28" />
           </span>

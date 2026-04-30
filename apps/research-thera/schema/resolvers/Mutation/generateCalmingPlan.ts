@@ -73,7 +73,10 @@ export const generateCalmingPlan: NonNullable<MutationResolvers['generateCalming
         planMarkdown: r.plan_markdown as string,
         sourcesJson: typeof r.sources_json === "string" ? r.sources_json : JSON.stringify(r.sources_json ?? []),
         safetyNotes: (r.safety_notes as string) ?? null,
-        generatedAt: r.generated_at as string,
+        generatedAt:
+          r.generated_at instanceof Date
+            ? r.generated_at.toISOString()
+            : (r.generated_at as string),
       },
     };
   } catch (err: any) {

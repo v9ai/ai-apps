@@ -5,15 +5,14 @@ import {
   AlertDialog,
   Badge,
   Box,
-  Button,
   Callout,
   Flex,
-  IconButton,
   SegmentedControl,
   Spinner,
   Text,
   TextArea,
 } from "@radix-ui/themes";
+import { Button, IconButton } from "@/components/ui";
 import {
   CheckIcon,
   Cross2Icon,
@@ -268,10 +267,9 @@ export function DraftReviewPanel() {
           )}
           <Box flexGrow="1" />
           <IconButton
-            size="2"
+            size="md"
             variant="ghost"
-            color="gray"
-            aria-label="Refresh drafts"
+            label="Refresh drafts"
             onClick={refetchAll}
           >
             <ReloadIcon />
@@ -288,7 +286,7 @@ export function DraftReviewPanel() {
           <Callout.Text>
             {errorMessage}{" "}
             <Button
-              size="1"
+              size="sm"
               variant="ghost"
               onClick={() => setErrorMessage(null)}
               aria-label="Dismiss error"
@@ -306,12 +304,12 @@ export function DraftReviewPanel() {
             <AlertDialog.Root>
               <AlertDialog.Trigger>
                 <Button
-                  size="2"
-                  variant="solid"
-                  color="green"
-                  disabled={pendingDraftIds.length === 0 || approvingAll}
+                  size="md"
+                  variant="solidGreen"
+                  disabled={pendingDraftIds.length === 0}
+                  loading={approvingAll}
                 >
-                  {approvingAll ? <Spinner size="1" /> : <PaperPlaneIcon />}
+                  <PaperPlaneIcon />
                   Send {pendingDraftIds.length}{" "}
                   {pluralize(pendingDraftIds.length, "draft")}
                 </Button>
@@ -328,12 +326,12 @@ export function DraftReviewPanel() {
                 </AlertDialog.Description>
                 <Flex gap="3" mt="4" justify="end">
                   <AlertDialog.Cancel>
-                    <Button variant="soft" color="gray">
+                    <Button variant="ghost" size="sm">
                       Cancel
                     </Button>
                   </AlertDialog.Cancel>
                   <AlertDialog.Action>
-                    <Button variant="solid" color="green" onClick={handleApproveAll}>
+                    <Button variant="solidGreen" size="sm" onClick={handleApproveAll}>
                       Send {pluralize(pendingDraftIds.length, "draft")}
                     </Button>
                   </AlertDialog.Action>
@@ -344,12 +342,11 @@ export function DraftReviewPanel() {
             <AlertDialog.Root>
               <AlertDialog.Trigger>
                 <Button
-                  size="2"
-                  variant="soft"
-                  color="red"
-                  disabled={pendingDraftIds.length === 0 || dismissingAll}
+                  size="md"
+                  variant="outline"
+                  disabled={pendingDraftIds.length === 0}
+                  loading={dismissingAll}
                 >
-                  {dismissingAll ? <Spinner size="1" /> : null}
                   Dismiss {pendingDraftIds.length}
                 </Button>
               </AlertDialog.Trigger>
@@ -364,12 +361,12 @@ export function DraftReviewPanel() {
                 </AlertDialog.Description>
                 <Flex gap="3" mt="4" justify="end">
                   <AlertDialog.Cancel>
-                    <Button variant="soft" color="gray">
+                    <Button variant="ghost" size="sm">
                       Cancel
                     </Button>
                   </AlertDialog.Cancel>
                   <AlertDialog.Action>
-                    <Button variant="solid" color="red" onClick={handleDismissAll}>
+                    <Button variant="solidRed" size="sm" onClick={handleDismissAll}>
                       Dismiss
                     </Button>
                   </AlertDialog.Action>
@@ -382,21 +379,19 @@ export function DraftReviewPanel() {
         )}
 
         <Button
-          size="2"
-          variant="soft"
-          disabled={generating}
+          size="md"
+          variant="outline"
+          loading={generating}
           onClick={handleGeneratePending}
         >
-          {generating ? <Spinner size="1" /> : null}
           Generate Reply Drafts
         </Button>
         <Button
-          size="2"
-          variant="soft"
-          disabled={generatingFollowUps}
+          size="md"
+          variant="outline"
+          loading={generatingFollowUps}
           onClick={handleGenerateFollowUps}
         >
-          {generatingFollowUps ? <Spinner size="1" /> : null}
           Generate Follow-ups
         </Button>
       </Flex>
@@ -430,12 +425,10 @@ export function DraftReviewPanel() {
             </Text>
             {statusFilter === "pending" && (
               <Flex gap="2" mt="2" wrap="wrap">
-                <Button size="1" variant="soft" onClick={handleGeneratePending} disabled={generating}>
-                  {generating ? <Spinner size="1" /> : null}
+                <Button size="sm" variant="outline" onClick={handleGeneratePending} loading={generating}>
                   Generate Reply Drafts
                 </Button>
-                <Button size="1" variant="soft" onClick={handleGenerateFollowUps} disabled={generatingFollowUps}>
-                  {generatingFollowUps ? <Spinner size="1" /> : null}
+                <Button size="sm" variant="outline" onClick={handleGenerateFollowUps} loading={generatingFollowUps}>
                   Generate Follow-ups
                 </Button>
               </Flex>
@@ -528,10 +521,9 @@ export function DraftReviewPanel() {
                     </Text>
                     {(draft.bodyText?.length ?? 0) > 200 && (
                       <Button
-                        size="1"
+                        size="sm"
                         variant="ghost"
-                        color="gray"
-                        mb="2"
+                        className={css({ marginBottom: "2" })}
                         onClick={() => toggleExpanded(draft.id)}
                       >
                         {isExpanded ? "Show less" : "Show full draft"}
@@ -543,18 +535,18 @@ export function DraftReviewPanel() {
                 {draft.status === "pending" && (
                   <Flex gap="2" wrap="wrap">
                     <Button
-                      size="1"
-                      color="green"
-                      disabled={isThisRowPending}
+                      size="sm"
+                      variant="solidGreen"
+                      loading={isThisRowPending}
                       onClick={() => handleApprove(draft.id)}
                       aria-label={`Send draft to ${draft.contactName}`}
                     >
-                      {isThisRowPending ? <Spinner size="1" /> : <CheckIcon />}
+                      <CheckIcon />
                       Send
                     </Button>
                     {isEditing ? (
                       <Button
-                        size="1"
+                        size="sm"
                         variant="ghost"
                         onClick={() => setEditingDraftId(null)}
                         aria-label="Cancel edit"
@@ -563,8 +555,8 @@ export function DraftReviewPanel() {
                       </Button>
                     ) : (
                       <Button
-                        size="1"
-                        variant="soft"
+                        size="sm"
+                        variant="outline"
                         onClick={() => {
                           setEditingDraftId(draft.id);
                           setEditedBody(draft.bodyText ?? "");
@@ -576,9 +568,8 @@ export function DraftReviewPanel() {
                       </Button>
                     )}
                     <Button
-                      size="1"
-                      variant="soft"
-                      color="red"
+                      size="sm"
+                      variant="solidRed"
                       disabled={isThisRowPending}
                       onClick={() => handleDismiss(draft.id)}
                       aria-label={`Dismiss draft to ${draft.contactName}`}

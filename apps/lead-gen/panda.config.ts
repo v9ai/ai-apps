@@ -65,6 +65,7 @@ export default defineConfig({
 
           // ---- status (error / warning / info) ----
           "status.error": { value: "#E5484D" },
+          "status.errorHover": { value: "#CD3F44" },
           "status.warning": { value: "#F5A623" },
           "status.info": { value: "#3E63DD" },
 
@@ -182,6 +183,10 @@ export default defineConfig({
           mono: {
             value:
               "ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Monaco, Consolas, monospace",
+          },
+          display: {
+            value:
+              "var(--font-instrument), Georgia, 'Times New Roman', serif",
           },
         },
 

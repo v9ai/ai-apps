@@ -22,6 +22,7 @@ from typing import Any
 import psycopg
 from langgraph.graph import END, START, StateGraph
 
+from ._github_freshness import FRESHNESS_VERSION, freshness_multiplier
 from .db_columns import persist_embedding
 from .deep_icp_graph import _dsn
 from .embeddings import (
@@ -358,6 +359,31 @@ def _load_existing_weights_hashes(
         return {}
 
 
+def _load_github_freshness(
+    cur: Any, company_id: int
+) -> tuple[Any, Any, float | None]:
+    """Return ``(github_analyzed_at, github_patterns, github_activity_score)``.
+
+    All three may be NULL for companies that aren't on GitHub or haven't been
+    probed yet — ``freshness_multiplier`` returns 1.0 in that case.
+    """
+    try:
+        cur.execute(
+            """
+            SELECT github_analyzed_at, github_patterns, github_activity_score
+            FROM companies WHERE id = %s
+            """,
+            (int(company_id),),
+        )
+        row = cur.fetchone()
+    except psycopg.Error:
+        return None, None, None
+    if not row:
+        return None, None, None
+    analyzed_at, patterns_raw, activity_score = row
+    return analyzed_at, patterns_raw, activity_score
+
+
 def _load_semantic_scores(
     cur: Any, company_id: int, product_ids: list[int]
 ) -> dict[int, float]:
@@ -427,7 +453,7 @@ async def score_verticals(state: CompanyEnrichmentState) -> dict:
     if not verticals:
         return {"agent_timings": {"score_verticals": round(time.perf_counter() - t0, 3)}}
 
-    tenant_id = "vadim"
+    tenant_id = "nyx"
     product_ids = [int(v.product_id) for v in verticals]
     composite_weights = load_composite_weights()
     semantic_weight_icp = float(
@@ -448,6 +474,14 @@ async def score_verticals(state: CompanyEnrichmentState) -> dict:
                 semantic_scores = _load_semantic_scores(
                     cur, int(company_id), product_ids
                 )
+                gh_analyzed_at, gh_patterns_raw, gh_activity_score = (
+                    _load_github_freshness(cur, int(company_id))
+                )
+                fresh_mult, repo_activity = freshness_multiplier(
+                    github_analyzed_at=gh_analyzed_at,
+                    github_patterns=gh_patterns_raw,
+                    github_activity_score=gh_activity_score,
+                )
                 for vertical in verticals:
                     regex_signals = apply_signal_rules(vertical, corpus)
                     regex_score, _regex_tier = compute_score_and_tier(
@@ -458,13 +492,22 @@ async def score_verticals(state: CompanyEnrichmentState) -> dict:
                     icp_payload = icps.get(int(vertical.product_id))
                     fit_result: dict[str, Any] | None = None
                     if icp_payload is not None:
-                        current_hash = str(
-                            (icp_payload.get("graph_meta") or {}).get("weights_hash")
-                            or ""
+                        # Fold FRESHNESS_VERSION into the idempotency key so a
+                        # bump to the GitHub-staleness rules invalidates prior
+                        # rows even when the ICP weights are unchanged.
+                        current_hash = (
+                            str(
+                                (icp_payload.get("graph_meta") or {}).get(
+                                    "weights_hash"
+                                )
+                                or ""
+                            )
+                            + ":fv"
+                            + FRESHNESS_VERSION
                         )
                         prior_hash = existing_hashes.get(int(vertical.product_id), "")
                         if current_hash and current_hash == prior_hash:
-                            # Idempotent skip — ICP hasn't changed since last score.
+                            # Idempotent skip — ICP + freshness rules unchanged.
                             continue
                         fit_result = compute_icp_fit(
                             icp_analysis=icp_payload,
@@ -474,6 +517,9 @@ async def score_verticals(state: CompanyEnrichmentState) -> dict:
                             regex_score=float(regex_score),
                             weights=composite_weights,
                         )
+                        # Store the suffixed hash so the next run's
+                        # idempotency check compares apples-to-apples.
+                        fit_result["icp_fit"]["weights_hash"] = current_hash
 
                     sem_score = semantic_scores.get(int(vertical.product_id))
                     # Clamp semantic into [0,1] before blending (cosine can be
@@ -482,6 +528,10 @@ async def score_verticals(state: CompanyEnrichmentState) -> dict:
                         max(0.0, min(1.0, float(sem_score)))
                         if sem_score is not None
                         else None
+                    )
+
+                    repo_activity_signal = (
+                        repo_activity if repo_activity.get("analyzed") else None
                     )
 
                     if fit_result is not None:
@@ -496,6 +546,11 @@ async def score_verticals(state: CompanyEnrichmentState) -> dict:
                         else:
                             final_score = base_score
                             final_tier = base_tier
+                        # GitHub-staleness penalty — does not override an
+                        # explicit deal-breaker disqualification.
+                        if final_tier != "disqualified" and fresh_mult < 1.0:
+                            final_score = round(final_score * fresh_mult, 4)
+                            final_tier = tier_for(final_score)
                         if (
                             not meaningful_keys
                             and final_score == 0
@@ -509,6 +564,7 @@ async def score_verticals(state: CompanyEnrichmentState) -> dict:
                             icp_block=fit_result["icp_fit"],
                             composite_score=final_score,
                             composite_tier=final_tier,
+                            repo_activity=repo_activity_signal,
                         )
                         write_score = final_score
                         write_tier = final_tier
@@ -523,6 +579,10 @@ async def score_verticals(state: CompanyEnrichmentState) -> dict:
                         else:
                             final_score = regex_only_score
                             _, final_tier = compute_score_and_tier(vertical, regex_signals)
+                        # GitHub-staleness penalty.
+                        if fresh_mult < 1.0 and final_score > 0:
+                            final_score = round(final_score * fresh_mult, 4)
+                            final_tier = tier_for(final_score)
                         if not meaningful_keys and final_score == 0 and sem_clamped is None:
                             continue
                         v2_signals = build_v2_signals(
@@ -531,6 +591,7 @@ async def score_verticals(state: CompanyEnrichmentState) -> dict:
                             icp_block=None,
                             composite_score=final_score if sem_clamped is not None else None,
                             composite_tier=final_tier if sem_clamped is not None else None,
+                            repo_activity=repo_activity_signal,
                         )
                         write_score = final_score
                         write_tier = final_tier
@@ -544,7 +605,7 @@ async def score_verticals(state: CompanyEnrichmentState) -> dict:
                           (company_id, product_id, signals, score, regex_score,
                            semantic_score, semantic_score_computed_at, tier, updated_at)
                         VALUES (%s, %s, %s::jsonb, %s, %s, %s,
-                                CASE WHEN %s IS NULL THEN NULL ELSE now() END,
+                                CASE WHEN %s::double precision IS NULL THEN NULL ELSE now() END,
                                 %s, now())
                         ON CONFLICT (company_id, product_id) DO UPDATE
                           SET signals                     = EXCLUDED.signals,
@@ -725,6 +786,113 @@ async def persist(state: CompanyEnrichmentState) -> dict:
     }
 
 
+# ── Node 5b: analyse_github ───────────────────────────────────────────────────
+
+# Re-analyse a company's GitHub org at most once per ANALYSE_GH_REFRESH_DAYS
+# unless ``github_analyzed_at`` is NULL. Cheap-ish (5–15 GH API calls per org)
+# but rate-limited, so we don't run it on every enrichment.
+try:
+    _GH_ANALYSE_REFRESH_DAYS = max(
+        1, int(os.environ.get("ANALYSE_GH_REFRESH_DAYS", "30"))
+    )
+except ValueError:
+    _GH_ANALYSE_REFRESH_DAYS = 30
+
+
+async def analyse_github(state: CompanyEnrichmentState) -> dict:
+    """Populate ``companies.github_*`` columns for companies with a known org.
+
+    Without this, ``score_verticals``' freshness multiplier is a no-op for
+    every newly-discovered company (because ``github_analyzed_at`` is NULL).
+    Reuses ``gh_patterns_graph.analyse_org`` + ``save_org_patterns`` rather
+    than reimplementing the activity probe.
+
+    Non-fatal — any failure (rate-limit, missing token, network) is logged
+    and swallowed so the downstream scoring still runs.
+    """
+    if state.get("_error") or state.get("_skip_reason"):
+        return {}
+    company_id = state.get("company_id")
+    if company_id is None:
+        return {}
+    t0 = time.perf_counter()
+
+    try:
+        with psycopg.connect(_dsn(), autocommit=True, connect_timeout=10) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT key, github_org, github_url, github_analyzed_at, tags
+                    FROM companies WHERE id = %s
+                    """,
+                    (int(company_id),),
+                )
+                row = cur.fetchone()
+    except psycopg.Error:
+        return {"agent_timings": {"analyse_github": round(time.perf_counter() - t0, 3)}}
+
+    if not row:
+        return {"agent_timings": {"analyse_github": round(time.perf_counter() - t0, 3)}}
+
+    company_key, github_org, github_url, analyzed_at, tags_json = row
+    org = (github_org or "").strip()
+    if not org:
+        return {"agent_timings": {"analyse_github": round(time.perf_counter() - t0, 3)}}
+
+    if analyzed_at:
+        try:
+            ts = datetime.fromisoformat(str(analyzed_at).replace("Z", "+00:00"))
+            if ts.tzinfo is None:
+                ts = ts.replace(tzinfo=timezone.utc)
+            age_days = (datetime.now(timezone.utc) - ts).days
+            if age_days < _GH_ANALYSE_REFRESH_DAYS:
+                return {
+                    "agent_timings": {
+                        "analyse_github": round(time.perf_counter() - t0, 3),
+                    },
+                }
+        except (TypeError, ValueError):
+            pass
+
+    # Lazy-import gh_patterns_graph — it pulls httpx + a fairly heavy module
+    # tree, and we only want to pay that on companies that actually have an org.
+    try:
+        from .gh_patterns_graph import GhClient, analyse_org, save_org_patterns
+    except Exception as e:  # noqa: BLE001
+        import logging as _logging
+        _logging.getLogger(__name__).warning("analyse_github import: %s", e)
+        return {"agent_timings": {"analyse_github": round(time.perf_counter() - t0, 3)}}
+
+    try:
+        client = GhClient.from_env()
+    except Exception as e:  # noqa: BLE001
+        import logging as _logging
+        _logging.getLogger(__name__).warning("analyse_github GhClient: %s", e)
+        return {"agent_timings": {"analyse_github": round(time.perf_counter() - t0, 3)}}
+
+    try:
+        patterns = await analyse_org(client, org, max_repos=10)
+        await save_org_patterns(
+            int(company_id),
+            company_key or org,
+            github_url or f"https://github.com/{org}",
+            patterns,
+            tags_json,
+        )
+    except Exception as e:  # noqa: BLE001
+        import logging as _logging
+        _logging.getLogger(__name__).warning(
+            "analyse_github failed for org=%s: %s", org, e
+        )
+    finally:
+        try:
+            await client.aclose()
+        except Exception:  # noqa: BLE001
+            pass
+
+    return {"agent_timings": {"analyse_github": round(time.perf_counter() - t0, 3)}}
+
+
 # ── Node 6: embed_profile ─────────────────────────────────────────────────────
 
 async def embed_profile(state: CompanyEnrichmentState) -> dict:
@@ -813,6 +981,7 @@ def build_graph(checkpointer: Any = None) -> Any:
     builder.add_node("classify", classify)
     builder.add_node("score", score)
     builder.add_node("persist", persist)
+    builder.add_node("analyse_github", analyse_github)
     builder.add_node("embed_profile", embed_profile)
     builder.add_node("score_verticals", score_verticals)
     builder.add_edge(START, "load")
@@ -820,9 +989,13 @@ def build_graph(checkpointer: Any = None) -> Any:
     builder.add_edge("fetch", "classify")
     builder.add_edge("classify", "score")
     builder.add_edge("score", "persist")
+    # GitHub activity probe runs before scoring so score_verticals can apply
+    # a staleness penalty to dead repos (Palico-style 2-year-old projects
+    # otherwise score Hot purely on text-corpus regex).
+    builder.add_edge("persist", "analyse_github")
     # Embedding runs before vertical scoring so score_verticals can blend
     # semantic cosine into the composite. Non-fatal on embed failure.
-    builder.add_edge("persist", "embed_profile")
+    builder.add_edge("analyse_github", "embed_profile")
     # Vertical signal scorer runs after embed so its failures never roll back
     # classification + scores. Adding a new product is a file-drop under
     # `verticals/`, not a graph change.

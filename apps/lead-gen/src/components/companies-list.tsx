@@ -30,6 +30,7 @@ import { button } from "@/recipes/button";
 import { css } from "styled-system/css";
 import { TrashIcon, PlusIcon, MixIcon, UploadIcon } from "@radix-ui/react-icons";
 import { ADMIN_EMAIL } from "@/lib/constants";
+import { SearchInput } from "@/components/ui/SearchInput";
 
 export function CompaniesList() {
   const router = useRouter();
@@ -39,6 +40,12 @@ export function CompaniesList() {
   const [category] = useState("ALL");
   const [sortBy, setSortBy] = useState(searchParams.get("sort") ?? "name");
   const [minTier, setMinTier] = useState(searchParams.get("tier") ?? "all");
+  const [tagFilter, setTagFilter] = useState(searchParams.get("tag") ?? "");
+
+  useEffect(() => {
+    const next = searchParams.get("tag") ?? "";
+    setTagFilter((cur) => (cur === next ? cur : next));
+  }, [searchParams]);
 
   useEffect(() => {
     const params = new URLSearchParams();
@@ -46,9 +53,10 @@ export function CompaniesList() {
     if (category !== "ALL") params.set("cat", category);
     if (sortBy !== "name") params.set("sort", sortBy);
     if (minTier !== "all") params.set("tier", minTier);
+    if (tagFilter) params.set("tag", tagFilter);
     const qs = params.toString();
     router.replace(`${pathname}${qs ? `?${qs}` : ""}`, { scroll: false });
-  }, [searchTerm, category, sortBy, minTier, router, pathname]);  
+  }, [searchTerm, category, sortBy, minTier, tagFilter, router, pathname]);  
   const observerRef = useRef<IntersectionObserver | null>(null);
   const { user } = useAuth();
   const [deleteCompanyMutation] = useDeleteCompanyMutation();
@@ -201,6 +209,7 @@ export function CompaniesList() {
     ...(searchTerm ? { text: searchTerm } : {}),
     ...(category !== "ALL" ? { category: category as CompanyCategory } : {}),
     ...(minTier !== "all" ? { min_ai_tier: parseInt(minTier, 10) } : {}),
+    ...(tagFilter ? { tags_any: [tagFilter] } : {}),
   };
   const orderBy = (sortBy === "score" ? "SCORE_DESC" : "NAME_ASC") as CompanyOrderBy;
 
@@ -271,9 +280,8 @@ export function CompaniesList() {
       <Container size="4" p="8">
         <Text color="red">Error loading companies: {error.message}</Text>
         <button
-          className={button({ variant: "solid", size: "sm" })}
+          className={`${button({ variant: "solid", size: "sm" })} ${css({ mt: "3" })}`}
           onClick={() => refetch()}
-          style={{ marginTop: 12 }}
         >
           retry
         </button>
@@ -285,7 +293,7 @@ export function CompaniesList() {
     <Container size="4" px="8">
       {/* header */}
       <Flex justify="between" align="center" py="2" mb="3">
-        <span className={css({ fontSize: "base" }) + " yc-row-title"}>
+        <span className={`yc-row-title ${css({ fontSize: "base" })}`}>
           companies
         </span>
         <Flex align="center" gap="3">
@@ -394,13 +402,13 @@ export function CompaniesList() {
       </Flex>
 
       {/* search */}
-      <div className="yc-search" style={{ marginBottom: 8 }}>
-        <input
+      <Box mb="2">
+        <SearchInput
           placeholder="search companies…"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
-      </div>
+      </Box>
 
       {/* filter bar */}
       <Flex gap="3" align="center" mb="2" wrap="wrap">
@@ -421,12 +429,38 @@ export function CompaniesList() {
           </Select.Content>
         </Select.Root>
 
-        {(minTier !== "all" || sortBy !== "name") && (
+        {tagFilter && (
+          <Flex
+            align="center"
+            gap="1"
+            px="2"
+            py="1"
+            className={css({
+              bg: "gray.3",
+              borderRadius: "full",
+              fontSize: "xs",
+              border: "1px solid",
+              borderColor: "gray.6",
+            })}
+          >
+            <Text size="1">tag: {tagFilter}</Text>
+            <button
+              className={`${button({ variant: "ghost", size: "sm" })} ${css({ px: "1", py: "0", fontSize: "sm", lineHeight: "none" })}`}
+              onClick={() => setTagFilter("")}
+              aria-label="clear tag filter"
+            >
+              ×
+            </button>
+          </Flex>
+        )}
+
+        {(minTier !== "all" || sortBy !== "name" || tagFilter) && (
           <button
             className={button({ variant: "ghost", size: "sm" })}
             onClick={() => {
               setSortBy("name");
               setMinTier("all");
+              setTagFilter("");
             }}
           >
             clear filters
@@ -442,11 +476,12 @@ export function CompaniesList() {
           py="2"
           px="3"
           mb="2"
-          style={{
-            background: "var(--accent-2)",
-            borderRadius: 8,
-            border: "1px solid var(--accent-6)",
-          }}
+          className={css({
+            bg: "accent.2",
+            borderRadius: "md",
+            border: "1px solid",
+            borderColor: "accent.6",
+          })}
         >
           <Text size="1" weight="bold">
             {selectedCompanies.size} selected
@@ -479,7 +514,7 @@ export function CompaniesList() {
       )}
 
       {/* dense ruled list */}
-      <div style={{ borderTop: "1px solid var(--gray-6)" }}>
+      <div className={css({ borderTop: "1px solid", borderColor: "gray.6" })}>
         {companies.map((company) => (
           <Link
             key={company.id}

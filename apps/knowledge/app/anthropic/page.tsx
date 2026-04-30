@@ -87,6 +87,11 @@ const FINISHERS: Finisher[] = [
     completedAt: "Apr 29, 2026",
     github: "https://github.com/hemantkamalakar",
   },
+  {
+    rank: 11,
+    name: "Kazi Musharraf",
+    completedAt: "Apr 30, 2026",
+  },
 ];
 
 const COURSES: Course[] = [

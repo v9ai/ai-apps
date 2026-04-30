@@ -29,6 +29,7 @@ from .registry import (  # noqa: F401 — re-exports
 # iteration order only when sorted() is bypassed — all_verticals() sorts by slug.
 from . import compliance_audit  # noqa: F401,E402
 from . import ingestible  # noqa: F401,E402
+from . import onboardingtutor  # noqa: F401,E402
 
 __all__ = [
     "VERTICALS",
@@ -42,4 +43,5 @@ __all__ = [
     "register",
     "compliance_audit",
     "ingestible",
+    "onboardingtutor",
 ]

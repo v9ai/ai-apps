@@ -93,6 +93,7 @@ _GRAPH_PATHS: dict[str, str] = {
     "story": "research_agent.story_graph:graph",
     "tts": "research_agent.tts_graph:graph",
     "games": "research_agent.games_graph:graph",
+    "movies": "research_agent.movies_graph:graph",
 }
 _LOADED_MODULES: dict[str, Any] = {}
 _LOADED_GRAPHS: dict[str, Any] = {}

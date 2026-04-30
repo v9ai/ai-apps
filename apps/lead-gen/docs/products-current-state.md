@@ -322,7 +322,7 @@ Loading: Suspense fallback. Empty: "No products yet." / "Product not found.". Er
 
 ### 8.4 Cron routes
 
-`/api/cron/cpn-campaign`, `/api/cron/followup-scheduler`, `/api/cron/backup`. **No product-specific cron** — product work is on-demand via UI/scripts.
+`/api/cron/backup`. **No product-specific cron** — product work is on-demand via UI/scripts.
 
 ---
 

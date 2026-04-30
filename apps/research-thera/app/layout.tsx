@@ -7,7 +7,6 @@ import { Header } from "./components/Header";
 import { SIDEBAR_WIDTH } from "./components/sidebar-constants";
 import { GlobalJournalShortcut } from "./components/GlobalJournalShortcut";
 import { VaultShortcut } from "./components/VaultShortcut";
-import { QuickCapture } from "./components/QuickCapture";
 
 export const metadata: Metadata = {
   title: {
@@ -36,7 +35,6 @@ export default function RootLayout({
             <Header />
             <GlobalJournalShortcut />
             <VaultShortcut />
-            <QuickCapture />
             <Box
               style={{
                 paddingLeft: `var(--sidebar-offset, 0px)`,

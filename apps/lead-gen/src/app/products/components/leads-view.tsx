@@ -1,27 +1,29 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import {
   Badge,
   Box,
   Container,
   Flex,
-  Separator,
+  Spinner,
   Text,
 } from "@radix-ui/themes";
 import {
   CubeIcon,
   ExternalLinkIcon,
-  GlobeIcon,
+  PaperPlaneIcon,
   PersonIcon,
-  RocketIcon,
-  StarFilledIcon,
 } from "@radix-ui/react-icons";
-import { css } from "styled-system/css";
+import { css, cx } from "styled-system/css";
+import { button } from "@/recipes/button";
 import {
   useProductBySlugQuery,
   useProductLeadsQuery,
+  useGetContactsLazyQuery,
+  useCreateDraftCampaignMutation,
 } from "@/__generated__/hooks";
 import {
   LoadingShell,
@@ -44,6 +46,13 @@ const tierBadgeColor: Record<string, "red" | "amber" | "blue" | "gray"> = {
   hot: "red",
   warm: "amber",
   cold: "blue",
+};
+
+// Token-aligned rail color per tier — matches the badge color family.
+const tierRailToken: Record<string, string> = {
+  hot: "red.9",
+  warm: "amber.9",
+  cold: "blue.9",
 };
 
 function tierLabel(t: string | null | undefined): string {
@@ -72,6 +81,9 @@ function extractSignalHighlights(signals: unknown): string[] {
 
 export function ProductLeadsPage({ slug }: { slug: string }) {
   const [tier, setTier] = useState<TierFilter>("all");
+  const [creatingForCompanyId, setCreatingForCompanyId] = useState<number | null>(null);
+  const [campaignError, setCampaignError] = useState<string | null>(null);
+  const router = useRouter();
 
   const { data: productData, loading: productLoading } = useProductBySlugQuery({
     variables: { slug },
@@ -88,38 +100,72 @@ export function ProductLeadsPage({ slug }: { slug: string }) {
     fetchPolicy: "cache-and-network",
   });
 
+  const [fetchContacts] = useGetContactsLazyQuery();
+  const [createDraftCampaign] = useCreateDraftCampaignMutation();
+
   const product = productData?.productBySlug;
   const conn = leadsData?.productLeads;
   const leads = useMemo(() => conn?.leads ?? [], [conn]);
 
+  const handleStartCampaign = async (lead: (typeof leads)[number]) => {
+    if (!product) return;
+    setCampaignError(null);
+    setCreatingForCompanyId(lead.companyId);
+    try {
+      const contactsResult = await fetchContacts({
+        variables: {
+          companyId: lead.companyId,
+          includeFlagged: false,
+          limit: 200,
+        },
+        fetchPolicy: "network-only",
+      });
+      const recipientEmails = (contactsResult.data?.contacts?.contacts ?? [])
+        .filter((c) => c.emailVerified && !c.doNotContact && c.email)
+        .map((c) => c.email as string);
+
+      const result = await createDraftCampaign({
+        variables: {
+          input: {
+            name: `${product.name} → ${lead.companyName}`,
+            companyId: lead.companyId,
+            productId: product.id,
+            productAwareMode: true,
+            personaMatchThreshold: 0.55,
+            recipientEmails,
+          },
+        },
+      });
+
+      const newId = result.data?.createDraftCampaign?.id;
+      if (!newId) {
+        throw new Error("Campaign created but no id returned");
+      }
+      router.push(`/companies/${lead.companyKey}/campaigns?edit=${encodeURIComponent(newId)}`);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed to create campaign";
+      setCampaignError(`${lead.companyName}: ${msg}`);
+      setCreatingForCompanyId(null);
+    }
+  };
+
   if (productLoading && !productData) return <LoadingShell />;
   if (!product) return <ProductNotFound slug={slug} />;
 
-  const tierChipBase = css({
-    fontSize: "xs",
-    px: "3",
-    py: "1",
-    borderRadius: "full",
-    cursor: "pointer",
-    border: "1px solid",
-    borderColor: "ui.border",
-    bg: "ui.surface",
-    color: "gray.11",
-    _hover: { bg: "accent.3", borderColor: "accent.7" },
-  });
-  const tierChipActive = css({
-    bg: "accent.9",
-    color: "accent.contrast",
-    borderColor: "accent.9",
-    _hover: { bg: "accent.10" },
-  });
-
-  const cardCls = css({
+  // Lead card with a left tier-color rail. Tighter padding for higher density,
+  // hover lift via border + bg shift.
+  const leadCardCls = css({
+    position: "relative",
     bg: "ui.surface",
     border: "1px solid",
     borderColor: "ui.border",
     borderRadius: "md",
-    p: "4",
+    pl: "4",
+    pr: "4",
+    py: "3",
+    overflow: "hidden",
+    transition: "border-color 120ms ease, background 120ms ease",
+    _hover: { borderColor: "ui.borderHover", bg: "ui.surfaceHover" },
   });
 
   return (
@@ -131,71 +177,82 @@ export function ProductLeadsPage({ slug }: { slug: string }) {
         currentLabel="Leads"
       />
 
-      <Flex direction="column" gap="4">
+      <Flex direction="column" gap="5">
         <SubpageHero productName={product.name} currentLabel="Leads" />
 
-        <Text as="p" size="2" color="gray" className={css({ lineHeight: "1.6" })}>
+        <Text
+          as="p"
+          size="2"
+          color="gray"
+          className={css({ lineHeight: "1.6", maxWidth: "62ch" })}
+        >
           Companies scored for this product by the vertical signal pipeline.
           Ranked by tier, then by aggregate score.
         </Text>
 
-        <Flex gap="4" wrap="wrap" mt="2">
-          <div className={cardCls} style={{ flex: "1 1 140px" }}>
-            <Flex align="center" gap="2" mb="1">
-              <span aria-hidden="true" className={css({ color: "red.11" })}><StarFilledIcon /></span>
-              <Text size="1" color="gray">Hot</Text>
-            </Flex>
-            <Text size="6" weight="bold" className={css({ color: "red.11" })}>
-              {conn?.hotCount ?? 0}
-            </Text>
-          </div>
-          <div className={cardCls} style={{ flex: "1 1 140px" }}>
-            <Flex align="center" gap="2" mb="1">
-              <span aria-hidden="true" className={css({ color: "amber.11" })}><RocketIcon /></span>
-              <Text size="1" color="gray">Warm</Text>
-            </Flex>
-            <Text size="6" weight="bold" className={css({ color: "amber.11" })}>
-              {conn?.warmCount ?? 0}
-            </Text>
-          </div>
-          <div className={cardCls} style={{ flex: "1 1 140px" }}>
-            <Flex align="center" gap="2" mb="1">
-              <span aria-hidden="true" className={css({ color: "blue.11" })}><PersonIcon /></span>
-              <Text size="1" color="gray">Cold</Text>
-            </Flex>
-            <Text size="6" weight="bold" className={css({ color: "blue.11" })}>
-              {conn?.coldCount ?? 0}
-            </Text>
-          </div>
-          <div className={cardCls} style={{ flex: "1 1 140px" }}>
-            <Flex align="center" gap="2" mb="1">
-              <span aria-hidden="true" className={css({ color: "gray.11" })}><GlobeIcon /></span>
-              <Text size="1" color="gray">Total</Text>
-            </Flex>
-            <Text size="6" weight="bold">
-              {conn?.totalCount ?? 0}
-            </Text>
-          </div>
-        </Flex>
-
-        <Separator my="2" size="4" />
-
-        <Flex gap="2" wrap="wrap" align="center">
-          <Text size="1" color="gray" mr="2">Filter:</Text>
-          {(["all", "hot", "warm", "cold"] as TierFilter[]).map((t) => (
-            <button
-              key={t}
-              type="button"
-              onClick={() => setTier(t)}
-              className={`${tierChipBase} ${tier === t ? tierChipActive : ""}`}
+        {/* FILTER STRIP */}
+        <Flex
+          gap="2"
+          wrap="wrap"
+          align="center"
+          className={css({
+            pb: "1",
+          })}
+        >
+          <Text
+            size="1"
+            color="gray"
+            mr="2"
+            className={css({
+              textTransform: "uppercase",
+              letterSpacing: "0.06em",
+              fontWeight: 500,
+            })}
+          >
+            Filter
+          </Text>
+          {(["all", "hot", "warm", "cold"] as TierFilter[]).map((t) => {
+            const tone =
+              t === "hot"
+                ? "red"
+                : t === "warm"
+                ? "amber"
+                : t === "cold"
+                ? "blue"
+                : "neutral";
+            return (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setTier(t)}
+                aria-pressed={tier === t}
+                className={button({ variant: "chip", size: "sm", tone })}
+              >
+                {t === "all" ? "All" : tierLabel(t)}
+              </button>
+            );
+          })}
+          {leads.length > 0 && (
+            <Text
+              size="1"
+              color="gray"
+              ml="auto"
+              className={css({ fontVariantNumeric: "tabular-nums" })}
             >
-              {t === "all" ? "All" : tierLabel(t)}
-            </button>
-          ))}
+              Showing {leads.length}
+              {conn?.totalCount ? ` of ${conn.totalCount}` : ""}
+            </Text>
+          )}
         </Flex>
 
         {error && (
           <Text color="red" as="p" role="alert">{error.message}</Text>
+        )}
+
+        {campaignError && (
+          <Text color="red" size="2" as="p" role="alert">
+            Campaign error — {campaignError}
+          </Text>
         )}
 
         {leadsLoading && !leadsData ? (
@@ -206,16 +263,43 @@ export function ProductLeadsPage({ slug }: { slug: string }) {
               bg: "ui.surface",
               border: "1px dashed",
               borderColor: "ui.border",
-              borderRadius: "md",
-              p: "6",
+              borderRadius: "lg",
+              px: "6",
+              py: "10",
               textAlign: "center",
             })}
           >
-            <Text as="p" size="2" color="gray">
-              No scored leads yet for this product
-              {tier !== "all" ? ` in the ${tier} tier` : ""}.
+            <span
+              aria-hidden="true"
+              className={css({
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "44px",
+                height: "44px",
+                borderRadius: "full",
+                bg: "accent.3",
+                color: "accent.11",
+                mb: "3",
+              })}
+            >
+              <PersonIcon width="20" height="20" />
+            </span>
+            <Text
+              as="p"
+              size="3"
+              weight="medium"
+              className={css({ color: "gray.12", mb: "1" })}
+            >
+              No scored leads yet
+              {tier !== "all" ? ` in the ${tier} tier` : ""}
             </Text>
-            <Text as="p" size="1" color="gray" mt="2">
+            <Text
+              as="p"
+              size="2"
+              color="gray"
+              className={css({ maxWidth: "380px", mx: "auto", lineHeight: "1.5" })}
+            >
               Leads appear here once the vertical signal pipeline runs against
               discovered companies for this product.
             </Text>
@@ -224,11 +308,27 @@ export function ProductLeadsPage({ slug }: { slug: string }) {
           <Flex direction="column" gap="2">
             {leads.map((lead) => {
               const highlights = extractSignalHighlights(lead.signals);
-              const tierColor = lead.tier ? tierBadgeColor[lead.tier] ?? "gray" : "gray";
+              const tierKey = lead.tier ?? "";
+              const tierColor = tierKey ? tierBadgeColor[tierKey] ?? "gray" : "gray";
+              const railToken = tierKey ? tierRailToken[tierKey] : undefined;
+              const isSelf = creatingForCompanyId === lead.companyId;
+              const isSiblingBusy = creatingForCompanyId !== null && !isSelf;
               return (
-                <div key={lead.companyId} className={cardCls}>
+                <article key={lead.companyId} className={leadCardCls}>
+                  {/* Left tier-color rail — token-driven so we stay on palette */}
+                  <span
+                    aria-hidden="true"
+                    className={css({
+                      position: "absolute",
+                      left: 0,
+                      top: 0,
+                      bottom: 0,
+                      width: "3px",
+                      bg: railToken ?? "gray.6",
+                    })}
+                  />
                   <Flex justify="between" align="start" gap="3" wrap="wrap">
-                    <Flex gap="3" align="center" style={{ minWidth: 0, flex: 1 }}>
+                    <Flex gap="3" align="center" className={css({ minWidth: 0, flex: 1 })}>
                       {lead.companyLogoUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
@@ -261,11 +361,12 @@ export function ProductLeadsPage({ slug }: { slug: string }) {
                           <CubeIcon />
                         </span>
                       )}
-                      <Flex direction="column" gap="1" style={{ minWidth: 0 }}>
+                      <Flex direction="column" gap="1" className={css({ minWidth: 0 })}>
                         <Flex align="center" gap="2" wrap="wrap">
                           <Link
                             href={`/companies/${lead.companyKey}`}
                             className={css({
+                              fontSize: "sm",
                               fontWeight: 600,
                               color: "gray.12",
                               textDecoration: "none",
@@ -281,14 +382,14 @@ export function ProductLeadsPage({ slug }: { slug: string }) {
                               rel="noopener noreferrer"
                               aria-label={`Open ${lead.companyName} website in new tab`}
                               className={css({
-                                color: "accent.11",
+                                color: "gray.10",
                                 fontSize: "xs",
                                 display: "inline-flex",
                                 alignItems: "center",
                                 gap: "1",
                                 textDecoration: "none",
                                 borderRadius: "sm",
-                                _hover: { textDecoration: "underline" },
+                                _hover: { color: "accent.11", textDecoration: "underline" },
                                 _focusVisible: {
                                   outline: "2px solid",
                                   outlineColor: "accent.9",
@@ -301,19 +402,21 @@ export function ProductLeadsPage({ slug }: { slug: string }) {
                             </a>
                           )}
                         </Flex>
-                        <Flex gap="2" wrap="wrap">
-                          {lead.companyIndustry && (
-                            <Badge color="gray" size="1">{lead.companyIndustry}</Badge>
-                          )}
-                          {lead.companySize && (
-                            <Badge color="gray" size="1">{lead.companySize}</Badge>
-                          )}
-                          {lead.companyLocation && (
-                            <Badge color="gray" size="1">{lead.companyLocation}</Badge>
-                          )}
-                        </Flex>
+                        {(lead.companyIndustry || lead.companySize || lead.companyLocation) && (
+                          <Flex gap="1" wrap="wrap">
+                            {lead.companyIndustry && (
+                              <Badge color="gray" size="1" variant="soft">{lead.companyIndustry}</Badge>
+                            )}
+                            {lead.companySize && (
+                              <Badge color="gray" size="1" variant="soft">{lead.companySize}</Badge>
+                            )}
+                            {lead.companyLocation && (
+                              <Badge color="gray" size="1" variant="soft">{lead.companyLocation}</Badge>
+                            )}
+                          </Flex>
+                        )}
                         {highlights.length > 0 && (
-                          <Flex gap="1" wrap="wrap" mt="1">
+                          <Flex gap="1" wrap="wrap">
                             {highlights.map((h, i) => (
                               <Badge key={i} color="indigo" size="1" variant="soft">
                                 {h}
@@ -323,21 +426,68 @@ export function ProductLeadsPage({ slug }: { slug: string }) {
                         )}
                       </Flex>
                     </Flex>
-                    <Flex direction="column" align="end" gap="1" style={{ flexShrink: 0 }}>
+                    <Flex
+                      direction="column"
+                      align="end"
+                      gap="1"
+                      className={css({ flexShrink: 0 })}
+                    >
                       <Badge color={tierColor} size="2">{tierLabel(lead.tier)}</Badge>
-                      <Text size="1" color="gray">
-                        Score <Text weight="bold" className={css({ color: "gray.12" })}>
+                      <Text
+                        size="1"
+                        color="gray"
+                        className={css({ fontVariantNumeric: "tabular-nums" })}
+                      >
+                        Score{" "}
+                        <Text
+                          weight="bold"
+                          className={css({
+                            color: "gray.12",
+                            fontVariantNumeric: "tabular-nums",
+                          })}
+                        >
                           {lead.score.toFixed(2)}
                         </Text>
                       </Text>
                       {lead.semanticScore != null && (
-                        <Text size="1" color="gray">
+                        <Text
+                          size="1"
+                          color="gray"
+                          className={css({ fontVariantNumeric: "tabular-nums" })}
+                        >
                           semantic {lead.semanticScore.toFixed(2)}
                         </Text>
                       )}
+                      <button
+                        type="button"
+                        onClick={() => handleStartCampaign(lead)}
+                        disabled={creatingForCompanyId !== null}
+                        aria-busy={isSelf}
+                        aria-label={
+                          isSelf
+                            ? `Starting campaign for ${lead.companyName}`
+                            : `Start campaign for ${lead.companyName}`
+                        }
+                        className={cx(
+                          button({ variant: "secondary", size: "sm" }),
+                          css({
+                            mt: "2",
+                            alignSelf: "stretch",
+                            justifyContent: "center",
+                          }),
+                          isSiblingBusy && css({ opacity: "0.6" }),
+                        )}
+                      >
+                        {isSelf ? <Spinner size="1" /> : <PaperPlaneIcon aria-hidden />}
+                        {isSelf
+                          ? "Starting…"
+                          : isSiblingBusy
+                          ? "Queued"
+                          : "Start campaign"}
+                      </button>
                     </Flex>
                   </Flex>
-                </div>
+                </article>
               );
             })}
           </Flex>

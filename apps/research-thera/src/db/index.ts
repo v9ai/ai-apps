@@ -1348,7 +1348,7 @@ export async function cleanupStaleJobs(minutes = 15): Promise<void> {
 export async function createGenerationJob(
   id: string,
   userId: string,
-  type: "AUDIO" | "RESEARCH" | "QUESTIONS" | "LONGFORM" | "DEEP_ANALYSIS" | "RECOMMENDED_BOOKS" | "DISCUSSION_GUIDE" | "ROUTINE_ANALYSIS" | "BOGDAN_DISCUSSION" | "MEDICATION_DEEP_RESEARCH" | "CONDITION_DEEP_RESEARCH" | "REGIMEN_INTERACTION_SCREEN",
+  type: "AUDIO" | "RESEARCH" | "QUESTIONS" | "LONGFORM" | "DEEP_ANALYSIS" | "RECOMMENDED_BOOKS" | "RECOMMENDED_MOVIES" | "DISCUSSION_GUIDE" | "ROUTINE_ANALYSIS" | "BOGDAN_DISCUSSION" | "MEDICATION_DEEP_RESEARCH" | "CONDITION_DEEP_RESEARCH" | "REGIMEN_INTERACTION_SCREEN",
   goalId?: number | null,
   storyId?: number,
 ) {
@@ -1686,6 +1686,114 @@ export async function deleteRecommendedBooksByCategory(category: string, onlyOrp
   const rows = onlyOrphans
     ? await neonSql`DELETE FROM recommended_books WHERE goal_id IS NULL AND category = ${category} RETURNING id`
     : await neonSql`DELETE FROM recommended_books WHERE category = ${category} RETURNING id`;
+  return rows.length;
+}
+
+type RecommendedMovieRow = {
+  id: number;
+  goalId: number | null;
+  familyMemberId: number | null;
+  title: string;
+  year: number | null;
+  imdbId: string | null;
+  tmdbId: string | null;
+  platform: string | null;
+  rating: string | null;
+  imdbRating: number | null;
+  ageBand: string | null;
+  genres: string[];
+  description: string;
+  whyRecommended: string;
+  category: string;
+  justwatchUrl: string | null;
+  generatedAt: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+function mapRecommendedMovie(row: Record<string, unknown>): RecommendedMovieRow {
+  let genres: string[] = [];
+  const rawGenres = row.genres;
+  if (typeof rawGenres === "string" && rawGenres.length > 0) {
+    try {
+      const parsed = JSON.parse(rawGenres);
+      if (Array.isArray(parsed)) genres = parsed.filter((x): x is string => typeof x === "string");
+    } catch {
+      genres = [];
+    }
+  }
+  const rawImdbRating = row.imdb_rating;
+  let imdbRating: number | null = null;
+  if (rawImdbRating != null) {
+    const parsed = typeof rawImdbRating === "number" ? rawImdbRating : Number(rawImdbRating);
+    imdbRating = Number.isFinite(parsed) ? parsed : null;
+  }
+  return {
+    id: row.id as number,
+    goalId: (row.goal_id as number) || null,
+    familyMemberId: (row.family_member_id as number) || null,
+    title: row.title as string,
+    year: (row.year as number) || null,
+    imdbId: (row.imdb_id as string) || null,
+    tmdbId: (row.tmdb_id as string) || null,
+    platform: (row.platform as string) || null,
+    rating: (row.rating as string) || null,
+    imdbRating,
+    ageBand: (row.age_band as string) || null,
+    genres,
+    description: row.description as string,
+    whyRecommended: row.why_recommended as string,
+    category: row.category as string,
+    justwatchUrl: (row.justwatch_url as string) || null,
+    generatedAt: row.generated_at as string,
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+  };
+}
+
+export async function listAllRecommendedMovies(options?: {
+  category?: string;
+  familyMemberId?: number;
+}) {
+  const { category, familyMemberId } = options ?? {};
+  const rows =
+    category && familyMemberId != null
+      ? await neonSql`
+          SELECT * FROM recommended_movies
+          WHERE category = ${category} AND family_member_id = ${familyMemberId}
+          ORDER BY category ASC, created_at DESC
+        `
+      : category
+        ? await neonSql`
+            SELECT * FROM recommended_movies
+            WHERE category = ${category}
+            ORDER BY category ASC, created_at DESC
+          `
+        : familyMemberId != null
+          ? await neonSql`
+              SELECT * FROM recommended_movies
+              WHERE family_member_id = ${familyMemberId}
+              ORDER BY category ASC, created_at DESC
+            `
+          : await neonSql`
+              SELECT * FROM recommended_movies
+              ORDER BY category ASC, created_at DESC
+            `;
+  return rows.map(mapRecommendedMovie);
+}
+
+export async function deleteRecommendedMovies(options: {
+  goalId?: number;
+  familyMemberId?: number;
+}) {
+  const { goalId, familyMemberId } = options;
+  if (goalId == null && familyMemberId == null) return 0;
+  const rows =
+    goalId != null && familyMemberId != null
+      ? await neonSql`DELETE FROM recommended_movies WHERE goal_id = ${goalId} AND family_member_id = ${familyMemberId} RETURNING id`
+      : goalId != null
+        ? await neonSql`DELETE FROM recommended_movies WHERE goal_id = ${goalId} RETURNING id`
+        : await neonSql`DELETE FROM recommended_movies WHERE family_member_id = ${familyMemberId} RETURNING id`;
   return rows.length;
 }
 

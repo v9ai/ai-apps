@@ -1,0 +1,23 @@
+query GetAllRecommendedMovies($category: String, $familyMemberId: Int) {
+  allRecommendedMovies(category: $category, familyMemberId: $familyMemberId) {
+    id
+    goalId
+    familyMemberId
+    title
+    year
+    imdbId
+    tmdbId
+    platform
+    rating
+    imdbRating
+    ageBand
+    genres
+    description
+    whyRecommended
+    category
+    justwatchUrl
+    generatedAt
+    createdAt
+    updatedAt
+  }
+}

@@ -1,0 +1,25 @@
+mutation GenerateRecommendedMovies($goalId: Int, $familyMemberId: Int) {
+  generateRecommendedMovies(goalId: $goalId, familyMemberId: $familyMemberId) {
+    success
+    message
+    jobId
+    movies {
+      id
+      goalId
+      familyMemberId
+      title
+      year
+      imdbId
+      platform
+      rating
+      imdbRating
+      ageBand
+      genres
+      description
+      whyRecommended
+      category
+      justwatchUrl
+      generatedAt
+    }
+  }
+}

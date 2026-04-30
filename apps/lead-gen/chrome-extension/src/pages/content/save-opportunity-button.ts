@@ -12,8 +12,10 @@ import {
   safeSendMessage,
   showErrorToast,
 } from "./lifecycle";
+import { registerInStack, unregisterFromStack } from "./floating-stack";
 
 const BTN_ATTR = "data-lg-save-opportunity-btn";
+const STACK_PRIORITY = 10;
 const ACTIVITY_PATH_RE = /^\/feed\/update\/urn:li:activity:/;
 
 let saveOpportunityBtn: HTMLButtonElement | null = null;
@@ -164,7 +166,6 @@ function createButton(): HTMLButtonElement {
   btn.title = "Save this LinkedIn post as an opportunity";
   btn.style.cssText = `
     position: fixed;
-    bottom: 24px;
     right: 24px;
     z-index: 9999;
     background-color: #d97706;
@@ -246,7 +247,10 @@ function createButton(): HTMLButtonElement {
 // ── Sync / Lifecycle ────────────────────────────────────────────────
 
 function removeButton() {
-  document.querySelectorAll(`[${BTN_ATTR}]`).forEach((el) => el.remove());
+  document.querySelectorAll<HTMLElement>(`[${BTN_ATTR}]`).forEach((el) => {
+    unregisterFromStack(el);
+    el.remove();
+  });
   saveOpportunityBtn = null;
 }
 
@@ -271,6 +275,7 @@ function sync() {
   btn.style.backgroundColor = "#6b7280";
   document.body.appendChild(btn);
   saveOpportunityBtn = btn;
+  registerInStack(btn, STACK_PRIORITY);
 
   const canonicalUrl = window.location.href.split("?")[0];
   safeSendMessage(

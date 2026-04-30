@@ -20,7 +20,6 @@ import {
   Box,
   Callout,
   Card,
-  Container,
   Dialog,
   Flex,
   Select,
@@ -29,7 +28,6 @@ import {
   Text,
 } from "@radix-ui/themes";
 import {
-  ArrowLeftIcon,
   ExclamationTriangleIcon,
   InfoCircledIcon,
   MagicWandIcon,
@@ -551,76 +549,37 @@ export function CompanyEmailsClient({
 
   if (!isAdmin) {
     return (
-      <Container size="3" p="8">
-        <Callout.Root color="red">
-          <Callout.Icon>
-            <ExclamationTriangleIcon />
-          </Callout.Icon>
-          <Callout.Text>Access denied. Admin only.</Callout.Text>
-        </Callout.Root>
-      </Container>
+      <Callout.Root color="red">
+        <Callout.Icon>
+          <ExclamationTriangleIcon />
+        </Callout.Icon>
+        <Callout.Text>Access denied. Admin only.</Callout.Text>
+      </Callout.Root>
     );
   }
 
   if (companyLoading) {
     return (
-      <Container size="3" p="8">
-        <Flex justify="center">
-          <Spinner size="3" />
-        </Flex>
-      </Container>
+      <Flex justify="center">
+        <Spinner size="3" />
+      </Flex>
     );
   }
 
   if (!company) {
     return (
-      <Container size="3" p="8">
-        <Callout.Root color="gray">
-          <Callout.Icon>
-            <InfoCircledIcon />
-          </Callout.Icon>
-          <Callout.Text>Company not found.</Callout.Text>
-        </Callout.Root>
-      </Container>
+      <Callout.Root color="gray">
+        <Callout.Icon>
+          <InfoCircledIcon />
+        </Callout.Icon>
+        <Callout.Text>Company not found.</Callout.Text>
+      </Callout.Root>
     );
   }
 
   return (
-    <Container size="3" p={{ initial: "4", md: "6" }}>
+    <>
       <Flex direction="column" gap="5">
-        {/* Header */}
-        <Box>
-          <Link
-            href={`/companies/${companyKey}`}
-            style={{ textDecoration: "none" }}
-          >
-            <Flex align="center" gap="1" mb="3">
-              <ArrowLeftIcon />
-              <Text size="2" color="gray">
-                {company.name}
-              </Text>
-            </Flex>
-          </Link>
-
-          {/* Tab navigation */}
-          <div className="rt-TabsRoot" style={{ marginBottom: "var(--space-4)" }}>
-            <div className="rt-TabsList" style={{ display: "flex", gap: 0 }}>
-              <Link href={`/companies/${companyKey}`} className="rt-reset rt-TabsTrigger" style={{ textDecoration: "none" }}>
-                Overview
-              </Link>
-              <Link href={`/companies/${companyKey}/contacts`} className="rt-reset rt-TabsTrigger" style={{ textDecoration: "none" }}>
-                Contacts
-              </Link>
-              <Link href={`/companies/${companyKey}/emails`} className="rt-reset rt-TabsTrigger" data-state="active" style={{ textDecoration: "none" }}>
-                Emails
-              </Link>
-              <Link href={`/companies/${companyKey}/posts`} className="rt-reset rt-TabsTrigger" style={{ textDecoration: "none" }}>
-                Posts
-              </Link>
-            </div>
-          </div>
-        </Box>
-
         {/* Toolbar */}
         <Flex align="center" gap="3" wrap="wrap">
           <Text size="2" color="gray">
@@ -772,6 +731,6 @@ export function CompanyEmailsClient({
         contacts={generateBatchContacts}
         onSuccess={() => void refetchEmails()}
       />
-    </Container>
+    </>
   );
 }

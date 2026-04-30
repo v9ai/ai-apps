@@ -306,6 +306,7 @@ type DecisionMakerCandidate {
   id: Int!
   firstName: String!
   lastName: String!
+  email: String
   position: String
   seniority: String
   department: String

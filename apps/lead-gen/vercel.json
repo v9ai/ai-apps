@@ -38,18 +38,6 @@
     {
       "path": "/api/cron/backup",
       "schedule": "0 3 * * *"
-    },
-    {
-      "path": "/api/cron/cpn-campaign",
-      "schedule": "0 9 * * *"
-    },
-    {
-      "path": "/api/cron/followup-scheduler",
-      "schedule": "0 7 * * *"
-    },
-    {
-      "path": "/api/cron/purge-flagged-contacts",
-      "schedule": "0 4 * * 0"
     }
   ]
 }

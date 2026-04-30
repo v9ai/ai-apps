@@ -134,3 +134,28 @@ export const partMocsCache = pgTable("part_mocs_cache", {
   mocs: jsonb("mocs").notNull().default([]),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+export const themes = pgTable("themes", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  slug: text("slug").notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  unique().on(t.userId, t.slug),
+]);
+
+export const themeItems = pgTable("theme_items", {
+  id: serial("id").primaryKey(),
+  themeId: integer("theme_id").notNull().references(() => themes.id, { onDelete: "cascade" }),
+  kind: text("kind").notNull(),
+  refId: text("ref_id").notNull(),
+  name: text("name").notNull(),
+  imageUrl: text("image_url"),
+  url: text("url"),
+  designer: text("designer"),
+  addedAt: timestamp("added_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  unique().on(t.themeId, t.kind, t.refId),
+]);

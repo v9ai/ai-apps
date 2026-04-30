@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { Container, Heading, Text, Table, Badge, Flex, Button, IconButton } from "@radix-ui/themes";
+import { Container, Heading, Text, Table, Badge, Flex } from "@radix-ui/themes";
+import { Button, IconButton } from "@/components/ui";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ExternalLinkIcon, EyeNoneIcon, Cross2Icon, CheckIcon } from "@radix-ui/react-icons";
@@ -257,18 +258,16 @@ export function OpportunitiesClient({
                   <Table.Cell>
                     <Flex gap="2" align="center">
                       <Button
-                        size="1"
+                        size="sm"
                         variant="ghost"
-                        color="gray"
                         onClick={() => handleBlockPg(opp.id)}
                         title="Block company (hide all jobs from this company)"
                       >
                         <EyeNoneIcon width={12} height={12} /> Block
                       </Button>
                       <Button
-                        size="1"
+                        size="sm"
                         variant="ghost"
-                        color="gray"
                         onClick={() => handleHide(opp.id, "pg")}
                         title="Remove this entry from the list"
                         aria-label="Remove"
@@ -345,18 +344,16 @@ export function OpportunitiesClient({
                   <Table.Cell>
                     <Flex gap="3" align="center">
                       <Button
-                        size="2"
-                        variant="ghost"
-                        color="green"
+                        size="sm"
+                        variant="solidGreen"
                         onClick={() => handleApplyD1(opp.id)}
                         title="Mark as applied"
                       >
                         <CheckIcon width={14} height={14} /> Apply
                       </Button>
                       <Button
-                        size="2"
+                        size="sm"
                         variant="ghost"
-                        color="gray"
                         onClick={() => handleArchiveD1(opp.id, opp.companyKey, opp.companyName)}
                         title="Block company (hide all jobs from this company)"
                       >
@@ -364,9 +361,8 @@ export function OpportunitiesClient({
                       </Button>
                       {opp.location && (
                         <Button
-                          size="2"
+                          size="sm"
                           variant="ghost"
-                          color="gray"
                           onClick={() => handleBlockLocation(opp.location)}
                           title={`Block location "${opp.location}" (substring match, hides any row containing this)`}
                         >
@@ -374,12 +370,11 @@ export function OpportunitiesClient({
                         </Button>
                       )}
                       <IconButton
-                        size="2"
+                        size="md"
                         variant="ghost"
-                        color="gray"
+                        label="Remove"
                         onClick={() => handleHide(opp.id, "d1")}
                         title="Remove this entry from the list"
-                        aria-label="Remove"
                       >
                         <Cross2Icon width={14} height={14} />
                       </IconButton>

@@ -67,6 +67,11 @@ class CalmingPlanState(TypedDict, total=False):
     _allergies: list[dict]
     _characteristics: list[dict]
     _deep_analysis: Optional[dict]
+    _prior_plans: list[dict]       # last N calming_plans for this member
+    _journal: list[dict]           # recent journal entries
+    _observations: list[dict]      # behavior_observations
+    _medications: list[dict]       # full medication history
+    _med_context: dict             # derived: Singulair status, washout window
     _clusters: list[dict]          # from analyze_patterns
     _research: list[dict]
     _cluster_bundles: list[dict]   # from generate_bundles (one per cluster)
@@ -139,6 +144,7 @@ async def _deepseek_json(prompt: str, *, max_tokens: int = 4096, temperature: fl
 # Node: load_context
 # ---------------------------------------------------------------------------
 async def load_context(state: CalmingPlanState) -> dict:
+    print("[calming_plan] load_context: enter (v2-merge)", flush=True)
     user_email = state.get("user_email")
     family_member_id = state.get("family_member_id")
     if not user_email or not family_member_id:
@@ -206,6 +212,46 @@ async def load_context(state: CalmingPlanState) -> dict:
                 except Exception as exc:
                     print(f"[calming_plan] allergies table unavailable: {exc}")
 
+                # Prior calming plans — last 5, newest first. Each new
+                # generation MERGES prior plan knowledge with the current
+                # state, rather than restarting from scratch.
+                prior_plans: list[dict] = []
+                try:
+                    await cur.execute(
+                        "SELECT id, language, plan_json, safety_notes, generated_at "
+                        "FROM calming_plans WHERE family_member_id = %s AND user_id = %s "
+                        "ORDER BY generated_at DESC LIMIT 5",
+                        (family_member_id, user_email),
+                    )
+                    for r in await cur.fetchall():
+                        plan_json_raw = r[2]
+                        try:
+                            pj = json.loads(plan_json_raw) if isinstance(plan_json_raw, str) else plan_json_raw
+                        except Exception:
+                            pj = {}
+                        prior_plans.append(
+                            {
+                                "id": r[0],
+                                "language": r[1],
+                                "headline": (pj or {}).get("headline"),
+                                "executive_summary": (pj or {}).get("executive_summary"),
+                                "cluster_names": [
+                                    b.get("cluster_name")
+                                    for b in ((pj or {}).get("cluster_bundles") or [])
+                                ],
+                                "supplement_names": [
+                                    s.get("name")
+                                    for s in ((pj or {}).get("supplements") or [])
+                                ],
+                                "safety_notes_preview": (r[3] or "")[:300],
+                                "generated_at": (
+                                    r[4].isoformat() if hasattr(r[4], "isoformat") else str(r[4])
+                                ),
+                            }
+                        )
+                except Exception as exc:
+                    print(f"[calming_plan] prior plans unavailable: {exc}")
+
                 # Family-member characteristics (broader than `issues` —
                 # includes risk-tier, impairment domains, age-of-onset).
                 characteristics: list[dict] = []
@@ -258,11 +304,95 @@ async def load_context(state: CalmingPlanState) -> dict:
                         "pattern_clusters": _loads(da_row[2]),
                         "family_system_insights": _loads(da_row[3]),
                     }
+
+                # Recent journal entries — gives the LLM concrete lived events
+                # to ground patterns, not just issue titles. Last 30 by date.
+                journal: list[dict] = []
+                try:
+                    await cur.execute(
+                        "SELECT entry_date, mood, mood_score, title, content, tags "
+                        "FROM journal_entries WHERE family_member_id = %s AND user_id = %s "
+                        "ORDER BY entry_date DESC NULLS LAST LIMIT 30",
+                        (family_member_id, user_email),
+                    )
+                    for r in await cur.fetchall():
+                        journal.append(
+                            {
+                                "entry_date": r[0],
+                                "mood": r[1],
+                                "mood_score": r[2],
+                                "title": (r[3] or "")[:200],
+                                "content": (r[4] or "")[:600],
+                                "tags": r[5],
+                            }
+                        )
+                except Exception as exc:
+                    print(f"[calming_plan] journal_entries unavailable: {exc}")
+
+                # Behavior observations — structured incident records
+                # (frequency, intensity, context).
+                observations: list[dict] = []
+                try:
+                    await cur.execute(
+                        "SELECT observed_at, observation_type, frequency, intensity, "
+                        "context, notes FROM behavior_observations "
+                        "WHERE family_member_id = %s AND user_id = %s "
+                        "ORDER BY observed_at DESC NULLS LAST LIMIT 20",
+                        (family_member_id, user_email),
+                    )
+                    for r in await cur.fetchall():
+                        observations.append(
+                            {
+                                "observed_at": r[0],
+                                "type": r[1],
+                                "frequency": r[2],
+                                "intensity": r[3],
+                                "context": (r[4] or "")[:240],
+                                "notes": (r[5] or "")[:240],
+                            }
+                        )
+                except Exception as exc:
+                    print(f"[calming_plan] behavior_observations unavailable: {exc}")
+
+                # Medication history — every row, ordered by start_date desc.
+                # Drives Singulair / neuropsychiatric-AE detection downstream.
+                medications: list[dict] = []
+                try:
+                    await cur.execute(
+                        "SELECT name, dosage, frequency, notes, start_date, end_date, is_active "
+                        "FROM medications WHERE family_member_id = %s AND user_id = %s "
+                        "ORDER BY start_date DESC NULLS LAST",
+                        (family_member_id, user_email),
+                    )
+                    for r in await cur.fetchall():
+                        medications.append(
+                            {
+                                "name": r[0],
+                                "dosage": r[1],
+                                "frequency": r[2],
+                                "notes": (r[3] or "")[:600],
+                                "start_date": (
+                                    r[4].isoformat() if hasattr(r[4], "isoformat") else r[4]
+                                ),
+                                "end_date": (
+                                    r[5].isoformat() if hasattr(r[5], "isoformat") else r[5]
+                                ),
+                                "is_active": bool(r[6]) if r[6] is not None else None,
+                            }
+                        )
+                except Exception as exc:
+                    print(f"[calming_plan] medications unavailable: {exc}")
     except Exception as exc:
         return {"error": f"load_context failed: {exc}"}
 
     # Resolve language: explicit input > member's preferred_language > 'ro'.
     language = state.get("language") or _language_from_pref(member.get("preferred_language"))
+
+    # Derived medication context — flag drugs with known neuropsychiatric AE
+    # profiles, especially Singulair (montelukast) under FDA black-box warning.
+    # When such a drug was recently discontinued, the plan front-loads
+    # supportive recovery nutrition during the 2-4 week washout window.
+    med_context = _derive_med_context(medications)
 
     return {
         "_member": member,
@@ -270,7 +400,52 @@ async def load_context(state: CalmingPlanState) -> dict:
         "_allergies": allergies,
         "_characteristics": characteristics,
         "_deep_analysis": deep_analysis,
+        "_prior_plans": prior_plans,
+        "_journal": journal,
+        "_observations": observations,
+        "_medications": medications,
+        "_med_context": med_context,
+        "_graph_version": "v3-singulair-iatrogenic-2026-04-30",
         "language": language,
+    }
+
+
+def _derive_med_context(medications: list[dict]) -> dict:
+    """Detect Singulair/montelukast in medication history and compute washout
+    window. Returns a small dict the prompts use to bias interventions toward
+    pathways the drug disrupts (HPA-axis, glutathione, serotonergic, BBB,
+    REM/sleep) when the member is currently on or recently off the drug."""
+    singulair_rx: Optional[dict] = None
+    for m in medications:
+        nm = (m.get("name") or "").lower()
+        if "singulair" in nm or "montelukast" in nm:
+            singulair_rx = m
+            break
+
+    if not singulair_rx:
+        return {"singulair_history": False}
+
+    is_active = bool(singulair_rx.get("is_active"))
+    end_date_str = singulair_rx.get("end_date")
+    days_since_stopped: Optional[int] = None
+    in_washout = False
+    if not is_active and end_date_str:
+        try:
+            end_dt = datetime.fromisoformat(str(end_date_str)[:10])
+            days_since_stopped = (datetime.utcnow() - end_dt).days
+            # 2-4 week observation per FDA / typical clinical practice.
+            in_washout = 0 <= days_since_stopped <= 28
+        except Exception:
+            pass
+
+    return {
+        "singulair_history": True,
+        "singulair_active": is_active,
+        "singulair_start_date": singulair_rx.get("start_date"),
+        "singulair_end_date": end_date_str,
+        "days_since_stopped": days_since_stopped,
+        "in_washout_window": in_washout,
+        "singulair_notes": (singulair_rx.get("notes") or "")[:500],
     }
 
 
@@ -291,6 +466,9 @@ _CLUSTER_AXES = (
     "emotional_dysregulation",
     "cognitive_attention",
     "co_regulation_attachment",
+    # Special axis for medication-attributable clusters (e.g. Singulair AE
+    # recovery during the post-discontinuation washout window).
+    "iatrogenic_neuropsychiatric_recovery",
 )
 
 
@@ -303,6 +481,10 @@ async def analyze_patterns(state: CalmingPlanState) -> dict:
     issues = state.get("_issues") or []
     characteristics = state.get("_characteristics") or []
     deep = state.get("_deep_analysis") or {}
+    prior_plans = state.get("_prior_plans") or []
+    journal = state.get("_journal") or []
+    observations = state.get("_observations") or []
+    med_context = state.get("_med_context") or {}
     language = state.get("language", "ro")
 
     age = _resolve_age(member.get("age_years"), member.get("date_of_birth"))
@@ -331,11 +513,78 @@ async def analyze_patterns(state: CalmingPlanState) -> dict:
         for c in characteristics
     )
     deep_summary = (deep.get("summary") or "")[:600]
+
+    # Journal — include up to 12 most recent entries with date+title+content
+    # snippet so the model can ground patterns in concrete events, not just
+    # issue titles.
+    journal_lines: list[str] = []
+    for j in journal[:12]:
+        title = (j.get("title") or "")[:120]
+        content = (j.get("content") or "")[:200]
+        mood = j.get("mood") or ""
+        score = j.get("mood_score")
+        score_str = f" [mood={mood}{f' {score}' if score is not None else ''}]" if mood or score is not None else ""
+        journal_lines.append(
+            f"- {j.get('entry_date', '')}: {title}{score_str}\n  {content}"
+        )
+    journal_block = "\n".join(journal_lines) or "(no journal entries)"
+
+    # Behavior observations — tighter, structured incidents.
+    obs_lines: list[str] = []
+    for o in observations[:8]:
+        obs_lines.append(
+            f"- {o.get('observed_at', '')}: {o.get('type', '')} "
+            f"[freq={o.get('frequency', '?')}, intensity={o.get('intensity', '?')}] "
+            f"context: {(o.get('context') or '')[:140]}"
+        )
+    obs_block = "\n".join(obs_lines) or "(no behavior observations)"
+
+    # Singulair / iatrogenic context — drives the cluster axis suggestion.
+    med_lines: list[str] = []
+    if med_context.get("singulair_history"):
+        if med_context.get("singulair_active"):
+            med_lines.append(
+                "Member is CURRENTLY taking Singulair (montelukast). FDA black-box warning for "
+                "neuropsychiatric AEs (agitation, anxiety, sleep disturbance, mood, suicidality). "
+                "Some symptoms may be partially iatrogenic. The plan supports the underlying "
+                "physiology with plant-based interventions but does NOT advise stopping the drug "
+                "(that is a clinician decision)."
+            )
+        elif med_context.get("in_washout_window"):
+            d = med_context.get("days_since_stopped")
+            med_lines.append(
+                f"Member STOPPED Singulair (montelukast) {d} day(s) ago and is in the 2-4 week "
+                "OBSERVATION/WASHOUT window to evaluate whether behavioral/sensory symptoms "
+                "improve. The plan should front-load nutrition that supports the pathways "
+                "Singulair disrupts: glutathione system (cruciferous vegetables, sulforaphane), "
+                "HPA-axis (adaptogenic herbs age-permitting), serotonergic system (tryptophan-"
+                "rich plant foods, saffron), mitochondrial function (polyphenols, olive oil), "
+                "and REM/sleep restoration (tart cherry, magnolia bark caution, lemon balm). "
+                "Frame as 'supportive recovery nutrition during washout' — NOT antidote, NOT Rx."
+            )
+        else:
+            med_lines.append(
+                "Member has Singulair (montelukast) history; not currently active and outside "
+                "washout window. Behavioral profile may still partly reflect lasting effects."
+            )
+    med_block = "\n".join(med_lines) or "(no notable medication-AE context)"
     pattern_clusters_existing = deep.get("pattern_clusters") or []
     existing_clusters_text = "\n".join(
         f"- {c.get('name', '')}: {(c.get('description') or '')[:160]}"
         for c in pattern_clusters_existing[:5]
     )
+
+    # Prior-plan cluster history — what patterns we've already identified
+    # across previous runs. Helps the model converge on stable, refined
+    # clusters rather than reshuffling each generation.
+    prior_clusters_set: list[str] = []
+    seen_pc: set[str] = set()
+    for pp in prior_plans:
+        for cn in pp.get("cluster_names") or []:
+            if cn and cn not in seen_pc:
+                seen_pc.add(cn)
+                prior_clusters_set.append(cn)
+    prior_clusters_text = ", ".join(prior_clusters_set[:8]) or "(none)"
 
     schema = """{
   "clusters": [
@@ -375,11 +624,30 @@ async def analyze_patterns(state: CalmingPlanState) -> dict:
             "## Existing deep-analysis pattern clusters (for reference only)",
             existing_clusters_text or "(none)",
             "",
+            "## Prior calming-plan cluster names (for continuity — prefer reusing/refining over inventing new)",
+            prior_clusters_text,
+            "",
+            "## Recent journal entries (concrete lived events — anchor patterns here)",
+            journal_block,
+            "",
+            "## Behavior observations",
+            obs_block,
+            "",
+            "## Medication / iatrogenic context (CRITICAL — biases cluster axes)",
+            med_block,
+            "",
             "## Existing deep-analysis summary",
             deep_summary or "(none)",
             "",
             "## Output rules",
             "- EXACTLY 3 clusters. Pick the 3 most therapeutically actionable patterns.",
+            "- If the medication context indicates an active/recent Singulair history, ONE of the 3 "
+            "clusters MUST be a 'singulair_washout_recovery' (or similar name) cluster with axis "
+            "'iatrogenic_neuropsychiatric_recovery' (use that exact axis literal — even though it's not "
+            "in the standard enum below, prefer it when applicable). The mechanism field for that cluster "
+            "should reference the specific pathways Singulair disrupts: cysLT1 receptor antagonism in CNS, "
+            "glutathione depletion, HPA-axis disruption, serotonergic/noradrenergic dysregulation, "
+            "mitochondrial dysfunction in neurons, BBB permeability changes, REM/sleep disruption.",
             "- Each cluster name must be snake_case and unique.",
             "- `dominant_issues` must list issue titles VERBATIM from the input — do not invent.",
             "- `axis` must be one of the enumerated values exactly.",
@@ -449,12 +717,23 @@ async def analyze_patterns(state: CalmingPlanState) -> dict:
 # Node: search_research
 # ---------------------------------------------------------------------------
 _BASE_QUERIES = [
-    "L-theanine children anxiety behavior randomized",
-    "chamomile pediatric anxiety calming evidence",
-    "magnesium glycinate child behavior sleep RCT",
-    "omega-3 EPA DHA children behavior attention",
-    "non-pharmacologic interventions childhood behavior regulation",
-    "lemon balm Melissa officinalis pediatric anxiety sleep",
+    "L-theanine green tea children anxiety behavior randomized",
+    "passionflower passiflora children anxiety sleep clinical trial",
+    "lemon balm Melissa officinalis pediatric anxiety sleep RCT",
+    "saffron Crocus sativus children mood behavior randomized",
+    "holy basil tulsi Ocimum sanctum stress anxiety pediatric",
+    "linden tea Tilia children calming evidence",
+    "lavender aromatherapy children behavior sleep RCT",
+    "algal omega-3 plant-source DHA children behavior attention",
+    "Mediterranean diet plants children behavior mood",
+    "forest bathing nature exposure children stress regulation",
+    # Singulair / montelukast neuropsychiatric AEs — mechanism-targeted recovery
+    "montelukast neuropsychiatric adverse events children FDA boxed warning",
+    "montelukast glutathione oxidative stress brain mechanism",
+    "sulforaphane broccoli sprouts children behavior glutathione",
+    "saffron extract Crocus children depression anxiety randomized",
+    "tart cherry juice children sleep melatonin",
+    "polyphenols Mediterranean diet pediatric mood neuroprotection",
 ]
 
 
@@ -552,6 +831,8 @@ def _build_bundle_prompt(state: CalmingPlanState, cluster: dict) -> str:
     issues = state.get("_issues") or []
     allergies = state.get("_allergies") or []
     research = state.get("_research") or []
+    journal = state.get("_journal") or []
+    med_context = state.get("_med_context") or {}
     language = state.get("language", "ro")
     age = _resolve_age(member.get("age_years"), member.get("date_of_birth"))
     name = member.get("first_name") or "the family member"
@@ -570,6 +851,50 @@ def _build_bundle_prompt(state: CalmingPlanState, cluster: dict) -> str:
         f"{(i.get('description') or '')[:160]}"
         for i in cluster_issues[:8]
     )
+
+    # Recent journal — last 6 entries; gives the bundle concrete events to
+    # cite in trigger_response_pairs.
+    journal_lines = []
+    for j in journal[:6]:
+        title = (j.get("title") or "")[:120]
+        content = (j.get("content") or "")[:160]
+        journal_lines.append(f"- {j.get('entry_date', '')}: {title} — {content}")
+    journal_block = "\n".join(journal_lines) or "(no recent journal)"
+
+    # Singulair / iatrogenic context — every bundle gets this so plant
+    # interventions can be mechanism-targeted.
+    if med_context.get("singulair_history"):
+        if med_context.get("singulair_active"):
+            singulair_block = (
+                "Member is CURRENTLY on Singulair (montelukast). Symptoms in this cluster may be "
+                "partially iatrogenic. Prefer plant interventions that support: glutathione "
+                "(cruciferous: broccoli sprouts/sulforaphane, kale, garlic, onion, watercress), "
+                "HPA-axis (tulsi/holy basil tea, lemon balm, oat-straw), serotonergic (saffron "
+                "extract — pediatric RCT evidence, plant tryptophan: pumpkin/sunflower seeds, "
+                "oats, chickpeas), mitochondrial/polyphenols (extra-virgin olive oil, blueberries "
+                "modulo birch, dark leafy greens), REM/sleep (tart cherry juice, lemon balm tea). "
+                "Do NOT recommend stopping Singulair — that is a clinician decision."
+            )
+        elif med_context.get("in_washout_window"):
+            d = med_context.get("days_since_stopped") or 0
+            singulair_block = (
+                f"Member STOPPED Singulair (montelukast) {d} day(s) ago — currently in 2-4 week "
+                "OBSERVATION/WASHOUT window. Front-load plant interventions that support pathways "
+                "Singulair disrupts: glutathione (broccoli sprouts/sulforaphane, kale, garlic, "
+                "watercress, asparagus), HPA-axis (tulsi/holy basil, lemon balm, ashwagandha "
+                "with age caveat), serotonergic (saffron, plant tryptophan from pumpkin/sunflower "
+                "seeds, oats, chickpeas, banana), mitochondrial (EVOO, polyphenol-rich plant "
+                "foods, dark cocoa modulo allergy), REM/sleep restoration (tart cherry juice, "
+                "lemon balm tea, magnolia bark with strict age caveat). Frame interventions as "
+                "'supportive recovery nutrition during washout' — neutral, food-first language."
+            )
+        else:
+            singulair_block = (
+                "Member has Singulair history (not active, outside washout). Some lasting effects "
+                "possible; gentle support of glutathione + HPA-axis pathways still useful."
+            )
+    else:
+        singulair_block = "(no Singulair / neuropsychiatric-AE drug history)"
 
     # Allergies block — same hard rules apply.
     allergy_lines: list[str] = []
@@ -640,10 +965,12 @@ def _build_bundle_prompt(state: CalmingPlanState, cluster: dict) -> str:
 
     return "\n".join(
         [
-            f"You are a pediatric integrative-medicine expert. Generate a FOCUSED intervention bundle "
-            f"for ONE behavioral cluster ('{cluster_name}', axis: {cluster_axis}) for {name} "
+            f"You are a pediatric PHYTOTHERAPY and integrative-medicine expert. Generate a "
+            f"FOCUSED, **PLANT-FIRST** intervention bundle for ONE behavioral cluster "
+            f"('{cluster_name}', axis: {cluster_axis}) for {name} "
             f"(age {age if age is not None else 'unspecified'}, currently on NO medications). "
-            f"This bundle is one of several — do not try to address every issue, only this cluster.",
+            f"This bundle is one of several — do not try to address every issue, only this cluster. "
+            f"PRIORITIZE botanical/herbal/plant-derived interventions over minerals or synthetics.",
             "",
             "## Cluster",
             f"Name: {cluster_name}",
@@ -653,21 +980,35 @@ def _build_bundle_prompt(state: CalmingPlanState, cluster: dict) -> str:
             "## Cluster's dominant issues",
             issues_block or "(none assigned to this cluster)",
             "",
+            "## Recent journal (concrete events — use for trigger_response_pairs)",
+            journal_block,
+            "",
+            "## Singulair / iatrogenic context (mechanism-targeted plant interventions)",
+            singulair_block,
+            "",
             "## ALLERGIES (HARD)",
             allergies_block,
             "",
             "## Research (filtered to this cluster + nearby)",
             research_block,
             "",
-            "## Hard rules",
+            "## Hard rules — PLANT-FIRST",
             "- ONE bundle for this cluster only. Don't drift to other patterns.",
-            "- 4-7 interventions covering at least 3 of: lifestyle, food, movement, sensory, supplement, co_regulation.",
+            "- 4-7 interventions. **At least 60% of interventions must be plant-based**: "
+            "  herbal teas (verified against allergies), culinary spices (turmeric, cinnamon, ginger, saffron), "
+            "  adaptogenic herbs age-permitting (lemon balm, holy basil/tulsi, gotu kola), "
+            "  plant-derived supplements (algal omega-3, plant-source magnesium-rich foods, plant flavonoids), "
+            "  aromatherapy (lavender topical/diffuser), plant foods rich in tryptophan/B6/folate, "
+            "  garden/forest-bathing, plant-based sensory tools (rice/lentil bins, pine cones, herb gardens).",
+            "- Cover at least 3 of: lifestyle, food (plants), movement, sensory (plant-based), supplement (plant-derived), co_regulation.",
+            "- AVOID generic mineral supplements (e.g. magnesium glycinate alone) UNLESS paired with a plant-rich food source. "
+            "Prefer 'magnesium from pumpkin seeds + spinach' over 'magnesium glycinate'.",
             "- 3-5 trigger_response_pairs — each pair must name a CONCRETE situation the parent will recognize, "
             "not a generic 'when child is upset'. Use the dominant issues for grounding.",
             "- KPIs at 1/4/12 weeks must be OBSERVABLE by a parent without instruments.",
-            "- Allergies override everything (apply cross-reactivity: ragweed↔chamomile, mint↔lemon balm/lavender ingestion, "
-            "birch↔raw fruit, latex↔banana/avocado/kiwi, dairy/tree-nut/salicylate/soy/egg). Each intervention's "
-            "`respects_allergies` field must state what was cross-checked.",
+            "- Allergies override everything (cross-reactivity: ragweed↔chamomile/echinacea/calendula/feverfew, "
+            "mint↔lemon balm/lavender ingestion, birch↔raw apples/almonds, latex↔banana/avocado/kiwi, "
+            "dairy/tree-nut/salicylate/soy/egg). Each intervention's `respects_allergies` field must state what was cross-checked.",
             "- Cite paper indexes from the ## Research section when grounding interventions; do not invent citations.",
             "- Keep every string concise: title<=80 chars, specifics<=220, why_it_works<=180.",
             "",
@@ -732,6 +1073,7 @@ def _build_synthesize_prompt(state: CalmingPlanState) -> str:
     research = state.get("_research") or []
     bundles = state.get("_cluster_bundles") or []
     clusters = state.get("_clusters") or []
+    prior_plans = state.get("_prior_plans") or []
     language = state.get("language", "ro")
     age = _resolve_age(member.get("age_years"), member.get("date_of_birth"))
     name = member.get("first_name") or "the family member"
@@ -755,6 +1097,19 @@ def _build_synthesize_prompt(state: CalmingPlanState) -> str:
         f"- {c.get('name')} (axis: {c.get('axis')}): {(c.get('hypothesized_mechanism') or '')[:160]}"
         for c in clusters
     )
+
+    # Prior plans — let the synthesizer carry forward what worked and refine.
+    prior_block_lines: list[str] = []
+    for pp in prior_plans[:3]:
+        line = (
+            f"- Plan #{pp.get('id')} ({pp.get('generated_at', '')[:10]}): "
+            f"{(pp.get('headline') or '')[:120]}"
+        )
+        sup_names = pp.get("supplement_names") or []
+        if sup_names:
+            line += " | supplements: " + ", ".join(sup_names[:5])
+        prior_block_lines.append(line)
+    prior_block = "\n".join(prior_block_lines) or "(no prior plans — this is the first)"
 
     issues_block = "\n".join(
         f"- {i.get('title')} ({i.get('category')}, {i.get('severity')})"
@@ -844,14 +1199,29 @@ def _build_synthesize_prompt(state: CalmingPlanState) -> str:
             "## Cluster identification (axes)",
             clusters_block or "(none)",
             "",
+            "## Prior plan history (MERGE-mode — extract what worked, refine, do not duplicate)",
+            prior_block,
+            "",
             "## Cluster bundles (compact summary — full bundles will be re-attached after generation, do NOT echo them)",
             bundles_block,
             "",
             f"## Source paper count\n{sources_count}",
             "",
-            "## Hard rules",
+            "## Hard rules — PLANT-FIRST + MERGE",
             "- DO NOT include cluster_bundles in your output — they will be re-attached programmatically.",
-            "- Stepped tiers: Tier 1 = lowest-friction lifestyle/sensory items. Tier 2 = nutrition+supplements. Tier 3 = escalation flags + when to consult.",
+            "- This is a MERGE of prior plans. Carry forward the best plant-based interventions that don't conflict with allergies; "
+            "drop redundant or under-performing ones; refine the unified routine.",
+            "- All `food_and_drinks.encourage` items MUST be plant-foods (whole grains, legumes, leafy greens, nuts/seeds modulo allergies, "
+            "fruits, fermented plant foods, herbs/spices). No animal proteins as primary entries.",
+            "- All `food_and_drinks.teas` MUST be herbal teas verified against allergies. Prefer tei (linden), "
+            "lemon balm (if no mint allergy), passionflower (evening), tulsi (holy basil), oat-straw, rooibos, "
+            "rose hip; avoid chamomile if ragweed-allergic.",
+            "- All `supplements` MUST be plant-derived OR plant-rich foods. Acceptable: algal omega-3, lemon balm extract, "
+            "saffron extract, magnolia bark, ashwagandha (caution under 12), holy basil, plant-source magnesium/zinc-rich food. "
+            "AVOID isolated synthetic minerals as standalone entries.",
+            "- Sensory items should reference plant materials where feasible: rice/bean bins, pine cones, herb gardens, "
+            "lavender pillows, citrus peels, eucalyptus baths.",
+            "- Stepped tiers: Tier 1 = lowest-friction plant-based lifestyle/food/sensory items. Tier 2 = botanical teas + plant-derived supplements. Tier 3 = escalation flags + when to consult.",
             "- Morning/evening/movement/food sections combine across bundles — keep each list <= 5 items.",
             "- Supplements section deduplicates supplements that appear in multiple bundles; <= 5 entries.",
             "- issue_coverage must map every input issue title to at least one section name (pattern bundle name OR routine section name).",

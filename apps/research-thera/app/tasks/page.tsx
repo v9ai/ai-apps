@@ -26,7 +26,7 @@ const STATUS_TO_ENUM: Record<ValidStatus, TaskStatus> = {
 };
 
 const emptyMessages: Record<string, string> = {
-  inbox: "Your inbox is empty. Press Cmd+K to capture a task.",
+  inbox: "Your inbox is empty.",
   active: "No active tasks. Move tasks from your inbox to get started.",
   completed: "No completed tasks yet. Complete some tasks to see them here.",
 };
@@ -79,21 +79,6 @@ function TasksPageInner() {
           />
         )}
       </Flex>
-
-      <Text size="2" color="gray">
-        Press{" "}
-        <kbd
-          style={{
-            padding: "2px 6px",
-            borderRadius: 4,
-            border: "1px solid var(--gray-a6)",
-            fontSize: "0.85em",
-          }}
-        >
-          Cmd+K
-        </kbd>{" "}
-        to add a task
-      </Text>
 
       <StatusTabs counts={counts} />
 

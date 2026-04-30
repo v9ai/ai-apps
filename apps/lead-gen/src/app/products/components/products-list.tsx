@@ -3,18 +3,17 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  Badge,
-  Container,
-  Flex,
-  Heading,
-  Text,
-  Tooltip,
-} from "@radix-ui/themes";
-import { CubeIcon, PlusIcon } from "@radix-ui/react-icons";
+import { Badge, Flex, Text, Tooltip } from "@radix-ui/themes";
+import { PlusIcon } from "@radix-ui/react-icons";
 import { toast } from "sonner";
 import { css } from "styled-system/css";
 import { button } from "@/recipes/button";
+import {
+  landingHeading,
+  landingSection,
+  landingSubtext,
+  sectionHeader,
+} from "@/recipes/landing";
 import {
   useProductsQuery,
   useDeleteProductMutation,
@@ -27,7 +26,6 @@ import {
 } from "@/__generated__/hooks";
 import { useAuth } from "@/lib/auth-hooks";
 import { ADMIN_EMAIL } from "@/lib/constants";
-import { LoadingShell } from "./view-chrome";
 import { ProductsEmptyState } from "./products-empty-state";
 import { ProductsSkeleton } from "./products-skeleton";
 import { ProductCard, DeleteProductDialog } from "./product-card";
@@ -225,65 +223,110 @@ export function ProductsList() {
   const showEmpty = !loading && rows.length === 0;
 
   return (
-    <Container size="4" p="6" asChild>
-      <main>
-        {/* Page header */}
-        <Flex
-          align={{ initial: "start", sm: "center" }}
-          justify="between"
-          gap="3"
-          wrap="wrap"
-          mb="5"
+    <main>
+      {/* Hero block */}
+      <section
+        className={css({ position: "relative", overflow: "hidden" })}
+      >
+        {/* Animated radial accent glow */}
+        <div
+          aria-hidden="true"
+          className={css({
+            position: "absolute",
+            top: { base: "-160px", lg: "-220px" },
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: { base: "400px", lg: "700px" },
+            height: { base: "400px", lg: "700px" },
+            borderRadius: "50%",
+            background:
+              "radial-gradient(circle, rgba(62, 99, 221, 0.15) 0%, rgba(62, 99, 221, 0.05) 40%, transparent 70%)",
+            pointerEvents: "none",
+            animation: "hero-glow-pulse 6s ease-in-out infinite",
+            zIndex: 0,
+          })}
+        />
+
+        <div
+          className={`${landingSection({ width: "default", spacing: "compact" })} ${css({ position: "relative", zIndex: 1 })}`}
         >
-          <Flex align="center" gap="3" wrap="wrap">
-            <span
-              aria-hidden="true"
-              className={css({
-                color: "accent.11",
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                bg: "accent.3",
-                borderRadius: "md",
-                p: "2",
-                boxShadow: "inset 0 0 0 1px token(colors.accent.6)",
-              })}
+          <Flex
+            align={{ initial: "start", md: "end" }}
+            justify="between"
+            gap="4"
+            wrap="wrap"
+          >
+            <div
+              className={`${sectionHeader({ align: "left", spacing: "compact" })} ${css({ mb: "0" })}`}
             >
-              <CubeIcon width="20" height="20" />
-            </span>
-            <Heading size="6">Products</Heading>
-            {rows.length > 0 && (
-              <Badge color="gray" radius="full" variant="soft">
-                {rows.length}
-              </Badge>
-            )}
-            {!isAdmin && user && (
-              <Tooltip content="Editing and analysis runs are restricted to operators.">
-                <Badge color="amber" variant="soft">
-                  View only
-                </Badge>
-              </Tooltip>
+              <span
+                className={css({
+                  fontSize: "xs",
+                  color: "ui.tertiary",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.12em",
+                  fontWeight: "semibold",
+                })}
+              >
+                Product intelligence
+              </span>
+
+              <Flex align="center" gap="3" wrap="wrap">
+                <h1
+                  className={landingHeading({
+                    level: "section",
+                    gradient: true,
+                  })}
+                >
+                  Products
+                </h1>
+                {rows.length > 0 && (
+                  <Badge color="gray" radius="full" variant="soft" size="2">
+                    {rows.length}
+                  </Badge>
+                )}
+                {!isAdmin && user && (
+                  <Tooltip content="Editing and analysis runs are restricted to operators.">
+                    <Badge color="amber" variant="soft">
+                      View only
+                    </Badge>
+                  </Tooltip>
+                )}
+              </Flex>
+
+              <p
+                className={`${landingSubtext({ size: "md", align: "left" })} ${css({ mx: "0" })}`}
+              >
+                Each product runs through{" "}
+                <Text as="span" weight="medium" className={css({ color: "ui.heading" })}>
+                  ICP → Pricing → GTM → Intel
+                </Text>
+                . Click into one to see signals and outreach drafts.
+              </p>
+            </div>
+
+            {isAdmin && (
+              <Link
+                href="/products/new"
+                className={button({ variant: "gradient", size: "md" })}
+                aria-keyshortcuts="n"
+              >
+                <PlusIcon aria-hidden /> Add product
+              </Link>
             )}
           </Flex>
-          {isAdmin && (
-            <Link
-              href="/products/new"
-              className={button({ variant: "gradient", size: "md" })}
-              aria-keyshortcuts="n"
-            >
-              <PlusIcon aria-hidden /> Add product
-            </Link>
-          )}
-        </Flex>
-        <Text size="2" color="gray" as="p" mb="5">
-          Operator workspace for ICP, pricing, GTM, and competitor intel.
-        </Text>
+        </div>
+      </section>
 
+      {/* List section */}
+      <section
+        className={`${landingSection({ width: "default", spacing: "compact" })} ${css({ pt: "0" })}`}
+      >
         {error && (
           <Flex
             gap="3"
             align="center"
-            mb="3"
+            mb="4"
             role="alert"
             className={css({
               p: "3",
@@ -306,6 +349,32 @@ export function ProductsList() {
           </Flex>
         )}
 
+        {rows.length > 0 && (
+          <Flex align="center" gap="3" mt="2" mb="5">
+            <Text
+              as="span"
+              size="2"
+              weight="medium"
+              className={css({
+                color: "ui.tertiary",
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                fontSize: "xs",
+              })}
+            >
+              Your products
+            </Text>
+            <div
+              aria-hidden="true"
+              className={css({
+                flex: 1,
+                h: "1px",
+                bg: "ui.border",
+              })}
+            />
+          </Flex>
+        )}
+
         {showSkeleton && <ProductsSkeleton count={6} />}
         {showEmpty && <ProductsEmptyState isAdmin={isAdmin} />}
 
@@ -313,7 +382,7 @@ export function ProductsList() {
           <div
             className={css({
               display: "grid",
-              gridTemplateColumns: { base: "1fr", md: "1fr 1fr" },
+              gridTemplateColumns: "1fr",
               gap: "3",
             })}
           >
@@ -339,7 +408,7 @@ export function ProductsList() {
           onCancel={() => setPendingDelete(null)}
           onConfirm={performDelete}
         />
-      </main>
-    </Container>
+      </section>
+    </main>
   );
 }

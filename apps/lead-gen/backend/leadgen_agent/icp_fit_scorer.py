@@ -330,9 +330,12 @@ def build_v2_signals(
     icp_block: dict[str, Any] | None,
     composite_score: float | None,
     composite_tier: str | None,
+    repo_activity: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Assemble the v2 signals jsonb shape. ``regex_signals`` carries the
     v1-compatible keys (minus schema_version, which moves to the root).
+    ``repo_activity`` records the GitHub freshness inputs that fed the
+    multiplier (auditable from the leads UI when present).
     """
     regex_only = {k: v for k, v in regex_signals.items() if k != "schema_version"}
     out: dict[str, Any] = {
@@ -345,6 +348,8 @@ def build_v2_signals(
         out["composite_score"] = composite_score
     if composite_tier is not None:
         out["composite_tier"] = composite_tier
+    if repo_activity is not None:
+        out["repo_activity"] = repo_activity
     return out
 
 

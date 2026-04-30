@@ -794,43 +794,6 @@ def _ensure_skill_embeds(self) -> torch.Tensor:
     return self._skill_embeds`,
   },
   {
-    heading: "Follow-Up Scheduler Cron",
-    content: "The GET /api/cron/followup-scheduler route subtracts 3, 5, and 7 days from Date.now() to derive cutoffs for sequence numbers 0/1/2, then filters contactEmails whose sent_at falls before the matching cutoff. Conversation-stage gates short-circuit the loop — anything starting with replied_, plus closed, converted, meeting_scheduled, is skipped. Why: before generating it checks for an existing pending draft of draft_type follow_up to prevent duplicate generations on overlapping cron runs.",
-    codeBlock: `// src/app/api/cron/followup-scheduler/route.ts:18
-const DAYS_AFTER_INITIAL = 3;
-const DAYS_AFTER_FOLLOWUP_1 = 5;
-const DAYS_AFTER_FOLLOWUP_2 = 7;
-
-const cutoffInitial = new Date(Date.now() - DAYS_AFTER_INITIAL * 86400000).toISOString();
-const cutoffF1     = new Date(Date.now() - DAYS_AFTER_FOLLOWUP_1 * 86400000).toISOString();
-const cutoffF2     = new Date(Date.now() - DAYS_AFTER_FOLLOWUP_2 * 86400000).toISOString();
-
-const needsFollowUp = eligibleEmails.filter((e) => {
-  const sentAt = e.sent_at || "";
-  const seqNum = parseInt(e.sequence_number || "0", 10);
-  const stage  = e.conversation_stage;
-
-  if (stage && stage.startsWith("replied_")) return false;
-  if (stage === "closed" || stage === "converted" || stage === "meeting_scheduled") return false;
-
-  if (seqNum === 0 && sentAt < cutoffInitial) return true;
-  if (seqNum === 1 && sentAt < cutoffF1)      return true;
-  if (seqNum === 2 && sentAt < cutoffF2)      return true;
-  return false;
-});
-
-for (const email of needsFollowUp) {
-  const [existingDraft] = await db.select({ id: replyDrafts.id })
-    .from(replyDrafts)
-    .where(and(
-      eq(replyDrafts.contact_id, email.contact_id),
-      eq(replyDrafts.draft_type, "follow_up"),
-      eq(replyDrafts.status, "pending"),
-    )).limit(1);
-  if (existingDraft) { skipped++; continue; }
-}`,
-  },
-  {
     heading: "Admin Agent — LangGraph Bridge",
     content: "adminAssistantAgent is a thin TypeScript wrapper that calls adminChat() in src/lib/langgraph-client.ts and coerces all errors into a discriminated union ({ text } | { text: null, error }) so callers never see raw exceptions. adminChat funnels through runGraph(), which POSTs to LANGGRAPH_URL/runs/wait with assistant_id 'admin_chat' and an optional bearer token. Why: the LLM orchestration runtime (Python LangGraph) and the serving runtime (Next.js) stay decoupled — the same client signature works against langgraph dev locally or a tunneled HF Space.",
     codeBlock: `// src/agents/admin-assistant.ts:10

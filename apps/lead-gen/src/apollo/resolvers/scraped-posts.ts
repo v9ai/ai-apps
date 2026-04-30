@@ -1,52 +1,23 @@
-import { getCompanyPosts, getCompanyStats } from "@/lib/posts-db";
 import type { GraphQLContext } from "../context";
 import { isAdminEmail } from "@/lib/admin";
-import { companies } from "@/db/schema";
-import { eq } from "drizzle-orm";
-
-interface SqlitePost {
-  person_name: string;
-  person_linkedin_url: string;
-  person_headline: string | null;
-  post_url: string | null;
-  post_text: string | null;
-  posted_date: string | null;
-  reactions_count: number;
-  comments_count: number;
-  reposts_count: number;
-  media_type: string;
-  is_repost: number;
-  original_author: string | null;
-  author_name: string | null;
-  author_url: string | null;
-  scraped_at: string;
-}
-
-interface SqliteStats {
-  company_name: string;
-  slug: string;
-  people_count: number;
-  posts_count: number;
-  first_scraped: string | null;
-  last_scraped: string | null;
-}
+import { listD1PostsByCompanyKey, type D1PostRow } from "@/lib/posts-d1-client";
 
 const ScrapedPost = {
-  personName:       (p: SqlitePost) => p.person_name,
-  personLinkedinUrl:(p: SqlitePost) => p.person_linkedin_url,
-  personHeadline:   (p: SqlitePost) => p.person_headline,
-  postUrl:          (p: SqlitePost) => p.post_url,
-  postText:         (p: SqlitePost) => p.post_text,
-  postedDate:       (p: SqlitePost) => p.posted_date,
-  reactionsCount:   (p: SqlitePost) => p.reactions_count,
-  commentsCount:    (p: SqlitePost) => p.comments_count,
-  repostsCount:     (p: SqlitePost) => p.reposts_count,
-  mediaType:        (p: SqlitePost) => p.media_type,
-  isRepost:         (p: SqlitePost) => !!p.is_repost,
-  originalAuthor:   (p: SqlitePost) => p.original_author,
-  authorName:       (p: SqlitePost) => p.author_name,
-  authorUrl:        (p: SqlitePost) => p.author_url,
-  scrapedAt:        (p: SqlitePost) => p.scraped_at,
+  personName:        (p: D1PostRow) => p.author_name ?? "",
+  personLinkedinUrl: (p: D1PostRow) => p.author_url ?? "",
+  personHeadline:    (_p: D1PostRow) => null,
+  postUrl:           (p: D1PostRow) => p.post_url,
+  postText:          (p: D1PostRow) => p.post_text,
+  postedDate:        (p: D1PostRow) => p.posted_date ?? p.posted_at,
+  reactionsCount:    (p: D1PostRow) => p.reactions_count,
+  commentsCount:     (p: D1PostRow) => p.comments_count,
+  repostsCount:      (p: D1PostRow) => p.reposts_count,
+  mediaType:         (p: D1PostRow) => p.media_type,
+  isRepost:          (p: D1PostRow) => !!p.is_repost,
+  originalAuthor:    (p: D1PostRow) => p.original_author,
+  authorName:        (p: D1PostRow) => p.author_name,
+  authorUrl:         (p: D1PostRow) => p.author_url,
+  scrapedAt:         (p: D1PostRow) => p.scraped_at,
 };
 
 export const scrapedPostResolvers = {
@@ -72,40 +43,34 @@ export const scrapedPostResolvers = {
         posts: [],
       };
 
-      // Try the provided slug first (company.key from Neon, e.g. "oliver-bernard")
-      // then the LinkedIn slug extracted from linkedin_url (e.g. "oliverbernard")
-      const slugsToTry = [args.companySlug];
+      const rows = await listD1PostsByCompanyKey(args.companySlug, 1000);
+      const posts = rows.filter((r) => r.type === "post");
 
-      const [company] = await context.db
-        .select({ linkedin_url: companies.linkedin_url })
-        .from(companies)
-        .where(eq(companies.key, args.companySlug))
-        .limit(1);
+      if (posts.length === 0) return empty;
 
-      if (company?.linkedin_url) {
-        const match = company.linkedin_url.match(/\/company\/([^/?#]+)/);
-        if (match && match[1] !== args.companySlug) {
-          slugsToTry.push(match[1]);
-        }
+      const peopleCount = new Set(
+        posts.map((p) => p.author_url).filter((u): u is string => !!u),
+      ).size;
+
+      let firstScraped: string | null = null;
+      let lastScraped: string | null = null;
+      for (const p of posts) {
+        if (!p.scraped_at) continue;
+        if (firstScraped === null || p.scraped_at < firstScraped) firstScraped = p.scraped_at;
+        if (lastScraped === null || p.scraped_at > lastScraped) lastScraped = p.scraped_at;
       }
 
-      for (const slug of slugsToTry) {
-        const stats = getCompanyStats(slug) as SqliteStats | undefined;
-        if (stats) {
-          const posts = getCompanyPosts(slug);
-          return {
-            companyName: stats.company_name,
-            slug: stats.slug,
-            peopleCount: stats.people_count,
-            postsCount: stats.posts_count,
-            firstScraped: stats.first_scraped,
-            lastScraped: stats.last_scraped,
-            posts,
-          };
-        }
-      }
+      const companyName = posts.find((p) => p.company_name)?.company_name ?? args.companySlug;
 
-      return empty;
+      return {
+        companyName,
+        slug: args.companySlug,
+        peopleCount,
+        postsCount: posts.length,
+        firstScraped,
+        lastScraped,
+        posts,
+      };
     },
   },
 };

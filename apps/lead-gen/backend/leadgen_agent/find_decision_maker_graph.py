@@ -332,6 +332,7 @@ def _shape_candidate(c: dict[str, Any], rank_score: float) -> dict[str, Any]:
         "id": c.get("id"),
         "first_name": c.get("first_name") or "",
         "last_name": c.get("last_name") or "",
+        "email": c.get("email") or None,
         "position": c.get("position") or None,
         "seniority": c.get("seniority") or None,
         "department": c.get("department") or None,

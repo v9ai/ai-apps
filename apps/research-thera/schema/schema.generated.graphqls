@@ -918,6 +918,12 @@ type DeleteRecommendedBooksResult {
   success: Boolean!
 }
 
+type DeleteRecommendedMoviesResult {
+  deletedCount: Int!
+  message: String
+  success: Boolean!
+}
+
 type DeleteRelationshipResult {
   message: String
   success: Boolean!
@@ -1295,6 +1301,13 @@ type GenerateRecommendedBooksResult {
   books: [RecommendedBook!]!
   jobId: String
   message: String
+  success: Boolean!
+}
+
+type GenerateRecommendedMoviesResult {
+  jobId: String
+  message: String
+  movies: [RecommendedMovie!]!
   success: Boolean!
 }
 
@@ -1830,6 +1843,7 @@ type Mutation {
   deleteNote(id: Int!): DeleteNoteResult!
   deleteProtocol(id: ID!): DeleteProtocolResult!
   deleteRecommendedBooks(goalId: Int, journalEntryId: Int): DeleteRecommendedBooksResult!
+  deleteRecommendedMovies(familyMemberId: Int, goalId: Int): DeleteRecommendedMoviesResult!
   deleteRelationship(id: Int!): DeleteRelationshipResult!
   deleteResearch(goalId: Int!): DeleteResearchResult!
   deleteRoutineAnalysis(id: Int!): DeleteRoutineAnalysisResult!
@@ -1860,6 +1874,7 @@ type Mutation {
   generateOpenAIAudio(input: GenerateOpenAIAudioInput!): GenerateOpenAIAudioResult!
   generateParentAdvice(goalId: Int!, language: String): GenerateParentAdviceResult!
   generateRecommendedBooks(goalId: Int, journalEntryId: Int): GenerateRecommendedBooksResult!
+  generateRecommendedMovies(familyMemberId: Int, goalId: Int): GenerateRecommendedMoviesResult!
   generateRegimenAnalysis(language: String, slug: String!): GenerateResearchResult!
   generateResearch(feedbackId: Int, goalId: Int, issueId: Int, journalEntryId: Int, medicationId: ID): GenerateResearchResult!
   generateRoutineAnalysis(familyMemberId: Int!): GenerateRoutineAnalysisResult!
@@ -2124,6 +2139,7 @@ type Query {
   allIssues: [Issue!]!
   allNotes: [Note!]!
   allRecommendedBooks(category: String): [RecommendedBook!]!
+  allRecommendedMovies(category: String, familyMemberId: Int): [RecommendedMovie!]!
   allStories: [Story!]!
   allTags: [String!]!
   allergies: [Allergy!]!
@@ -2222,6 +2238,28 @@ type RecommendedBook {
   isbn: String
   journalEntryId: Int
   title: String!
+  updatedAt: String!
+  whyRecommended: String!
+  year: Int
+}
+
+type RecommendedMovie {
+  ageBand: String
+  category: String!
+  createdAt: String!
+  description: String!
+  familyMemberId: Int
+  generatedAt: String!
+  genres: [String!]!
+  goalId: Int
+  id: Int!
+  imdbId: String
+  imdbRating: Float
+  justwatchUrl: String
+  platform: String
+  rating: String
+  title: String!
+  tmdbId: String
   updatedAt: String!
   whyRecommended: String!
   year: Int

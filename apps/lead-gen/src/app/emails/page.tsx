@@ -16,6 +16,7 @@ import {
   TextField,
 } from "@radix-ui/themes";
 import { button } from "@/recipes/button";
+import { css } from "styled-system/css";
 import {
   ExternalLinkIcon,
   ReloadIcon,
@@ -116,11 +117,11 @@ function StatSection({ title, stats }: StatSectionProps) {
         {title}
       </Text>
       <div
-        style={{
+        className={css({
           display: "grid",
           gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
-          gap: "8px",
-        }}
+          gap: "2",
+        })}
       >
         {stats.map((s) => (
           <StatCard key={s.label} label={s.label} value={s.value} />
@@ -647,7 +648,7 @@ function WebhookEventsList() {
               </Text>
             )}
             {expandedId === event.id && (
-              <Box mt="3" p="2" style={{ background: "var(--gray-a2)", borderRadius: "var(--radius-2)", overflow: "auto", maxHeight: 300 }}>
+              <Box mt="3" p="2" className={css({ bg: "var(--gray-a2)", borderRadius: "md", overflow: "auto", maxHeight: "300px" })}>
                 <Text size="1" as="div" style={{ fontFamily: "monospace", whiteSpace: "pre-wrap", wordBreak: "break-all" }}>
                   ID: {event.emailId}
                 </Text>

@@ -8,8 +8,6 @@ export const button = cva({
     cursor: "pointer",
     borderRadius: "md",
     boxShadow: "none",
-    textTransform: "lowercase",
-    letterSpacing: "normal",
     fontFamily: "inherit",
     lineHeight: "none",
     textDecoration: "none",
@@ -46,6 +44,15 @@ export const button = cva({
         fontWeight: "bold",
         _hover: {
           background: "status.positiveHover",
+        },
+      },
+      solidRed: {
+        background: "status.error",
+        color: "accent.contrast",
+        border: "1px solid transparent",
+        fontWeight: "bold",
+        _hover: {
+          background: "status.errorHover",
         },
       },
       ghost: {
@@ -93,6 +100,67 @@ export const button = cva({
           opacity: "0.9",
         },
       },
+      chip: {
+        background: "ui.surface",
+        color: "ui.secondary",
+        border: "1px solid",
+        borderColor: "ui.border",
+        fontWeight: "medium",
+        _hover: {
+          background: "ui.surfaceHover",
+          color: "gray.12",
+          borderColor: "ui.borderHover",
+        },
+        '&[aria-pressed="true"]': {
+          background: "accent.subtle",
+          color: "accent.primary",
+          borderColor: "accent.border",
+          fontWeight: "semibold",
+        },
+      },
+      secondary: {
+        background: "indigo.3",
+        color: "indigo.12",
+        border: "1px solid",
+        borderColor: "indigo.5",
+        fontWeight: "semibold",
+        _hover: {
+          background: "indigo.4",
+          borderColor: "indigo.7",
+        },
+        _disabled: {
+          opacity: "1",
+          background: "ui.surfaceRaised",
+          color: "ui.tertiary",
+          borderColor: "ui.border",
+          cursor: "not-allowed",
+          pointerEvents: "none",
+        },
+      },
+    },
+    tone: {
+      neutral: {},
+      red: {
+        '&[aria-pressed="true"]': {
+          background: "red.3",
+          color: "red.11",
+          borderColor: "red.6",
+        },
+      },
+      amber: {
+        '&[aria-pressed="true"]': {
+          background: "amber.3",
+          color: "amber.11",
+          borderColor: "amber.6",
+        },
+      },
+      blue: {
+        '&[aria-pressed="true"]': {
+          background: "blue.3",
+          color: "blue.11",
+          borderColor: "blue.6",
+        },
+      },
     },
     size: {
       sm: {
@@ -122,5 +190,6 @@ export const button = cva({
   defaultVariants: {
     variant: "solid",
     size: "md",
+    tone: "neutral",
   },
 });

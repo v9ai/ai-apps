@@ -843,6 +843,7 @@ export type DecisionMakerCandidate = {
   authorityScore: Scalars['Float']['output'];
   department: Maybe<Scalars['String']['output']>;
   dmReasons: Array<Scalars['String']['output']>;
+  email: Maybe<Scalars['String']['output']>;
   firstName: Scalars['String']['output'];
   id: Scalars['Int']['output'];
   isDecisionMaker: Scalars['Boolean']['output'];
@@ -1545,6 +1546,7 @@ export type Mutation = {
   findContactEmail: FindContactEmailResult;
   findDecisionMaker: FindDecisionMakerResponse;
   flagContactsForDeletion: BatchOperationResult;
+  generateCampaignSequence: EmailCampaign;
   /** Generate and store embeddings for companies missing them. Admin only. */
   generateCompanyEmbeddings: GenerateEmbeddingsResult;
   generateDraftsForPending: GenerateDraftsBatchResult;
@@ -1873,6 +1875,12 @@ export type MutationFindDecisionMakerArgs = {
 
 export type MutationFlagContactsForDeletionArgs = {
   threshold?: InputMaybe<Scalars['Float']['input']>;
+};
+
+
+export type MutationGenerateCampaignSequenceArgs = {
+  campaignId: Scalars['String']['input'];
+  personaMatchThreshold?: InputMaybe<Scalars['Float']['input']>;
 };
 
 

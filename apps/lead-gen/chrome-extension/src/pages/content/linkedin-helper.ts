@@ -10,6 +10,7 @@ import {
   showErrorToast,
 } from "./lifecycle";
 import { getSelfProfileSlug } from "../../services/self-profile";
+import { registerInStack, unregisterFromStack } from "./floating-stack";
 
 function clickDismiss(el: HTMLElement) {
   el.click();
@@ -365,7 +366,6 @@ function createConnectAllButton(): HTMLButtonElement {
   btn.title = "Send connect request to all people on this page";
   btn.style.cssText = `
     position: fixed;
-    bottom: 24px;
     right: 24px;
     z-index: 9999;
     background-color: #0a66c2;
@@ -515,7 +515,9 @@ function injectConnectAllButton() {
   if (!window.location.pathname.startsWith("/search/results/people")) return;
   if (document.querySelector(`[${CONNECT_ALL_BTN_ATTR}]`)) return;
 
-  document.body.appendChild(createConnectAllButton());
+  const btn = createConnectAllButton();
+  document.body.appendChild(btn);
+  registerInStack(btn, 10);
 }
 
 function observeConnectAllButton() {
@@ -721,7 +723,6 @@ function createBrowseProfilesButton(): HTMLButtonElement {
   btn.title = `Visit ${REFRESH_BATCH_SIZE_DEFAULT} recruiters from Neon (least-recently-visited first), refresh post + browsemap data, and re-score fit. Order is driven by the D1 contact_visits log so each click advances the cycle.`;
   btn.style.cssText = `
     position: fixed;
-    bottom: 80px;
     right: 24px;
     z-index: 9999;
     background-color: #7c3aed;
@@ -791,10 +792,15 @@ function syncBrowseButtonForPath() {
   if (!document.body) return;
   if (isOnAnyLinkedInPath()) {
     if (!document.querySelector(`[${BROWSE_PROFILES_BTN_ATTR}]`)) {
-      document.body.appendChild(createBrowseProfilesButton());
+      const btn = createBrowseProfilesButton();
+      document.body.appendChild(btn);
+      registerInStack(btn, 20);
     }
   } else {
-    document.querySelectorAll(`[${BROWSE_PROFILES_BTN_ATTR}]`).forEach((el) => el.remove());
+    document.querySelectorAll<HTMLElement>(`[${BROWSE_PROFILES_BTN_ATTR}]`).forEach((el) => {
+      unregisterFromStack(el);
+      el.remove();
+    });
     browseProfilesBtn = null;
   }
 }
@@ -849,7 +855,6 @@ function createBrowseAllButton(): HTMLButtonElement {
   btn.title = "Paginate every search page via Voyager API and visit each remote profile";
   btn.style.cssText = `
     position: fixed;
-    bottom: 136px;
     right: 24px;
     z-index: 9999;
     background-color: #0f766e;
@@ -920,10 +925,15 @@ function syncBrowseAllButtonForPath() {
   if (!document.body) return;
   if (isOnBrowsableLinkedInPath()) {
     if (!document.querySelector(`[${BROWSE_ALL_BTN_ATTR}]`)) {
-      document.body.appendChild(createBrowseAllButton());
+      const btn = createBrowseAllButton();
+      document.body.appendChild(btn);
+      registerInStack(btn, 30);
     }
   } else {
-    document.querySelectorAll(`[${BROWSE_ALL_BTN_ATTR}]`).forEach((el) => el.remove());
+    document.querySelectorAll<HTMLElement>(`[${BROWSE_ALL_BTN_ATTR}]`).forEach((el) => {
+      unregisterFromStack(el);
+      el.remove();
+    });
     browseAllBtn = null;
   }
 }
@@ -972,7 +982,6 @@ function createScoreAllButton(): HTMLButtonElement {
   btn.title = "Re-score every saved contact with a LinkedIn URL via score_recruiter_fit (Shift-click: ignore 24h dedup)";
   btn.style.cssText = `
     position: fixed;
-    bottom: 192px;
     right: 24px;
     z-index: 9999;
     background-color: #d97706;
@@ -1041,10 +1050,15 @@ function syncScoreAllButtonForPath() {
   const onFeed = window.location.pathname.startsWith("/feed");
   if (onFeed) {
     if (!document.querySelector(`[${SCORE_ALL_BTN_ATTR}]`)) {
-      document.body.appendChild(createScoreAllButton());
+      const btn = createScoreAllButton();
+      document.body.appendChild(btn);
+      registerInStack(btn, 40);
     }
   } else {
-    document.querySelectorAll(`[${SCORE_ALL_BTN_ATTR}]`).forEach((el) => el.remove());
+    document.querySelectorAll<HTMLElement>(`[${SCORE_ALL_BTN_ATTR}]`).forEach((el) => {
+      unregisterFromStack(el);
+      el.remove();
+    });
     scoreAllBtn = null;
   }
 }
@@ -1236,8 +1250,14 @@ function getCompanySlug(): string | null {
 
 function removeCompanyButtons() {
   // Remove all buttons from DOM (handles duplicates too)
-  document.querySelectorAll(`[${FIND_RELATED_BTN_ATTR}]`).forEach((el) => el.remove());
-  document.querySelectorAll(`[${SCRAPE_PEOPLE_POSTS_BTN_ATTR}]`).forEach((el) => el.remove());
+  document.querySelectorAll<HTMLElement>(`[${FIND_RELATED_BTN_ATTR}]`).forEach((el) => {
+    unregisterFromStack(el);
+    el.remove();
+  });
+  document.querySelectorAll<HTMLElement>(`[${SCRAPE_PEOPLE_POSTS_BTN_ATTR}]`).forEach((el) => {
+    unregisterFromStack(el);
+    el.remove();
+  });
   findRelatedBtn = null;
   scrapePeoplePostsBtn = null;
   scrapePeoplePostsRunning = false;
@@ -1252,7 +1272,6 @@ function createFindRelatedButton(): HTMLButtonElement {
   btn.title = "Find and save similar/related companies from LinkedIn";
   btn.style.cssText = `
     position: fixed;
-    bottom: 80px;
     right: 24px;
     z-index: 9999;
     background-color: #0d9488;
@@ -1344,7 +1363,6 @@ function createScrapePeoplePostsButton(): HTMLButtonElement {
   btn.title = "Navigate to each person's activity page and save their posts";
   btn.style.cssText = `
     position: fixed;
-    bottom: 136px;
     right: 24px;
     z-index: 9999;
     background-color: #7c3aed;
@@ -1461,12 +1479,14 @@ function syncCompanyButtons() {
     const frBtn = createFindRelatedButton();
     document.body.appendChild(frBtn);
     findRelatedBtn = frBtn;
+    registerInStack(frBtn, 20);
   }
 
   if (!document.querySelector(`[${SCRAPE_PEOPLE_POSTS_BTN_ATTR}]`)) {
     const sppBtn = createScrapePeoplePostsButton();
     document.body.appendChild(sppBtn);
     scrapePeoplePostsBtn = sppBtn;
+    registerInStack(sppBtn, 30);
   }
 }
 
@@ -1521,7 +1541,10 @@ function getProfileSlug(): string | null {
 }
 
 function removeProfileButton() {
-  document.querySelectorAll(`[${IMPORT_PROFILE_BTN_ATTR}]`).forEach((el) => el.remove());
+  document.querySelectorAll<HTMLElement>(`[${IMPORT_PROFILE_BTN_ATTR}]`).forEach((el) => {
+    unregisterFromStack(el);
+    el.remove();
+  });
   importProfileBtn = null;
 }
 
@@ -1901,7 +1924,6 @@ function createImportProfileButton(): HTMLButtonElement {
   btn.title = "Import this LinkedIn profile into the CRM";
   btn.style.cssText = `
     position: fixed;
-    bottom: 24px;
     right: 24px;
     z-index: 9999;
     background-color: #0a66c2;
@@ -2095,6 +2117,7 @@ function _doSyncProfileButton(slug: string) {
     btn.style.backgroundColor = "#6b7280";
     document.body.appendChild(btn);
     importProfileBtn = btn;
+    registerInStack(btn, 10);
 
     const linkedinUrl = window.location.href.split("?")[0];
     safeSendMessage(
@@ -2165,7 +2188,10 @@ function getJobId(): string | null {
 }
 
 function removeOpportunityButton() {
-  document.querySelectorAll(`[${IMPORT_OPPORTUNITY_BTN_ATTR}]`).forEach((el) => el.remove());
+  document.querySelectorAll<HTMLElement>(`[${IMPORT_OPPORTUNITY_BTN_ATTR}]`).forEach((el) => {
+    unregisterFromStack(el);
+    el.remove();
+  });
   importOpportunityBtn = null;
 }
 
@@ -2403,7 +2429,6 @@ function createImportOpportunityButton(): HTMLButtonElement {
   btn.title = "Import this job opportunity into the pipeline";
   btn.style.cssText = `
     position: fixed;
-    bottom: 24px;
     right: 24px;
     z-index: 9999;
     background-color: #0a66c2;
@@ -2509,6 +2534,7 @@ function syncOpportunityButton() {
     btn.style.backgroundColor = "#6b7280";
     document.body.appendChild(btn);
     importOpportunityBtn = btn;
+    registerInStack(btn, 10);
 
     const canonicalUrl = `https://www.linkedin.com/jobs/view/${jobId}/`;
     safeSendMessage(
@@ -2685,7 +2711,7 @@ async function extractJobData() {
       // Fall through to card scraper if the detail panel isn't present
       // (e.g. search sidebar still mounted with cards).
     }
-    return extractLinkedInJobData();
+    return await extractLinkedInJobData();
   }
 
   return [];
@@ -2825,7 +2851,9 @@ async function extractLinkedInJobDetailPage() {
 }
 
 // Extract LinkedIn job data
-function extractLinkedInJobData() {
+async function extractLinkedInJobData() {
+  const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
   // LinkedIn rotates class names; pin to stable hooks (`data-job-id` /
   // `data-occludable-job-id`) and the `/jobs/view/` URL pattern, with
   // class-based selectors as fast paths.
@@ -2846,14 +2874,46 @@ function extractLinkedInJobData() {
   const jobs: any[] = [];
   let skippedNoTitle = 0;
   let skippedNoUrl = 0;
+  let descriptionsCaptured = 0;
 
-  cardRoots.forEach((jobCard) => {
+  // Read the description from the right-hand detail pane. LinkedIn renders
+  // it under a stable `[data-testid="expandable-text-box"]` selector — the
+  // same one the single-post detail-page scraper uses (~L2776).
+  const readDetailDescription = (): string | null => {
+    const node = document.querySelector<HTMLElement>(
+      '[data-testid="expandable-text-box"]',
+    );
+    const txt = node?.innerText?.trim() ?? "";
+    return txt.length > 0 ? txt : null;
+  };
+
+  // Wait for the detail pane to reflect the clicked card. We can't reliably
+  // bind a description back to a card from the DOM alone, so we detect a
+  // change relative to the previous card's description text.
+  const waitForDetailUpdate = async (
+    previous: string | null,
+    timeoutMs = 2500,
+  ): Promise<string | null> => {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      const current = readDetailDescription();
+      if (current && current !== previous && current.length >= 40) {
+        return current;
+      }
+      await sleep(120);
+    }
+    return readDetailDescription();
+  };
+
+  let lastDescription: string | null = readDetailDescription();
+
+  for (const jobCard of cardRoots) {
     const titleAnchor = jobCard.querySelector<HTMLAnchorElement>(
       'a.job-card-list__title--link, a.job-card-container__link, a[href*="/jobs/view/"]',
     );
     if (!titleAnchor) {
       skippedNoTitle++;
-      return;
+      continue;
     }
 
     const rawTitle =
@@ -2866,7 +2926,7 @@ function extractLinkedInJobData() {
     const title = stripVerifiedBadge(rawTitle);
     if (!title) {
       skippedNoTitle++;
-      return;
+      continue;
     }
 
     let url = "";
@@ -2878,7 +2938,7 @@ function extractLinkedInJobData() {
     }
     if (!url) {
       skippedNoUrl++;
-      return;
+      continue;
     }
 
     const companyEl = jobCard.querySelector(
@@ -2898,20 +2958,43 @@ function extractLinkedInJobData() {
       jobCard.textContent?.includes("No longer accepting applications") ||
       jobCard.classList.contains("job-card-container--closed");
 
+    // Click the card to swap the right-pane detail view, then read its
+    // description. If the pane never updates (LinkedIn stall, captcha,
+    // archived job with no body), keep moving with description=null.
+    let description: string | null = null;
+    try {
+      const clickable =
+        jobCard.querySelector<HTMLElement>(
+          'a.job-card-list__title--link, a.job-card-container__link',
+        ) ?? titleAnchor;
+      clickable.click();
+      description = await waitForDetailUpdate(lastDescription);
+      if (description) {
+        lastDescription = description;
+        descriptionsCaptured++;
+      }
+    } catch (err) {
+      console.debug("[CS] extractLinkedInJobData: click/desc failed", err);
+    }
+
     const jobData: any = {
       title,
       company,
       url,
       archived: isArchived,
+      description,
     };
     if (metadataUls[0]) jobData.location = metadataUls[0].textContent?.trim();
     if (metadataUls[1]) jobData.salary = metadataUls[1].textContent?.trim();
 
     jobs.push(jobData);
-  });
+
+    // Throttle to avoid LinkedIn rate-limiting / captcha.
+    await sleep(250);
+  }
 
   console.log(
-    `[CS] extractLinkedInJobData: ${jobs.length} extracted, ${skippedNoTitle} skipped (no title), ${skippedNoUrl} skipped (no url) — total cards seen: ${cardRoots.size}`,
+    `[CS] extractLinkedInJobData: ${jobs.length} extracted, ${descriptionsCaptured} with description, ${skippedNoTitle} skipped (no title), ${skippedNoUrl} skipped (no url) — total cards seen: ${cardRoots.size}`,
   );
   return jobs;
 }
@@ -3087,7 +3170,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         let actualPagesScraped = 1; // current page is always scraped
 
         // Extract jobs + companies from current page
-        const currentJobs = extractLinkedInJobData();
+        const currentJobs = await extractLinkedInJobData();
         const currentCompanies = extractCompaniesFromJobCards();
         allJobs.push(...currentJobs);
         currentCompanies.forEach((c) => {
@@ -3126,7 +3209,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           await new Promise((resolve) => setTimeout(resolve, 1000));
 
           // Extract jobs + companies from new page
-          const pageJobs = extractLinkedInJobData();
+          const pageJobs = await extractLinkedInJobData();
           const pageCompanies = extractCompaniesFromJobCards();
           allJobs.push(...pageJobs);
           pageCompanies.forEach((c) => {

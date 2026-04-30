@@ -85,26 +85,23 @@ a:hover svg {
   text-decoration: underline;
 }
 
-/* ---------- sidebar nav links ---------- */
-nav a {
+/* ---------- sidebar nav links (scoped to .sidebar-nav so product/breadcrumb nav strips can use the design-system button recipe instead) ---------- */
+.sidebar-nav a {
   color: var(--gray-11);
   text-decoration: none;
-  text-transform: lowercase;
   font-weight: 500;
-  letter-spacing: 0.02em;
   transition: color 0.15s;
   padding: 5px 8px;
   display: block;
 }
-nav a:hover {
+.sidebar-nav a:hover {
   color: var(--gray-12);
   background: var(--gray-3);
 }
-nav a[aria-current="page"],
-nav a.active {
+.sidebar-nav a[aria-current="page"],
+.sidebar-nav a.active {
   color: var(--gray-12);
   font-weight: 600;
-  letter-spacing: 0.015em;
 }
 
 /* ---------- flat rows (jobs, companies) ---------- */

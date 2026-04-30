@@ -10,6 +10,7 @@ import {
   useFindDecisionMakerMutation,
   useUpdateCompanyMutation,
   useCreateContactMutation,
+  useCreateDraftCampaignMutation,
   useDeleteCompanyMutation,
   useBlockCompanyMutation,
   useUnblockCompanyMutation,
@@ -899,6 +900,9 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
         setDmDialogOpen(true);
       },
     });
+
+  const [createDraftCampaign, { loading: isDraftingCampaign }] =
+    useCreateDraftCampaignMutation();
 
   const [updateCompanyDirect] = useUpdateCompanyMutation();
   const [linkedInFetchError, setLinkedInFetchError] = useState<string | null>(null);

@@ -55,6 +55,7 @@ extend type Mutation {
   updateCampaign(id: String!, input: UpdateCampaignInput!): EmailCampaign!
   deleteCampaign(id: String!): DeleteCampaignResult!
   launchEmailCampaign(id: String!): EmailCampaign!
+  generateCampaignSequence(campaignId: String!, personaMatchThreshold: Float): EmailCampaign!
   sendEmail(input: SendEmailInput!): SendEmailResult!
   generateEmail(input: GenerateEmailInput!): GenerateEmailResult!
   createEmailTemplate(input: CreateEmailTemplateInput!): EmailTemplate!

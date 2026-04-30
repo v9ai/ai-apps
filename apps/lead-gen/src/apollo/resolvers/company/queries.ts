@@ -58,6 +58,12 @@ const fetchCompaniesList = withEdgeCache(
           sql`${companies.service_taxonomy}::jsonb ?| array[${sql.join(values, sql.raw(","))}]`,
         );
       }
+      if (args.filter.tags_any && args.filter.tags_any.length > 0) {
+        const values = args.filter.tags_any.map((v) => sql`${v}`);
+        conditions.push(
+          sql`(CASE WHEN ${companies.tags} LIKE '[%' THEN ${companies.tags}::jsonb ?| array[${sql.join(values, sql.raw(","))}] ELSE FALSE END)`,
+        );
+      }
     }
 
     const limit = args.limit ?? 50;

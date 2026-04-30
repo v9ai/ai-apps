@@ -5,7 +5,6 @@ import {
   useGetCompanyQuery,
   useGetCompanyScrapedPostsQuery,
 } from "@/__generated__/hooks";
-import Link from "next/link";
 import { useAuth } from "@/lib/auth-hooks";
 import { ADMIN_EMAIL } from "@/lib/constants";
 import { formatDistanceToNow, parseISO, isValid } from "date-fns";
@@ -15,16 +14,13 @@ import {
   Box,
   Callout,
   Card,
-  Container,
   Flex,
   Link as RadixLink,
   Separator,
   Spinner,
-  TabNav,
   Text,
 } from "@radix-ui/themes";
 import {
-  ArrowLeftIcon,
   ChatBubbleIcon,
   ExclamationTriangleIcon,
   ExternalLinkIcon,
@@ -200,73 +196,36 @@ export function CompanyPostsClient({ companyKey }: { companyKey: string }) {
 
   if (!isAdmin) {
     return (
-      <Container size="3" p="8">
-        <Callout.Root color="red">
-          <Callout.Icon>
-            <ExclamationTriangleIcon />
-          </Callout.Icon>
-          <Callout.Text>Access denied. Admin only.</Callout.Text>
-        </Callout.Root>
-      </Container>
+      <Callout.Root color="red">
+        <Callout.Icon>
+          <ExclamationTriangleIcon />
+        </Callout.Icon>
+        <Callout.Text>Access denied. Admin only.</Callout.Text>
+      </Callout.Root>
     );
   }
 
   if (companyLoading) {
     return (
-      <Container size="3" p="8">
-        <Flex justify="center">
-          <Spinner size="3" />
-        </Flex>
-      </Container>
+      <Flex justify="center">
+        <Spinner size="3" />
+      </Flex>
     );
   }
 
   if (!company) {
     return (
-      <Container size="3" p="8">
-        <Callout.Root color="gray">
-          <Callout.Icon>
-            <InfoCircledIcon />
-          </Callout.Icon>
-          <Callout.Text>Company not found.</Callout.Text>
-        </Callout.Root>
-      </Container>
+      <Callout.Root color="gray">
+        <Callout.Icon>
+          <InfoCircledIcon />
+        </Callout.Icon>
+        <Callout.Text>Company not found.</Callout.Text>
+      </Callout.Root>
     );
   }
 
   return (
-    <Container size="3" p={{ initial: "4", md: "6" }}>
-      <Flex direction="column" gap="5">
-        {/* Header */}
-        <Box>
-          <Link
-            href={`/companies/${companyKey}`}
-            style={{ textDecoration: "none" }}
-          >
-            <Flex align="center" gap="1" mb="3">
-              <ArrowLeftIcon />
-              <Text size="2" color="gray">
-                {company.name}
-              </Text>
-            </Flex>
-          </Link>
-
-          <TabNav.Root mb="4">
-            <TabNav.Link asChild>
-              <Link href={`/companies/${companyKey}`}>Overview</Link>
-            </TabNav.Link>
-            <TabNav.Link asChild>
-              <Link href={`/companies/${companyKey}/contacts`}>Contacts</Link>
-            </TabNav.Link>
-            <TabNav.Link asChild>
-              <Link href={`/companies/${companyKey}/emails`}>Emails</Link>
-            </TabNav.Link>
-            <TabNav.Link asChild active>
-              <Link href={`/companies/${companyKey}/posts`}>Posts</Link>
-            </TabNav.Link>
-          </TabNav.Root>
-        </Box>
-
+    <Flex direction="column" gap="5">
         {/* Toolbar */}
         <Flex gap="3" align="center" wrap="wrap">
           <button
@@ -318,7 +277,6 @@ export function CompanyPostsClient({ companyKey }: { companyKey: string }) {
             ))}
           </Flex>
         )}
-      </Flex>
-    </Container>
+    </Flex>
   );
 }

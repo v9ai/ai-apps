@@ -41,7 +41,7 @@ export function HomeTasks() {
         />
       ) : (
         <Text size="3" color="gray">
-          Your inbox is empty. Press Cmd+K to capture a task.
+          Your inbox is empty.
         </Text>
       )}
     </Flex>

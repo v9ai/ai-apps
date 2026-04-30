@@ -15,8 +15,10 @@ import {
   teardownIfDead,
   safeSendMessage,
 } from "./lifecycle";
+import { registerInStack, unregisterFromStack } from "./floating-stack";
 
 const BTN_ATTR = "data-lg-import-all-btn";
+const STACK_PRIORITY = 20;
 
 let importAllBtn: HTMLButtonElement | null = null;
 let lastUrl = "";
@@ -40,22 +42,6 @@ const COLOR_HOVER = "#1d4ed8";
 const COLOR_BUSY = "#1e3a8a";
 const COLOR_ERROR = "#dc2626";
 const COLOR_DONE = "#16a34a";
-
-const BASE_BOTTOM = 24;
-const STACK_GAP = 16;
-
-// Stack above the single-job "Import Opportunity" button when it's present
-// (both render together on /jobs/view/{id}). Measure its actual height instead
-// of hardcoding an offset — text wraps and state changes can resize it.
-function computeBottomOffset(): number {
-  const lower = document.querySelector<HTMLElement>(
-    "[data-lg-import-opportunity-btn]",
-  );
-  if (!lower) return BASE_BOTTOM;
-  const h = lower.getBoundingClientRect().height;
-  if (!h) return BASE_BOTTOM;
-  return BASE_BOTTOM + h + STACK_GAP;
-}
 
 function resetIdle(btn: HTMLButtonElement) {
   btn.disabled = false;
@@ -87,7 +73,6 @@ function createButton(): HTMLButtonElement {
     text-overflow: ellipsis;
     white-space: nowrap;
   `;
-  btn.style.bottom = `${computeBottomOffset()}px`;
 
   btn.addEventListener("mouseenter", () => {
     if (!btn.disabled) btn.style.backgroundColor = COLOR_HOVER;
@@ -157,31 +142,11 @@ function installProgressListener() {
 // ── Sync / lifecycle ───────────────────────────────────────────────
 
 function removeButton() {
-  document.querySelectorAll(`[${BTN_ATTR}]`).forEach((el) => el.remove());
+  document.querySelectorAll<HTMLElement>(`[${BTN_ATTR}]`).forEach((el) => {
+    unregisterFromStack(el);
+    el.remove();
+  });
   importAllBtn = null;
-}
-
-function reposition() {
-  if (!importAllBtn) return;
-  importAllBtn.style.bottom = `${computeBottomOffset()}px`;
-}
-
-// Track the lower "Import Opportunity" button so we reposition the instant
-// its size or presence changes — `sync()`'s 800ms cooldown is too coarse to
-// catch state transitions ("Checking…" → "Import Opportunity" → "View: …").
-let observedLower: HTMLElement | null = null;
-const lowerResizeObserver =
-  typeof ResizeObserver !== "undefined" ? new ResizeObserver(reposition) : null;
-
-function trackLowerButton() {
-  const lower = document.querySelector<HTMLElement>(
-    "[data-lg-import-opportunity-btn]",
-  );
-  if (lower === observedLower) return;
-  if (observedLower && lowerResizeObserver) lowerResizeObserver.unobserve(observedLower);
-  observedLower = lower;
-  if (lower && lowerResizeObserver) lowerResizeObserver.observe(lower);
-  reposition();
 }
 
 function sync() {
@@ -191,20 +156,18 @@ function sync() {
     if (importAllBtn || document.querySelector(`[${BTN_ATTR}]`)) {
       removeButton();
     }
-    trackLowerButton();
     return;
   }
 
   if (document.querySelector(`[${BTN_ATTR}]`)) {
     importAllBtn = document.querySelector<HTMLButtonElement>(`[${BTN_ATTR}]`);
-    trackLowerButton();
     return;
   }
 
   const btn = createButton();
   document.body.appendChild(btn);
   importAllBtn = btn;
-  trackLowerButton();
+  registerInStack(btn, STACK_PRIORITY);
   console.log(`[ImportAllOpportunitiesBtn] injected on ${window.location.pathname}`);
 }
 
@@ -247,9 +210,6 @@ function makeLeadingEdgeObserver() {
   let cooldownUntil = 0;
   return new MutationObserver(() => {
     if (teardownIfDead()) return;
-    // Always re-track the lower button so a freshly-mounted "Import Opportunity"
-    // is observed before sync's cooldown elapses.
-    trackLowerButton();
     const now = Date.now();
     if (now < cooldownUntil) return;
     cooldownUntil = now + 800;
@@ -283,11 +243,6 @@ function init() {
     if (window.location.href === lastUrl) return;
     lastUrl = window.location.href;
     syncWithRetries();
-  });
-
-  window.addEventListener("resize", () => {
-    if (teardownIfDead()) return;
-    reposition();
   });
 
   const urlPoll = setInterval(() => {

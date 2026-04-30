@@ -33,19 +33,29 @@ import {
   Callout,
   Card,
   Code,
-  Container,
   Dialog,
   Flex,
   Link as RadixLink,
   Spinner,
-  TabNav,
   Text,
   TextArea,
   TextField,
 } from "@radix-ui/themes";
 import { button } from "@/recipes/button";
+import { css } from "styled-system/css";
+
+const nativeFieldStyle = css({
+  width: "100%",
+  px: "3",
+  py: "2",
+  borderRadius: "md",
+  border: "1px solid",
+  borderColor: "gray.6",
+  bg: "ui.bg",
+  color: "gray.12",
+  fontSize: "sm",
+});
 import {
-  ArrowLeftIcon,
   CalendarIcon,
   CheckIcon,
   CopyIcon,
@@ -831,50 +841,42 @@ export function CompanyContactsClient({
   // Admin guard
   if (!isAdmin) {
     return (
-      <Container size="3" p="8">
-        <Callout.Root color="red">
-          <Callout.Icon>
-            <ExclamationTriangleIcon />
-          </Callout.Icon>
-          <Callout.Text>Access denied. Admin only.</Callout.Text>
-        </Callout.Root>
-      </Container>
+      <Callout.Root color="red">
+        <Callout.Icon>
+          <ExclamationTriangleIcon />
+        </Callout.Icon>
+        <Callout.Text>Access denied. Admin only.</Callout.Text>
+      </Callout.Root>
     );
   }
 
   if (companyLoading) {
     return (
-      <Container size="3" p="8">
-        <Flex justify="center">
-          <Spinner size="3" />
-        </Flex>
-      </Container>
+      <Flex justify="center">
+        <Spinner size="3" />
+      </Flex>
     );
   }
 
   if (!company) {
     return (
-      <Container size="3" p="8">
-        <Callout.Root color="gray">
-          <Callout.Icon>
-            <InfoCircledIcon />
-          </Callout.Icon>
-          <Callout.Text>Company not found.</Callout.Text>
-        </Callout.Root>
-      </Container>
+      <Callout.Root color="gray">
+        <Callout.Icon>
+          <InfoCircledIcon />
+        </Callout.Icon>
+        <Callout.Text>Company not found.</Callout.Text>
+      </Callout.Root>
     );
   }
 
   if (contactsError) {
     return (
-      <Container size="3" p="8">
-        <Callout.Root color="red">
-          <Callout.Icon>
-            <ExclamationTriangleIcon />
-          </Callout.Icon>
-          <Callout.Text>Failed to load contacts: {contactsError.message}</Callout.Text>
-        </Callout.Root>
-      </Container>
+      <Callout.Root color="red">
+        <Callout.Icon>
+          <ExclamationTriangleIcon />
+        </Callout.Icon>
+        <Callout.Text>Failed to load contacts: {contactsError.message}</Callout.Text>
+      </Callout.Root>
     );
   }
 
@@ -902,39 +904,6 @@ export function CompanyContactsClient({
   const content = (
     <>
       <Flex direction="column" gap="5">
-        {/* Back link + header (standalone page only) */}
-        {!embedded && (
-        <Box>
-          <Link
-            href={`/companies/${companyKey}`}
-            style={{ textDecoration: "none" }}
-          >
-            <Flex align="center" gap="1" mb="3">
-              <ArrowLeftIcon />
-              <Text size="2" color="gray">
-                {company.name}
-              </Text>
-            </Flex>
-          </Link>
-
-          {/* Tab navigation */}
-          <TabNav.Root mb="4">
-            <TabNav.Link asChild>
-              <Link href={`/companies/${companyKey}`}>Overview</Link>
-            </TabNav.Link>
-            <TabNav.Link asChild active>
-              <Link href={`/companies/${companyKey}/contacts`}>Contacts</Link>
-            </TabNav.Link>
-            <TabNav.Link asChild>
-              <Link href={`/companies/${companyKey}/emails`}>Emails</Link>
-            </TabNav.Link>
-            <TabNav.Link asChild>
-              <Link href={`/companies/${companyKey}/posts`}>Posts</Link>
-            </TabNav.Link>
-          </TabNav.Root>
-        </Box>
-        )}
-
         {/* Email discovery status */}
         {emailDiscoveryStatus && (
           <Callout.Root
@@ -1412,7 +1381,7 @@ export function CompanyContactsClient({
                 type="date"
                 value={remindDate}
                 onChange={(e) => setRemindDate(e.target.value)}
-                style={{ width: "100%", padding: "6px 10px", borderRadius: 6, border: "1px solid var(--gray-6)", background: "var(--color-background)", color: "var(--gray-12)", fontSize: 14 }}
+                className={nativeFieldStyle}
               />
             </Box>
 
@@ -1421,7 +1390,7 @@ export function CompanyContactsClient({
               <select
                 value={remindRecurrence}
                 onChange={(e) => setRemindRecurrence(e.target.value)}
-                style={{ width: "100%", padding: "6px 10px", borderRadius: 6, border: "1px solid var(--gray-6)", background: "var(--color-background)", color: "var(--gray-12)", fontSize: 14 }}
+                className={nativeFieldStyle}
               >
                 <option value="none">One-time</option>
                 <option value="weekly">Weekly</option>
@@ -1493,6 +1462,5 @@ export function CompanyContactsClient({
     </>
   );
 
-  if (embedded) return content;
-  return <Container size="3" p={{ initial: "4", md: "6" }}>{content}</Container>;
+  return content;
 }

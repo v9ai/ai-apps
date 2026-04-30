@@ -7,12 +7,21 @@ import { Providers } from "@/components/providers";
 import { SidebarProvider } from "@/components/sidebar-provider";
 import { Sidebar, MainContent } from "@/components/sidebar";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { Inter } from "next/font/google";
+import { Inter, Instrument_Serif } from "next/font/google";
 
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
   display: "swap",
+});
+
+const instrumentSerif = Instrument_Serif({
+  subsets: ["latin"],
+  weight: ["400"],
+  style: ["normal", "italic"],
+  variable: "--font-instrument",
+  display: "swap",
+  preload: true,
 });
 
 export const metadata: Metadata = {
@@ -28,7 +37,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.variable}>
+      <body className={`${inter.variable} ${instrumentSerif.variable}`}>
         <Theme appearance="dark" radius="medium">
           <Providers>
             <ErrorBoundary>

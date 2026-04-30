@@ -7,6 +7,8 @@ import {
   LoadingShell,
   ErrorShell,
   ProductNotFound,
+  SectionCard,
+  SectionHeading,
   SubpageBreadcrumb,
   SubpageHero,
   ProductExternalLink,
@@ -37,15 +39,31 @@ export interface PositioningAnalysis {
   };
 }
 
-const cardStyle = css({
-  bg: "ui.surface",
-  border: "1px solid",
-  borderColor: "ui.border",
-  borderRadius: "md",
-  p: "4",
+const listResetStyle = css({ listStyle: "none", p: 0, m: 0 });
+
+const eyebrowStyle = css({
+  color: "accent.11",
+  textTransform: "uppercase",
+  letterSpacing: "0.12em",
+  fontWeight: "medium",
+  fontSize: "xs",
 });
 
-const listResetStyle = css({ listStyle: "none", p: 0, m: 0 });
+const ordinalChipStyle = css({
+  color: "accent.11",
+  bg: "accent.3",
+  border: "1px solid",
+  borderColor: "accent.6",
+  px: "2",
+  py: "1",
+  borderRadius: "sm",
+  flexShrink: 0,
+  fontVariantNumeric: "tabular-nums",
+  minWidth: "28px",
+  textAlign: "center",
+  fontWeight: "bold",
+  fontSize: "xs",
+});
 
 export function PositioningAnalysisView({ data }: { data: PositioningAnalysis }) {
   const statement = data.positioning_statement?.trim() ?? "";
@@ -60,73 +78,160 @@ export function PositioningAnalysisView({ data }: { data: PositioningAnalysis })
   const meta = data.graph_meta;
 
   return (
-    <Flex direction="column" gap="6">
-      {/* Hero: positioning statement + category */}
+    <Flex direction="column" gap="7">
+      {/* Hero: positioning statement is the punchline of the whole view */}
       <Box
         className={css({
           bg: "accent.2",
           border: "1px solid",
           borderColor: "accent.6",
-          borderRadius: "md",
-          p: "5",
+          borderRadius: "lg",
+          p: "6",
+          position: "relative",
+          overflow: "hidden",
+          _before: {
+            content: '""',
+            position: "absolute",
+            top: 0,
+            left: 0,
+            bottom: 0,
+            width: "4px",
+            bg: "accent.9",
+          },
         })}
       >
-        {category && (
-          <Badge color="blue" size="2" mb="3">
-            {category}
-          </Badge>
-        )}
-        <Heading size="5" mb="2">
-          Positioning statement
-        </Heading>
-        <Text
-          size="4"
-          as="p"
-          className={css({ lineHeight: "1.6", color: "gray.12" })}
-        >
-          {statement || "(empty — positioning graph has not run yet)"}
-        </Text>
+        <Flex direction="column" gap="3">
+          <Flex align="center" gap="2" wrap="wrap">
+            <Text className={eyebrowStyle}>Positioning statement</Text>
+            {category && (
+              <Badge color="indigo" variant="solid" size="1" radius="full">
+                {category}
+              </Badge>
+            )}
+          </Flex>
+          <Text
+            size="5"
+            as="p"
+            className={css({
+              lineHeight: "1.55",
+              color: "gray.12",
+              fontWeight: "medium",
+              letterSpacing: "-0.01em",
+            })}
+          >
+            {statement || (
+              <Text size="3" color="gray" className={css({ fontStyle: "italic", fontWeight: "regular" })}>
+                Empty — positioning graph has not run yet.
+              </Text>
+            )}
+          </Text>
+        </Flex>
       </Box>
 
-      {/* Differentiators */}
+      {/* Differentiators — ranked, the most actionable evidence */}
       {differentiators.length > 0 && (
         <Box>
-          <Heading size="4" mb="2">
-            Differentiators ({differentiators.length})
-          </Heading>
+          <SectionHeading
+            eyebrow="Why we win"
+            title="Differentiators"
+            count={differentiators.length}
+            description="What this product does that competitors do not — ranked by salience."
+          />
           <Flex direction="column" gap="2">
             {differentiators.map((d, i) => (
-              <Box key={i} className={cardStyle}>
+              <SectionCard key={i} emphasized={i === 0}>
                 <Flex align="start" gap="3">
-                  <Text
-                    size="1"
-                    weight="bold"
-                    className={css({
-                      color: "accent.11",
-                      bg: "accent.3",
-                      px: "2",
-                      py: "1",
-                      borderRadius: "sm",
-                      flexShrink: 0,
-                    })}
-                  >
+                  <Text size="1" className={ordinalChipStyle}>
                     {i + 1}
                   </Text>
-                  <Text size="2" className={css({ lineHeight: "1.6" })}>
+                  <Text size="3" className={css({ lineHeight: "1.6", color: "gray.12" })}>
                     {d}
                   </Text>
                 </Flex>
-              </Box>
+              </SectionCard>
             ))}
           </Flex>
         </Box>
       )}
 
-      {/* Competitor frame */}
+      {/* Two-up: white space (opportunity) + axes (tradeoffs) */}
+      {(whiteSpace.length > 0 || axes.length > 0) && (
+        <Box
+          className={css({
+            display: "grid",
+            gridTemplateColumns: { base: "1fr", md: "1fr 1fr" },
+            gap: "5",
+          })}
+        >
+          {whiteSpace.length > 0 && (
+            <Box>
+              <SectionHeading
+                eyebrow="Opportunity"
+                title="White space"
+                count={whiteSpace.length}
+                description="Unoccupied positions this product could credibly own."
+              />
+              <ul className={listResetStyle}>
+                {whiteSpace.map((w, i) => (
+                  <li
+                    key={i}
+                    className={css({
+                      display: "flex",
+                      alignItems: "flex-start",
+                      gap: "3",
+                      py: "2",
+                      borderBottom: "1px solid",
+                      borderColor: "ui.border",
+                      _last: { borderBottom: "none" },
+                    })}
+                  >
+                    <span
+                      aria-hidden="true"
+                      className={css({
+                        color: "accent.10",
+                        mt: "1",
+                        fontSize: "xs",
+                        flexShrink: 0,
+                      })}
+                    >
+                      ◆
+                    </span>
+                    <Text size="2" className={css({ lineHeight: "1.55", color: "gray.12" })}>
+                      {w}
+                    </Text>
+                  </li>
+                ))}
+              </ul>
+            </Box>
+          )}
+
+          {axes.length > 0 && (
+            <Box>
+              <SectionHeading
+                eyebrow="Tradeoffs"
+                title="Positioning axes"
+                count={axes.length}
+                description="Dimensions on which competitors split."
+              />
+              <Flex gap="2" wrap="wrap">
+                {axes.map((a, i) => (
+                  <Badge key={i} color="gray" size="2" variant="surface" radius="full">
+                    {a}
+                  </Badge>
+                ))}
+              </Flex>
+            </Box>
+          )}
+        </Box>
+      )}
+
+      {/* Competitor frame — supporting evidence, dense badges */}
       <Box>
-        <Heading size="3" mb="2">
-          Competitor frame
-        </Heading>
+        <SectionHeading
+          eyebrow="In the same conversation"
+          title="Competitor frame"
+          count={competitorFrame.length || undefined}
+        />
         {competitorFrame.length > 0 ? (
           <Flex gap="2" wrap="wrap">
             {competitorFrame.map((c, i) => (
@@ -143,80 +248,38 @@ export function PositioningAnalysisView({ data }: { data: PositioningAnalysis })
         )}
       </Box>
 
-      {/* White space */}
-      {whiteSpace.length > 0 && (
-        <Box>
-          <Heading size="4" mb="2">
-            White space
-          </Heading>
-          <Text size="2" color="gray" mb="2" as="p">
-            Unoccupied positions this product could credibly own.
-          </Text>
-          <ul className={listResetStyle}>
-            {whiteSpace.map((w, i) => (
-              <li
-                key={i}
-                className={css({
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: "2",
-                  py: "1",
-                })}
-              >
-                <span aria-hidden="true" className={css({ color: "accent.11", mt: "1" })}>◆</span>
-                <Text size="2" className={css({ lineHeight: "1.5" })}>
-                  {w}
-                </Text>
-              </li>
-            ))}
-          </ul>
-        </Box>
-      )}
-
-      {/* Positioning axes */}
-      {axes.length > 0 && (
-        <Box>
-          <Heading size="4" mb="2">
-            Positioning axes
-          </Heading>
-          <Text size="2" color="gray" mb="2" as="p">
-            Tradeoff dimensions on which competitors split.
-          </Text>
-          <Flex gap="2" wrap="wrap">
-            {axes.map((a, i) => (
-              <Badge key={i} color="gray" size="2" variant="soft">
-                {a}
-              </Badge>
-            ))}
-          </Flex>
-        </Box>
-      )}
-
-      {/* Narrative hooks */}
+      {/* Narrative hooks — pull-quote treatment, demoted below evidence */}
       {hooks.length > 0 && (
         <Box>
-          <Heading size="4" mb="2">
-            Narrative hooks
-          </Heading>
-          <Flex direction="column" gap="2">
+          <SectionHeading
+            eyebrow="Lines to use"
+            title="Narrative hooks"
+            count={hooks.length}
+            description="Headline phrases the team can lift verbatim into copy."
+          />
+          <Flex direction="column" gap="3">
             {hooks.map((h, i) => (
               <Box
                 key={i}
                 className={css({
                   borderLeft: "3px solid",
                   borderColor: "accent.9",
-                  pl: "3",
-                  py: "1",
+                  pl: "4",
+                  py: "2",
+                  bg: "accent.2",
+                  borderRadius: "0 sm sm 0",
                 })}
               >
                 <Text
                   size="3"
+                  as="p"
                   className={css({
                     fontStyle: "italic",
-                    lineHeight: "1.5",
+                    lineHeight: "1.55",
+                    color: "gray.12",
                   })}
                 >
-                  “{h}”
+                  &ldquo;{h}&rdquo;
                 </Text>
               </Box>
             ))}
@@ -224,7 +287,7 @@ export function PositioningAnalysisView({ data }: { data: PositioningAnalysis })
         </Box>
       )}
 
-      {/* Category conventions — collapsible */}
+      {/* Category conventions — collapsible context */}
       {conventions.length > 0 && (
         <details
           className={css({
@@ -232,18 +295,21 @@ export function PositioningAnalysisView({ data }: { data: PositioningAnalysis })
             borderColor: "ui.border",
             borderRadius: "md",
             p: "3",
+            bg: "ui.surface",
           })}
         >
           <summary
             className={css({
               cursor: "pointer",
-              fontWeight: "bold",
               fontSize: "sm",
+              fontWeight: "medium",
+              color: "gray.12",
+              _hover: { color: "accent.11" },
             })}
           >
             Category conventions ({conventions.length})
           </summary>
-          <ul className={css({ listStyle: "none", p: 0, m: 0, mt: "2" })}>
+          <ul className={css({ listStyle: "none", p: 0, m: 0, mt: "3" })}>
             {conventions.map((c, i) => (
               <li
                 key={i}
@@ -254,7 +320,9 @@ export function PositioningAnalysisView({ data }: { data: PositioningAnalysis })
                   py: "1",
                 })}
               >
-                <span aria-hidden="true" className={css({ color: "gray.10", mt: "1" })}>•</span>
+                <span aria-hidden="true" className={css({ color: "gray.10", mt: "1" })}>
+                  •
+                </span>
                 <Text size="2" color="gray">
                   {c}
                 </Text>
@@ -274,6 +342,7 @@ export function PositioningAnalysisView({ data }: { data: PositioningAnalysis })
                 cursor: "pointer",
                 fontSize: "xs",
                 color: "gray.10",
+                _hover: { color: "gray.12" },
               })}
             >
               Run info
@@ -324,45 +393,55 @@ export function ProductPositioningPage({ slug }: { slug: string }) {
   return (
     <Container size="4" p="6" asChild>
       <main>
-      <SubpageBreadcrumb
-        productSlug={product.slug}
-        productName={product.name}
-        currentLabel="Positioning"
-      />
-
-      <Flex direction="column" gap="4">
-        <SubpageHero
+        <SubpageBreadcrumb
+          productSlug={product.slug}
           productName={product.name}
           currentLabel="Positioning"
         />
 
-        <Flex gap="3" wrap="wrap" align="center">
-          <ProductExternalLink
-            url={product.url}
-            domain={product.domain}
-            productName={product.name}
-          />
-        </Flex>
+        <Flex direction="column" gap="4">
+          <SubpageHero productName={product.name} currentLabel="Positioning" />
 
-        <div
-          className={css({
-            mt: "5",
-            pt: "6",
-            borderTop: "1px solid",
-            borderColor: "ui.border",
-          })}
-        >
-          {positioning ? (
-            <PositioningAnalysisView data={positioning} />
-          ) : (
-            <Text color="gray">
-              No positioning analysis yet. An admin needs to dispatch the
-              positioning graph first (see{" "}
-              <code>POST /dispatch/positioning-all</code>).
-            </Text>
-          )}
-        </div>
-      </Flex>
+          <Flex gap="3" wrap="wrap" align="center">
+            <ProductExternalLink
+              url={product.url}
+              domain={product.domain}
+              productName={product.name}
+            />
+          </Flex>
+
+          <div
+            className={css({
+              mt: "5",
+              pt: "6",
+              borderTop: "1px solid",
+              borderColor: "ui.border",
+            })}
+          >
+            {positioning ? (
+              <PositioningAnalysisView data={positioning} />
+            ) : (
+              <Box
+                className={css({
+                  bg: "ui.surface",
+                  border: "1px dashed",
+                  borderColor: "ui.border",
+                  borderRadius: "md",
+                  p: "6",
+                  textAlign: "center",
+                })}
+              >
+                <Heading size="3" mb="2">
+                  No positioning analysis yet
+                </Heading>
+                <Text color="gray" size="2" as="p">
+                  An admin needs to dispatch the positioning graph first
+                  (see <code>POST /dispatch/positioning-all</code>).
+                </Text>
+              </Box>
+            )}
+          </div>
+        </Flex>
       </main>
     </Container>
   );

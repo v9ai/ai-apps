@@ -178,6 +178,32 @@ export const recommendedBooks = pgTable("recommended_books", {
     .default(sql`NOW()`),
 });
 
+export const recommendedMovies = pgTable("recommended_movies", {
+  id: serial("id").primaryKey(),
+  goalId: integer("goal_id"),
+  familyMemberId: integer("family_member_id"),
+  title: text("title").notNull(),
+  year: integer("year"),
+  imdbId: text("imdb_id"),
+  tmdbId: text("tmdb_id"),
+  platform: text("platform"),
+  rating: text("rating"),
+  imdbRating: text("imdb_rating"),
+  ageBand: text("age_band"),
+  genres: text("genres"), // JSON array
+  description: text("description").notNull(),
+  whyRecommended: text("why_recommended").notNull(),
+  category: text("category").notNull(),
+  justwatchUrl: text("justwatch_url"),
+  generatedAt: text("generated_at").notNull(),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`NOW()`),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`NOW()`),
+});
+
 export const notes = pgTable("notes", {
   id: serial("id").primaryKey(),
   entityId: integer("entity_id").notNull(),

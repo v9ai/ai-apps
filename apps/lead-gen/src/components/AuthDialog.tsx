@@ -3,12 +3,13 @@
 import { useState, useEffect } from "react";
 import {
   Dialog,
-  Button,
   Flex,
   Text,
   TextField,
   Separator,
 } from "@radix-ui/themes";
+import { Button } from "@/components/ui";
+import { css } from "styled-system/css";
 import { authClient } from "@/lib/auth/client";
 
 type Mode = "signin" | "signup";
@@ -134,12 +135,15 @@ export function AuthDialog({
               </Text>
             )}
 
-            <Button type="submit" disabled={loading} mt="2">
-              {loading
-                ? "Loading..."
-                : mode === "signin"
-                  ? "Sign In"
-                  : "Create Account"}
+            <Button
+              type="submit"
+              variant="solid"
+              size="md"
+              loading={loading}
+              loadingText="Loading..."
+              className={css({ marginTop: "2" })}
+            >
+              {mode === "signin" ? "Sign In" : "Create Account"}
             </Button>
           </Flex>
         </form>

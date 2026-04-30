@@ -846,6 +846,7 @@ export type DecisionMakerCandidate = {
   authorityScore: Scalars['Float']['output'];
   department: Maybe<Scalars['String']['output']>;
   dmReasons: Array<Scalars['String']['output']>;
+  email: Maybe<Scalars['String']['output']>;
   firstName: Scalars['String']['output'];
   id: Scalars['Int']['output'];
   isDecisionMaker: Scalars['Boolean']['output'];
@@ -1548,6 +1549,7 @@ export type Mutation = {
   findContactEmail: FindContactEmailResult;
   findDecisionMaker: FindDecisionMakerResponse;
   flagContactsForDeletion: BatchOperationResult;
+  generateCampaignSequence: EmailCampaign;
   /** Generate and store embeddings for companies missing them. Admin only. */
   generateCompanyEmbeddings: GenerateEmbeddingsResult;
   generateDraftsForPending: GenerateDraftsBatchResult;
@@ -1876,6 +1878,12 @@ export type MutationFindDecisionMakerArgs = {
 
 export type MutationFlagContactsForDeletionArgs = {
   threshold?: InputMaybe<Scalars['Float']['input']>;
+};
+
+
+export type MutationGenerateCampaignSequenceArgs = {
+  campaignId: Scalars['String']['input'];
+  personaMatchThreshold?: InputMaybe<Scalars['Float']['input']>;
 };
 
 
@@ -5205,6 +5213,7 @@ export type DecisionMakerCandidateResolvers<ContextType = GraphQLContext, Parent
   authorityScore?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   department?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   dmReasons?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  email?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   firstName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   isDecisionMaker?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
@@ -5776,6 +5785,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   findContactEmail?: Resolver<ResolversTypes['FindContactEmailResult'], ParentType, ContextType, RequireFields<MutationFindContactEmailArgs, 'contactId'>>;
   findDecisionMaker?: Resolver<ResolversTypes['FindDecisionMakerResponse'], ParentType, ContextType, Partial<MutationFindDecisionMakerArgs>>;
   flagContactsForDeletion?: Resolver<ResolversTypes['BatchOperationResult'], ParentType, ContextType, Partial<MutationFlagContactsForDeletionArgs>>;
+  generateCampaignSequence?: Resolver<ResolversTypes['EmailCampaign'], ParentType, ContextType, RequireFields<MutationGenerateCampaignSequenceArgs, 'campaignId'>>;
   generateCompanyEmbeddings?: Resolver<ResolversTypes['GenerateEmbeddingsResult'], ParentType, ContextType, Partial<MutationGenerateCompanyEmbeddingsArgs>>;
   generateDraftsForPending?: Resolver<ResolversTypes['GenerateDraftsBatchResult'], ParentType, ContextType>;
   generateEmail?: Resolver<ResolversTypes['GenerateEmailResult'], ParentType, ContextType, RequireFields<MutationGenerateEmailArgs, 'input'>>;

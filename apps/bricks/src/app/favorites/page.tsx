@@ -2,6 +2,7 @@
 
 import { css } from "styled-system/css";
 import { Favorites } from "../_components/Favorites";
+import { Themes } from "../_components/Themes";
 
 export default function FavoritesPage() {
   return (
@@ -13,6 +14,7 @@ export default function FavoritesPage() {
         py: "12",
       })}
     >
+      <Themes />
       <Favorites />
     </main>
   );

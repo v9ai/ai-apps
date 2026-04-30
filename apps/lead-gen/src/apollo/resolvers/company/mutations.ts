@@ -625,6 +625,17 @@ export const companyMutations = {
         }
       }
 
+      // Fire-and-forget: rank decision-makers so the campaign view picks
+      // up fresh authority/seniority on the next render.
+      if (imported > 0) {
+        runFindDecisionMaker({ companyId: companyRow.id }).catch((err) => {
+          console.warn(
+            `[importCompanyWithContacts] DM ranking fire-and-forget failed for company_id=${companyRow.id}:`,
+            err instanceof Error ? err.message : String(err),
+          );
+        });
+      }
+
       return {
         success: true,
         company: companyRow,
@@ -814,6 +825,7 @@ export const companyMutations = {
         id: c.id,
         firstName: c.first_name,
         lastName: c.last_name,
+        email: c.email,
         position: c.position,
         seniority: c.seniority,
         department: c.department,

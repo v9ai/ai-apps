@@ -22,6 +22,9 @@ query GetEmailCampaign($id: String!) {
   emailCampaign(id: $id) {
     id
     companyId
+    productId
+    productAwareMode
+    personaMatchThreshold
     name
     status
     sequence
@@ -73,6 +76,19 @@ mutation LaunchEmailCampaign($id: String!) {
     emailsSent
     emailsScheduled
     emailsFailed
+    updatedAt
+  }
+}
+
+mutation GenerateCampaignSequence($campaignId: String!, $personaMatchThreshold: Float) {
+  generateCampaignSequence(campaignId: $campaignId, personaMatchThreshold: $personaMatchThreshold) {
+    id
+    name
+    status
+    sequence
+    recipientEmails
+    totalRecipients
+    personaMatchThreshold
     updatedAt
   }
 }

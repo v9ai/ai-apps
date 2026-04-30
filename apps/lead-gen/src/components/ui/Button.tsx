@@ -3,7 +3,14 @@ import { button } from "@/recipes/button";
 import { css, cx } from "styled-system/css";
 import { Spinner } from "./Spinner";
 
-type ButtonVariant = "solid" | "ghost" | "outline" | "solidGreen" | "link" | "gradient";
+type ButtonVariant =
+  | "solid"
+  | "ghost"
+  | "outline"
+  | "solidGreen"
+  | "solidRed"
+  | "link"
+  | "gradient";
 type ButtonSize = "sm" | "md" | "lg";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {

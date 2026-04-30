@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Card, Flex, Text, Badge, Table, Button, Separator } from "@radix-ui/themes";
+import { Card, Flex, Text, Badge, Table, Separator } from "@radix-ui/themes";
 import { ChevronDownIcon, ChevronUpIcon, DownloadIcon } from "@radix-ui/react-icons";
+import { button } from "@/recipes/button";
 import type { OpportunitiesPageQuery } from "@/__generated__/hooks";
 
 type EvalReport = OpportunitiesPageQuery["opportunitiesPage"]["evalReport"];
@@ -104,16 +105,13 @@ export function EvalStatsPanel({ report }: { report: EvalReport }) {
           )}
 
           <Flex justify="end" mt="1">
-            <Button
-              size="1"
-              variant="soft"
-              color="gray"
-              asChild
+            <a
+              href="/api/opportunities/eval?format=jsonl"
+              download
+              className={button({ variant: "outline", size: "sm" })}
             >
-              <a href="/api/opportunities/eval?format=jsonl" download>
-                <DownloadIcon width={12} height={12} /> Export JSONL
-              </a>
-            </Button>
+              <DownloadIcon width={12} height={12} /> Export JSONL
+            </a>
           </Flex>
         </Flex>
       )}

@@ -31,6 +31,8 @@ import {
   LoadingShell,
   ErrorShell,
   ProductNotFound,
+  SectionCard,
+  SectionHeading,
   SubpageBreadcrumb,
   SubpageHero,
 } from "./view-chrome";
@@ -39,12 +41,12 @@ type Product = NonNullable<ProductCompetitorsBySlugQuery["productBySlug"]>;
 type Analysis = NonNullable<Product["latestCompetitorAnalysis"]>;
 type Competitor = Analysis["competitors"][number];
 
-const cardStyle = css({
-  bg: "ui.surface",
-  border: "1px solid",
-  borderColor: "ui.border",
-  borderRadius: "md",
-  p: "4",
+const eyebrowStyle = css({
+  color: "accent.11",
+  textTransform: "uppercase",
+  letterSpacing: "0.12em",
+  fontWeight: "medium",
+  fontSize: "xs",
 });
 
 const teamCardStyle = css({
@@ -56,6 +58,10 @@ const teamCardStyle = css({
   display: "flex",
   flexDirection: "column",
   gap: "2",
+  flex: 1,
+  minWidth: 0,
+  transition: "border-color 150ms ease",
+  _hover: { borderColor: "gray.7" },
 });
 
 // The three LangGraph pipelines that populate this page, in the order they
@@ -113,55 +119,142 @@ function provenance(analysis: Analysis | null | undefined): string {
   return `${analysis.status} · ${when}`;
 }
 
+function statusColor(status: string): "green" | "amber" | "blue" | "gray" {
+  if (status === "complete" || status === "approved") return "green";
+  if (status === "pending_approval" || status === "in_progress") return "amber";
+  if (status === "running") return "blue";
+  return "gray";
+}
+
 // ─── Sub-components ────────────────────────────────────────────────
 
 function ExplainerPanel({ analysis }: { analysis: Analysis | null | undefined }) {
   return (
-    <Box className={cardStyle}>
-      <Heading size="4" mb="2">
-        How this analysis was produced
-      </Heading>
-      <Text size="2" color="gray" mb="4">
-        Three LangGraph pipelines run in sequence. Each writes to its own DB
-        tables; the next one reads what the previous one produced. There&apos;s
-        an admin approval gate between teams 1 and 2.
-      </Text>
-      <Flex
-        direction={{ initial: "column", md: "row" }}
-        gap="3"
-        align="stretch"
+    <Box
+      className={css({
+        bg: "ui.surface",
+        border: "1px solid",
+        borderColor: "ui.border",
+        borderRadius: "lg",
+        p: "5",
+      })}
+    >
+      <Flex direction="column" gap="1" mb="4">
+        <Text className={eyebrowStyle}>Provenance</Text>
+        <Heading size="4" className={css({ color: "gray.12" })}>
+          How this analysis was produced
+        </Heading>
+        <Text size="2" color="gray" as="p" className={css({ maxWidth: "70ch" })}>
+          Three LangGraph pipelines run in sequence. Each writes to its own DB
+          tables; the next reads what the previous produced. There&apos;s an
+          admin approval gate between teams 1 and 2.
+        </Text>
+      </Flex>
+      <Box
+        className={css({
+          display: "grid",
+          gridTemplateColumns: { base: "1fr", md: "repeat(3, 1fr)" },
+          gap: "3",
+        })}
       >
         {TEAMS.map((team, idx) => (
-          <Box key={team.graph} className={teamCardStyle} style={{ flex: 1 }}>
-            <Flex align="center" gap="2">
-              <Badge color="indigo" size="2">
-                Team {idx + 1}
-              </Badge>
-              <Text weight="bold">{team.name}</Text>
+          <Box key={team.graph} className={teamCardStyle}>
+            <Flex align="center" gap="2" justify="between">
+              <Flex align="center" gap="2">
+                <Text
+                  size="1"
+                  className={css({
+                    color: "accent.11",
+                    bg: "accent.3",
+                    border: "1px solid",
+                    borderColor: "accent.6",
+                    px: "2",
+                    py: "1",
+                    borderRadius: "sm",
+                    flexShrink: 0,
+                    fontVariantNumeric: "tabular-nums",
+                    minWidth: "28px",
+                    textAlign: "center",
+                    fontWeight: "bold",
+                    fontSize: "xs",
+                  })}
+                >
+                  {idx + 1}
+                </Text>
+                <Text weight="bold" size="2" className={css({ color: "gray.12" })}>
+                  {team.name}
+                </Text>
+              </Flex>
             </Flex>
-            <Text size="1" color="gray">
-              <code>{team.graph}</code>
+            <Text
+              size="1"
+              className={css({
+                color: "gray.10",
+                fontFamily: "mono",
+                wordBreak: "break-word",
+              })}
+            >
+              {team.graph}
             </Text>
             <Separator size="4" />
-            <Text size="2">
-              <strong>Inputs:</strong> {team.inputs}
-            </Text>
-            <Text size="2">
-              <strong>Outputs:</strong> {team.outputs}
-            </Text>
-            <Text size="2" color="gray">
-              {team.method}
-            </Text>
-            <Text size="1" color="gray">
-              <strong>Trigger:</strong> {team.trigger}
-            </Text>
+            <Flex direction="column" gap="2">
+              <Box>
+                <Text
+                  size="1"
+                  className={css({
+                    color: "gray.10",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.08em",
+                    fontWeight: "medium",
+                  })}
+                >
+                  Inputs
+                </Text>
+                <Text size="2" as="p" className={css({ color: "gray.12", mt: "0.5" })}>
+                  {team.inputs}
+                </Text>
+              </Box>
+              <Box>
+                <Text
+                  size="1"
+                  className={css({
+                    color: "gray.10",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.08em",
+                    fontWeight: "medium",
+                  })}
+                >
+                  Outputs
+                </Text>
+                <Text size="2" as="p" className={css({ color: "gray.12", mt: "0.5" })}>
+                  {team.outputs}
+                </Text>
+              </Box>
+              <Text size="2" color="gray" as="p" className={css({ lineHeight: "1.55" })}>
+                {team.method}
+              </Text>
+              <Text size="1" color="gray" as="p" className={css({ mt: "1" })}>
+                <strong>Trigger:</strong> {team.trigger}
+              </Text>
+            </Flex>
           </Box>
         ))}
-      </Flex>
+      </Box>
       <Separator size="4" my="4" />
-      <Text size="2" color="gray">
-        Current run: <strong>{provenance(analysis)}</strong>
-      </Text>
+      <Flex align="center" gap="2" wrap="wrap">
+        <Text size="2" color="gray">
+          Current run:
+        </Text>
+        {analysis ? (
+          <Badge color={statusColor(analysis.status)} size="2" variant="soft">
+            {provenance(analysis)}
+          </Badge>
+        ) : (
+          <Badge color="gray" size="2" variant="surface">
+            not yet analyzed
+          </Badge>
+        )}
+      </Flex>
     </Box>
   );
 }
@@ -188,19 +281,29 @@ function KickoffPanel({
   }
 
   return (
-    <Box className={cardStyle}>
-      <Heading size="3" mb="2">
-        {hasAnalysis ? "Re-run team 1 (Discovery)" : "Run team 1 (Discovery)"}
-      </Heading>
-      <Text size="2" color="gray" mb="3">
+    <Box
+      className={css({
+        bg: "accent.2",
+        border: "1px solid",
+        borderColor: "accent.6",
+        borderRadius: "lg",
+        p: "5",
+      })}
+    >
+      <Flex direction="column" gap="1" mb="3">
+        <Text className={eyebrowStyle}>Admin action</Text>
+        <Heading size="3" className={css({ color: "gray.12" })}>
+          {hasAnalysis ? "Re-run team 1 (Discovery)" : "Run team 1 (Discovery)"}
+        </Heading>
+      </Flex>
+      <Text size="2" color="gray" mb="3" as="p" className={css({ lineHeight: "1.55", maxWidth: "70ch" })}>
         Kicks off the <code>competitors_team</code> LangGraph pipeline. It
         returns 5–7 suggested competitors in <code>pending_approval</code>{" "}
-        status. An admin then runs{" "}
-        <code>approveCompetitors</code> (from the existing competitors admin
-        tools) to advance to team 2 (deep scrape). Team 3 (pricing) is a
-        separate kickoff from the products list.
+        status. An admin then runs <code>approveCompetitors</code> (from the
+        existing competitors admin tools) to advance to team 2 (deep scrape).
+        Team 3 (pricing) is a separate kickoff from the products list.
       </Text>
-      <Flex align="center" gap="2">
+      <Flex align="center" gap="3" wrap="wrap">
         <button
           type="button"
           onClick={onClick}
@@ -231,80 +334,141 @@ function KickoffPanel({
   );
 }
 
-function CompetitorCard({ c }: { c: Competitor }) {
+function CompetitorCard({ c, ordinal }: { c: Competitor; ordinal: number }) {
   return (
-    <Box
-      className={cardStyle}
-      style={{ display: "flex", flexDirection: "column", gap: 8 }}
-    >
-      <Flex align="center" gap="2" justify="between">
-        <Flex align="center" gap="2">
-          {c.logoUrl && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={c.logoUrl}
-              alt={`${c.name} logo`}
-              width={24}
-              height={24}
-              style={{ borderRadius: 4 }}
-            />
-          )}
-          <Text weight="bold">{c.name}</Text>
+    <SectionCard>
+      <Flex direction="column" gap="2" className={css({ height: "100%" })}>
+        <Flex align="center" gap="2" justify="between">
+          <Flex align="center" gap="2" className={css({ minWidth: 0 })}>
+            <Text
+              size="1"
+              className={css({
+                color: "gray.11",
+                bg: "gray.3",
+                border: "1px solid",
+                borderColor: "gray.6",
+                px: "2",
+                py: "1",
+                borderRadius: "sm",
+                flexShrink: 0,
+                fontVariantNumeric: "tabular-nums",
+                minWidth: "28px",
+                textAlign: "center",
+                fontWeight: "bold",
+                fontSize: "xs",
+              })}
+            >
+              {ordinal}
+            </Text>
+            {c.logoUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={c.logoUrl}
+                alt={`${c.name} logo`}
+                width={24}
+                height={24}
+                className={css({
+                  borderRadius: "sm",
+                  flexShrink: 0,
+                  border: "1px solid",
+                  borderColor: "ui.border",
+                })}
+              />
+            )}
+            <Text
+              weight="bold"
+              size="3"
+              className={css({
+                color: "gray.12",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              })}
+            >
+              {c.name}
+            </Text>
+          </Flex>
+          <a
+            href={c.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`Visit ${c.name} website in new tab`}
+            className={css({
+              color: "accent.11",
+              fontSize: "xs",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "1",
+              borderRadius: "sm",
+              flexShrink: 0,
+              _hover: { textDecoration: "underline" },
+              _focusVisible: {
+                outline: "2px solid",
+                outlineColor: "accent.9",
+                outlineOffset: "2px",
+              },
+            })}
+          >
+            {c.domain ?? "visit"} <ExternalLinkIcon aria-hidden />
+          </a>
         </Flex>
-        <a
-          href={c.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label={`Visit ${c.name} website in new tab`}
-          className={css({
-            color: "accent.11",
-            fontSize: "xs",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "1",
-            borderRadius: "sm",
-            _hover: { textDecoration: "underline" },
-            _focusVisible: {
-              outline: "2px solid",
-              outlineColor: "accent.9",
-              outlineOffset: "2px",
-            },
-          })}
+        {c.positioningHeadline && (
+          <Text
+            size="2"
+            weight="medium"
+            as="p"
+            className={css({ color: "gray.12", lineHeight: "1.5" })}
+          >
+            {c.positioningHeadline}
+          </Text>
+        )}
+        {c.positioningTagline && (
+          <Text size="2" color="gray" as="p" className={css({ lineHeight: "1.5" })}>
+            {c.positioningTagline}
+          </Text>
+        )}
+        {c.targetAudience && (
+          <Text size="1" color="gray" as="p" className={css({ lineHeight: "1.5" })}>
+            <Text
+              size="1"
+              className={css({
+                color: "accent.11",
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                fontWeight: "medium",
+                mr: "2",
+              })}
+            >
+              For
+            </Text>
+            {c.targetAudience}
+          </Text>
+        )}
+        <Flex
+          gap="1"
+          wrap="wrap"
+          mt="auto"
+          pt="2"
+          className={css({ borderTop: "1px solid", borderColor: "ui.border" })}
         >
-          {c.domain ?? "visit"} <ExternalLinkIcon aria-hidden />
-        </a>
-      </Flex>
-      {c.positioningHeadline && (
-        <Text size="2" weight="medium">
-          {c.positioningHeadline}
-        </Text>
-      )}
-      {c.positioningTagline && (
-        <Text size="2" color="gray">
-          {c.positioningTagline}
-        </Text>
-      )}
-      {c.targetAudience && (
-        <Text size="1" color="gray">
-          <strong>For:</strong> {c.targetAudience}
-        </Text>
-      )}
-      <Flex gap="1" wrap="wrap" mt="1">
-        <Badge color="gray" size="1">
-          {c.status}
-        </Badge>
-        {c.pricingTiers.length > 0 && (
-          <Badge color="green" size="1">
-            {c.pricingTiers.length} tier{c.pricingTiers.length === 1 ? "" : "s"}
+          <Badge color={statusColor(c.status)} size="1" variant="soft">
+            {c.status}
           </Badge>
-        )}
-        {c.features.length > 0 && (
-          <Badge color="blue" size="1">
-            {c.features.length} feature{c.features.length === 1 ? "" : "s"}
-          </Badge>
-        )}
+          {c.pricingTiers.length > 0 && (
+            <Badge color="green" size="1" variant="soft">
+              {c.pricingTiers.length} tier
+              {c.pricingTiers.length === 1 ? "" : "s"}
+            </Badge>
+          )}
+          {c.features.length > 0 && (
+            <Badge color="blue" size="1" variant="soft">
+              {c.features.length} feature
+              {c.features.length === 1 ? "" : "s"}
+            </Badge>
+          )}
+        </Flex>
       </Flex>
-    </Box>
+    </SectionCard>
   );
 }
 
@@ -312,20 +476,31 @@ function PricingMatrix({ competitors }: { competitors: Competitor[] }) {
   const withTiers = competitors.filter((c) => c.pricingTiers.length > 0);
   if (withTiers.length === 0) {
     return (
-      <Text size="2" color="gray">
-        No pricing tiers extracted yet. Run the Pricing Analyst (team 2) to
-        populate.
-      </Text>
+      <Box
+        className={css({
+          bg: "ui.surface",
+          border: "1px dashed",
+          borderColor: "ui.border",
+          borderRadius: "md",
+          p: "4",
+        })}
+      >
+        <Text size="2" color="gray" as="p">
+          No pricing tiers extracted yet. Run the Pricing Analyst (team 2) to
+          populate.
+        </Text>
+      </Box>
     );
   }
 
   return (
     <Box
-      style={{ overflowX: "auto" }}
       className={css({
+        overflowX: "auto",
         border: "1px solid",
         borderColor: "ui.border",
         borderRadius: "md",
+        bg: "ui.surface",
       })}
     >
       <Table.Root size="1">
@@ -345,16 +520,28 @@ function PricingMatrix({ competitors }: { competitors: Competitor[] }) {
               .sort((a, b) => a.sortOrder - b.sortOrder)
               .map((t, tIdx) => (
                 <Table.Row key={`${c.id}-${t.id}`}>
-                  <Table.Cell>{tIdx === 0 ? c.name : ""}</Table.Cell>
-                  <Table.Cell>{t.tierName}</Table.Cell>
                   <Table.Cell>
+                    {tIdx === 0 ? (
+                      <Text weight="medium" size="2" className={css({ color: "gray.12" })}>
+                        {c.name}
+                      </Text>
+                    ) : (
+                      ""
+                    )}
+                  </Table.Cell>
+                  <Table.Cell>{t.tierName}</Table.Cell>
+                  <Table.Cell className={css({ fontVariantNumeric: "tabular-nums" })}>
                     {t.isCustomQuote ? "Custom" : formatMoney(t.monthlyPriceUsd)}
                   </Table.Cell>
-                  <Table.Cell>{formatMoney(t.annualPriceUsd)}</Table.Cell>
-                  <Table.Cell>{formatMoney(t.seatPriceUsd)}</Table.Cell>
+                  <Table.Cell className={css({ fontVariantNumeric: "tabular-nums" })}>
+                    {formatMoney(t.annualPriceUsd)}
+                  </Table.Cell>
+                  <Table.Cell className={css({ fontVariantNumeric: "tabular-nums" })}>
+                    {formatMoney(t.seatPriceUsd)}
+                  </Table.Cell>
                   <Table.Cell>
                     {t.isCustomQuote ? (
-                      <Badge color="gray" size="1">
+                      <Badge color="gray" size="1" variant="surface">
                         Contact Sales
                       </Badge>
                     ) : (
@@ -374,9 +561,19 @@ function FeatureMatrix({ competitors }: { competitors: Competitor[] }) {
   const withFeatures = competitors.filter((c) => c.features.length > 0);
   if (withFeatures.length === 0) {
     return (
-      <Text size="2" color="gray">
-        No feature parity data yet.
-      </Text>
+      <Box
+        className={css({
+          bg: "ui.surface",
+          border: "1px dashed",
+          borderColor: "ui.border",
+          borderRadius: "md",
+          p: "4",
+        })}
+      >
+        <Text size="2" color="gray" as="p">
+          No feature parity data yet.
+        </Text>
+      </Box>
     );
   }
   const allFeatures = Array.from(
@@ -385,11 +582,12 @@ function FeatureMatrix({ competitors }: { competitors: Competitor[] }) {
 
   return (
     <Box
-      style={{ overflowX: "auto" }}
       className={css({
+        overflowX: "auto",
         border: "1px solid",
         borderColor: "ui.border",
         borderRadius: "md",
+        bg: "ui.surface",
       })}
     >
       <Table.Root size="1">
@@ -406,15 +604,25 @@ function FeatureMatrix({ competitors }: { competitors: Competitor[] }) {
         <Table.Body>
           {allFeatures.map((feature) => (
             <Table.Row key={feature}>
-              <Table.Cell>{feature}</Table.Cell>
+              <Table.Cell>
+                <Text size="2" className={css({ color: "gray.12" })}>
+                  {feature}
+                </Text>
+              </Table.Cell>
               {withFeatures.map((c) => {
                 const has = c.features.some((f) => f.featureText === feature);
                 return (
                   <Table.Cell key={c.id}>
                     {has ? (
-                      <CheckIcon aria-hidden className={css({ color: "green.10" })} />
+                      <CheckIcon
+                        aria-label={`${c.name} has ${feature}`}
+                        className={css({ color: "green.10" })}
+                      />
                     ) : (
-                      <Cross2Icon aria-hidden className={css({ color: "gray.8" })} />
+                      <Cross2Icon
+                        aria-label={`${c.name} does not have ${feature}`}
+                        className={css({ color: "gray.8" })}
+                      />
                     )}
                   </Table.Cell>
                 );
@@ -448,82 +656,114 @@ export function ProductCompetitorsPage({ slug }: { slug: string }) {
   const analysis = product.latestCompetitorAnalysis;
   const competitors = analysis?.competitors ?? [];
 
+  // Sort competitors so the highest-signal cards (most pricing tiers + features) lead.
+  const sortedCompetitors = [...competitors].sort(
+    (a, b) =>
+      b.pricingTiers.length + b.features.length -
+      (a.pricingTiers.length + a.features.length),
+  );
+
   return (
     <Container size="4" p="6" asChild>
       <main>
-      <SubpageBreadcrumb
-        productSlug={product.slug}
-        productName={product.name}
-        currentLabel="Competitors & pricing"
-      />
-
-      <Flex direction="column" gap="6">
-        <SubpageHero
+        <SubpageBreadcrumb
+          productSlug={product.slug}
           productName={product.name}
           currentLabel="Competitors & pricing"
         />
 
-        <ExplainerPanel analysis={analysis} />
-
-        {competitors.length === 0 ? (
-          <Box className={cardStyle}>
-            <Heading size="3" mb="2">
-              No analysis yet
-            </Heading>
-            <Text size="2" color="gray">
-              No <code>competitor_analyses</code> row exists for this product
-              yet. {isAdmin ? "Use the panel below to start team 1." : "Ask an admin to kick off the discovery team."}
-            </Text>
-          </Box>
-        ) : (
-          <>
-            <Box>
-              <Heading size="4" mb="3">
-                Competitors ({competitors.length})
-              </Heading>
-              <Flex
-                gap="3"
-                wrap="wrap"
-                className={css({
-                  "& > *": {
-                    flex: "1 1 280px",
-                    minWidth: "280px",
-                    maxWidth: "100%",
-                  },
-                })}
-              >
-                {competitors.map((c) => (
-                  <CompetitorCard key={c.id} c={c} />
-                ))}
-              </Flex>
-            </Box>
-
-            <Box>
-              <Heading size="4" mb="3">
-                Pricing tiers
-              </Heading>
-              <PricingMatrix competitors={competitors} />
-            </Box>
-
-            <Box>
-              <Heading size="4" mb="3">
-                Feature parity
-              </Heading>
-              <FeatureMatrix competitors={competitors} />
-            </Box>
-          </>
-        )}
-
-        {isAdmin && (
-          <KickoffPanel
-            productId={product.id}
-            hasAnalysis={Boolean(analysis)}
-            onDone={() => {
-              void refetch();
-            }}
+        <Flex direction="column" gap="6">
+          <SubpageHero
+            productName={product.name}
+            currentLabel="Competitors & pricing"
+            trailing={
+              competitors.length > 0 ? (
+                <Badge color="indigo" size="2" variant="soft" radius="full">
+                  {competitors.length} competitor
+                  {competitors.length === 1 ? "" : "s"}
+                </Badge>
+              ) : null
+            }
           />
-        )}
-      </Flex>
+
+          <ExplainerPanel analysis={analysis} />
+
+          {competitors.length === 0 ? (
+            <Box
+              className={css({
+                bg: "ui.surface",
+                border: "1px dashed",
+                borderColor: "ui.border",
+                borderRadius: "md",
+                p: "6",
+                textAlign: "center",
+              })}
+            >
+              <Heading size="3" mb="2">
+                No analysis yet
+              </Heading>
+              <Text size="2" color="gray" as="p">
+                No <code>competitor_analyses</code> row exists for this product
+                yet.{" "}
+                {isAdmin
+                  ? "Use the panel below to start team 1."
+                  : "Ask an admin to kick off the discovery team."}
+              </Text>
+            </Box>
+          ) : (
+            <>
+              <Box>
+                <SectionHeading
+                  eyebrow="Direct rivals"
+                  title="Competitors"
+                  count={sortedCompetitors.length}
+                  description="Ranked by depth of evidence (pricing tiers + features extracted)."
+                />
+                <Box
+                  className={css({
+                    display: "grid",
+                    gridTemplateColumns: {
+                      base: "1fr",
+                      sm: "repeat(2, 1fr)",
+                      lg: "repeat(3, 1fr)",
+                    },
+                    gap: "3",
+                  })}
+                >
+                  {sortedCompetitors.map((c, i) => (
+                    <CompetitorCard key={c.id} c={c} ordinal={i + 1} />
+                  ))}
+                </Box>
+              </Box>
+
+              <Box>
+                <SectionHeading
+                  eyebrow="What they charge"
+                  title="Pricing tiers"
+                />
+                <PricingMatrix competitors={sortedCompetitors} />
+              </Box>
+
+              <Box>
+                <SectionHeading
+                  eyebrow="What they ship"
+                  title="Feature parity"
+                />
+                <FeatureMatrix competitors={sortedCompetitors} />
+              </Box>
+            </>
+          )}
+
+          {isAdmin && (
+            <KickoffPanel
+              productId={product.id}
+              hasAnalysis={Boolean(analysis)}
+              onDone={() => {
+                void refetch();
+              }}
+            />
+          )}
+        </Flex>
       </main>
     </Container>
   );

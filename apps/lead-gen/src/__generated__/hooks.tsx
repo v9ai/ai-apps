@@ -846,6 +846,7 @@ export type DecisionMakerCandidate = {
   authorityScore: Scalars['Float']['output'];
   department: Maybe<Scalars['String']['output']>;
   dmReasons: Array<Scalars['String']['output']>;
+  email: Maybe<Scalars['String']['output']>;
   firstName: Scalars['String']['output'];
   id: Scalars['Int']['output'];
   isDecisionMaker: Scalars['Boolean']['output'];
@@ -1548,6 +1549,7 @@ export type Mutation = {
   findContactEmail: FindContactEmailResult;
   findDecisionMaker: FindDecisionMakerResponse;
   flagContactsForDeletion: BatchOperationResult;
+  generateCampaignSequence: EmailCampaign;
   /** Generate and store embeddings for companies missing them. Admin only. */
   generateCompanyEmbeddings: GenerateEmbeddingsResult;
   generateDraftsForPending: GenerateDraftsBatchResult;
@@ -1876,6 +1878,12 @@ export type MutationFindDecisionMakerArgs = {
 
 export type MutationFlagContactsForDeletionArgs = {
   threshold?: InputMaybe<Scalars['Float']['input']>;
+};
+
+
+export type MutationGenerateCampaignSequenceArgs = {
+  campaignId: Scalars['String']['input'];
+  personaMatchThreshold?: InputMaybe<Scalars['Float']['input']>;
 };
 
 
@@ -4159,7 +4167,7 @@ export type FindDecisionMakerMutationVariables = Exact<{
 }>;
 
 
-export type FindDecisionMakerMutation = { __typename?: 'Mutation', findDecisionMaker: { __typename?: 'FindDecisionMakerResponse', success: boolean, message: string | null, companyId: number | null, companyKey: string | null, summary: string | null, classifyCount: number, topDecisionMaker: { __typename?: 'DecisionMakerCandidate', id: number, firstName: string, lastName: string, position: string | null, seniority: string | null, department: string | null, isDecisionMaker: boolean, authorityScore: number, dmReasons: Array<string>, rankScore: number } | null, decisionMakers: Array<{ __typename?: 'DecisionMakerCandidate', id: number, firstName: string, lastName: string, position: string | null, seniority: string | null, department: string | null, isDecisionMaker: boolean, authorityScore: number, dmReasons: Array<string>, rankScore: number }>, ranked: Array<{ __typename?: 'DecisionMakerCandidate', id: number, firstName: string, lastName: string, position: string | null, seniority: string | null, department: string | null, isDecisionMaker: boolean, authorityScore: number, dmReasons: Array<string>, rankScore: number }> } };
+export type FindDecisionMakerMutation = { __typename?: 'Mutation', findDecisionMaker: { __typename?: 'FindDecisionMakerResponse', success: boolean, message: string | null, companyId: number | null, companyKey: string | null, summary: string | null, classifyCount: number, topDecisionMaker: { __typename?: 'DecisionMakerCandidate', id: number, firstName: string, lastName: string, email: string | null, position: string | null, seniority: string | null, department: string | null, isDecisionMaker: boolean, authorityScore: number, dmReasons: Array<string>, rankScore: number } | null, decisionMakers: Array<{ __typename?: 'DecisionMakerCandidate', id: number, firstName: string, lastName: string, email: string | null, position: string | null, seniority: string | null, department: string | null, isDecisionMaker: boolean, authorityScore: number, dmReasons: Array<string>, rankScore: number }>, ranked: Array<{ __typename?: 'DecisionMakerCandidate', id: number, firstName: string, lastName: string, email: string | null, position: string | null, seniority: string | null, department: string | null, isDecisionMaker: boolean, authorityScore: number, dmReasons: Array<string>, rankScore: number }> } };
 
 export type ImportCompaniesMutationVariables = Exact<{
   companies: Array<CompanyImportInput> | CompanyImportInput;
@@ -4480,7 +4488,7 @@ export type GetEmailCampaignQueryVariables = Exact<{
 }>;
 
 
-export type GetEmailCampaignQuery = { __typename?: 'Query', emailCampaign: { __typename?: 'EmailCampaign', id: string, companyId: number | null, name: string, status: string, sequence: any | null, delayDays: any | null, startAt: string | null, mode: string | null, fromEmail: string | null, replyTo: string | null, totalRecipients: number, emailsSent: number, emailsScheduled: number, emailsFailed: number, recipientEmails: Array<string>, createdAt: string, updatedAt: string } | null };
+export type GetEmailCampaignQuery = { __typename?: 'Query', emailCampaign: { __typename?: 'EmailCampaign', id: string, companyId: number | null, productId: number | null, productAwareMode: boolean, personaMatchThreshold: number | null, name: string, status: string, sequence: any | null, delayDays: any | null, startAt: string | null, mode: string | null, fromEmail: string | null, replyTo: string | null, totalRecipients: number, emailsSent: number, emailsScheduled: number, emailsFailed: number, recipientEmails: Array<string>, createdAt: string, updatedAt: string } | null };
 
 export type CreateDraftCampaignMutationVariables = Exact<{
   input: CreateCampaignInput;
@@ -4510,6 +4518,14 @@ export type LaunchEmailCampaignMutationVariables = Exact<{
 
 
 export type LaunchEmailCampaignMutation = { __typename?: 'Mutation', launchEmailCampaign: { __typename?: 'EmailCampaign', id: string, name: string, status: string, emailsSent: number, emailsScheduled: number, emailsFailed: number, updatedAt: string } };
+
+export type GenerateCampaignSequenceMutationVariables = Exact<{
+  campaignId: Scalars['String']['input'];
+  personaMatchThreshold?: InputMaybe<Scalars['Float']['input']>;
+}>;
+
+
+export type GenerateCampaignSequenceMutation = { __typename?: 'Mutation', generateCampaignSequence: { __typename?: 'EmailCampaign', id: string, name: string, status: string, sequence: any | null, recipientEmails: Array<string>, totalRecipients: number, personaMatchThreshold: number | null, updatedAt: string } };
 
 export type SendEmailMutationVariables = Exact<{
   input: SendEmailInput;
@@ -5777,6 +5793,7 @@ export const FindDecisionMakerDocument = gql`
       id
       firstName
       lastName
+      email
       position
       seniority
       department
@@ -5789,6 +5806,7 @@ export const FindDecisionMakerDocument = gql`
       id
       firstName
       lastName
+      email
       position
       seniority
       department
@@ -5801,6 +5819,7 @@ export const FindDecisionMakerDocument = gql`
       id
       firstName
       lastName
+      email
       position
       seniority
       department
@@ -7715,6 +7734,9 @@ export const GetEmailCampaignDocument = gql`
   emailCampaign(id: $id) {
     id
     companyId
+    productId
+    productAwareMode
+    personaMatchThreshold
     name
     status
     sequence
@@ -7915,6 +7937,50 @@ export function useLaunchEmailCampaignMutation(baseOptions?: Apollo.MutationHook
 export type LaunchEmailCampaignMutationHookResult = ReturnType<typeof useLaunchEmailCampaignMutation>;
 export type LaunchEmailCampaignMutationResult = Apollo.MutationResult<LaunchEmailCampaignMutation>;
 export type LaunchEmailCampaignMutationOptions = Apollo.BaseMutationOptions<LaunchEmailCampaignMutation, LaunchEmailCampaignMutationVariables>;
+export const GenerateCampaignSequenceDocument = gql`
+    mutation GenerateCampaignSequence($campaignId: String!, $personaMatchThreshold: Float) {
+  generateCampaignSequence(
+    campaignId: $campaignId
+    personaMatchThreshold: $personaMatchThreshold
+  ) {
+    id
+    name
+    status
+    sequence
+    recipientEmails
+    totalRecipients
+    personaMatchThreshold
+    updatedAt
+  }
+}
+    `;
+export type GenerateCampaignSequenceMutationFn = Apollo.MutationFunction<GenerateCampaignSequenceMutation, GenerateCampaignSequenceMutationVariables>;
+
+/**
+ * __useGenerateCampaignSequenceMutation__
+ *
+ * To run a mutation, you first call `useGenerateCampaignSequenceMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useGenerateCampaignSequenceMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [generateCampaignSequenceMutation, { data, loading, error }] = useGenerateCampaignSequenceMutation({
+ *   variables: {
+ *      campaignId: // value for 'campaignId'
+ *      personaMatchThreshold: // value for 'personaMatchThreshold'
+ *   },
+ * });
+ */
+export function useGenerateCampaignSequenceMutation(baseOptions?: Apollo.MutationHookOptions<GenerateCampaignSequenceMutation, GenerateCampaignSequenceMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<GenerateCampaignSequenceMutation, GenerateCampaignSequenceMutationVariables>(GenerateCampaignSequenceDocument, options);
+      }
+export type GenerateCampaignSequenceMutationHookResult = ReturnType<typeof useGenerateCampaignSequenceMutation>;
+export type GenerateCampaignSequenceMutationResult = Apollo.MutationResult<GenerateCampaignSequenceMutation>;
+export type GenerateCampaignSequenceMutationOptions = Apollo.BaseMutationOptions<GenerateCampaignSequenceMutation, GenerateCampaignSequenceMutationVariables>;
 export const SendEmailDocument = gql`
     mutation SendEmail($input: SendEmailInput!) {
   sendEmail(input: $input) {

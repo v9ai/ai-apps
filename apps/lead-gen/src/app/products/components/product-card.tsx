@@ -1,17 +1,17 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   AlertDialog,
-  Badge,
-  Button as RadixButton,
   DropdownMenu,
   Flex,
   IconButton,
   Text,
 } from "@radix-ui/themes";
+import { Button } from "@/components/ui";
+import { differenceInDays, formatDistanceToNow } from "date-fns";
 import {
   CubeIcon,
   DotsVerticalIcon,
@@ -24,20 +24,15 @@ import {
   Sparkles,
   Trash2,
   Eye,
-  RefreshCw,
 } from "lucide-react";
-import { toast } from "sonner";
 import { css } from "styled-system/css";
 import { button } from "@/recipes/button";
 import { stagger } from "@/recipes/motion";
 import {
   useProductRunsLive,
-  intelKindLabel,
-  intelKindHint,
   isInflight,
   type IntelKind,
 } from "@/lib/use-product-runs-live";
-import { StatusBadge } from "./view-chrome";
 
 type ProductRow = {
   id: number;
@@ -115,28 +110,113 @@ export function ProductCard({
         ? "partial"
         : "cold";
 
-  const stripeColor =
+  // Per-kind state for the unified progress bar.
+  type KindState = "complete" | "running" | "errored" | "none";
+  const KIND_ORDER: readonly IntelKind[] = ["icp", "pricing", "gtm", "product_intel"] as const;
+  const kindTimestamp: Record<IntelKind, string | null> = {
+    icp: p.icpAnalyzedAt,
+    pricing: p.pricingAnalyzedAt,
+    gtm: p.gtmAnalyzedAt,
+    product_intel: p.intelReportAt,
+  };
+  function kindState(kind: IntelKind): KindState {
+    const run = runs[kind];
+    if (isInflight(run)) return "running";
+    if (run?.status === "error" || run?.status === "timeout") return "errored";
+    if (kindTimestamp[kind] || run?.status === "success") return "complete";
+    return "none";
+  }
+  const kindStates: Record<IntelKind, KindState> = {
+    icp: kindState("icp"),
+    pricing: kindState("pricing"),
+    gtm: kindState("gtm"),
+    product_intel: kindState("product_intel"),
+  };
+  const erroredKinds = KIND_ORDER.filter((k) => kindStates[k] === "errored");
+
+  // Tagline: first sentence of description, or first ~90 chars, no clamp.
+  function buildTagline(text: string): string {
+    if (!text) return "";
+    const firstSentence = text.split(/(?<=[.!?])\s+/)[0] ?? text;
+    if (firstSentence.length <= 110) return firstSentence;
+    return text.slice(0, 90).trimEnd() + "…";
+  }
+  const tagline = buildTagline(p.description?.trim() ?? "");
+
+  // Freshness: most-recent of the four AnalyzedAt timestamps.
+  const mostRecentAnalyzedAt = (() => {
+    const candidates = [
+      p.icpAnalyzedAt,
+      p.pricingAnalyzedAt,
+      p.gtmAnalyzedAt,
+      p.intelReportAt,
+    ].filter((v): v is string => !!v);
+    if (candidates.length === 0) return null;
+    return candidates.reduce((latest, ts) => (Date.parse(ts) > Date.parse(latest) ? ts : latest));
+  })();
+  const freshnessLabel = mostRecentAnalyzedAt
+    ? `Last analyzed ${formatDistanceToNow(new Date(mostRecentAnalyzedAt), { addSuffix: true })}`
+    : "Not yet analyzed";
+  const freshnessDotColor = mostRecentAnalyzedAt
+    ? (() => {
+        const ageDays = differenceInDays(new Date(), new Date(mostRecentAnalyzedAt));
+        if (ageDays < 7) return "var(--green-9)";
+        if (ageDays < 30) return "var(--amber-9)";
+        return "var(--gray-8)";
+      })()
+    : "var(--gray-7)";
+
+  // State-aware primary CTA.
+  type CTA =
+    | { kind: "link"; label: string; href: string; variant: "outline" | "gradient" | "solid" | "ghost" }
+    | { kind: "action"; label: string; onClick: () => void; variant: "outline" | "gradient" | "solid" | "ghost" };
+  const primaryCTA: CTA = (() => {
+    if (!isAdmin) {
+      return { kind: "link", label: "Open report →", href: `/products/${p.slug}`, variant: "outline" };
+    }
+    if (erroredKinds.length > 0) {
+      const firstErrored = erroredKinds[0];
+      const handler =
+        firstErrored === "icp"
+          ? () => onAnalyzeIcp(p.id, p.slug)
+          : firstErrored === "pricing"
+            ? () => onAnalyzePricing(p.id)
+            : firstErrored === "gtm"
+              ? () => onAnalyzeGtm(p.id)
+              : () => onRunFullIntel(p.id);
+      return { kind: "action", label: "Resume run", onClick: handler, variant: "solid" };
+    }
+    if (state === "running") {
+      return { kind: "link", label: "View live run", href: `/products/${p.slug}`, variant: "outline" };
+    }
+    if (state === "full") {
+      return { kind: "link", label: "Open report", href: `/products/${p.slug}`, variant: "outline" };
+    }
+    if (state === "partial") {
+      return {
+        kind: "action",
+        label: "Continue → Run full intel",
+        onClick: () => onRunFullIntel(p.id),
+        variant: "gradient",
+      };
+    }
+    return {
+      kind: "action",
+      label: "Run ICP",
+      onClick: () => onAnalyzeIcp(p.id, p.slug),
+      variant: "gradient",
+    };
+  })();
+
+  // State-tinted accents for the top border + hover glow.
+  const accentColor =
     state === "running"
       ? "var(--accent-9)"
       : state === "full"
         ? "var(--green-9)"
         : state === "partial"
-          ? "var(--accent-6)"
-          : "var(--gray-6)";
-
-  const faviconUrl = p.domain
-    ? `https://www.google.com/s2/favicons?domain=${encodeURIComponent(p.domain)}&sz=64`
-    : null;
-
-  const [favLoaded, setFavLoaded] = useState(false);
-  const [favError, setFavError] = useState(false);
-
-  const description = p.description?.trim() ?? "";
-
-  const showIcp = !!p.icpAnalyzedAt || !!runs.icp;
-  const showPricing = !!p.pricingAnalyzedAt || !!runs.pricing;
-  const showGtm = !!p.gtmAnalyzedAt || !!runs.gtm;
-  const showIntel = !!p.intelReportAt || !!runs.product_intel;
+          ? "var(--orange-9)"
+          : "var(--gray-7)";
 
   const cardCls = useMemo(
     () =>
@@ -147,56 +227,87 @@ export function ProductCard({
         borderColor: "ui.border",
         borderRadius: "lg",
         p: "5",
-        pl: "6",
-        transition: "border-color 150ms ease, transform 150ms ease, box-shadow 200ms ease",
+        overflow: "hidden",
+        transition:
+          "border-color 200ms ease, transform 200ms ease, box-shadow 200ms ease",
         _hover: {
-          borderColor: "accent.8",
-          transform: "translateY(-1px)",
-          boxShadow: "0 8px 24px -12px rgba(0,0,0,0.4)",
+          borderColor: "ui.borderHover",
+          transform: "translateY(-2px)",
         },
       }),
     [],
   );
 
-  const stripeCls = useMemo(
+  const topRuleCls = useMemo(
     () =>
       css({
         position: "absolute",
         top: "0",
-        bottom: "0",
         left: "0",
-        width: "4px",
-        borderTopLeftRadius: "lg",
-        borderBottomLeftRadius: "lg",
+        right: "0",
+        height: "2px",
       }),
     [],
   );
 
-  const cardClasses = `${cardCls} ${stagger({ index: (index % 10) as 0|1|2|3|4|5|6|7|8|9, animation: "slideUp" })}`;
+  const overlayLinkCls = useMemo(
+    () =>
+      css({
+        position: "absolute",
+        inset: 0,
+        zIndex: 0,
+        borderRadius: "lg",
+        _focusVisible: {
+          outline: "2px solid",
+          outlineColor: "accent.8",
+          outlineOffset: "2px",
+        },
+      }),
+    [],
+  );
+
+  const cardClasses = `${cardCls} ${stagger({ index: (index % 5) as 0|1|2|3|4, animation: "fadeIn" })}`;
+
+  // Hover glow: state-tinted box-shadow applied via inline style on enter/leave.
+  const hoverShadow = `0 12px 32px -12px ${accentColor}55, 0 0 0 1px ${accentColor}30`;
 
   return (
-    <div className={cardClasses} data-product-id={p.id}>
+    <div
+      className={cardClasses}
+      data-product-id={p.id}
+      onMouseEnter={(e) => {
+        (e.currentTarget as HTMLDivElement).style.boxShadow = hoverShadow;
+      }}
+      onMouseLeave={(e) => {
+        (e.currentTarget as HTMLDivElement).style.boxShadow = "none";
+      }}
+    >
+      <Link
+        href={`/products/${p.slug}`}
+        aria-label={p.name}
+        className={overlayLinkCls}
+      />
       <span
         aria-hidden="true"
-        className={stripeCls}
+        className={topRuleCls}
         style={{
-          background: stripeColor,
-          opacity: state === "running" ? 1 : 0.85,
+          background: accentColor,
+          opacity: state === "running" ? 1 : 0.9,
           animation: state === "running" ? "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite" : undefined,
         }}
       />
 
       {/* Header */}
       <Flex align="start" justify="between" gap="3">
-        <Flex align="center" gap="3" className={css({ flex: 1, minWidth: 0 })}>
+        <Flex align="start" gap="3" className={css({ flex: 1, minWidth: 0 })}>
           <span
             aria-hidden="true"
             className={css({
               display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",
-              w: "8",
-              h: "8",
+              w: "10",
+              h: "10",
               borderRadius: "md",
               bg: "ui.surfaceRaised",
               border: "1px solid",
@@ -206,56 +317,30 @@ export function ProductCard({
               overflow: "hidden",
             })}
           >
-            {faviconUrl && !favError ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={faviconUrl}
-                alt=""
-                width={20}
-                height={20}
-                onLoad={() => setFavLoaded(true)}
-                onError={() => setFavError(true)}
-                style={{
-                  width: 20,
-                  height: 20,
-                  objectFit: "contain",
-                  opacity: favLoaded ? 1 : 0,
-                  transition: "opacity 150ms ease",
-                }}
-              />
-            ) : (
-              <CubeIcon width="18" height="18" />
-            )}
+            <CubeIcon width="22" height="22" />
           </span>
           <div className={css({ minWidth: 0, flex: 1 })}>
-            <Link
-              href={`/products/${p.slug}`}
+            <Text
+              as="span"
+              weight="bold"
+              size="6"
               className={css({
-                color: "inherit",
-                textDecoration: "none",
-                display: "inline-block",
-                _hover: { textDecoration: "underline" },
+                display: "block",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                lineHeight: "1.15",
+                letterSpacing: "-0.015em",
               })}
             >
-              <Text
-                as="span"
-                weight="bold"
-                size="4"
-                className={css({
-                  display: "block",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                })}
-              >
-                {p.name}
-              </Text>
-            </Link>
+              {p.name}
+            </Text>
+            {/* Domain + freshness row, sits directly under the title. */}
             <Flex
               align="center"
-              gap="2"
+              gap="3"
               wrap="wrap"
-              className={css({ mt: "1", color: "gray.11", fontSize: "xs" })}
+              className={css({ mt: "1", color: "ui.tertiary", fontSize: "xs" })}
             >
               <a
                 href={p.url}
@@ -264,12 +349,15 @@ export function ProductCard({
                 aria-label={`Open ${p.name} website in new tab`}
                 onClick={(e) => e.stopPropagation()}
                 className={css({
-                  color: "inherit",
+                  position: "relative",
+                  zIndex: 1,
+                  color: "ui.tertiary",
                   textDecoration: "none",
                   display: "inline-flex",
                   alignItems: "center",
                   gap: "1",
-                  _hover: { textDecoration: "underline", color: "accent.11" },
+                  minWidth: 0,
+                  _hover: { color: "accent.11", textDecoration: "underline" },
                 })}
               >
                 <ExternalLinkIcon aria-hidden width="12" height="12" />
@@ -278,12 +366,33 @@ export function ProductCard({
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                     whiteSpace: "nowrap",
-                    maxWidth: "16ch",
+                    maxWidth: "22ch",
                   })}
                 >
                   {p.domain ?? p.url}
                 </span>
               </a>
+              <Flex align="center" gap="2" className={css({ minWidth: 0 })}>
+                <span
+                  aria-hidden="true"
+                  className={css({
+                    width: "6px",
+                    height: "6px",
+                    borderRadius: "full",
+                    flexShrink: 0,
+                  })}
+                  style={{ background: freshnessDotColor }}
+                />
+                <span
+                  className={css({
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  })}
+                >
+                  {freshnessLabel}
+                </span>
+              </Flex>
             </Flex>
           </div>
         </Flex>
@@ -296,6 +405,7 @@ export function ProductCard({
                 variant="ghost"
                 color="gray"
                 aria-label="Product actions"
+                className={css({ position: "relative", zIndex: 1 })}
               >
                 <DotsVerticalIcon />
               </IconButton>
@@ -390,141 +500,63 @@ export function ProductCard({
         )}
       </Flex>
 
-      {/* Description (always rendered, 2-line clamp, fixed min-h kills CLS) */}
-      <Text
-        size="2"
-        color="gray"
-        className={css({
-          mt: "3",
-          minHeight: "2.625rem",
-          lineHeight: "1.5",
-          overflow: "hidden",
-          color: description ? "ui.secondary" : "gray.10",
-        })}
-        style={{
-          display: "-webkit-box",
-          WebkitLineClamp: 2,
-          WebkitBoxOrient: "vertical" as const,
-        }}
-      >
-        {description || "No description yet — run ICP to enrich."}
-      </Text>
-
-      {/* Status row */}
-      <Flex gap="2" wrap="wrap" mt="4" align="center">
-        <KindStatus
-          kind="icp"
-          run={runs.icp}
-          present={showIcp}
-          onRetry={() => onAnalyzeIcp(p.id, p.slug)}
-          isAdmin={isAdmin}
-        />
-        <KindStatus
-          kind="pricing"
-          run={runs.pricing}
-          present={showPricing}
-          onRetry={() => onAnalyzePricing(p.id)}
-          isAdmin={isAdmin}
-        />
-        <KindStatus
-          kind="gtm"
-          run={runs.gtm}
-          present={showGtm}
-          onRetry={() => onAnalyzeGtm(p.id)}
-          isAdmin={isAdmin}
-        />
-        <KindStatus
-          kind="product_intel"
-          run={runs.product_intel}
-          present={showIntel}
-          onRetry={() => onRunFullIntel(p.id)}
-          isAdmin={isAdmin}
-        />
-      </Flex>
-
-      {/* Non-admin / mobile inline actions */}
-      {!isAdmin && (
-        <Flex gap="2" mt="4" wrap="wrap">
-          {!!p.icpAnalysis && (
-            <Link
-              href={`/products/${p.slug}/icp`}
-              className={button({ variant: "outline", size: "sm" })}
-            >
-              View ICP
-            </Link>
-          )}
-          <Link
-            href={`/products/${p.slug}/competitors`}
-            className={button({ variant: "outline", size: "sm" })}
-          >
-            Competitors &amp; pricing
-          </Link>
-        </Flex>
+      {/* Tagline */}
+      {tagline && (
+        <Text
+          size="2"
+          as="p"
+          className={css({
+            position: "relative",
+            zIndex: 1,
+            mt: "2",
+            color: "ui.primary",
+            lineHeight: "1.45",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            pointerEvents: "none",
+          })}
+        >
+          {tagline}
+        </Text>
       )}
-    </div>
-  );
-}
 
-function KindStatus({
-  kind,
-  run,
-  present,
-  onRetry,
-  isAdmin,
-}: {
-  kind: IntelKind;
-  run: ReturnType<typeof useProductRunsLive>["runs"][IntelKind];
-  present: boolean;
-  onRetry: () => void;
-  isAdmin: boolean;
-}) {
-  const label = intelKindLabel(kind);
-  const status = run?.status;
-  const inflight = isInflight(run);
 
-  // No record at all → show muted "—"
-  if (!present && !run) {
-    return (
-      <Badge color="gray" size="2" variant="surface">
-        {label} —
-      </Badge>
-    );
-  }
-
-  // Inflight → blue with elapsed seconds
-  if (inflight) {
-    const elapsed = elapsedSeconds(run?.startedAt ?? null);
-    return (
-      <StatusBadge
-        status={status ?? "running"}
-        label={`${label} ${elapsed}s`}
-      />
-    );
-  }
-
-  // Error / timeout → red/amber + retry
-  if (status === "error" || status === "timeout") {
-    return (
-      <Flex gap="1" align="center">
-        <span title={run?.error?.slice(0, 200) ?? ""}>
-          <StatusBadge status={status} label={`${label} ${status}`} />
-        </span>
-        {isAdmin && (
+      {/* Footer: primary CTA, right-aligned. Domain + freshness now live in
+          the header row directly under the product name. */}
+      <Flex
+        align="center"
+        justify="end"
+        gap="3"
+        wrap="wrap"
+        mt="4"
+        pt="4"
+        className={css({
+          position: "relative",
+          zIndex: 1,
+          borderTop: "1px solid",
+          borderColor: "ui.border",
+        })}
+      >
+        {primaryCTA.kind === "link" ? (
+          <Link
+            href={primaryCTA.href}
+            className={button({ variant: primaryCTA.variant, size: "md" })}
+          >
+            {primaryCTA.label}
+          </Link>
+        ) : (
           <button
             type="button"
-            aria-label={`Retry ${label}`}
-            onClick={() => onRetry()}
-            className={button({ variant: "ghost", size: "sm" })}
-            style={{ height: 22, padding: "0 6px" }}
+            onClick={primaryCTA.onClick}
+            className={button({ variant: primaryCTA.variant, size: "md" })}
           >
-            <RefreshCw size={12} />
+            {primaryCTA.label}
           </button>
         )}
       </Flex>
-    );
-  }
-
-  return <StatusBadge status="success" label={`${label} success`} />;
+    </div>
+  );
 }
 
 export function DeleteProductDialog({
@@ -547,14 +579,14 @@ export function DeleteProductDialog({
         </AlertDialog.Description>
         <Flex gap="3" mt="4" justify="end">
           <AlertDialog.Cancel>
-            <RadixButton variant="soft" color="gray" onClick={onCancel}>
+            <Button variant="ghost" size="sm" onClick={onCancel}>
               Cancel
-            </RadixButton>
+            </Button>
           </AlertDialog.Cancel>
           <AlertDialog.Action>
-            <RadixButton variant="solid" color="red" onClick={onConfirm}>
+            <Button variant="solidRed" size="sm" onClick={onConfirm}>
               Delete
-            </RadixButton>
+            </Button>
           </AlertDialog.Action>
         </Flex>
       </AlertDialog.Content>

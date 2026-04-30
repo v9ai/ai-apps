@@ -168,6 +168,7 @@ type Query {
   therapeuticQuestions(goalId: Int, issueId: Int, journalEntryId: Int): [TherapeuticQuestion!]!
   recommendedBooks(goalId: Int, journalEntryId: Int): [RecommendedBook!]!
   allRecommendedBooks(category: String): [RecommendedBook!]!
+  allRecommendedMovies(category: String, familyMemberId: Int): [RecommendedMovie!]!
   notes(entityId: Int!, entityType: String!): [Note!]!
   allNotes: [Note!]!
   note(id: Int, slug: String): Note
@@ -347,6 +348,8 @@ type Mutation {
   deleteTherapeuticQuestions(goalId: Int, issueId: Int, journalEntryId: Int): DeleteQuestionsResult!
   generateRecommendedBooks(goalId: Int, journalEntryId: Int): GenerateRecommendedBooksResult!
   deleteRecommendedBooks(goalId: Int, journalEntryId: Int): DeleteRecommendedBooksResult!
+  generateRecommendedMovies(goalId: Int, familyMemberId: Int): GenerateRecommendedMoviesResult!
+  deleteRecommendedMovies(goalId: Int, familyMemberId: Int): DeleteRecommendedMoviesResult!
   generateLongFormText(
     goalId: Int
     issueId: Int
@@ -658,6 +661,28 @@ type RecommendedBook {
   whyRecommended: String!
   category: String!
   amazonUrl: String
+  generatedAt: String!
+  createdAt: String!
+  updatedAt: String!
+}
+
+type RecommendedMovie {
+  id: Int!
+  goalId: Int
+  familyMemberId: Int
+  title: String!
+  year: Int
+  imdbId: String
+  tmdbId: String
+  platform: String
+  rating: String
+  imdbRating: Float
+  ageBand: String
+  genres: [String!]!
+  description: String!
+  whyRecommended: String!
+  category: String!
+  justwatchUrl: String
   generatedAt: String!
   createdAt: String!
   updatedAt: String!
@@ -976,6 +1001,19 @@ type GenerateRecommendedBooksResult {
 }
 
 type DeleteRecommendedBooksResult {
+  success: Boolean!
+  message: String
+  deletedCount: Int!
+}
+
+type GenerateRecommendedMoviesResult {
+  success: Boolean!
+  message: String
+  jobId: String
+  movies: [RecommendedMovie!]!
+}
+
+type DeleteRecommendedMoviesResult {
   success: Boolean!
   message: String
   deletedCount: Int!

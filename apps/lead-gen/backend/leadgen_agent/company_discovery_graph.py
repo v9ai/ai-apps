@@ -257,7 +257,7 @@ async def persist(state: CompanyDiscoveryState) -> dict:
                             tags_list.append(vertical)
                         if geography:
                             tags_list.append(geography)
-                        key = f"vadim:discovery-{_slugify(c['domain'])}"[:200]
+                        key = _slugify(c["domain"])[:200]
                         cur.execute(
                             """
                             INSERT INTO companies

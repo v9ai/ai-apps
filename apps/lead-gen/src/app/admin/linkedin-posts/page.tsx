@@ -23,6 +23,8 @@ import {
   Text,
 } from "@radix-ui/themes";
 import { button } from "@/recipes/button";
+import { css } from "styled-system/css";
+import { truncate } from "@/recipes/text";
 import {
   ExclamationTriangleIcon,
   InfoCircledIcon,
@@ -101,7 +103,7 @@ export default function AdminLinkedInPostsPage() {
   }
 
   return (
-    <Container size="4" p="8" style={{ maxWidth: 1200 }}>
+    <Container size="4" p="8" className={css({ maxWidth: "1200px" })}>
       <Flex justify="between" align="center" mb="6">
         <Heading size="7">LinkedIn Posts</Heading>
         <button
@@ -211,13 +213,7 @@ export default function AdminLinkedInPostsPage() {
                           color="gray"
                           as="p"
                           mt="1"
-                          style={{
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            display: "-webkit-box",
-                            WebkitLineClamp: 3,
-                            WebkitBoxOrient: "vertical",
-                          }}
+                          className={truncate({ lines: 3 })}
                         >
                           {sp.post.content ?? sp.post.title ?? "No content"}
                         </Text>
@@ -278,13 +274,7 @@ function PostCard({
               color="gray"
               as="p"
               mt="1"
-              style={{
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                display: "-webkit-box",
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: "vertical",
-              }}
+              className={truncate({ lines: 2 })}
             >
               {post.content ?? post.title ?? "No content"}
             </Text>

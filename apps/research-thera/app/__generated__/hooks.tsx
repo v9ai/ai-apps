@@ -1008,6 +1008,13 @@ export type DeleteRecommendedBooksResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type DeleteRecommendedMoviesResult = {
+  __typename?: 'DeleteRecommendedMoviesResult';
+  deletedCount: Scalars['Int']['output'];
+  message?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
 export type DeleteRelationshipResult = {
   __typename?: 'DeleteRelationshipResult';
   message?: Maybe<Scalars['String']['output']>;
@@ -1429,6 +1436,14 @@ export type GenerateRecommendedBooksResult = {
   books: Array<RecommendedBook>;
   jobId?: Maybe<Scalars['String']['output']>;
   message?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
+export type GenerateRecommendedMoviesResult = {
+  __typename?: 'GenerateRecommendedMoviesResult';
+  jobId?: Maybe<Scalars['String']['output']>;
+  message?: Maybe<Scalars['String']['output']>;
+  movies: Array<RecommendedMovie>;
   success: Scalars['Boolean']['output'];
 };
 
@@ -2001,6 +2016,7 @@ export type Mutation = {
   deleteNote: DeleteNoteResult;
   deleteProtocol: DeleteProtocolResult;
   deleteRecommendedBooks: DeleteRecommendedBooksResult;
+  deleteRecommendedMovies: DeleteRecommendedMoviesResult;
   deleteRelationship: DeleteRelationshipResult;
   deleteResearch: DeleteResearchResult;
   deleteRoutineAnalysis: DeleteRoutineAnalysisResult;
@@ -2031,6 +2047,7 @@ export type Mutation = {
   generateOpenAIAudio: GenerateOpenAiAudioResult;
   generateParentAdvice: GenerateParentAdviceResult;
   generateRecommendedBooks: GenerateRecommendedBooksResult;
+  generateRecommendedMovies: GenerateRecommendedMoviesResult;
   generateRegimenAnalysis: GenerateResearchResult;
   generateResearch: GenerateResearchResult;
   generateRoutineAnalysis: GenerateRoutineAnalysisResult;
@@ -2409,6 +2426,12 @@ export type MutationDeleteRecommendedBooksArgs = {
 };
 
 
+export type MutationDeleteRecommendedMoviesArgs = {
+  familyMemberId?: InputMaybe<Scalars['Int']['input']>;
+  goalId?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
 export type MutationDeleteRelationshipArgs = {
   id: Scalars['Int']['input'];
 };
@@ -2579,6 +2602,12 @@ export type MutationGenerateParentAdviceArgs = {
 export type MutationGenerateRecommendedBooksArgs = {
   goalId?: InputMaybe<Scalars['Int']['input']>;
   journalEntryId?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type MutationGenerateRecommendedMoviesArgs = {
+  familyMemberId?: InputMaybe<Scalars['Int']['input']>;
+  goalId?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -3104,6 +3133,7 @@ export type Query = {
   allIssues: Array<Issue>;
   allNotes: Array<Note>;
   allRecommendedBooks: Array<RecommendedBook>;
+  allRecommendedMovies: Array<RecommendedMovie>;
   allStories: Array<Story>;
   allTags: Array<Scalars['String']['output']>;
   allergies: Array<Allergy>;
@@ -3203,6 +3233,12 @@ export type QueryAffirmationsArgs = {
 
 export type QueryAllRecommendedBooksArgs = {
   category?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryAllRecommendedMoviesArgs = {
+  category?: InputMaybe<Scalars['String']['input']>;
+  familyMemberId?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -3550,6 +3586,29 @@ export type RecommendedBook = {
   isbn?: Maybe<Scalars['String']['output']>;
   journalEntryId?: Maybe<Scalars['Int']['output']>;
   title: Scalars['String']['output'];
+  updatedAt: Scalars['String']['output'];
+  whyRecommended: Scalars['String']['output'];
+  year?: Maybe<Scalars['Int']['output']>;
+};
+
+export type RecommendedMovie = {
+  __typename?: 'RecommendedMovie';
+  ageBand?: Maybe<Scalars['String']['output']>;
+  category: Scalars['String']['output'];
+  createdAt: Scalars['String']['output'];
+  description: Scalars['String']['output'];
+  familyMemberId?: Maybe<Scalars['Int']['output']>;
+  generatedAt: Scalars['String']['output'];
+  genres: Array<Scalars['String']['output']>;
+  goalId?: Maybe<Scalars['Int']['output']>;
+  id: Scalars['Int']['output'];
+  imdbId?: Maybe<Scalars['String']['output']>;
+  imdbRating?: Maybe<Scalars['Float']['output']>;
+  justwatchUrl?: Maybe<Scalars['String']['output']>;
+  platform?: Maybe<Scalars['String']['output']>;
+  rating?: Maybe<Scalars['String']['output']>;
+  title: Scalars['String']['output'];
+  tmdbId?: Maybe<Scalars['String']['output']>;
   updatedAt: Scalars['String']['output'];
   whyRecommended: Scalars['String']['output'];
   year?: Maybe<Scalars['Int']['output']>;
@@ -4703,6 +4762,14 @@ export type DeleteRecommendedBooksMutationVariables = Exact<{
 
 export type DeleteRecommendedBooksMutation = { __typename?: 'Mutation', deleteRecommendedBooks: { __typename?: 'DeleteRecommendedBooksResult', success: boolean, message?: string | null, deletedCount: number } };
 
+export type DeleteRecommendedMoviesMutationVariables = Exact<{
+  goalId?: InputMaybe<Scalars['Int']['input']>;
+  familyMemberId?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type DeleteRecommendedMoviesMutation = { __typename?: 'Mutation', deleteRecommendedMovies: { __typename?: 'DeleteRecommendedMoviesResult', success: boolean, message?: string | null, deletedCount: number } };
+
 export type DeleteRelationshipMutationVariables = Exact<{
   id: Scalars['Int']['input'];
 }>;
@@ -4971,6 +5038,14 @@ export type GenerateRecommendedBooksMutationVariables = Exact<{
 
 export type GenerateRecommendedBooksMutation = { __typename?: 'Mutation', generateRecommendedBooks: { __typename?: 'GenerateRecommendedBooksResult', success: boolean, message?: string | null, jobId?: string | null, books: Array<{ __typename?: 'RecommendedBook', id: number, goalId?: number | null, title: string, authors: Array<string>, year?: number | null, isbn?: string | null, description: string, whyRecommended: string, category: string, amazonUrl?: string | null, generatedAt: string }> } };
 
+export type GenerateRecommendedMoviesMutationVariables = Exact<{
+  goalId?: InputMaybe<Scalars['Int']['input']>;
+  familyMemberId?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type GenerateRecommendedMoviesMutation = { __typename?: 'Mutation', generateRecommendedMovies: { __typename?: 'GenerateRecommendedMoviesResult', success: boolean, message?: string | null, jobId?: string | null, movies: Array<{ __typename?: 'RecommendedMovie', id: number, goalId?: number | null, familyMemberId?: number | null, title: string, year?: number | null, imdbId?: string | null, platform?: string | null, rating?: string | null, imdbRating?: number | null, ageBand?: string | null, genres: Array<string>, description: string, whyRecommended: string, category: string, justwatchUrl?: string | null, generatedAt: string }> } };
+
 export type GenerateRegimenAnalysisMutationVariables = Exact<{
   slug: Scalars['String']['input'];
   language?: InputMaybe<Scalars['String']['input']>;
@@ -5041,6 +5116,14 @@ export type GetAllRecommendedBooksQueryVariables = Exact<{
 
 
 export type GetAllRecommendedBooksQuery = { __typename?: 'Query', allRecommendedBooks: Array<{ __typename?: 'RecommendedBook', id: number, goalId?: number | null, title: string, authors: Array<string>, year?: number | null, isbn?: string | null, description: string, whyRecommended: string, category: string, amazonUrl?: string | null, generatedAt: string, createdAt: string, updatedAt: string }> };
+
+export type GetAllRecommendedMoviesQueryVariables = Exact<{
+  category?: InputMaybe<Scalars['String']['input']>;
+  familyMemberId?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type GetAllRecommendedMoviesQuery = { __typename?: 'Query', allRecommendedMovies: Array<{ __typename?: 'RecommendedMovie', id: number, goalId?: number | null, familyMemberId?: number | null, title: string, year?: number | null, imdbId?: string | null, tmdbId?: string | null, platform?: string | null, rating?: string | null, imdbRating?: number | null, ageBand?: string | null, genres: Array<string>, description: string, whyRecommended: string, category: string, justwatchUrl?: string | null, generatedAt: string, createdAt: string, updatedAt: string }> };
 
 export type GetAllStoriesQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -8986,6 +9069,42 @@ export function useDeleteRecommendedBooksMutation(baseOptions?: Apollo.MutationH
 export type DeleteRecommendedBooksMutationHookResult = ReturnType<typeof useDeleteRecommendedBooksMutation>;
 export type DeleteRecommendedBooksMutationResult = Apollo.MutationResult<DeleteRecommendedBooksMutation>;
 export type DeleteRecommendedBooksMutationOptions = Apollo.BaseMutationOptions<DeleteRecommendedBooksMutation, DeleteRecommendedBooksMutationVariables>;
+export const DeleteRecommendedMoviesDocument = gql`
+    mutation DeleteRecommendedMovies($goalId: Int, $familyMemberId: Int) {
+  deleteRecommendedMovies(goalId: $goalId, familyMemberId: $familyMemberId) {
+    success
+    message
+    deletedCount
+  }
+}
+    `;
+export type DeleteRecommendedMoviesMutationFn = Apollo.MutationFunction<DeleteRecommendedMoviesMutation, DeleteRecommendedMoviesMutationVariables>;
+
+/**
+ * __useDeleteRecommendedMoviesMutation__
+ *
+ * To run a mutation, you first call `useDeleteRecommendedMoviesMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteRecommendedMoviesMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteRecommendedMoviesMutation, { data, loading, error }] = useDeleteRecommendedMoviesMutation({
+ *   variables: {
+ *      goalId: // value for 'goalId'
+ *      familyMemberId: // value for 'familyMemberId'
+ *   },
+ * });
+ */
+export function useDeleteRecommendedMoviesMutation(baseOptions?: Apollo.MutationHookOptions<DeleteRecommendedMoviesMutation, DeleteRecommendedMoviesMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteRecommendedMoviesMutation, DeleteRecommendedMoviesMutationVariables>(DeleteRecommendedMoviesDocument, options);
+      }
+export type DeleteRecommendedMoviesMutationHookResult = ReturnType<typeof useDeleteRecommendedMoviesMutation>;
+export type DeleteRecommendedMoviesMutationResult = Apollo.MutationResult<DeleteRecommendedMoviesMutation>;
+export type DeleteRecommendedMoviesMutationOptions = Apollo.BaseMutationOptions<DeleteRecommendedMoviesMutation, DeleteRecommendedMoviesMutationVariables>;
 export const DeleteRelationshipDocument = gql`
     mutation DeleteRelationship($id: Int!) {
   deleteRelationship(id: $id) {
@@ -10410,6 +10529,60 @@ export function useGenerateRecommendedBooksMutation(baseOptions?: Apollo.Mutatio
 export type GenerateRecommendedBooksMutationHookResult = ReturnType<typeof useGenerateRecommendedBooksMutation>;
 export type GenerateRecommendedBooksMutationResult = Apollo.MutationResult<GenerateRecommendedBooksMutation>;
 export type GenerateRecommendedBooksMutationOptions = Apollo.BaseMutationOptions<GenerateRecommendedBooksMutation, GenerateRecommendedBooksMutationVariables>;
+export const GenerateRecommendedMoviesDocument = gql`
+    mutation GenerateRecommendedMovies($goalId: Int, $familyMemberId: Int) {
+  generateRecommendedMovies(goalId: $goalId, familyMemberId: $familyMemberId) {
+    success
+    message
+    jobId
+    movies {
+      id
+      goalId
+      familyMemberId
+      title
+      year
+      imdbId
+      platform
+      rating
+      imdbRating
+      ageBand
+      genres
+      description
+      whyRecommended
+      category
+      justwatchUrl
+      generatedAt
+    }
+  }
+}
+    `;
+export type GenerateRecommendedMoviesMutationFn = Apollo.MutationFunction<GenerateRecommendedMoviesMutation, GenerateRecommendedMoviesMutationVariables>;
+
+/**
+ * __useGenerateRecommendedMoviesMutation__
+ *
+ * To run a mutation, you first call `useGenerateRecommendedMoviesMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useGenerateRecommendedMoviesMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [generateRecommendedMoviesMutation, { data, loading, error }] = useGenerateRecommendedMoviesMutation({
+ *   variables: {
+ *      goalId: // value for 'goalId'
+ *      familyMemberId: // value for 'familyMemberId'
+ *   },
+ * });
+ */
+export function useGenerateRecommendedMoviesMutation(baseOptions?: Apollo.MutationHookOptions<GenerateRecommendedMoviesMutation, GenerateRecommendedMoviesMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<GenerateRecommendedMoviesMutation, GenerateRecommendedMoviesMutationVariables>(GenerateRecommendedMoviesDocument, options);
+      }
+export type GenerateRecommendedMoviesMutationHookResult = ReturnType<typeof useGenerateRecommendedMoviesMutation>;
+export type GenerateRecommendedMoviesMutationResult = Apollo.MutationResult<GenerateRecommendedMoviesMutation>;
+export type GenerateRecommendedMoviesMutationOptions = Apollo.BaseMutationOptions<GenerateRecommendedMoviesMutation, GenerateRecommendedMoviesMutationVariables>;
 export const GenerateRegimenAnalysisDocument = gql`
     mutation GenerateRegimenAnalysis($slug: String!, $language: String) {
   generateRegimenAnalysis(slug: $slug, language: $language) {
@@ -10893,6 +11066,68 @@ export type GetAllRecommendedBooksQueryHookResult = ReturnType<typeof useGetAllR
 export type GetAllRecommendedBooksLazyQueryHookResult = ReturnType<typeof useGetAllRecommendedBooksLazyQuery>;
 export type GetAllRecommendedBooksSuspenseQueryHookResult = ReturnType<typeof useGetAllRecommendedBooksSuspenseQuery>;
 export type GetAllRecommendedBooksQueryResult = Apollo.QueryResult<GetAllRecommendedBooksQuery, GetAllRecommendedBooksQueryVariables>;
+export const GetAllRecommendedMoviesDocument = gql`
+    query GetAllRecommendedMovies($category: String, $familyMemberId: Int) {
+  allRecommendedMovies(category: $category, familyMemberId: $familyMemberId) {
+    id
+    goalId
+    familyMemberId
+    title
+    year
+    imdbId
+    tmdbId
+    platform
+    rating
+    imdbRating
+    ageBand
+    genres
+    description
+    whyRecommended
+    category
+    justwatchUrl
+    generatedAt
+    createdAt
+    updatedAt
+  }
+}
+    `;
+
+/**
+ * __useGetAllRecommendedMoviesQuery__
+ *
+ * To run a query within a React component, call `useGetAllRecommendedMoviesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetAllRecommendedMoviesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetAllRecommendedMoviesQuery({
+ *   variables: {
+ *      category: // value for 'category'
+ *      familyMemberId: // value for 'familyMemberId'
+ *   },
+ * });
+ */
+export function useGetAllRecommendedMoviesQuery(baseOptions?: Apollo.QueryHookOptions<GetAllRecommendedMoviesQuery, GetAllRecommendedMoviesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetAllRecommendedMoviesQuery, GetAllRecommendedMoviesQueryVariables>(GetAllRecommendedMoviesDocument, options);
+      }
+export function useGetAllRecommendedMoviesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetAllRecommendedMoviesQuery, GetAllRecommendedMoviesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetAllRecommendedMoviesQuery, GetAllRecommendedMoviesQueryVariables>(GetAllRecommendedMoviesDocument, options);
+        }
+// @ts-ignore
+export function useGetAllRecommendedMoviesSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetAllRecommendedMoviesQuery, GetAllRecommendedMoviesQueryVariables>): Apollo.UseSuspenseQueryResult<GetAllRecommendedMoviesQuery, GetAllRecommendedMoviesQueryVariables>;
+export function useGetAllRecommendedMoviesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetAllRecommendedMoviesQuery, GetAllRecommendedMoviesQueryVariables>): Apollo.UseSuspenseQueryResult<GetAllRecommendedMoviesQuery | undefined, GetAllRecommendedMoviesQueryVariables>;
+export function useGetAllRecommendedMoviesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetAllRecommendedMoviesQuery, GetAllRecommendedMoviesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetAllRecommendedMoviesQuery, GetAllRecommendedMoviesQueryVariables>(GetAllRecommendedMoviesDocument, options);
+        }
+export type GetAllRecommendedMoviesQueryHookResult = ReturnType<typeof useGetAllRecommendedMoviesQuery>;
+export type GetAllRecommendedMoviesLazyQueryHookResult = ReturnType<typeof useGetAllRecommendedMoviesLazyQuery>;
+export type GetAllRecommendedMoviesSuspenseQueryHookResult = ReturnType<typeof useGetAllRecommendedMoviesSuspenseQuery>;
+export type GetAllRecommendedMoviesQueryResult = Apollo.QueryResult<GetAllRecommendedMoviesQuery, GetAllRecommendedMoviesQueryVariables>;
 export const GetAllStoriesDocument = gql`
     query GetAllStories {
   allStories {

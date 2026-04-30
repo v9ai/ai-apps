@@ -333,7 +333,7 @@ _Generated 2026-04-23 by a 10-expert parallel audit. Product-focused: one sectio
 - `src/components/sidebar.tsx:36-169` — collapsible nav (Companies, Opportunities, Follow-ups, Contacts, Emails, Posts), tenant select, auth header, GitHub link.
 - `src/components/providers.tsx:8-13` — Apollo provider.
 - `src/app/api/graphql/route.ts:117-258` — depth-limit, CORS, rate-limit, tenant-scoped DB, session cache.
-- `vercel.json:8-50` — 5-min timeout on `/api/*`, 3 cron jobs (backup 3am, cpn-campaign 9am, followup-scheduler 7am).
+- `vercel.json:8-50` — 5-min timeout on `/api/*`, 1 cron job (backup 3am).
 
 **Current state:** Production on Vercel (Node 24.x). Single-tenant (`vadim`) — RLS infrastructure retained for defense-in-depth (`app_tenant` role + `app.tenant` GUC set per request in `withTenantDb`). GraphQL-first. Admin UI live (Emails + LinkedIn Posts). Responsive sidebar (200px / 56px).
 

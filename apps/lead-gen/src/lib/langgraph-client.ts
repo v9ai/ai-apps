@@ -14,6 +14,78 @@ const LANGGRAPH_URL =
 // When set, must match LANGGRAPH_AUTH_TOKEN in backend/.env.
 const LANGGRAPH_AUTH_TOKEN = process.env.LANGGRAPH_AUTH_TOKEN;
 
+// Catches Vercel builds where LANGGRAPH_URL was deployed but the token secret
+// was not, which produces 401s on every graph call with no other signal.
+let _missingTokenWarned = false;
+function warnIfMissingTokenInProd() {
+  if (_missingTokenWarned) return;
+  _missingTokenWarned = true;
+  const isLocal =
+    LANGGRAPH_URL.startsWith("http://127.0.0.1") ||
+    LANGGRAPH_URL.startsWith("http://localhost");
+  if (!isLocal && !LANGGRAPH_AUTH_TOKEN) {
+    console.warn(
+      `[langgraph-client] LANGGRAPH_URL=${LANGGRAPH_URL} but LANGGRAPH_AUTH_TOKEN is unset. ` +
+        `All graph calls will 401. Set the token in the deployment env and redeploy.`,
+    );
+  }
+}
+
+export type LangGraphErrorKind =
+  | "auth"
+  | "timeout"
+  | "backend"
+  | "client"
+  | "unknown";
+
+export class LangGraphError extends Error {
+  readonly kind: LangGraphErrorKind;
+  readonly status: number;
+  readonly assistantId: string;
+  readonly bodyText: string;
+
+  constructor(args: {
+    kind: LangGraphErrorKind;
+    status: number;
+    assistantId: string;
+    bodyText: string;
+  }) {
+    super(
+      `LangGraph ${args.assistantId} failed (${args.status}): ${args.bodyText}`,
+    );
+    this.name = "LangGraphError";
+    this.kind = args.kind;
+    this.status = args.status;
+    this.assistantId = args.assistantId;
+    this.bodyText = args.bodyText;
+  }
+}
+
+function sanitizeBody(text: string): string {
+  const trimmed = text.trim();
+  if (!trimmed) return "";
+  // FastAPI shape: {"detail": "Unauthorized"}
+  if (trimmed.startsWith("{")) {
+    try {
+      const parsed = JSON.parse(trimmed) as { detail?: unknown; error?: unknown };
+      if (typeof parsed.detail === "string") return parsed.detail;
+      if (typeof parsed.error === "string") return parsed.error;
+    } catch {
+      // fall through
+    }
+  }
+  // CF dispatcher returns plain text like "invalid bearer token"; cap length.
+  return trimmed.length > 500 ? `${trimmed.slice(0, 500)}…` : trimmed;
+}
+
+function classifyStatus(status: number): LangGraphErrorKind {
+  if (status === 401 || status === 403) return "auth";
+  if (status === 408 || status === 504) return "timeout";
+  if (status >= 500) return "backend";
+  if (status >= 400) return "client";
+  return "unknown";
+}
+
 /**
  * Resolves the LangGraph assistant id for the product-intel supervisor based
  * on PRODUCT_INTEL_GRAPH_VERSION (default "v1"). v2 registers as the separate
@@ -30,23 +102,40 @@ async function runGraph<T>(
   input: Record<string, unknown>,
   options: { timeoutMs?: number } = {},
 ): Promise<T> {
+  warnIfMissingTokenInProd();
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
   if (LANGGRAPH_AUTH_TOKEN) {
     headers.Authorization = `Bearer ${LANGGRAPH_AUTH_TOKEN}`;
   }
-  const res = await fetch(`${LANGGRAPH_URL}/runs/wait`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({ assistant_id: assistantId, input }),
-    signal: AbortSignal.timeout(options.timeoutMs ?? 60_000),
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${LANGGRAPH_URL}/runs/wait`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ assistant_id: assistantId, input }),
+      signal: AbortSignal.timeout(options.timeoutMs ?? 60_000),
+    });
+  } catch (err) {
+    const isAbort =
+      err instanceof Error &&
+      (err.name === "AbortError" || err.name === "TimeoutError");
+    throw new LangGraphError({
+      kind: isAbort ? "timeout" : "backend",
+      status: 0,
+      assistantId,
+      bodyText: err instanceof Error ? err.message : String(err),
+    });
+  }
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    throw new Error(
-      `LangGraph ${assistantId} failed (${res.status}): ${text}`,
-    );
+    throw new LangGraphError({
+      kind: classifyStatus(res.status),
+      status: res.status,
+      assistantId,
+      bodyText: sanitizeBody(text),
+    });
   }
   // /runs/wait returns the final graph state as a flat JSON object.
   return res.json() as Promise<T>;
@@ -412,6 +501,48 @@ export function enrichCompany(input: {
     { company_id: input.companyId },
     { timeoutMs: 120_000 },
   );
+}
+
+export interface DecisionMakerCandidate {
+  id: number;
+  first_name: string;
+  last_name: string;
+  email: string | null;
+  position: string | null;
+  seniority: string | null;
+  department: string | null;
+  is_decision_maker: boolean;
+  authority_score: number;
+  dm_reasons: string[];
+  rank_score: number;
+}
+
+export interface FindDecisionMakerResult {
+  company?: { id: number; key: string; name: string };
+  ranked: DecisionMakerCandidate[];
+  decision_makers: DecisionMakerCandidate[];
+  top_decision_maker: DecisionMakerCandidate | null;
+  classify_count: number;
+  summary: string;
+  error?: string | null;
+}
+
+/**
+ * Rank existing DB contacts of a company by likelihood of being the decision
+ * maker. Re-classifies any contacts missing seniority/authority via LLM and
+ * persists those flags back to `contacts`. No web/LinkedIn discovery — pure
+ * read-and-rank over rows already in Neon.
+ */
+export function findDecisionMaker(input: {
+  companyKey?: string;
+  companyId?: number;
+}): Promise<FindDecisionMakerResult> {
+  const payload: Record<string, unknown> = {};
+  if (input.companyKey) payload.company_key = input.companyKey;
+  if (input.companyId) payload.company_id = input.companyId;
+  return runGraph<FindDecisionMakerResult>("find_decision_maker", payload, {
+    timeoutMs: 90_000,
+  });
 }
 
 export interface CompanyProblem {

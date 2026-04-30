@@ -70,7 +70,7 @@ export function Sidebar() {
         zIndex: 10,
       }}
     >
-      <nav>
+      <nav className="sidebar-nav">
         {/* logo */}
         <Flex asChild align="center" justify="center" style={{ paddingLeft: collapsed ? 0 : 10, overflow: "hidden" }}>
         <Link href="/dashboard" style={{ textDecoration: "none" }}>

@@ -17,8 +17,10 @@ import {
   teardownIfDead,
   safeSendMessage,
 } from "./lifecycle";
+import { registerInStack, unregisterFromStack } from "./floating-stack";
 
 const BTN_ATTR = "data-lg-import-people-btn";
+const STACK_PRIORITY = 10;
 // Match /company/{slug}/people, /company/{slug}/people/, and any deeper path
 // under /people (e.g. filter sub-routes LinkedIn may add).
 const PEOPLE_PATH_RE = /^\/company\/[^/]+\/people(\/|$)/;
@@ -54,7 +56,6 @@ function createButton(): HTMLButtonElement {
   btn.title = "Scrape all people on this company page and save to CRM";
   btn.style.cssText = `
     position: fixed;
-    bottom: 24px;
     right: 24px;
     z-index: 9999;
     background-color: #0a66c2;
@@ -114,7 +115,10 @@ function createButton(): HTMLButtonElement {
 }
 
 function removeButton() {
-  document.querySelectorAll(`[${BTN_ATTR}]`).forEach((el) => el.remove());
+  document.querySelectorAll<HTMLElement>(`[${BTN_ATTR}]`).forEach((el) => {
+    unregisterFromStack(el);
+    el.remove();
+  });
   importPeopleBtn = null;
 }
 
@@ -138,6 +142,7 @@ function sync() {
   const btn = createButton();
   document.body.appendChild(btn);
   importPeopleBtn = btn;
+  registerInStack(btn, STACK_PRIORITY);
   console.log(`[ImportPeopleBtn] injected on ${window.location.pathname}`);
 }
 

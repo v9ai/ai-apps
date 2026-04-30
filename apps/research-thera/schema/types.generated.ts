@@ -1004,6 +1004,13 @@ export type DeleteRecommendedBooksResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type DeleteRecommendedMoviesResult = {
+  __typename?: 'DeleteRecommendedMoviesResult';
+  deletedCount: Scalars['Int']['output'];
+  message?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
 export type DeleteRelationshipResult = {
   __typename?: 'DeleteRelationshipResult';
   message?: Maybe<Scalars['String']['output']>;
@@ -1418,6 +1425,14 @@ export type GenerateRecommendedBooksResult = {
   books: Array<RecommendedBook>;
   jobId?: Maybe<Scalars['String']['output']>;
   message?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
+export type GenerateRecommendedMoviesResult = {
+  __typename?: 'GenerateRecommendedMoviesResult';
+  jobId?: Maybe<Scalars['String']['output']>;
+  message?: Maybe<Scalars['String']['output']>;
+  movies: Array<RecommendedMovie>;
   success: Scalars['Boolean']['output'];
 };
 
@@ -1986,6 +2001,7 @@ export type Mutation = {
   deleteNote: DeleteNoteResult;
   deleteProtocol: DeleteProtocolResult;
   deleteRecommendedBooks: DeleteRecommendedBooksResult;
+  deleteRecommendedMovies: DeleteRecommendedMoviesResult;
   deleteRelationship: DeleteRelationshipResult;
   deleteResearch: DeleteResearchResult;
   deleteRoutineAnalysis: DeleteRoutineAnalysisResult;
@@ -2016,6 +2032,7 @@ export type Mutation = {
   generateOpenAIAudio: GenerateOpenAIAudioResult;
   generateParentAdvice: GenerateParentAdviceResult;
   generateRecommendedBooks: GenerateRecommendedBooksResult;
+  generateRecommendedMovies: GenerateRecommendedMoviesResult;
   generateRegimenAnalysis: GenerateResearchResult;
   generateResearch: GenerateResearchResult;
   generateRoutineAnalysis: GenerateRoutineAnalysisResult;
@@ -2394,6 +2411,12 @@ export type MutationdeleteRecommendedBooksArgs = {
 };
 
 
+export type MutationdeleteRecommendedMoviesArgs = {
+  familyMemberId?: InputMaybe<Scalars['Int']['input']>;
+  goalId?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
 export type MutationdeleteRelationshipArgs = {
   id: Scalars['Int']['input'];
 };
@@ -2564,6 +2587,12 @@ export type MutationgenerateParentAdviceArgs = {
 export type MutationgenerateRecommendedBooksArgs = {
   goalId?: InputMaybe<Scalars['Int']['input']>;
   journalEntryId?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type MutationgenerateRecommendedMoviesArgs = {
+  familyMemberId?: InputMaybe<Scalars['Int']['input']>;
+  goalId?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -3082,6 +3111,7 @@ export type Query = {
   allIssues: Array<Issue>;
   allNotes: Array<Note>;
   allRecommendedBooks: Array<RecommendedBook>;
+  allRecommendedMovies: Array<RecommendedMovie>;
   allStories: Array<Story>;
   allTags: Array<Scalars['String']['output']>;
   allergies: Array<Allergy>;
@@ -3181,6 +3211,12 @@ export type QueryaffirmationsArgs = {
 
 export type QueryallRecommendedBooksArgs = {
   category?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryallRecommendedMoviesArgs = {
+  category?: InputMaybe<Scalars['String']['input']>;
+  familyMemberId?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -3528,6 +3564,29 @@ export type RecommendedBook = {
   isbn?: Maybe<Scalars['String']['output']>;
   journalEntryId?: Maybe<Scalars['Int']['output']>;
   title: Scalars['String']['output'];
+  updatedAt: Scalars['String']['output'];
+  whyRecommended: Scalars['String']['output'];
+  year?: Maybe<Scalars['Int']['output']>;
+};
+
+export type RecommendedMovie = {
+  __typename?: 'RecommendedMovie';
+  ageBand?: Maybe<Scalars['String']['output']>;
+  category: Scalars['String']['output'];
+  createdAt: Scalars['String']['output'];
+  description: Scalars['String']['output'];
+  familyMemberId?: Maybe<Scalars['Int']['output']>;
+  generatedAt: Scalars['String']['output'];
+  genres: Array<Scalars['String']['output']>;
+  goalId?: Maybe<Scalars['Int']['output']>;
+  id: Scalars['Int']['output'];
+  imdbId?: Maybe<Scalars['String']['output']>;
+  imdbRating?: Maybe<Scalars['Float']['output']>;
+  justwatchUrl?: Maybe<Scalars['String']['output']>;
+  platform?: Maybe<Scalars['String']['output']>;
+  rating?: Maybe<Scalars['String']['output']>;
+  title: Scalars['String']['output'];
+  tmdbId?: Maybe<Scalars['String']['output']>;
   updatedAt: Scalars['String']['output'];
   whyRecommended: Scalars['String']['output'];
   year?: Maybe<Scalars['Int']['output']>;
@@ -4354,6 +4413,7 @@ export type ResolversTypes = {
   DeleteProtocolResult: ResolverTypeWrapper<DeleteProtocolResult>;
   DeleteQuestionsResult: ResolverTypeWrapper<DeleteQuestionsResult>;
   DeleteRecommendedBooksResult: ResolverTypeWrapper<DeleteRecommendedBooksResult>;
+  DeleteRecommendedMoviesResult: ResolverTypeWrapper<DeleteRecommendedMoviesResult>;
   DeleteRelationshipResult: ResolverTypeWrapper<DeleteRelationshipResult>;
   DeleteResearchResult: ResolverTypeWrapper<DeleteResearchResult>;
   DeleteRoutineAnalysisResult: ResolverTypeWrapper<DeleteRoutineAnalysisResult>;
@@ -4402,6 +4462,7 @@ export type ResolversTypes = {
   GenerateParentAdviceResult: ResolverTypeWrapper<GenerateParentAdviceResult>;
   GenerateQuestionsResult: ResolverTypeWrapper<GenerateQuestionsResult>;
   GenerateRecommendedBooksResult: ResolverTypeWrapper<GenerateRecommendedBooksResult>;
+  GenerateRecommendedMoviesResult: ResolverTypeWrapper<GenerateRecommendedMoviesResult>;
   GenerateResearchResult: ResolverTypeWrapper<GenerateResearchResult>;
   GenerateRoutineAnalysisResult: ResolverTypeWrapper<GenerateRoutineAnalysisResult>;
   GenerationJob: ResolverTypeWrapper<Omit<GenerationJob, 'status' | 'type'> & { status: ResolversTypes['JobStatus'], type: ResolversTypes['JobType'] }>;
@@ -4470,6 +4531,7 @@ export type ResolversTypes = {
   PublicDiscussionGuideResult: ResolverTypeWrapper<PublicDiscussionGuideResult>;
   Query: ResolverTypeWrapper<Record<PropertyKey, never>>;
   RecommendedBook: ResolverTypeWrapper<RecommendedBook>;
+  RecommendedMovie: ResolverTypeWrapper<RecommendedMovie>;
   RegimenAnalysis: ResolverTypeWrapper<RegimenAnalysis>;
   RegimenFlag: ResolverTypeWrapper<RegimenFlag>;
   Relationship: ResolverTypeWrapper<Omit<Relationship, 'related' | 'relatedType' | 'status' | 'subject' | 'subjectType'> & { related?: Maybe<ResolversTypes['RelationshipPerson']>, relatedType: ResolversTypes['PersonType'], status: ResolversTypes['RelationshipStatus'], subject?: Maybe<ResolversTypes['RelationshipPerson']>, subjectType: ResolversTypes['PersonType'] }>;
@@ -4643,6 +4705,7 @@ export type ResolversParentTypes = {
   DeleteProtocolResult: DeleteProtocolResult;
   DeleteQuestionsResult: DeleteQuestionsResult;
   DeleteRecommendedBooksResult: DeleteRecommendedBooksResult;
+  DeleteRecommendedMoviesResult: DeleteRecommendedMoviesResult;
   DeleteRelationshipResult: DeleteRelationshipResult;
   DeleteResearchResult: DeleteResearchResult;
   DeleteRoutineAnalysisResult: DeleteRoutineAnalysisResult;
@@ -4684,6 +4747,7 @@ export type ResolversParentTypes = {
   GenerateParentAdviceResult: GenerateParentAdviceResult;
   GenerateQuestionsResult: GenerateQuestionsResult;
   GenerateRecommendedBooksResult: GenerateRecommendedBooksResult;
+  GenerateRecommendedMoviesResult: GenerateRecommendedMoviesResult;
   GenerateResearchResult: GenerateResearchResult;
   GenerateRoutineAnalysisResult: GenerateRoutineAnalysisResult;
   GenerationJob: GenerationJob;
@@ -4741,6 +4805,7 @@ export type ResolversParentTypes = {
   PublicDiscussionGuideResult: PublicDiscussionGuideResult;
   Query: Record<PropertyKey, never>;
   RecommendedBook: RecommendedBook;
+  RecommendedMovie: RecommendedMovie;
   RegimenAnalysis: RegimenAnalysis;
   RegimenFlag: RegimenFlag;
   Relationship: Omit<Relationship, 'related' | 'subject'> & { related?: Maybe<ResolversParentTypes['RelationshipPerson']>, subject?: Maybe<ResolversParentTypes['RelationshipPerson']> };
@@ -5391,6 +5456,12 @@ export type DeleteRecommendedBooksResultResolvers<ContextType = GraphQLContext, 
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
 };
 
+export type DeleteRecommendedMoviesResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DeleteRecommendedMoviesResult'] = ResolversParentTypes['DeleteRecommendedMoviesResult']> = {
+  deletedCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+};
+
 export type DeleteRelationshipResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DeleteRelationshipResult'] = ResolversParentTypes['DeleteRelationshipResult']> = {
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
@@ -5716,6 +5787,13 @@ export type GenerateRecommendedBooksResultResolvers<ContextType = GraphQLContext
   books?: Resolver<Array<ResolversTypes['RecommendedBook']>, ParentType, ContextType>;
   jobId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+};
+
+export type GenerateRecommendedMoviesResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['GenerateRecommendedMoviesResult'] = ResolversParentTypes['GenerateRecommendedMoviesResult']> = {
+  jobId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  movies?: Resolver<Array<ResolversTypes['RecommendedMovie']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
 };
 
@@ -6214,6 +6292,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   deleteNote?: Resolver<ResolversTypes['DeleteNoteResult'], ParentType, ContextType, RequireFields<MutationdeleteNoteArgs, 'id'>>;
   deleteProtocol?: Resolver<ResolversTypes['DeleteProtocolResult'], ParentType, ContextType, RequireFields<MutationdeleteProtocolArgs, 'id'>>;
   deleteRecommendedBooks?: Resolver<ResolversTypes['DeleteRecommendedBooksResult'], ParentType, ContextType, Partial<MutationdeleteRecommendedBooksArgs>>;
+  deleteRecommendedMovies?: Resolver<ResolversTypes['DeleteRecommendedMoviesResult'], ParentType, ContextType, Partial<MutationdeleteRecommendedMoviesArgs>>;
   deleteRelationship?: Resolver<ResolversTypes['DeleteRelationshipResult'], ParentType, ContextType, RequireFields<MutationdeleteRelationshipArgs, 'id'>>;
   deleteResearch?: Resolver<ResolversTypes['DeleteResearchResult'], ParentType, ContextType, RequireFields<MutationdeleteResearchArgs, 'goalId'>>;
   deleteRoutineAnalysis?: Resolver<ResolversTypes['DeleteRoutineAnalysisResult'], ParentType, ContextType, RequireFields<MutationdeleteRoutineAnalysisArgs, 'id'>>;
@@ -6244,6 +6323,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   generateOpenAIAudio?: Resolver<ResolversTypes['GenerateOpenAIAudioResult'], ParentType, ContextType, RequireFields<MutationgenerateOpenAIAudioArgs, 'input'>>;
   generateParentAdvice?: Resolver<ResolversTypes['GenerateParentAdviceResult'], ParentType, ContextType, RequireFields<MutationgenerateParentAdviceArgs, 'goalId'>>;
   generateRecommendedBooks?: Resolver<ResolversTypes['GenerateRecommendedBooksResult'], ParentType, ContextType, Partial<MutationgenerateRecommendedBooksArgs>>;
+  generateRecommendedMovies?: Resolver<ResolversTypes['GenerateRecommendedMoviesResult'], ParentType, ContextType, Partial<MutationgenerateRecommendedMoviesArgs>>;
   generateRegimenAnalysis?: Resolver<ResolversTypes['GenerateResearchResult'], ParentType, ContextType, RequireFields<MutationgenerateRegimenAnalysisArgs, 'slug'>>;
   generateResearch?: Resolver<ResolversTypes['GenerateResearchResult'], ParentType, ContextType, Partial<MutationgenerateResearchArgs>>;
   generateRoutineAnalysis?: Resolver<ResolversTypes['GenerateRoutineAnalysisResult'], ParentType, ContextType, RequireFields<MutationgenerateRoutineAnalysisArgs, 'familyMemberId'>>;
@@ -6464,6 +6544,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   allIssues?: Resolver<Array<ResolversTypes['Issue']>, ParentType, ContextType>;
   allNotes?: Resolver<Array<ResolversTypes['Note']>, ParentType, ContextType>;
   allRecommendedBooks?: Resolver<Array<ResolversTypes['RecommendedBook']>, ParentType, ContextType, Partial<QueryallRecommendedBooksArgs>>;
+  allRecommendedMovies?: Resolver<Array<ResolversTypes['RecommendedMovie']>, ParentType, ContextType, Partial<QueryallRecommendedMoviesArgs>>;
   allStories?: Resolver<Array<ResolversTypes['Story']>, ParentType, ContextType>;
   allTags?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   allergies?: Resolver<Array<ResolversTypes['Allergy']>, ParentType, ContextType>;
@@ -6562,6 +6643,28 @@ export type RecommendedBookResolvers<ContextType = GraphQLContext, ParentType ex
   isbn?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   journalEntryId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  whyRecommended?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  year?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+};
+
+export type RecommendedMovieResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['RecommendedMovie'] = ResolversParentTypes['RecommendedMovie']> = {
+  ageBand?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  category?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  description?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  familyMemberId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  generatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  genres?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  goalId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  imdbId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  imdbRating?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  justwatchUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  platform?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  rating?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  tmdbId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   whyRecommended?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   year?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
@@ -7043,6 +7146,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   DeleteProtocolResult?: DeleteProtocolResultResolvers<ContextType>;
   DeleteQuestionsResult?: DeleteQuestionsResultResolvers<ContextType>;
   DeleteRecommendedBooksResult?: DeleteRecommendedBooksResultResolvers<ContextType>;
+  DeleteRecommendedMoviesResult?: DeleteRecommendedMoviesResultResolvers<ContextType>;
   DeleteRelationshipResult?: DeleteRelationshipResultResolvers<ContextType>;
   DeleteResearchResult?: DeleteResearchResultResolvers<ContextType>;
   DeleteRoutineAnalysisResult?: DeleteRoutineAnalysisResultResolvers<ContextType>;
@@ -7089,6 +7193,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   GenerateParentAdviceResult?: GenerateParentAdviceResultResolvers<ContextType>;
   GenerateQuestionsResult?: GenerateQuestionsResultResolvers<ContextType>;
   GenerateRecommendedBooksResult?: GenerateRecommendedBooksResultResolvers<ContextType>;
+  GenerateRecommendedMoviesResult?: GenerateRecommendedMoviesResultResolvers<ContextType>;
   GenerateResearchResult?: GenerateResearchResultResolvers<ContextType>;
   GenerateRoutineAnalysisResult?: GenerateRoutineAnalysisResultResolvers<ContextType>;
   GenerationJob?: GenerationJobResolvers<ContextType>;
@@ -7153,6 +7258,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   PublicDiscussionGuideResult?: PublicDiscussionGuideResultResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
   RecommendedBook?: RecommendedBookResolvers<ContextType>;
+  RecommendedMovie?: RecommendedMovieResolvers<ContextType>;
   RegimenAnalysis?: RegimenAnalysisResolvers<ContextType>;
   RegimenFlag?: RegimenFlagResolvers<ContextType>;
   Relationship?: RelationshipResolvers<ContextType>;

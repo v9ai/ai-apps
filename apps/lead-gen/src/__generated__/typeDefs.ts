@@ -772,6 +772,7 @@ type DecisionMakerCandidate {
   authorityScore: Float!
   department: String
   dmReasons: [String!]!
+  email: String
   firstName: String!
   id: Int!
   isDecisionMaker: Boolean!
@@ -1430,6 +1431,7 @@ type Mutation {
   findContactEmail(contactId: Int!): FindContactEmailResult!
   findDecisionMaker(id: Int, key: String): FindDecisionMakerResponse!
   flagContactsForDeletion(threshold: Float): BatchOperationResult!
+  generateCampaignSequence(campaignId: String!, personaMatchThreshold: Float): EmailCampaign!
   """Generate and store embeddings for companies missing them. Admin only."""
   generateCompanyEmbeddings(batchSize: Int, companyIds: [Int!]): GenerateEmbeddingsResult!
   generateDraftsForPending: GenerateDraftsBatchResult!

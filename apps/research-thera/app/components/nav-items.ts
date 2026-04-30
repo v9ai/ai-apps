@@ -19,7 +19,6 @@ export const NAV_ITEMS: NavItem[] = [
   { kind: "link", href: "/house", label: "House", icon: HomeIcon },
   { kind: "link", href: "/dashboard", label: "Dashboard" },
   { kind: "link", href: "/chat", label: "Chat" },
-  { kind: "link", href: "/search", label: "Search" },
   {
     kind: "group",
     key: "health",
@@ -66,6 +65,7 @@ export const NAV_ITEMS: NavItem[] = [
     children: [
       { href: "/books", label: "Books" },
       { href: "/games", label: "Games" },
+      { href: "/movies", label: "Movies" },
     ],
   },
 ];
