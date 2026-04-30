@@ -1001,6 +1001,13 @@ export type DeleteQuestionsResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type DeleteRecommendedAudiobooksResult = {
+  __typename?: 'DeleteRecommendedAudiobooksResult';
+  deletedCount: Scalars['Int']['output'];
+  message?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
 export type DeleteRecommendedBooksResult = {
   __typename?: 'DeleteRecommendedBooksResult';
   deletedCount: Scalars['Int']['output'];
@@ -1428,6 +1435,14 @@ export type GenerateQuestionsResult = {
   jobId?: Maybe<Scalars['String']['output']>;
   message?: Maybe<Scalars['String']['output']>;
   questions: Array<TherapeuticQuestion>;
+  success: Scalars['Boolean']['output'];
+};
+
+export type GenerateRecommendedAudiobooksResult = {
+  __typename?: 'GenerateRecommendedAudiobooksResult';
+  audiobooks: Array<RecommendedAudiobook>;
+  jobId?: Maybe<Scalars['String']['output']>;
+  message?: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
 };
 
@@ -2015,6 +2030,7 @@ export type Mutation = {
   deleteMemoryEntry: DeleteMemoryEntryResult;
   deleteNote: DeleteNoteResult;
   deleteProtocol: DeleteProtocolResult;
+  deleteRecommendedAudiobooks: DeleteRecommendedAudiobooksResult;
   deleteRecommendedBooks: DeleteRecommendedBooksResult;
   deleteRecommendedMovies: DeleteRecommendedMoviesResult;
   deleteRelationship: DeleteRelationshipResult;
@@ -2046,6 +2062,7 @@ export type Mutation = {
   generateMedicationDeepResearch: GenerateResearchResult;
   generateOpenAIAudio: GenerateOpenAiAudioResult;
   generateParentAdvice: GenerateParentAdviceResult;
+  generateRecommendedAudiobooks: GenerateRecommendedAudiobooksResult;
   generateRecommendedBooks: GenerateRecommendedBooksResult;
   generateRecommendedMovies: GenerateRecommendedMoviesResult;
   generateRegimenAnalysis: GenerateResearchResult;
@@ -2420,6 +2437,12 @@ export type MutationDeleteProtocolArgs = {
 };
 
 
+export type MutationDeleteRecommendedAudiobooksArgs = {
+  familyMemberId?: InputMaybe<Scalars['Int']['input']>;
+  goalId?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
 export type MutationDeleteRecommendedBooksArgs = {
   goalId?: InputMaybe<Scalars['Int']['input']>;
   journalEntryId?: InputMaybe<Scalars['Int']['input']>;
@@ -2596,6 +2619,12 @@ export type MutationGenerateOpenAiAudioArgs = {
 export type MutationGenerateParentAdviceArgs = {
   goalId: Scalars['Int']['input'];
   language?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type MutationGenerateRecommendedAudiobooksArgs = {
+  familyMemberId?: InputMaybe<Scalars['Int']['input']>;
+  goalId?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -3132,6 +3161,7 @@ export type Query = {
   affirmations: Array<Affirmation>;
   allIssues: Array<Issue>;
   allNotes: Array<Note>;
+  allRecommendedAudiobooks: Array<RecommendedAudiobook>;
   allRecommendedBooks: Array<RecommendedBook>;
   allRecommendedMovies: Array<RecommendedMovie>;
   allStories: Array<Story>;
@@ -3228,6 +3258,12 @@ export type QueryAffirmationArgs = {
 
 export type QueryAffirmationsArgs = {
   familyMemberId: Scalars['Int']['input'];
+};
+
+
+export type QueryAllRecommendedAudiobooksArgs = {
+  category?: InputMaybe<Scalars['String']['input']>;
+  familyMemberId?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -3571,6 +3607,28 @@ export type QueryTherapeuticQuestionsArgs = {
 export type QueryVehicleArgs = {
   id?: InputMaybe<Scalars['ID']['input']>;
   slug?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type RecommendedAudiobook = {
+  __typename?: 'RecommendedAudiobook';
+  ageBand?: Maybe<Scalars['String']['output']>;
+  authors: Array<Scalars['String']['output']>;
+  category: Scalars['String']['output'];
+  coverUrl?: Maybe<Scalars['String']['output']>;
+  createdAt: Scalars['String']['output'];
+  description: Scalars['String']['output'];
+  familyMemberId?: Maybe<Scalars['Int']['output']>;
+  generatedAt: Scalars['String']['output'];
+  goalId?: Maybe<Scalars['Int']['output']>;
+  id: Scalars['Int']['output'];
+  language: Scalars['String']['output'];
+  lengthMinutes?: Maybe<Scalars['Int']['output']>;
+  narrators: Array<Scalars['String']['output']>;
+  title: Scalars['String']['output'];
+  updatedAt: Scalars['String']['output'];
+  voxaUrl?: Maybe<Scalars['String']['output']>;
+  whyRecommended: Scalars['String']['output'];
+  year?: Maybe<Scalars['Int']['output']>;
 };
 
 export type RecommendedBook = {
@@ -4755,6 +4813,14 @@ export type DeleteProtocolMutationVariables = Exact<{
 
 export type DeleteProtocolMutation = { __typename?: 'Mutation', deleteProtocol: { __typename?: 'DeleteProtocolResult', success: boolean } };
 
+export type DeleteRecommendedAudiobooksMutationVariables = Exact<{
+  goalId?: InputMaybe<Scalars['Int']['input']>;
+  familyMemberId?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type DeleteRecommendedAudiobooksMutation = { __typename?: 'Mutation', deleteRecommendedAudiobooks: { __typename?: 'DeleteRecommendedAudiobooksResult', success: boolean, message?: string | null, deletedCount: number } };
+
 export type DeleteRecommendedBooksMutationVariables = Exact<{
   goalId: Scalars['Int']['input'];
 }>;
@@ -5031,6 +5097,14 @@ export type GenerateParentAdviceMutationVariables = Exact<{
 
 export type GenerateParentAdviceMutation = { __typename?: 'Mutation', generateParentAdvice: { __typename?: 'GenerateParentAdviceResult', success: boolean, message?: string | null, parentAdvice?: string | null } };
 
+export type GenerateRecommendedAudiobooksMutationVariables = Exact<{
+  goalId?: InputMaybe<Scalars['Int']['input']>;
+  familyMemberId?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type GenerateRecommendedAudiobooksMutation = { __typename?: 'Mutation', generateRecommendedAudiobooks: { __typename?: 'GenerateRecommendedAudiobooksResult', success: boolean, message?: string | null, jobId?: string | null, audiobooks: Array<{ __typename?: 'RecommendedAudiobook', id: number, goalId?: number | null, familyMemberId?: number | null, title: string, authors: Array<string>, narrators: Array<string>, year?: number | null, lengthMinutes?: number | null, language: string, ageBand?: string | null, voxaUrl?: string | null, coverUrl?: string | null, description: string, whyRecommended: string, category: string, generatedAt: string }> } };
+
 export type GenerateRecommendedBooksMutationVariables = Exact<{
   goalId: Scalars['Int']['input'];
 }>;
@@ -5109,6 +5183,14 @@ export type GetAllNotesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type GetAllNotesQuery = { __typename?: 'Query', allNotes: Array<{ __typename?: 'Note', id: number, entityId: number, entityType: string, createdBy: string, noteType?: string | null, slug?: string | null, title?: string | null, content: string, tags?: Array<string> | null, createdAt: string, updatedAt: string, goal?: { __typename?: 'Goal', id: number, title: string, description?: string | null, status: string } | null }> };
+
+export type GetAllRecommendedAudiobooksQueryVariables = Exact<{
+  category?: InputMaybe<Scalars['String']['input']>;
+  familyMemberId?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type GetAllRecommendedAudiobooksQuery = { __typename?: 'Query', allRecommendedAudiobooks: Array<{ __typename?: 'RecommendedAudiobook', id: number, goalId?: number | null, familyMemberId?: number | null, title: string, authors: Array<string>, narrators: Array<string>, year?: number | null, lengthMinutes?: number | null, language: string, ageBand?: string | null, voxaUrl?: string | null, coverUrl?: string | null, description: string, whyRecommended: string, category: string, generatedAt: string, createdAt: string, updatedAt: string }> };
 
 export type GetAllRecommendedBooksQueryVariables = Exact<{
   category?: InputMaybe<Scalars['String']['input']>;
@@ -9034,6 +9116,42 @@ export function useDeleteProtocolMutation(baseOptions?: Apollo.MutationHookOptio
 export type DeleteProtocolMutationHookResult = ReturnType<typeof useDeleteProtocolMutation>;
 export type DeleteProtocolMutationResult = Apollo.MutationResult<DeleteProtocolMutation>;
 export type DeleteProtocolMutationOptions = Apollo.BaseMutationOptions<DeleteProtocolMutation, DeleteProtocolMutationVariables>;
+export const DeleteRecommendedAudiobooksDocument = gql`
+    mutation DeleteRecommendedAudiobooks($goalId: Int, $familyMemberId: Int) {
+  deleteRecommendedAudiobooks(goalId: $goalId, familyMemberId: $familyMemberId) {
+    success
+    message
+    deletedCount
+  }
+}
+    `;
+export type DeleteRecommendedAudiobooksMutationFn = Apollo.MutationFunction<DeleteRecommendedAudiobooksMutation, DeleteRecommendedAudiobooksMutationVariables>;
+
+/**
+ * __useDeleteRecommendedAudiobooksMutation__
+ *
+ * To run a mutation, you first call `useDeleteRecommendedAudiobooksMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteRecommendedAudiobooksMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteRecommendedAudiobooksMutation, { data, loading, error }] = useDeleteRecommendedAudiobooksMutation({
+ *   variables: {
+ *      goalId: // value for 'goalId'
+ *      familyMemberId: // value for 'familyMemberId'
+ *   },
+ * });
+ */
+export function useDeleteRecommendedAudiobooksMutation(baseOptions?: Apollo.MutationHookOptions<DeleteRecommendedAudiobooksMutation, DeleteRecommendedAudiobooksMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteRecommendedAudiobooksMutation, DeleteRecommendedAudiobooksMutationVariables>(DeleteRecommendedAudiobooksDocument, options);
+      }
+export type DeleteRecommendedAudiobooksMutationHookResult = ReturnType<typeof useDeleteRecommendedAudiobooksMutation>;
+export type DeleteRecommendedAudiobooksMutationResult = Apollo.MutationResult<DeleteRecommendedAudiobooksMutation>;
+export type DeleteRecommendedAudiobooksMutationOptions = Apollo.BaseMutationOptions<DeleteRecommendedAudiobooksMutation, DeleteRecommendedAudiobooksMutationVariables>;
 export const DeleteRecommendedBooksDocument = gql`
     mutation DeleteRecommendedBooks($goalId: Int!) {
   deleteRecommendedBooks(goalId: $goalId) {
@@ -10481,6 +10599,60 @@ export function useGenerateParentAdviceMutation(baseOptions?: Apollo.MutationHoo
 export type GenerateParentAdviceMutationHookResult = ReturnType<typeof useGenerateParentAdviceMutation>;
 export type GenerateParentAdviceMutationResult = Apollo.MutationResult<GenerateParentAdviceMutation>;
 export type GenerateParentAdviceMutationOptions = Apollo.BaseMutationOptions<GenerateParentAdviceMutation, GenerateParentAdviceMutationVariables>;
+export const GenerateRecommendedAudiobooksDocument = gql`
+    mutation GenerateRecommendedAudiobooks($goalId: Int, $familyMemberId: Int) {
+  generateRecommendedAudiobooks(goalId: $goalId, familyMemberId: $familyMemberId) {
+    success
+    message
+    jobId
+    audiobooks {
+      id
+      goalId
+      familyMemberId
+      title
+      authors
+      narrators
+      year
+      lengthMinutes
+      language
+      ageBand
+      voxaUrl
+      coverUrl
+      description
+      whyRecommended
+      category
+      generatedAt
+    }
+  }
+}
+    `;
+export type GenerateRecommendedAudiobooksMutationFn = Apollo.MutationFunction<GenerateRecommendedAudiobooksMutation, GenerateRecommendedAudiobooksMutationVariables>;
+
+/**
+ * __useGenerateRecommendedAudiobooksMutation__
+ *
+ * To run a mutation, you first call `useGenerateRecommendedAudiobooksMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useGenerateRecommendedAudiobooksMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [generateRecommendedAudiobooksMutation, { data, loading, error }] = useGenerateRecommendedAudiobooksMutation({
+ *   variables: {
+ *      goalId: // value for 'goalId'
+ *      familyMemberId: // value for 'familyMemberId'
+ *   },
+ * });
+ */
+export function useGenerateRecommendedAudiobooksMutation(baseOptions?: Apollo.MutationHookOptions<GenerateRecommendedAudiobooksMutation, GenerateRecommendedAudiobooksMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<GenerateRecommendedAudiobooksMutation, GenerateRecommendedAudiobooksMutationVariables>(GenerateRecommendedAudiobooksDocument, options);
+      }
+export type GenerateRecommendedAudiobooksMutationHookResult = ReturnType<typeof useGenerateRecommendedAudiobooksMutation>;
+export type GenerateRecommendedAudiobooksMutationResult = Apollo.MutationResult<GenerateRecommendedAudiobooksMutation>;
+export type GenerateRecommendedAudiobooksMutationOptions = Apollo.BaseMutationOptions<GenerateRecommendedAudiobooksMutation, GenerateRecommendedAudiobooksMutationVariables>;
 export const GenerateRecommendedBooksDocument = gql`
     mutation GenerateRecommendedBooks($goalId: Int!) {
   generateRecommendedBooks(goalId: $goalId) {
@@ -11011,6 +11183,67 @@ export type GetAllNotesQueryHookResult = ReturnType<typeof useGetAllNotesQuery>;
 export type GetAllNotesLazyQueryHookResult = ReturnType<typeof useGetAllNotesLazyQuery>;
 export type GetAllNotesSuspenseQueryHookResult = ReturnType<typeof useGetAllNotesSuspenseQuery>;
 export type GetAllNotesQueryResult = Apollo.QueryResult<GetAllNotesQuery, GetAllNotesQueryVariables>;
+export const GetAllRecommendedAudiobooksDocument = gql`
+    query GetAllRecommendedAudiobooks($category: String, $familyMemberId: Int) {
+  allRecommendedAudiobooks(category: $category, familyMemberId: $familyMemberId) {
+    id
+    goalId
+    familyMemberId
+    title
+    authors
+    narrators
+    year
+    lengthMinutes
+    language
+    ageBand
+    voxaUrl
+    coverUrl
+    description
+    whyRecommended
+    category
+    generatedAt
+    createdAt
+    updatedAt
+  }
+}
+    `;
+
+/**
+ * __useGetAllRecommendedAudiobooksQuery__
+ *
+ * To run a query within a React component, call `useGetAllRecommendedAudiobooksQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetAllRecommendedAudiobooksQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetAllRecommendedAudiobooksQuery({
+ *   variables: {
+ *      category: // value for 'category'
+ *      familyMemberId: // value for 'familyMemberId'
+ *   },
+ * });
+ */
+export function useGetAllRecommendedAudiobooksQuery(baseOptions?: Apollo.QueryHookOptions<GetAllRecommendedAudiobooksQuery, GetAllRecommendedAudiobooksQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetAllRecommendedAudiobooksQuery, GetAllRecommendedAudiobooksQueryVariables>(GetAllRecommendedAudiobooksDocument, options);
+      }
+export function useGetAllRecommendedAudiobooksLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetAllRecommendedAudiobooksQuery, GetAllRecommendedAudiobooksQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetAllRecommendedAudiobooksQuery, GetAllRecommendedAudiobooksQueryVariables>(GetAllRecommendedAudiobooksDocument, options);
+        }
+// @ts-ignore
+export function useGetAllRecommendedAudiobooksSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetAllRecommendedAudiobooksQuery, GetAllRecommendedAudiobooksQueryVariables>): Apollo.UseSuspenseQueryResult<GetAllRecommendedAudiobooksQuery, GetAllRecommendedAudiobooksQueryVariables>;
+export function useGetAllRecommendedAudiobooksSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetAllRecommendedAudiobooksQuery, GetAllRecommendedAudiobooksQueryVariables>): Apollo.UseSuspenseQueryResult<GetAllRecommendedAudiobooksQuery | undefined, GetAllRecommendedAudiobooksQueryVariables>;
+export function useGetAllRecommendedAudiobooksSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetAllRecommendedAudiobooksQuery, GetAllRecommendedAudiobooksQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetAllRecommendedAudiobooksQuery, GetAllRecommendedAudiobooksQueryVariables>(GetAllRecommendedAudiobooksDocument, options);
+        }
+export type GetAllRecommendedAudiobooksQueryHookResult = ReturnType<typeof useGetAllRecommendedAudiobooksQuery>;
+export type GetAllRecommendedAudiobooksLazyQueryHookResult = ReturnType<typeof useGetAllRecommendedAudiobooksLazyQuery>;
+export type GetAllRecommendedAudiobooksSuspenseQueryHookResult = ReturnType<typeof useGetAllRecommendedAudiobooksSuspenseQuery>;
+export type GetAllRecommendedAudiobooksQueryResult = Apollo.QueryResult<GetAllRecommendedAudiobooksQuery, GetAllRecommendedAudiobooksQueryVariables>;
 export const GetAllRecommendedBooksDocument = gql`
     query GetAllRecommendedBooks($category: String) {
   allRecommendedBooks(category: $category) {

@@ -9,9 +9,10 @@ class ThemeMocsState(TypedDict, total=False):
     # Populated by identify_theme
     theme_summary: Optional[str]
     related_keywords: Optional[list[str]]
-    # Populated by generate_mocs
+    anchor_sets: Optional[list[str]]
+    # Populated by fetch_alternates
     mocs: Optional[list[dict]]
-    # Populated by rank_mocs
+    # Populated by rank_by_complexity
     ranked_mocs: Optional[list[dict]]
     ranking_summary: Optional[str]
     source: Optional[str]

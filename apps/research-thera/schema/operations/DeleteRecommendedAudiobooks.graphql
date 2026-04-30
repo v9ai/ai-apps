@@ -1,0 +1,7 @@
+mutation DeleteRecommendedAudiobooks($goalId: Int, $familyMemberId: Int) {
+  deleteRecommendedAudiobooks(goalId: $goalId, familyMemberId: $familyMemberId) {
+    success
+    message
+    deletedCount
+  }
+}

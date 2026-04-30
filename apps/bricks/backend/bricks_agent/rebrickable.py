@@ -1,14 +1,14 @@
-"""Parse Rebrickable MOC URLs to extract metadata.
-
-The Rebrickable API does NOT have MOC endpoints, so we extract metadata
-from the URL slug structure:
-    https://rebrickable.com/mocs/MOC-154803/JKBrickworks/rapid-fire-spring-launcher/
-"""
+"""Rebrickable URL parsing + MOC alternates fetching."""
 
 from __future__ import annotations
 
+import os
 import re
 from urllib.parse import unquote
+
+import httpx
+
+REBRICKABLE_BASE = "https://rebrickable.com/api/v3/lego"
 
 
 def parse_moc_url(url: str) -> dict:
@@ -34,3 +34,62 @@ def parse_moc_url(url: str) -> dict:
         "name": name,
         "url": url,
     }
+
+
+async def fetch_set_alternates(
+    set_num: str,
+    *,
+    page_size: int = 30,
+    client: httpx.AsyncClient | None = None,
+) -> list[dict]:
+    """Fetch real MOCs based on an official LEGO set.
+
+    Returns a list of {moc_id, name, designer, year, num_parts, image_url, moc_url}.
+    Returns [] on any error or if the set has no alternates.
+    """
+    api_key = os.environ.get("REBRICKABLE_API_KEY")
+    if not api_key:
+        return []
+
+    set_num = set_num.strip()
+    if "-" not in set_num:
+        set_num = f"{set_num}-1"
+
+    headers = {"Authorization": f"key {api_key}"}
+    url = f"{REBRICKABLE_BASE}/sets/{set_num}/alternates/"
+    params = {"page_size": page_size}
+
+    own_client = client is None
+    if own_client:
+        client = httpx.AsyncClient(timeout=20.0)
+    try:
+        resp = await client.get(url, headers=headers, params=params)
+        if resp.status_code != 200:
+            return []
+        data = resp.json()
+    except Exception:
+        return []
+    finally:
+        if own_client:
+            await client.aclose()
+
+    out: list[dict] = []
+    for r in data.get("results", []) or []:
+        moc_id = r.get("set_num")
+        if not moc_id:
+            continue
+        try:
+            num_parts = int(r.get("num_parts") or 0)
+        except (TypeError, ValueError):
+            num_parts = 0
+        out.append({
+            "moc_id": moc_id,
+            "name": r.get("name") or moc_id,
+            "designer": r.get("designer_name") or "Unknown",
+            "year": r.get("year"),
+            "num_parts": num_parts,
+            "image_url": r.get("moc_img_url"),
+            "moc_url": r.get("moc_url") or f"https://rebrickable.com/mocs/{moc_id}/",
+            "anchor_set": set_num,
+        })
+    return out

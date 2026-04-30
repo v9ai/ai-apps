@@ -1,0 +1,25 @@
+mutation GenerateRecommendedAudiobooks($goalId: Int, $familyMemberId: Int) {
+  generateRecommendedAudiobooks(goalId: $goalId, familyMemberId: $familyMemberId) {
+    success
+    message
+    jobId
+    audiobooks {
+      id
+      goalId
+      familyMemberId
+      title
+      authors
+      narrators
+      year
+      lengthMinutes
+      language
+      ageBand
+      voxaUrl
+      coverUrl
+      description
+      whyRecommended
+      category
+      generatedAt
+    }
+  }
+}

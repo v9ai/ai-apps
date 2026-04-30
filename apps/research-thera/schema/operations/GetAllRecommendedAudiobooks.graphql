@@ -1,0 +1,22 @@
+query GetAllRecommendedAudiobooks($category: String, $familyMemberId: Int) {
+  allRecommendedAudiobooks(category: $category, familyMemberId: $familyMemberId) {
+    id
+    goalId
+    familyMemberId
+    title
+    authors
+    narrators
+    year
+    lengthMinutes
+    language
+    ageBand
+    voxaUrl
+    coverUrl
+    description
+    whyRecommended
+    category
+    generatedAt
+    createdAt
+    updatedAt
+  }
+}

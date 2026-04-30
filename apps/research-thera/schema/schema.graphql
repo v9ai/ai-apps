@@ -691,6 +691,27 @@ type RecommendedMovie {
   updatedAt: String!
 }
 
+type RecommendedAudiobook {
+  id: Int!
+  goalId: Int
+  familyMemberId: Int
+  title: String!
+  authors: [String!]!
+  narrators: [String!]!
+  year: Int
+  lengthMinutes: Int
+  language: String!
+  ageBand: String
+  voxaUrl: String
+  coverUrl: String
+  description: String!
+  whyRecommended: String!
+  category: String!
+  generatedAt: String!
+  createdAt: String!
+  updatedAt: String!
+}
+
 type Story {
   id: Int!
   goalId: Int
@@ -1017,6 +1038,19 @@ type GenerateRecommendedMoviesResult {
 }
 
 type DeleteRecommendedMoviesResult {
+  success: Boolean!
+  message: String
+  deletedCount: Int!
+}
+
+type GenerateRecommendedAudiobooksResult {
+  success: Boolean!
+  message: String
+  jobId: String
+  audiobooks: [RecommendedAudiobook!]!
+}
+
+type DeleteRecommendedAudiobooksResult {
   success: Boolean!
   message: String
   deletedCount: Int!

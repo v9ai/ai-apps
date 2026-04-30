@@ -912,6 +912,12 @@ type DeleteQuestionsResult {
   success: Boolean!
 }
 
+type DeleteRecommendedAudiobooksResult {
+  deletedCount: Int!
+  message: String
+  success: Boolean!
+}
+
 type DeleteRecommendedBooksResult {
   deletedCount: Int!
   message: String
@@ -1294,6 +1300,13 @@ type GenerateQuestionsResult {
   jobId: String
   message: String
   questions: [TherapeuticQuestion!]!
+  success: Boolean!
+}
+
+type GenerateRecommendedAudiobooksResult {
+  audiobooks: [RecommendedAudiobook!]!
+  jobId: String
+  message: String
   success: Boolean!
 }
 
@@ -1842,6 +1855,7 @@ type Mutation {
   deleteMemoryEntry(id: ID!): DeleteMemoryEntryResult!
   deleteNote(id: Int!): DeleteNoteResult!
   deleteProtocol(id: ID!): DeleteProtocolResult!
+  deleteRecommendedAudiobooks(familyMemberId: Int, goalId: Int): DeleteRecommendedAudiobooksResult!
   deleteRecommendedBooks(goalId: Int, journalEntryId: Int): DeleteRecommendedBooksResult!
   deleteRecommendedMovies(familyMemberId: Int, goalId: Int): DeleteRecommendedMoviesResult!
   deleteRelationship(id: Int!): DeleteRelationshipResult!
@@ -1873,6 +1887,7 @@ type Mutation {
   generateMedicationDeepResearch(language: String, slug: String!): GenerateResearchResult!
   generateOpenAIAudio(input: GenerateOpenAIAudioInput!): GenerateOpenAIAudioResult!
   generateParentAdvice(goalId: Int!, language: String): GenerateParentAdviceResult!
+  generateRecommendedAudiobooks(familyMemberId: Int, goalId: Int): GenerateRecommendedAudiobooksResult!
   generateRecommendedBooks(goalId: Int, journalEntryId: Int): GenerateRecommendedBooksResult!
   generateRecommendedMovies(familyMemberId: Int, goalId: Int): GenerateRecommendedMoviesResult!
   generateRegimenAnalysis(language: String, slug: String!): GenerateResearchResult!
@@ -2138,6 +2153,7 @@ type Query {
   affirmations(familyMemberId: Int!): [Affirmation!]!
   allIssues: [Issue!]!
   allNotes: [Note!]!
+  allRecommendedAudiobooks(category: String, familyMemberId: Int): [RecommendedAudiobook!]!
   allRecommendedBooks(category: String): [RecommendedBook!]!
   allRecommendedMovies(category: String, familyMemberId: Int): [RecommendedMovie!]!
   allStories: [Story!]!
@@ -2224,6 +2240,27 @@ type Query {
   vaultStatus: VaultStatus!
   vehicle(id: ID, slug: String): Vehicle
   vehicles: [Vehicle!]!
+}
+
+type RecommendedAudiobook {
+  ageBand: String
+  authors: [String!]!
+  category: String!
+  coverUrl: String
+  createdAt: String!
+  description: String!
+  familyMemberId: Int
+  generatedAt: String!
+  goalId: Int
+  id: Int!
+  language: String!
+  lengthMinutes: Int
+  narrators: [String!]!
+  title: String!
+  updatedAt: String!
+  voxaUrl: String
+  whyRecommended: String!
+  year: Int
 }
 
 type RecommendedBook {
