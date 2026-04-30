@@ -829,6 +829,38 @@ export const affirmations = pgTable("affirmations", {
     .default(sql`NOW()`),
 });
 
+export const psychScreeningAssessments = pgTable("psych_screening_assessments", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  familyMemberId: integer("family_member_id")
+    .notNull()
+    .references(() => familyMembers.id, { onDelete: "cascade" }),
+  // URGENT_CONSULT | CONSULT_RECOMMENDED | WAIT_AND_OBSERVE | NO_CONSULT_NEEDED
+  recommendation: text("recommendation").notNull(),
+  confidence: real("confidence").notNull(),
+  iatrogenicLikelihood: real("iatrogenic_likelihood"),
+  rationale: text("rationale").notNull(), // Romanian
+  redFlags: jsonb("red_flags"),
+  supportingObservations: jsonb("supporting_observations"),
+  differential: jsonb("differential"),
+  recommendedNextSteps: jsonb("recommended_next_steps"),
+  observationWindow: jsonb("observation_window"), // {phase, days_since_stop, reassess_in_days}
+  citations: jsonb("citations"),
+  dataSnapshot: jsonb("data_snapshot"),
+  critique: jsonb("critique"),
+  language: text("language").notNull().default("ro"),
+  model: text("model"),
+  jobId: text("job_id").references(() => generationJobs.id),
+  createdAt: timestamp("created_at", { withTimezone: false })
+    .notNull()
+    .default(sql`NOW()`),
+  updatedAt: timestamp("updated_at", { withTimezone: false })
+    .notNull()
+    .default(sql`NOW()`),
+}, (t) => ({
+  byMember: index("idx_psych_screen_member").on(t.familyMemberId, t.createdAt),
+}));
+
 export const familyMemberCharacteristics = pgTable("family_member_characteristics", {
   id: serial("id").primaryKey(),
   familyMemberId: integer("family_member_id").notNull(),

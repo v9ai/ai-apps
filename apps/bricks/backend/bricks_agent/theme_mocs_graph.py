@@ -1,34 +1,45 @@
-"""LangGraph pipeline — discover MOC builds related to a curated theme.
+"""LangGraph pipeline — discover real Rebrickable MOCs related to a theme.
 
-Three-step, AI-only pipeline (no Rebrickable calls):
-  1. identify_theme — distil the theme name into a focused build brief and keywords
-  2. generate_mocs  — generate plausible community MOCs that fit the theme
-  3. rank_mocs      — rank by fit/quality, surface top picks and a short summary
+Three-step pipeline:
+  1. identify_theme        — LLM produces theme summary, keywords, and 6-10
+                             real LEGO set numbers ("anchor sets") that
+                             characterize the theme.
+  2. fetch_alternates      — for each anchor set, call Rebrickable
+                             /sets/{setNum}/alternates/ in parallel. Returns
+                             real MOC IDs, real images, real part counts.
+  3. rank_by_complexity    — dedupe, sort by num_parts descending, flag the
+                             top 3 as top_pick.
+
+If LLM-suggested anchors yield zero MOCs, fall back to a curated seed list.
 """
 
 from __future__ import annotations
 
-import re
+import asyncio
 
+import httpx
 from langgraph.graph import END, START, StateGraph
 
 from .graph import _get_llm, _parse_json
+from .rebrickable import fetch_set_alternates, search_sets
 from .theme_mocs_state import ThemeMocsState
 
-_MOC_ID_RE = re.compile(r"^MOC-\d+$")
+# Curated fallback anchor sets — used only if the LLM's suggestions yield
+# zero alternates (e.g., the LLM picks obscure sets that have no MOCs based
+# on them). Hand-picked dragon-friendly themes.
+_FALLBACK_ANCHORS = [
+    "71773-1",  # Ninjago — Kai's Golden Dragon Raider
+    "71772-1",  # Ninjago — The Crystal King
+    "70653-1",  # Ninjago — Firstbourne
+    "31102-1",  # Creator 3-in-1 — Fire Dragon
+    "21348-1",  # Ideas — Dungeons & Dragons (red dragon)
+    "10302-1",  # Icons — Optimus Prime (high-alternates set)
+    "31058-1",  # Creator 3-in-1 — Mighty Dinosaurs
+    "6086-1",   # Castle — Black Knight's Castle
+]
 
 
-def _normalize_moc_id(raw: str, fallback_num: int) -> str:
-    candidate = str(raw).strip()
-    if _MOC_ID_RE.match(candidate):
-        return candidate
-    digits = re.sub(r"[^0-9]", "", candidate)
-    if digits:
-        return f"MOC-{digits}"
-    return f"MOC-{20000 + fallback_num}"
-
-
-# ── Node 1: Identify the theme ────────────────────────────────────────────
+# ── Node 1: Identify theme + pick anchor sets ────────────────────────────
 
 
 async def identify_theme(state: ThemeMocsState) -> dict:
@@ -38,18 +49,26 @@ async def identify_theme(state: ThemeMocsState) -> dict:
             "error": "theme_name is required",
             "theme_summary": "",
             "related_keywords": [],
+            "anchor_sets": [],
         }
 
+    # 1) Ground anchor sets in real Rebrickable search results — sets whose
+    #    name actually contains the theme word, ordered by parts. This avoids
+    #    the LLM picking off-theme high-alternate-count sets.
+    primary_query = theme_name.lower().rstrip("s") or theme_name.lower()
+    found = await search_sets(primary_query, page_size=20)
+    found = [s for s in found if s.get("num_parts", 0) >= 50][:10]
+    anchors = [s["set_num"] for s in found]
+
+    # 2) LLM produces summary + keywords (used only for UI + name filter).
     llm = _get_llm()
     resp = await llm.ainvoke(
         [
             {
                 "role": "system",
                 "content": (
-                    "You are a LEGO MOC curator. Given a theme name, describe what kinds of "
-                    "builds and motifs the AFOL community produces under that theme, and list "
-                    "concrete keywords/sub-themes that would appear in MOC titles. "
-                    "Return valid JSON only."
+                    "You are a LEGO MOC curator. Given a theme name, return a short "
+                    "summary and keywords. Return valid JSON only."
                 ),
             },
             {
@@ -58,7 +77,7 @@ async def identify_theme(state: ThemeMocsState) -> dict:
                     f"Theme: {theme_name}\n\n"
                     "Return JSON:\n"
                     '{"theme_summary": "2-3 sentences on what this theme covers in MOC builds", '
-                    '"related_keywords": ["keyword1", "keyword2", "..."]}'
+                    '"related_keywords": ["keyword1", "keyword2", ...]}'
                 ),
             },
         ],
@@ -70,164 +89,126 @@ async def identify_theme(state: ThemeMocsState) -> dict:
         return {
             "theme_summary": str(data.get("theme_summary", "")),
             "related_keywords": [str(k) for k in data.get("related_keywords", [])][:12],
+            "anchor_sets": anchors,
         }
     except Exception:
-        return {"theme_summary": "", "related_keywords": []}
+        return {
+            "theme_summary": "",
+            "related_keywords": [],
+            "anchor_sets": anchors,
+        }
 
 
-# ── Node 2: Generate plausible MOCs for the theme ─────────────────────────
+# ── Node 2: Fetch real MOCs from Rebrickable ──────────────────────────────
 
 
-async def generate_mocs(state: ThemeMocsState) -> dict:
+def _theme_match_keywords(theme_name: str, keywords: list[str]) -> list[str]:
+    """Build the set of lowercase tokens we'll look for in MOC names."""
+    base = {theme_name.lower().rstrip("s"), theme_name.lower()}
+    for k in keywords or []:
+        k = (k or "").strip().lower()
+        if not k:
+            continue
+        base.add(k)
+        base.add(k.rstrip("s"))
+    return [k for k in base if k]
+
+
+def _matches_theme(name: str, tokens: list[str]) -> bool:
+    n = (name or "").lower()
+    return any(tok and tok in n for tok in tokens)
+
+
+async def fetch_alternates(state: ThemeMocsState) -> dict:
     if state.get("error"):
         return {"mocs": []}
 
-    theme_name = state.get("theme_name", "")
-    summary = state.get("theme_summary", "")
-    keywords = state.get("related_keywords", []) or []
+    anchors = state.get("anchor_sets") or []
+    if not anchors:
+        anchors = list(_FALLBACK_ANCHORS)
 
-    llm = _get_llm()
-    resp = await llm.ainvoke(
-        [
-            {
-                "role": "system",
-                "content": (
-                    "You are a knowledgeable LEGO MOC community curator with deep familiarity "
-                    "with AFOL (Adult Fan of LEGO) building styles. Given a theme, generate a "
-                    "diverse list of plausible community MOC builds that fit that theme. "
-                    "Use authentic AFOL naming conventions. Return valid JSON only."
-                ),
-            },
-            {
-                "role": "user",
-                "content": (
-                    f"Theme: {theme_name}\n"
-                    f"Theme summary: {summary}\n"
-                    f"Related keywords: {', '.join(keywords) if keywords else '(none)'}\n\n"
-                    "Generate 20 plausible AFOL community MOC builds for this theme.\n"
-                    "Requirements:\n"
-                    "- Cover diverse interpretations and scales\n"
-                    "- 3-4 different scales: micro (50-200 pcs), scene (200-800 pcs), "
-                    "  large (800-2500 pcs), display (2500+ pcs)\n"
-                    "- Authentic AFOL designer handles\n"
-                    "- MOC IDs in MOC-XXXXXX format (numbers 10000-199999)\n"
-                    "- Years between 2018-2025\n"
-                    "- Description explains how the MOC realises the theme\n"
-                    "Return JSON:\n"
-                    '{"mocs": [{"moc_id": "MOC-42153", "name": "Smaug on the Lonely Mountain", '
-                    '"designer": "MordorBuilds", "year": 2022, "num_parts": 3120, '
-                    '"description": "Massive sleeping dragon coiled atop a treasure hoard"}]}'
-                ),
-            },
-        ],
-        response_format={"type": "json_object"},
+    async def _gather(anchor_list: list[str]) -> list[dict]:
+        async with httpx.AsyncClient(timeout=20.0) as client:
+            tasks = [fetch_set_alternates(s, client=client) for s in anchor_list]
+            return await asyncio.gather(*tasks)
+
+    results = await _gather(anchors)
+    flat: list[dict] = [m for batch in results for m in batch]
+
+    # Fallback if the LLM picked obscure sets with no alternates
+    if not flat and anchors != list(_FALLBACK_ANCHORS):
+        results = await _gather(list(_FALLBACK_ANCHORS))
+        flat = [m for batch in results for m in batch]
+
+    # Drop trivial entries
+    flat = [m for m in flat if m.get("num_parts", 0) >= 50]
+
+    # Filter by theme name match in the MOC title (avoids unrelated
+    # alternates that share an anchor set — e.g. Optimus Prime alternates
+    # from set 10302-1 leaking into a 'Dragons' search). Try strict match
+    # on the theme name first; only fall back to the broader keyword set
+    # if the strict pass leaves us with too few results.
+    name_lower = state.get("theme_name", "").lower()
+    primary = [name_lower, name_lower.rstrip("s")]
+    primary = [p for p in primary if p]
+    keyword_tokens = _theme_match_keywords(
+        state.get("theme_name", ""),
+        state.get("related_keywords") or [],
     )
 
-    try:
-        data = _parse_json(resp.content)
-        raw = data.get("mocs", [])
-    except Exception:
-        raw = []
+    strict = [m for m in flat if _matches_theme(m["name"], primary)]
+    if len(strict) >= 3:
+        flat = strict
+    elif keyword_tokens:
+        broad = [m for m in flat if _matches_theme(m["name"], keyword_tokens)]
+        if len(broad) >= 5:
+            flat = broad
 
-    normalized: list[dict] = []
+    # Dedupe by moc_id (first occurrence wins)
     seen: set[str] = set()
-    for i, m in enumerate(raw):
-        if not (m.get("moc_id") and m.get("name")):
+    deduped: list[dict] = []
+    for m in flat:
+        mid = m["moc_id"]
+        if mid in seen:
             continue
-        moc_id = _normalize_moc_id(str(m["moc_id"]), i)
-        if moc_id in seen:
-            continue
-        seen.add(moc_id)
-        try:
-            num_parts = max(1, int(m.get("num_parts", 100)))
-        except (ValueError, TypeError):
-            num_parts = 100
-        normalized.append({
-            "moc_id": moc_id,
-            "name": str(m.get("name", "Unnamed MOC")),
-            "designer": str(m.get("designer", "Unknown")),
-            "year": m.get("year"),
-            "num_parts": num_parts,
-            "image_url": None,
-            "moc_url": "",
-            "description": str(m.get("description", "")),
-        })
+        seen.add(mid)
+        deduped.append(m)
 
-    return {"mocs": normalized, "source": "ai"}
+    return {"mocs": deduped, "source": "rebrickable"}
 
 
-# ── Node 3: Rank MOCs ─────────────────────────────────────────────────────
+# ── Node 3: Rank by complexity ────────────────────────────────────────────
 
 
-async def rank_mocs(state: ThemeMocsState) -> dict:
+async def rank_by_complexity(state: ThemeMocsState) -> dict:
     if state.get("error"):
         return {"ranked_mocs": [], "ranking_summary": ""}
 
-    mocs = state.get("mocs", [])
+    mocs = state.get("mocs", []) or []
     if not mocs:
-        return {"ranked_mocs": [], "ranking_summary": "No MOC builds found for this theme."}
+        return {
+            "ranked_mocs": [],
+            "ranking_summary": "No MOCs found for this theme on Rebrickable.",
+        }
 
-    theme_name = state.get("theme_name", "")
-    listing = "\n".join(
-        f"- {m['moc_id']}: \"{m['name']}\" by {m['designer']} "
-        f"({m.get('year', '?')}, {m.get('num_parts', '?')} parts) — {m.get('description', '')}"
-        for m in mocs
-    )
+    sorted_mocs = sorted(mocs, key=lambda m: m.get("num_parts", 0), reverse=True)
 
-    llm = _get_llm()
-    resp = await llm.ainvoke(
-        [
-            {
-                "role": "system",
-                "content": (
-                    "You are a LEGO MOC community expert. Rank the MOCs by how well they "
-                    "embody the theme, creativity, and variety. Return valid JSON only."
-                ),
-            },
-            {
-                "role": "user",
-                "content": (
-                    f"Theme: {theme_name}\n\n"
-                    f"MOC builds:\n{listing}\n\n"
-                    "Return JSON:\n"
-                    '{"summary": "2-3 sentences on how the AFOL community interprets this theme", '
-                    '"top_picks": ["MOC-...", "MOC-...", "MOC-..."], '
-                    '"categories": [{"label": "Sub-theme name", "moc_ids": ["MOC-..."]}]}'
-                ),
-            },
-        ],
-        response_format={"type": "json_object"},
-    )
-
-    try:
-        ranking = _parse_json(resp.content)
-    except Exception:
-        ranking = {}
-
-    label_map: dict[str, str] = {}
-    for cat in ranking.get("categories", []):
-        for moc_id in cat.get("moc_ids", []):
-            label_map[moc_id] = cat.get("label", "")
-
-    moc_map = {m["moc_id"]: m for m in mocs}
     ranked: list[dict] = []
-    for moc_id in ranking.get("top_picks", []):
-        if moc_id in moc_map:
-            enriched = {**moc_map.pop(moc_id), "top_pick": True}
-            if moc_id in label_map:
-                enriched["sub_theme"] = label_map[moc_id]
-            ranked.append(enriched)
-    for m in mocs:
-        if m["moc_id"] in moc_map:
-            enriched = dict(m)
-            if m["moc_id"] in label_map:
-                enriched["sub_theme"] = label_map[m["moc_id"]]
-            ranked.append(enriched)
+    for i, m in enumerate(sorted_mocs):
+        enriched = dict(m)
+        if i < 3:
+            enriched["top_pick"] = True
+        ranked.append(enriched)
 
-    return {
-        "ranked_mocs": ranked,
-        "ranking_summary": ranking.get("summary", ""),
-    }
+    anchors_used = sorted({m.get("anchor_set") for m in ranked if m.get("anchor_set")})
+    smallest = ranked[-1].get("num_parts") if ranked else 0
+    largest = ranked[0].get("num_parts") if ranked else 0
+    summary = (
+        f"Found {len(ranked)} MOCs across {len(anchors_used)} anchor sets, "
+        f"ranging from {smallest:,} to {largest:,} parts."
+    )
+
+    return {"ranked_mocs": ranked, "ranking_summary": summary}
 
 
 # ── Graph wiring ──────────────────────────────────────────────────────────
@@ -236,13 +217,13 @@ async def rank_mocs(state: ThemeMocsState) -> dict:
 def create_theme_mocs_graph():
     builder = StateGraph(ThemeMocsState)
     builder.add_node("identify_theme", identify_theme)
-    builder.add_node("generate_mocs", generate_mocs)
-    builder.add_node("rank_mocs", rank_mocs)
+    builder.add_node("fetch_alternates", fetch_alternates)
+    builder.add_node("rank_by_complexity", rank_by_complexity)
 
     builder.add_edge(START, "identify_theme")
-    builder.add_edge("identify_theme", "generate_mocs")
-    builder.add_edge("generate_mocs", "rank_mocs")
-    builder.add_edge("rank_mocs", END)
+    builder.add_edge("identify_theme", "fetch_alternates")
+    builder.add_edge("fetch_alternates", "rank_by_complexity")
+    builder.add_edge("rank_by_complexity", END)
 
     return builder.compile()
 

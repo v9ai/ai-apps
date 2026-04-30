@@ -36,6 +36,58 @@ def parse_moc_url(url: str) -> dict:
     }
 
 
+async def search_sets(
+    query: str,
+    *,
+    page_size: int = 15,
+    client: httpx.AsyncClient | None = None,
+) -> list[dict]:
+    """Search Rebrickable for official LEGO sets matching a query.
+
+    Returns a list of {set_num, name, year, num_parts}. Sorted by Rebrickable's
+    search relevance (which weighs name match and popularity). Returns [] on
+    error or empty result.
+    """
+    api_key = os.environ.get("REBRICKABLE_API_KEY")
+    if not api_key:
+        return []
+
+    headers = {"Authorization": f"key {api_key}"}
+    url = f"{REBRICKABLE_BASE}/sets/"
+    params = {"search": query, "page_size": page_size, "ordering": "-num_parts"}
+
+    own_client = client is None
+    if own_client:
+        client = httpx.AsyncClient(timeout=20.0)
+    try:
+        resp = await client.get(url, headers=headers, params=params)
+        if resp.status_code != 200:
+            return []
+        data = resp.json()
+    except Exception:
+        return []
+    finally:
+        if own_client:
+            await client.aclose()
+
+    out: list[dict] = []
+    for r in data.get("results", []) or []:
+        set_num = r.get("set_num")
+        if not set_num:
+            continue
+        try:
+            num_parts = int(r.get("num_parts") or 0)
+        except (TypeError, ValueError):
+            num_parts = 0
+        out.append({
+            "set_num": set_num,
+            "name": r.get("name") or set_num,
+            "year": r.get("year"),
+            "num_parts": num_parts,
+        })
+    return out
+
+
 async def fetch_set_alternates(
     set_num: str,
     *,

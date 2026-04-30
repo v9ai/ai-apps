@@ -3,6 +3,7 @@
   "dependencies": ["."],
   "graphs": {
     "affirmations": "research_agent.affirmations_graph:graph",
+    "audiobooks": "research_agent.audiobooks_graph:graph",
     "bogdan_discussion": "research_agent.bogdan_discussion_graph:graph",
     "books": "research_agent.books_graph:graph",
     "calming_plan": "research_agent.calming_plan_graph:graph",

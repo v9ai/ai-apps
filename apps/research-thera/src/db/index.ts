@@ -1348,7 +1348,7 @@ export async function cleanupStaleJobs(minutes = 15): Promise<void> {
 export async function createGenerationJob(
   id: string,
   userId: string,
-  type: "AUDIO" | "RESEARCH" | "QUESTIONS" | "LONGFORM" | "DEEP_ANALYSIS" | "RECOMMENDED_BOOKS" | "RECOMMENDED_MOVIES" | "RECOMMENDED_AUDIOBOOKS" | "DISCUSSION_GUIDE" | "ROUTINE_ANALYSIS" | "BOGDAN_DISCUSSION" | "MEDICATION_DEEP_RESEARCH" | "CONDITION_DEEP_RESEARCH" | "REGIMEN_INTERACTION_SCREEN",
+  type: "AUDIO" | "RESEARCH" | "QUESTIONS" | "LONGFORM" | "DEEP_ANALYSIS" | "RECOMMENDED_BOOKS" | "RECOMMENDED_MOVIES" | "RECOMMENDED_AUDIOBOOKS" | "DISCUSSION_GUIDE" | "ROUTINE_ANALYSIS" | "BOGDAN_DISCUSSION" | "MEDICATION_DEEP_RESEARCH" | "CONDITION_DEEP_RESEARCH" | "REGIMEN_INTERACTION_SCREEN" | "PSYCH_SCREEN",
   goalId?: number | null,
   storyId?: number,
 ) {
@@ -4003,6 +4003,51 @@ export async function createBogdanDiscussionGuide(data: {
 }
 
 // ============================================
+// Psych Screening Assessments
+// ============================================
+
+function mapPsychScreenRow(r: any) {
+  return {
+    id: r.id as number,
+    userId: r.user_id as string,
+    familyMemberId: r.family_member_id as number,
+    recommendation: r.recommendation as string,
+    confidence: typeof r.confidence === "number" ? r.confidence : Number(r.confidence),
+    iatrogenicLikelihood:
+      r.iatrogenic_likelihood == null ? null : Number(r.iatrogenic_likelihood),
+    rationale: r.rationale as string,
+    redFlags: r.red_flags ?? [],
+    supportingObservations: r.supporting_observations ?? [],
+    differential: r.differential ?? [],
+    recommendedNextSteps: r.recommended_next_steps ?? [],
+    observationWindow: r.observation_window ?? null,
+    citations: r.citations ?? [],
+    dataSnapshot: r.data_snapshot ?? null,
+    critique: r.critique ?? null,
+    language: r.language as string,
+    model: (r.model as string) || null,
+    jobId: (r.job_id as string) || null,
+    createdAt: r.created_at instanceof Date ? r.created_at.toISOString() : (r.created_at as string),
+    updatedAt: r.updated_at instanceof Date ? r.updated_at.toISOString() : (r.updated_at as string),
+  };
+}
+
+export async function getLatestPsychScreen(userId: string, familyMemberId?: number) {
+  const rows = familyMemberId
+    ? await neonSql`SELECT * FROM psych_screening_assessments WHERE user_id = ${userId} AND family_member_id = ${familyMemberId} ORDER BY created_at DESC LIMIT 1`
+    : await neonSql`SELECT * FROM psych_screening_assessments WHERE user_id = ${userId} ORDER BY created_at DESC LIMIT 1`;
+  if (rows.length === 0) return null;
+  return mapPsychScreenRow(rows[0]);
+}
+
+export async function listPsychScreens(userId: string, familyMemberId?: number) {
+  const rows = familyMemberId
+    ? await neonSql`SELECT * FROM psych_screening_assessments WHERE user_id = ${userId} AND family_member_id = ${familyMemberId} ORDER BY created_at DESC`
+    : await neonSql`SELECT * FROM psych_screening_assessments WHERE user_id = ${userId} ORDER BY created_at DESC`;
+  return rows.map(mapPsychScreenRow);
+}
+
+// ============================================
 // Conversations
 // ============================================
 
@@ -4556,6 +4601,9 @@ export const db = {
   getLatestBogdanDiscussionGuide,
   listBogdanDiscussionGuides,
   createBogdanDiscussionGuide,
+  // Psych Screening Assessments
+  getLatestPsychScreen,
+  listPsychScreens,
   // Conversations
   createConversation,
   getConversation,

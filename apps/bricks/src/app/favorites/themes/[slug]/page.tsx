@@ -32,9 +32,10 @@ interface DiscoveredMoc {
   designer: string;
   year: number | null;
   num_parts: number;
-  description: string;
+  image_url: string | null;
+  moc_url: string | null;
+  anchor_set: string | null;
   top_pick?: boolean;
-  sub_theme?: string;
 }
 
 interface DiscoveryResult {
@@ -156,6 +157,7 @@ export default function ThemeDetailPage() {
           refId: m.moc_id,
           name: m.name,
           designer: m.designer,
+          url: m.moc_url ?? undefined,
         }),
       });
       load();

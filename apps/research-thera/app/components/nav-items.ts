@@ -63,6 +63,7 @@ export const NAV_ITEMS: NavItem[] = [
     key: "library",
     label: "Library",
     children: [
+      { href: "/audiobooks", label: "Audiobooks" },
       { href: "/books", label: "Books" },
       { href: "/games", label: "Games" },
       { href: "/movies", label: "Movies" },
