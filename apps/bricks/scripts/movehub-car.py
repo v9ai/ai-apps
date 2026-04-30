@@ -78,8 +78,8 @@ battery_warning = False
 
 # --- Main loop ------------------------------------------------------------
 # Button map:
-#   RIGHT_PLUS / RIGHT_MINUS → drive forward / backward
-#   LEFT_PLUS  / LEFT_MINUS  → steer ±STEER_ANGLE (auto-center on release)
+#   LEFT_PLUS  / LEFT_MINUS  → drive forward / backward
+#   RIGHT_PLUS / RIGHT_MINUS → steer ±STEER_ANGLE (auto-center on release)
 #   CENTER                   → emergency stop
 while True:
     pressed = remote.buttons.pressed()
@@ -95,10 +95,10 @@ while True:
         continue
 
     # Drive
-    if Button.RIGHT_PLUS in pressed:
+    if Button.LEFT_PLUS in pressed:
         motor_a.run(DRIVE_SPEED)
         motor_b.run(-DRIVE_SPEED)
-    elif Button.RIGHT_MINUS in pressed:
+    elif Button.LEFT_MINUS in pressed:
         motor_a.run(-DRIVE_SPEED)
         motor_b.run(DRIVE_SPEED)
     else:
@@ -106,11 +106,11 @@ while True:
         motor_b.stop()
 
     # Steer
-    is_steering = Button.LEFT_PLUS in pressed or Button.LEFT_MINUS in pressed
+    is_steering = Button.RIGHT_PLUS in pressed or Button.RIGHT_MINUS in pressed
     if steering:
-        if Button.LEFT_PLUS in pressed:
+        if Button.RIGHT_PLUS in pressed:
             steering.run_target(STEER_SPEED, STEER_ANGLE, then=Stop.HOLD, wait=False)
-        elif Button.LEFT_MINUS in pressed:
+        elif Button.RIGHT_MINUS in pressed:
             steering.run_target(STEER_SPEED, -STEER_ANGLE, then=Stop.HOLD, wait=False)
         elif was_steering:
             steering.run_target(STEER_SPEED, 0, then=Stop.HOLD, wait=False)
@@ -131,9 +131,9 @@ while True:
     # Hub light: battery warning > driving direction > idle
     if battery_warning:
         hub.light.on(Color.YELLOW)
-    elif Button.RIGHT_PLUS in pressed:
+    elif Button.LEFT_PLUS in pressed:
         hub.light.on(Color.GREEN)
-    elif Button.RIGHT_MINUS in pressed:
+    elif Button.LEFT_MINUS in pressed:
         hub.light.on(Color.ORANGE)
     else:
         hub.light.on(Color.WHITE)
