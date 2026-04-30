@@ -1729,7 +1729,7 @@ function DecisionMakerDialog({
                     )}
                     <Flex justify="end" gap="2">
                       <Button
-                        size="2"
+                        size="sm"
                         disabled={!top.email || drafting}
                         title={top.email ? undefined : "No email on file for this contact"}
                         onClick={() => {
