@@ -47,6 +47,7 @@ class AudiobooksState(TypedDict, total=False):
     # Internal
     _prompt: str
     _category: str
+    _candidates: list[dict]
     # Output
     success: bool
     message: str

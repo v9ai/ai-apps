@@ -1,0 +1,53 @@
+query LatestPsychScreen($familyMemberId: Int) {
+  latestPsychScreen(familyMemberId: $familyMemberId) {
+    id
+    familyMemberId
+    recommendation
+    confidence
+    iatrogenicLikelihood
+    rationale
+    redFlags {
+      category
+      labelRo
+      evidenceRef
+    }
+    supportingObservations {
+      summaryRo
+      evidenceRef
+    }
+    differential {
+      condition
+      likelihood
+      rationaleRo
+    }
+    recommendedNextSteps
+    observationWindow {
+      phase
+      daysSinceStop
+      reassessInDays
+    }
+    citations {
+      researchId
+      title
+      doi
+      year
+      authors
+    }
+    critique {
+      scores {
+        romanianFluency
+        iatrogenicAlignment
+        evidenceGrounding
+        redFlagFidelity
+        advisoryTone
+        actionability
+      }
+      weakSections
+      refined
+    }
+    language
+    model
+    jobId
+    createdAt
+  }
+}

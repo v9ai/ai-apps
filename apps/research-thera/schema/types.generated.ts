@@ -1419,6 +1419,13 @@ export type GenerateParentAdviceResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type GeneratePsychScreenResult = {
+  __typename?: 'GeneratePsychScreenResult';
+  jobId?: Maybe<Scalars['String']['output']>;
+  message?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
 export type GenerateQuestionsResult = {
   __typename?: 'GenerateQuestionsResult';
   jobId?: Maybe<Scalars['String']['output']>;
@@ -2047,6 +2054,7 @@ export type Mutation = {
   generateMedicationDeepResearch: GenerateResearchResult;
   generateOpenAIAudio: GenerateOpenAIAudioResult;
   generateParentAdvice: GenerateParentAdviceResult;
+  generatePsychScreen: GeneratePsychScreenResult;
   generateRecommendedAudiobooks: GenerateRecommendedAudiobooksResult;
   generateRecommendedBooks: GenerateRecommendedBooksResult;
   generateRecommendedMovies: GenerateRecommendedMoviesResult;
@@ -2607,6 +2615,12 @@ export type MutationgenerateParentAdviceArgs = {
 };
 
 
+export type MutationgeneratePsychScreenArgs = {
+  familyMemberId?: InputMaybe<Scalars['Int']['input']>;
+  language?: InputMaybe<Scalars['String']['input']>;
+};
+
+
 export type MutationgenerateRecommendedAudiobooksArgs = {
   familyMemberId?: InputMaybe<Scalars['Int']['input']>;
   goalId?: InputMaybe<Scalars['Int']['input']>;
@@ -3126,6 +3140,86 @@ export type ProtocolSupplement = {
   url?: Maybe<Scalars['String']['output']>;
 };
 
+export type PsychScreenCitation = {
+  __typename?: 'PsychScreenCitation';
+  authors?: Maybe<Scalars['String']['output']>;
+  doi?: Maybe<Scalars['String']['output']>;
+  researchId: Scalars['Int']['output'];
+  title: Scalars['String']['output'];
+  year?: Maybe<Scalars['Int']['output']>;
+};
+
+export type PsychScreenCritique = {
+  __typename?: 'PsychScreenCritique';
+  refined?: Maybe<Scalars['Boolean']['output']>;
+  scores?: Maybe<PsychScreenScores>;
+  weakSections?: Maybe<Array<Scalars['String']['output']>>;
+};
+
+export type PsychScreenDifferentialItem = {
+  __typename?: 'PsychScreenDifferentialItem';
+  condition: Scalars['String']['output'];
+  likelihood: Scalars['Float']['output'];
+  rationaleRo: Scalars['String']['output'];
+};
+
+export type PsychScreenObservationWindow = {
+  __typename?: 'PsychScreenObservationWindow';
+  daysSinceStop?: Maybe<Scalars['Int']['output']>;
+  phase: Scalars['String']['output'];
+  reassessInDays?: Maybe<Scalars['Int']['output']>;
+};
+
+export type PsychScreenRecommendation =
+  | 'CONSULT_RECOMMENDED'
+  | 'NO_CONSULT_NEEDED'
+  | 'URGENT_CONSULT'
+  | 'WAIT_AND_OBSERVE';
+
+export type PsychScreenRedFlag = {
+  __typename?: 'PsychScreenRedFlag';
+  category: Scalars['String']['output'];
+  evidenceRef?: Maybe<Scalars['String']['output']>;
+  labelRo?: Maybe<Scalars['String']['output']>;
+};
+
+export type PsychScreenScores = {
+  __typename?: 'PsychScreenScores';
+  actionability?: Maybe<Scalars['Int']['output']>;
+  advisoryTone?: Maybe<Scalars['Int']['output']>;
+  evidenceGrounding?: Maybe<Scalars['Int']['output']>;
+  iatrogenicAlignment?: Maybe<Scalars['Int']['output']>;
+  redFlagFidelity?: Maybe<Scalars['Int']['output']>;
+  romanianFluency?: Maybe<Scalars['Int']['output']>;
+};
+
+export type PsychScreenSupportingObservation = {
+  __typename?: 'PsychScreenSupportingObservation';
+  evidenceRef?: Maybe<Scalars['String']['output']>;
+  summaryRo: Scalars['String']['output'];
+};
+
+export type PsychScreeningAssessment = {
+  __typename?: 'PsychScreeningAssessment';
+  citations: Array<PsychScreenCitation>;
+  confidence: Scalars['Float']['output'];
+  createdAt: Scalars['String']['output'];
+  critique?: Maybe<PsychScreenCritique>;
+  differential: Array<PsychScreenDifferentialItem>;
+  familyMemberId: Scalars['Int']['output'];
+  iatrogenicLikelihood?: Maybe<Scalars['Float']['output']>;
+  id: Scalars['Int']['output'];
+  jobId?: Maybe<Scalars['String']['output']>;
+  language: Scalars['String']['output'];
+  model?: Maybe<Scalars['String']['output']>;
+  observationWindow?: Maybe<PsychScreenObservationWindow>;
+  rationale: Scalars['String']['output'];
+  recommendation: PsychScreenRecommendation;
+  recommendedNextSteps: Array<Scalars['String']['output']>;
+  redFlags: Array<PsychScreenRedFlag>;
+  supportingObservations: Array<PsychScreenSupportingObservation>;
+};
+
 export type PublicDiscussionGuideResult = {
   __typename?: 'PublicDiscussionGuideResult';
   entryTitle?: Maybe<Scalars['String']['output']>;
@@ -3190,6 +3284,7 @@ export type Query = {
   journalEntries: Array<JournalEntry>;
   journalEntry?: Maybe<JournalEntry>;
   latestBogdanDiscussion?: Maybe<BogdanDiscussionGuide>;
+  latestPsychScreen?: Maybe<PsychScreeningAssessment>;
   medicalLetters: Array<MedicalLetter>;
   medication?: Maybe<Medication>;
   medicationDeepResearch?: Maybe<MedicationDeepResearch>;
@@ -3202,6 +3297,7 @@ export type Query = {
   notes: Array<Note>;
   protocol?: Maybe<ProtocolDetail>;
   protocols: Array<Protocol>;
+  psychScreens: Array<PsychScreeningAssessment>;
   publicDiscussionGuide?: Maybe<PublicDiscussionGuideResult>;
   recommendedBooks: Array<RecommendedBook>;
   regimenAnalysis?: Maybe<RegimenAnalysis>;
@@ -3459,6 +3555,11 @@ export type QueryjournalEntryArgs = {
 };
 
 
+export type QuerylatestPsychScreenArgs = {
+  familyMemberId?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
 export type QuerymedicalLettersArgs = {
   doctorId: Scalars['ID']['input'];
 };
@@ -3489,6 +3590,11 @@ export type QuerynotesArgs = {
 
 export type QueryprotocolArgs = {
   slug: Scalars['String']['input'];
+};
+
+
+export type QuerypsychScreensArgs = {
+  familyMemberId?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -4519,6 +4625,7 @@ export type ResolversTypes = {
   GenerateOpenAIAudioInput: GenerateOpenAIAudioInput;
   GenerateOpenAIAudioResult: ResolverTypeWrapper<GenerateOpenAIAudioResult>;
   GenerateParentAdviceResult: ResolverTypeWrapper<GenerateParentAdviceResult>;
+  GeneratePsychScreenResult: ResolverTypeWrapper<GeneratePsychScreenResult>;
   GenerateQuestionsResult: ResolverTypeWrapper<GenerateQuestionsResult>;
   GenerateRecommendedAudiobooksResult: ResolverTypeWrapper<GenerateRecommendedAudiobooksResult>;
   GenerateRecommendedBooksResult: ResolverTypeWrapper<GenerateRecommendedBooksResult>;
@@ -4588,6 +4695,15 @@ export type ResolversTypes = {
   Protocol: ResolverTypeWrapper<Protocol>;
   ProtocolDetail: ResolverTypeWrapper<ProtocolDetail>;
   ProtocolSupplement: ResolverTypeWrapper<ProtocolSupplement>;
+  PsychScreenCitation: ResolverTypeWrapper<PsychScreenCitation>;
+  PsychScreenCritique: ResolverTypeWrapper<PsychScreenCritique>;
+  PsychScreenDifferentialItem: ResolverTypeWrapper<PsychScreenDifferentialItem>;
+  PsychScreenObservationWindow: ResolverTypeWrapper<PsychScreenObservationWindow>;
+  PsychScreenRecommendation: ResolverTypeWrapper<'URGENT_CONSULT' | 'CONSULT_RECOMMENDED' | 'WAIT_AND_OBSERVE' | 'NO_CONSULT_NEEDED'>;
+  PsychScreenRedFlag: ResolverTypeWrapper<PsychScreenRedFlag>;
+  PsychScreenScores: ResolverTypeWrapper<PsychScreenScores>;
+  PsychScreenSupportingObservation: ResolverTypeWrapper<PsychScreenSupportingObservation>;
+  PsychScreeningAssessment: ResolverTypeWrapper<Omit<PsychScreeningAssessment, 'recommendation'> & { recommendation: ResolversTypes['PsychScreenRecommendation'] }>;
   PublicDiscussionGuideResult: ResolverTypeWrapper<PublicDiscussionGuideResult>;
   Query: ResolverTypeWrapper<Record<PropertyKey, never>>;
   RecommendedAudiobook: ResolverTypeWrapper<RecommendedAudiobook>;
@@ -4807,6 +4923,7 @@ export type ResolversParentTypes = {
   GenerateOpenAIAudioInput: GenerateOpenAIAudioInput;
   GenerateOpenAIAudioResult: GenerateOpenAIAudioResult;
   GenerateParentAdviceResult: GenerateParentAdviceResult;
+  GeneratePsychScreenResult: GeneratePsychScreenResult;
   GenerateQuestionsResult: GenerateQuestionsResult;
   GenerateRecommendedAudiobooksResult: GenerateRecommendedAudiobooksResult;
   GenerateRecommendedBooksResult: GenerateRecommendedBooksResult;
@@ -4865,6 +4982,14 @@ export type ResolversParentTypes = {
   Protocol: Protocol;
   ProtocolDetail: ProtocolDetail;
   ProtocolSupplement: ProtocolSupplement;
+  PsychScreenCitation: PsychScreenCitation;
+  PsychScreenCritique: PsychScreenCritique;
+  PsychScreenDifferentialItem: PsychScreenDifferentialItem;
+  PsychScreenObservationWindow: PsychScreenObservationWindow;
+  PsychScreenRedFlag: PsychScreenRedFlag;
+  PsychScreenScores: PsychScreenScores;
+  PsychScreenSupportingObservation: PsychScreenSupportingObservation;
+  PsychScreeningAssessment: PsychScreeningAssessment;
   PublicDiscussionGuideResult: PublicDiscussionGuideResult;
   Query: Record<PropertyKey, never>;
   RecommendedAudiobook: RecommendedAudiobook;
@@ -5846,6 +5971,12 @@ export type GenerateParentAdviceResultResolvers<ContextType = GraphQLContext, Pa
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
 };
 
+export type GeneratePsychScreenResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['GeneratePsychScreenResult'] = ResolversParentTypes['GeneratePsychScreenResult']> = {
+  jobId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+};
+
 export type GenerateQuestionsResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['GenerateQuestionsResult'] = ResolversParentTypes['GenerateQuestionsResult']> = {
   jobId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -6400,6 +6531,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   generateMedicationDeepResearch?: Resolver<ResolversTypes['GenerateResearchResult'], ParentType, ContextType, RequireFields<MutationgenerateMedicationDeepResearchArgs, 'slug'>>;
   generateOpenAIAudio?: Resolver<ResolversTypes['GenerateOpenAIAudioResult'], ParentType, ContextType, RequireFields<MutationgenerateOpenAIAudioArgs, 'input'>>;
   generateParentAdvice?: Resolver<ResolversTypes['GenerateParentAdviceResult'], ParentType, ContextType, RequireFields<MutationgenerateParentAdviceArgs, 'goalId'>>;
+  generatePsychScreen?: Resolver<ResolversTypes['GeneratePsychScreenResult'], ParentType, ContextType, Partial<MutationgeneratePsychScreenArgs>>;
   generateRecommendedAudiobooks?: Resolver<ResolversTypes['GenerateRecommendedAudiobooksResult'], ParentType, ContextType, Partial<MutationgenerateRecommendedAudiobooksArgs>>;
   generateRecommendedBooks?: Resolver<ResolversTypes['GenerateRecommendedBooksResult'], ParentType, ContextType, Partial<MutationgenerateRecommendedBooksArgs>>;
   generateRecommendedMovies?: Resolver<ResolversTypes['GenerateRecommendedMoviesResult'], ParentType, ContextType, Partial<MutationgenerateRecommendedMoviesArgs>>;
@@ -6611,6 +6743,74 @@ export type ProtocolSupplementResolvers<ContextType = GraphQLContext, ParentType
   url?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
 };
 
+export type PsychScreenCitationResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['PsychScreenCitation'] = ResolversParentTypes['PsychScreenCitation']> = {
+  authors?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  doi?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  researchId?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  year?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+};
+
+export type PsychScreenCritiqueResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['PsychScreenCritique'] = ResolversParentTypes['PsychScreenCritique']> = {
+  refined?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  scores?: Resolver<Maybe<ResolversTypes['PsychScreenScores']>, ParentType, ContextType>;
+  weakSections?: Resolver<Maybe<Array<ResolversTypes['String']>>, ParentType, ContextType>;
+};
+
+export type PsychScreenDifferentialItemResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['PsychScreenDifferentialItem'] = ResolversParentTypes['PsychScreenDifferentialItem']> = {
+  condition?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  likelihood?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  rationaleRo?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type PsychScreenObservationWindowResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['PsychScreenObservationWindow'] = ResolversParentTypes['PsychScreenObservationWindow']> = {
+  daysSinceStop?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  phase?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  reassessInDays?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+};
+
+export type PsychScreenRecommendationResolvers = EnumResolverSignature<{ CONSULT_RECOMMENDED?: any, NO_CONSULT_NEEDED?: any, URGENT_CONSULT?: any, WAIT_AND_OBSERVE?: any }, ResolversTypes['PsychScreenRecommendation']>;
+
+export type PsychScreenRedFlagResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['PsychScreenRedFlag'] = ResolversParentTypes['PsychScreenRedFlag']> = {
+  category?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  evidenceRef?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  labelRo?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+};
+
+export type PsychScreenScoresResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['PsychScreenScores'] = ResolversParentTypes['PsychScreenScores']> = {
+  actionability?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  advisoryTone?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  evidenceGrounding?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  iatrogenicAlignment?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  redFlagFidelity?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  romanianFluency?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+};
+
+export type PsychScreenSupportingObservationResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['PsychScreenSupportingObservation'] = ResolversParentTypes['PsychScreenSupportingObservation']> = {
+  evidenceRef?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  summaryRo?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type PsychScreeningAssessmentResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['PsychScreeningAssessment'] = ResolversParentTypes['PsychScreeningAssessment']> = {
+  citations?: Resolver<Array<ResolversTypes['PsychScreenCitation']>, ParentType, ContextType>;
+  confidence?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  critique?: Resolver<Maybe<ResolversTypes['PsychScreenCritique']>, ParentType, ContextType>;
+  differential?: Resolver<Array<ResolversTypes['PsychScreenDifferentialItem']>, ParentType, ContextType>;
+  familyMemberId?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  iatrogenicLikelihood?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  jobId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  language?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  model?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  observationWindow?: Resolver<Maybe<ResolversTypes['PsychScreenObservationWindow']>, ParentType, ContextType>;
+  rationale?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  recommendation?: Resolver<ResolversTypes['PsychScreenRecommendation'], ParentType, ContextType>;
+  recommendedNextSteps?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  redFlags?: Resolver<Array<ResolversTypes['PsychScreenRedFlag']>, ParentType, ContextType>;
+  supportingObservations?: Resolver<Array<ResolversTypes['PsychScreenSupportingObservation']>, ParentType, ContextType>;
+};
+
 export type PublicDiscussionGuideResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['PublicDiscussionGuideResult'] = ResolversParentTypes['PublicDiscussionGuideResult']> = {
   entryTitle?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   familyMemberName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -6673,6 +6873,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   journalEntries?: Resolver<Array<ResolversTypes['JournalEntry']>, ParentType, ContextType, Partial<QueryjournalEntriesArgs>>;
   journalEntry?: Resolver<Maybe<ResolversTypes['JournalEntry']>, ParentType, ContextType, RequireFields<QueryjournalEntryArgs, 'id'>>;
   latestBogdanDiscussion?: Resolver<Maybe<ResolversTypes['BogdanDiscussionGuide']>, ParentType, ContextType>;
+  latestPsychScreen?: Resolver<Maybe<ResolversTypes['PsychScreeningAssessment']>, ParentType, ContextType, Partial<QuerylatestPsychScreenArgs>>;
   medicalLetters?: Resolver<Array<ResolversTypes['MedicalLetter']>, ParentType, ContextType, RequireFields<QuerymedicalLettersArgs, 'doctorId'>>;
   medication?: Resolver<Maybe<ResolversTypes['Medication']>, ParentType, ContextType, RequireFields<QuerymedicationArgs, 'id'>>;
   medicationDeepResearch?: Resolver<Maybe<ResolversTypes['MedicationDeepResearch']>, ParentType, ContextType, RequireFields<QuerymedicationDeepResearchArgs, 'memberSlug' | 'slug'>>;
@@ -6685,6 +6886,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   notes?: Resolver<Array<ResolversTypes['Note']>, ParentType, ContextType, RequireFields<QuerynotesArgs, 'entityId' | 'entityType'>>;
   protocol?: Resolver<Maybe<ResolversTypes['ProtocolDetail']>, ParentType, ContextType, RequireFields<QueryprotocolArgs, 'slug'>>;
   protocols?: Resolver<Array<ResolversTypes['Protocol']>, ParentType, ContextType>;
+  psychScreens?: Resolver<Array<ResolversTypes['PsychScreeningAssessment']>, ParentType, ContextType, Partial<QuerypsychScreensArgs>>;
   publicDiscussionGuide?: Resolver<Maybe<ResolversTypes['PublicDiscussionGuideResult']>, ParentType, ContextType, RequireFields<QuerypublicDiscussionGuideArgs, 'journalEntryId'>>;
   recommendedBooks?: Resolver<Array<ResolversTypes['RecommendedBook']>, ParentType, ContextType, Partial<QueryrecommendedBooksArgs>>;
   regimenAnalysis?: Resolver<Maybe<ResolversTypes['RegimenAnalysis']>, ParentType, ContextType, RequireFields<QueryregimenAnalysisArgs, 'slug'>>;
@@ -7293,6 +7495,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   GenerateLongFormTextResult?: GenerateLongFormTextResultResolvers<ContextType>;
   GenerateOpenAIAudioResult?: GenerateOpenAIAudioResultResolvers<ContextType>;
   GenerateParentAdviceResult?: GenerateParentAdviceResultResolvers<ContextType>;
+  GeneratePsychScreenResult?: GeneratePsychScreenResultResolvers<ContextType>;
   GenerateQuestionsResult?: GenerateQuestionsResultResolvers<ContextType>;
   GenerateRecommendedAudiobooksResult?: GenerateRecommendedAudiobooksResultResolvers<ContextType>;
   GenerateRecommendedBooksResult?: GenerateRecommendedBooksResultResolvers<ContextType>;
@@ -7358,6 +7561,15 @@ export type Resolvers<ContextType = GraphQLContext> = {
   Protocol?: ProtocolResolvers<ContextType>;
   ProtocolDetail?: ProtocolDetailResolvers<ContextType>;
   ProtocolSupplement?: ProtocolSupplementResolvers<ContextType>;
+  PsychScreenCitation?: PsychScreenCitationResolvers<ContextType>;
+  PsychScreenCritique?: PsychScreenCritiqueResolvers<ContextType>;
+  PsychScreenDifferentialItem?: PsychScreenDifferentialItemResolvers<ContextType>;
+  PsychScreenObservationWindow?: PsychScreenObservationWindowResolvers<ContextType>;
+  PsychScreenRecommendation?: PsychScreenRecommendationResolvers;
+  PsychScreenRedFlag?: PsychScreenRedFlagResolvers<ContextType>;
+  PsychScreenScores?: PsychScreenScoresResolvers<ContextType>;
+  PsychScreenSupportingObservation?: PsychScreenSupportingObservationResolvers<ContextType>;
+  PsychScreeningAssessment?: PsychScreeningAssessmentResolvers<ContextType>;
   PublicDiscussionGuideResult?: PublicDiscussionGuideResultResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
   RecommendedAudiobook?: RecommendedAudiobookResolvers<ContextType>;

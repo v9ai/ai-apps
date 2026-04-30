@@ -1,0 +1,7 @@
+mutation GeneratePsychScreen($familyMemberId: Int, $language: String) {
+  generatePsychScreen(familyMemberId: $familyMemberId, language: $language) {
+    success
+    message
+    jobId
+  }
+}

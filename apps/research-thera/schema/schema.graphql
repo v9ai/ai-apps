@@ -262,6 +262,10 @@ type Query {
   latestBogdanDiscussion: BogdanDiscussionGuide
   bogdanDiscussions: [BogdanDiscussionGuide!]!
 
+  # Psychologist-screening assessment (advisory only)
+  latestPsychScreen(familyMemberId: Int): PsychScreeningAssessment
+  psychScreens(familyMemberId: Int): [PsychScreeningAssessment!]!
+
   # Tag language rules (per-user override for AI-generated content language)
   tagLanguage(tag: String!): String
 
@@ -466,6 +470,9 @@ type Mutation {
 
   # Bogdan-specific discussion guide (one-shot, hard-wired to Bogdan)
   generateBogdanDiscussion: GenerateBogdanDiscussionResult!
+
+  # Psychologist-screening assessment (decides if a family member needs a psiholog)
+  generatePsychScreen(familyMemberId: Int, language: String): GeneratePsychScreenResult!
 
   # Conversations
   createConversation(issueId: Int!, message: String!): Conversation!
@@ -2152,6 +2159,91 @@ type BogdanDiscussionGuide {
 }
 
 type GenerateBogdanDiscussionResult {
+  success: Boolean!
+  message: String
+  jobId: String
+}
+
+# ============================================
+# Psychologist-screening assessment
+# Advisory output: decides if a family member needs a psychologist consult.
+# Iatrogenic-aware: weights post-Singulair washout symptoms differently.
+# ============================================
+
+enum PsychScreenRecommendation {
+  URGENT_CONSULT
+  CONSULT_RECOMMENDED
+  WAIT_AND_OBSERVE
+  NO_CONSULT_NEEDED
+}
+
+type PsychScreenObservationWindow {
+  phase: String!
+  daysSinceStop: Int
+  reassessInDays: Int
+}
+
+type PsychScreenRedFlag {
+  category: String!
+  labelRo: String
+  evidenceRef: String
+}
+
+type PsychScreenSupportingObservation {
+  summaryRo: String!
+  evidenceRef: String
+}
+
+type PsychScreenDifferentialItem {
+  condition: String!
+  likelihood: Float!
+  rationaleRo: String!
+}
+
+type PsychScreenCitation {
+  researchId: Int!
+  title: String!
+  doi: String
+  year: Int
+  authors: String
+}
+
+type PsychScreenScores {
+  romanianFluency: Int
+  iatrogenicAlignment: Int
+  evidenceGrounding: Int
+  redFlagFidelity: Int
+  advisoryTone: Int
+  actionability: Int
+}
+
+type PsychScreenCritique {
+  scores: PsychScreenScores
+  weakSections: [String!]
+  refined: Boolean
+}
+
+type PsychScreeningAssessment {
+  id: Int!
+  familyMemberId: Int!
+  recommendation: PsychScreenRecommendation!
+  confidence: Float!
+  iatrogenicLikelihood: Float
+  rationale: String!
+  redFlags: [PsychScreenRedFlag!]!
+  supportingObservations: [PsychScreenSupportingObservation!]!
+  differential: [PsychScreenDifferentialItem!]!
+  recommendedNextSteps: [String!]!
+  observationWindow: PsychScreenObservationWindow
+  citations: [PsychScreenCitation!]!
+  critique: PsychScreenCritique
+  language: String!
+  model: String
+  jobId: String
+  createdAt: String!
+}
+
+type GeneratePsychScreenResult {
   success: Boolean!
   message: String
   jobId: String

@@ -1296,6 +1296,12 @@ type GenerateParentAdviceResult {
   success: Boolean!
 }
 
+type GeneratePsychScreenResult {
+  jobId: String
+  message: String
+  success: Boolean!
+}
+
 type GenerateQuestionsResult {
   jobId: String
   message: String
@@ -1887,6 +1893,7 @@ type Mutation {
   generateMedicationDeepResearch(language: String, slug: String!): GenerateResearchResult!
   generateOpenAIAudio(input: GenerateOpenAIAudioInput!): GenerateOpenAIAudioResult!
   generateParentAdvice(goalId: Int!, language: String): GenerateParentAdviceResult!
+  generatePsychScreen(familyMemberId: Int, language: String): GeneratePsychScreenResult!
   generateRecommendedAudiobooks(familyMemberId: Int, goalId: Int): GenerateRecommendedAudiobooksResult!
   generateRecommendedBooks(goalId: Int, journalEntryId: Int): GenerateRecommendedBooksResult!
   generateRecommendedMovies(familyMemberId: Int, goalId: Int): GenerateRecommendedMoviesResult!
@@ -2142,6 +2149,79 @@ type ProtocolSupplement {
   url: String
 }
 
+type PsychScreenCitation {
+  authors: String
+  doi: String
+  researchId: Int!
+  title: String!
+  year: Int
+}
+
+type PsychScreenCritique {
+  refined: Boolean
+  scores: PsychScreenScores
+  weakSections: [String!]
+}
+
+type PsychScreenDifferentialItem {
+  condition: String!
+  likelihood: Float!
+  rationaleRo: String!
+}
+
+type PsychScreenObservationWindow {
+  daysSinceStop: Int
+  phase: String!
+  reassessInDays: Int
+}
+
+enum PsychScreenRecommendation {
+  CONSULT_RECOMMENDED
+  NO_CONSULT_NEEDED
+  URGENT_CONSULT
+  WAIT_AND_OBSERVE
+}
+
+type PsychScreenRedFlag {
+  category: String!
+  evidenceRef: String
+  labelRo: String
+}
+
+type PsychScreenScores {
+  actionability: Int
+  advisoryTone: Int
+  evidenceGrounding: Int
+  iatrogenicAlignment: Int
+  redFlagFidelity: Int
+  romanianFluency: Int
+}
+
+type PsychScreenSupportingObservation {
+  evidenceRef: String
+  summaryRo: String!
+}
+
+type PsychScreeningAssessment {
+  citations: [PsychScreenCitation!]!
+  confidence: Float!
+  createdAt: String!
+  critique: PsychScreenCritique
+  differential: [PsychScreenDifferentialItem!]!
+  familyMemberId: Int!
+  iatrogenicLikelihood: Float
+  id: Int!
+  jobId: String
+  language: String!
+  model: String
+  observationWindow: PsychScreenObservationWindow
+  rationale: String!
+  recommendation: PsychScreenRecommendation!
+  recommendedNextSteps: [String!]!
+  redFlags: [PsychScreenRedFlag!]!
+  supportingObservations: [PsychScreenSupportingObservation!]!
+}
+
 type PublicDiscussionGuideResult {
   entryTitle: String
   familyMemberName: String
@@ -2204,6 +2284,7 @@ type Query {
   journalEntries(familyMemberId: Int, fromDate: String, goalId: Int, mood: String, tag: String, toDate: String): [JournalEntry!]!
   journalEntry(id: Int!): JournalEntry
   latestBogdanDiscussion: BogdanDiscussionGuide
+  latestPsychScreen(familyMemberId: Int): PsychScreeningAssessment
   medicalLetters(doctorId: ID!): [MedicalLetter!]!
   medication(id: ID!): Medication
   medicationDeepResearch(memberSlug: String!, slug: String!): MedicationDeepResearch
@@ -2216,6 +2297,7 @@ type Query {
   notes(entityId: Int!, entityType: String!): [Note!]!
   protocol(slug: String!): ProtocolDetail
   protocols: [Protocol!]!
+  psychScreens(familyMemberId: Int): [PsychScreeningAssessment!]!
   publicDiscussionGuide(journalEntryId: Int!): PublicDiscussionGuideResult
   recommendedBooks(goalId: Int, journalEntryId: Int): [RecommendedBook!]!
   regimenAnalysis(slug: String!): RegimenAnalysis

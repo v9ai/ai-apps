@@ -1430,6 +1430,13 @@ export type GenerateParentAdviceResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type GeneratePsychScreenResult = {
+  __typename?: 'GeneratePsychScreenResult';
+  jobId?: Maybe<Scalars['String']['output']>;
+  message?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
 export type GenerateQuestionsResult = {
   __typename?: 'GenerateQuestionsResult';
   jobId?: Maybe<Scalars['String']['output']>;
@@ -2062,6 +2069,7 @@ export type Mutation = {
   generateMedicationDeepResearch: GenerateResearchResult;
   generateOpenAIAudio: GenerateOpenAiAudioResult;
   generateParentAdvice: GenerateParentAdviceResult;
+  generatePsychScreen: GeneratePsychScreenResult;
   generateRecommendedAudiobooks: GenerateRecommendedAudiobooksResult;
   generateRecommendedBooks: GenerateRecommendedBooksResult;
   generateRecommendedMovies: GenerateRecommendedMoviesResult;
@@ -2622,6 +2630,12 @@ export type MutationGenerateParentAdviceArgs = {
 };
 
 
+export type MutationGeneratePsychScreenArgs = {
+  familyMemberId?: InputMaybe<Scalars['Int']['input']>;
+  language?: InputMaybe<Scalars['String']['input']>;
+};
+
+
 export type MutationGenerateRecommendedAudiobooksArgs = {
   familyMemberId?: InputMaybe<Scalars['Int']['input']>;
   goalId?: InputMaybe<Scalars['Int']['input']>;
@@ -3148,6 +3162,87 @@ export type ProtocolSupplement = {
   url?: Maybe<Scalars['String']['output']>;
 };
 
+export type PsychScreenCitation = {
+  __typename?: 'PsychScreenCitation';
+  authors?: Maybe<Scalars['String']['output']>;
+  doi?: Maybe<Scalars['String']['output']>;
+  researchId: Scalars['Int']['output'];
+  title: Scalars['String']['output'];
+  year?: Maybe<Scalars['Int']['output']>;
+};
+
+export type PsychScreenCritique = {
+  __typename?: 'PsychScreenCritique';
+  refined?: Maybe<Scalars['Boolean']['output']>;
+  scores?: Maybe<PsychScreenScores>;
+  weakSections?: Maybe<Array<Scalars['String']['output']>>;
+};
+
+export type PsychScreenDifferentialItem = {
+  __typename?: 'PsychScreenDifferentialItem';
+  condition: Scalars['String']['output'];
+  likelihood: Scalars['Float']['output'];
+  rationaleRo: Scalars['String']['output'];
+};
+
+export type PsychScreenObservationWindow = {
+  __typename?: 'PsychScreenObservationWindow';
+  daysSinceStop?: Maybe<Scalars['Int']['output']>;
+  phase: Scalars['String']['output'];
+  reassessInDays?: Maybe<Scalars['Int']['output']>;
+};
+
+export enum PsychScreenRecommendation {
+  ConsultRecommended = 'CONSULT_RECOMMENDED',
+  NoConsultNeeded = 'NO_CONSULT_NEEDED',
+  UrgentConsult = 'URGENT_CONSULT',
+  WaitAndObserve = 'WAIT_AND_OBSERVE'
+}
+
+export type PsychScreenRedFlag = {
+  __typename?: 'PsychScreenRedFlag';
+  category: Scalars['String']['output'];
+  evidenceRef?: Maybe<Scalars['String']['output']>;
+  labelRo?: Maybe<Scalars['String']['output']>;
+};
+
+export type PsychScreenScores = {
+  __typename?: 'PsychScreenScores';
+  actionability?: Maybe<Scalars['Int']['output']>;
+  advisoryTone?: Maybe<Scalars['Int']['output']>;
+  evidenceGrounding?: Maybe<Scalars['Int']['output']>;
+  iatrogenicAlignment?: Maybe<Scalars['Int']['output']>;
+  redFlagFidelity?: Maybe<Scalars['Int']['output']>;
+  romanianFluency?: Maybe<Scalars['Int']['output']>;
+};
+
+export type PsychScreenSupportingObservation = {
+  __typename?: 'PsychScreenSupportingObservation';
+  evidenceRef?: Maybe<Scalars['String']['output']>;
+  summaryRo: Scalars['String']['output'];
+};
+
+export type PsychScreeningAssessment = {
+  __typename?: 'PsychScreeningAssessment';
+  citations: Array<PsychScreenCitation>;
+  confidence: Scalars['Float']['output'];
+  createdAt: Scalars['String']['output'];
+  critique?: Maybe<PsychScreenCritique>;
+  differential: Array<PsychScreenDifferentialItem>;
+  familyMemberId: Scalars['Int']['output'];
+  iatrogenicLikelihood?: Maybe<Scalars['Float']['output']>;
+  id: Scalars['Int']['output'];
+  jobId?: Maybe<Scalars['String']['output']>;
+  language: Scalars['String']['output'];
+  model?: Maybe<Scalars['String']['output']>;
+  observationWindow?: Maybe<PsychScreenObservationWindow>;
+  rationale: Scalars['String']['output'];
+  recommendation: PsychScreenRecommendation;
+  recommendedNextSteps: Array<Scalars['String']['output']>;
+  redFlags: Array<PsychScreenRedFlag>;
+  supportingObservations: Array<PsychScreenSupportingObservation>;
+};
+
 export type PublicDiscussionGuideResult = {
   __typename?: 'PublicDiscussionGuideResult';
   entryTitle?: Maybe<Scalars['String']['output']>;
@@ -3212,6 +3307,7 @@ export type Query = {
   journalEntries: Array<JournalEntry>;
   journalEntry?: Maybe<JournalEntry>;
   latestBogdanDiscussion?: Maybe<BogdanDiscussionGuide>;
+  latestPsychScreen?: Maybe<PsychScreeningAssessment>;
   medicalLetters: Array<MedicalLetter>;
   medication?: Maybe<Medication>;
   medicationDeepResearch?: Maybe<MedicationDeepResearch>;
@@ -3224,6 +3320,7 @@ export type Query = {
   notes: Array<Note>;
   protocol?: Maybe<ProtocolDetail>;
   protocols: Array<Protocol>;
+  psychScreens: Array<PsychScreeningAssessment>;
   publicDiscussionGuide?: Maybe<PublicDiscussionGuideResult>;
   recommendedBooks: Array<RecommendedBook>;
   regimenAnalysis?: Maybe<RegimenAnalysis>;
@@ -3481,6 +3578,11 @@ export type QueryJournalEntryArgs = {
 };
 
 
+export type QueryLatestPsychScreenArgs = {
+  familyMemberId?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
 export type QueryMedicalLettersArgs = {
   doctorId: Scalars['ID']['input'];
 };
@@ -3511,6 +3613,11 @@ export type QueryNotesArgs = {
 
 export type QueryProtocolArgs = {
   slug: Scalars['String']['input'];
+};
+
+
+export type QueryPsychScreensArgs = {
+  familyMemberId?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -5097,6 +5204,14 @@ export type GenerateParentAdviceMutationVariables = Exact<{
 
 export type GenerateParentAdviceMutation = { __typename?: 'Mutation', generateParentAdvice: { __typename?: 'GenerateParentAdviceResult', success: boolean, message?: string | null, parentAdvice?: string | null } };
 
+export type GeneratePsychScreenMutationVariables = Exact<{
+  familyMemberId?: InputMaybe<Scalars['Int']['input']>;
+  language?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type GeneratePsychScreenMutation = { __typename?: 'Mutation', generatePsychScreen: { __typename?: 'GeneratePsychScreenResult', success: boolean, message?: string | null, jobId?: string | null } };
+
 export type GenerateRecommendedAudiobooksMutationVariables = Exact<{
   goalId?: InputMaybe<Scalars['Int']['input']>;
   familyMemberId?: InputMaybe<Scalars['Int']['input']>;
@@ -5554,6 +5669,13 @@ export type LatestBogdanDiscussionQueryVariables = Exact<{ [key: string]: never;
 
 export type LatestBogdanDiscussionQuery = { __typename?: 'Query', latestBogdanDiscussion?: { __typename?: 'BogdanDiscussionGuide', id: number, familyMemberId: number, childAge?: number | null, behaviorSummary: string, model: string, createdAt: string, developmentalContext: { __typename?: 'DevelopmentalContext', stage: string, explanation: string, normalizedBehavior: string, researchBasis?: string | null }, conversationStarters: Array<{ __typename?: 'ConversationStarter', opener: string, context: string, ageAppropriateNote?: string | null }>, talkingPoints: Array<{ __typename?: 'TalkingPoint', point: string, explanation: string, researchBacking?: string | null, citations?: Array<{ __typename?: 'Citation', researchId: number, doi?: string | null, title: string, year?: number | null, authors?: string | null, url?: string | null }> | null, microScript?: { __typename?: 'MicroScript', parentOpener: string, childResponse: string, parentFollowUp: string } | null }>, languageGuide: { __typename?: 'LanguageGuide', whatToSay: Array<{ __typename?: 'LanguageExample', phrase: string, reason: string, alternative?: string | null }>, whatNotToSay: Array<{ __typename?: 'LanguageExample', phrase: string, reason: string, alternative?: string | null }> }, anticipatedReactions: Array<{ __typename?: 'AnticipatedReaction', reaction: string, likelihood: string, howToRespond: string }>, followUpPlan: Array<{ __typename?: 'FollowUpStep', action: string, timing: string, description: string }>, citations: Array<{ __typename?: 'Citation', researchId: number, doi?: string | null, title: string, year?: number | null, authors?: string | null, url?: string | null }>, critique?: { __typename?: 'DiscussionGuideCritique', weakSections: Array<string>, refined: boolean, scores: { __typename?: 'CritiqueScores', romanianFluency: number, actionability: number, citationCoverage: number, ageAppropriateness: number, internalConsistency: number, microScriptDepth: number } } | null } | null };
 
+export type LatestPsychScreenQueryVariables = Exact<{
+  familyMemberId?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type LatestPsychScreenQuery = { __typename?: 'Query', latestPsychScreen?: { __typename?: 'PsychScreeningAssessment', id: number, familyMemberId: number, recommendation: PsychScreenRecommendation, confidence: number, iatrogenicLikelihood?: number | null, rationale: string, recommendedNextSteps: Array<string>, language: string, model?: string | null, jobId?: string | null, createdAt: string, redFlags: Array<{ __typename?: 'PsychScreenRedFlag', category: string, labelRo?: string | null, evidenceRef?: string | null }>, supportingObservations: Array<{ __typename?: 'PsychScreenSupportingObservation', summaryRo: string, evidenceRef?: string | null }>, differential: Array<{ __typename?: 'PsychScreenDifferentialItem', condition: string, likelihood: number, rationaleRo: string }>, observationWindow?: { __typename?: 'PsychScreenObservationWindow', phase: string, daysSinceStop?: number | null, reassessInDays?: number | null } | null, citations: Array<{ __typename?: 'PsychScreenCitation', researchId: number, title: string, doi?: string | null, year?: number | null, authors?: string | null }>, critique?: { __typename?: 'PsychScreenCritique', weakSections?: Array<string> | null, refined?: boolean | null, scores?: { __typename?: 'PsychScreenScores', romanianFluency?: number | null, iatrogenicAlignment?: number | null, evidenceGrounding?: number | null, redFlagFidelity?: number | null, advisoryTone?: number | null, actionability?: number | null } | null } | null } | null };
+
 export type LinkContactToIssueMutationVariables = Exact<{
   issueId: Scalars['Int']['input'];
   contactId: Scalars['Int']['input'];
@@ -5644,6 +5766,13 @@ export type ProtocolsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type ProtocolsQuery = { __typename?: 'Query', protocols: Array<{ __typename?: 'Protocol', id: string, name: string, slug: string, targetAreas: Array<string>, status: string, notes?: string | null, startDate?: string | null, endDate?: string | null, supplementCount: number, createdAt: string }> };
+
+export type PsychScreensQueryVariables = Exact<{
+  familyMemberId?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type PsychScreensQuery = { __typename?: 'Query', psychScreens: Array<{ __typename?: 'PsychScreeningAssessment', id: number, familyMemberId: number, recommendation: PsychScreenRecommendation, confidence: number, iatrogenicLikelihood?: number | null, createdAt: string, observationWindow?: { __typename?: 'PsychScreenObservationWindow', phase: string, daysSinceStop?: number | null, reassessInDays?: number | null } | null }> };
 
 export type RecordCognitiveBaselineMutationVariables = Exact<{
   protocolId: Scalars['ID']['input'];
@@ -10599,6 +10728,42 @@ export function useGenerateParentAdviceMutation(baseOptions?: Apollo.MutationHoo
 export type GenerateParentAdviceMutationHookResult = ReturnType<typeof useGenerateParentAdviceMutation>;
 export type GenerateParentAdviceMutationResult = Apollo.MutationResult<GenerateParentAdviceMutation>;
 export type GenerateParentAdviceMutationOptions = Apollo.BaseMutationOptions<GenerateParentAdviceMutation, GenerateParentAdviceMutationVariables>;
+export const GeneratePsychScreenDocument = gql`
+    mutation GeneratePsychScreen($familyMemberId: Int, $language: String) {
+  generatePsychScreen(familyMemberId: $familyMemberId, language: $language) {
+    success
+    message
+    jobId
+  }
+}
+    `;
+export type GeneratePsychScreenMutationFn = Apollo.MutationFunction<GeneratePsychScreenMutation, GeneratePsychScreenMutationVariables>;
+
+/**
+ * __useGeneratePsychScreenMutation__
+ *
+ * To run a mutation, you first call `useGeneratePsychScreenMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useGeneratePsychScreenMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [generatePsychScreenMutation, { data, loading, error }] = useGeneratePsychScreenMutation({
+ *   variables: {
+ *      familyMemberId: // value for 'familyMemberId'
+ *      language: // value for 'language'
+ *   },
+ * });
+ */
+export function useGeneratePsychScreenMutation(baseOptions?: Apollo.MutationHookOptions<GeneratePsychScreenMutation, GeneratePsychScreenMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<GeneratePsychScreenMutation, GeneratePsychScreenMutationVariables>(GeneratePsychScreenDocument, options);
+      }
+export type GeneratePsychScreenMutationHookResult = ReturnType<typeof useGeneratePsychScreenMutation>;
+export type GeneratePsychScreenMutationResult = Apollo.MutationResult<GeneratePsychScreenMutation>;
+export type GeneratePsychScreenMutationOptions = Apollo.BaseMutationOptions<GeneratePsychScreenMutation, GeneratePsychScreenMutationVariables>;
 export const GenerateRecommendedAudiobooksDocument = gql`
     mutation GenerateRecommendedAudiobooks($goalId: Int, $familyMemberId: Int) {
   generateRecommendedAudiobooks(goalId: $goalId, familyMemberId: $familyMemberId) {
@@ -15004,6 +15169,97 @@ export type LatestBogdanDiscussionQueryHookResult = ReturnType<typeof useLatestB
 export type LatestBogdanDiscussionLazyQueryHookResult = ReturnType<typeof useLatestBogdanDiscussionLazyQuery>;
 export type LatestBogdanDiscussionSuspenseQueryHookResult = ReturnType<typeof useLatestBogdanDiscussionSuspenseQuery>;
 export type LatestBogdanDiscussionQueryResult = Apollo.QueryResult<LatestBogdanDiscussionQuery, LatestBogdanDiscussionQueryVariables>;
+export const LatestPsychScreenDocument = gql`
+    query LatestPsychScreen($familyMemberId: Int) {
+  latestPsychScreen(familyMemberId: $familyMemberId) {
+    id
+    familyMemberId
+    recommendation
+    confidence
+    iatrogenicLikelihood
+    rationale
+    redFlags {
+      category
+      labelRo
+      evidenceRef
+    }
+    supportingObservations {
+      summaryRo
+      evidenceRef
+    }
+    differential {
+      condition
+      likelihood
+      rationaleRo
+    }
+    recommendedNextSteps
+    observationWindow {
+      phase
+      daysSinceStop
+      reassessInDays
+    }
+    citations {
+      researchId
+      title
+      doi
+      year
+      authors
+    }
+    critique {
+      scores {
+        romanianFluency
+        iatrogenicAlignment
+        evidenceGrounding
+        redFlagFidelity
+        advisoryTone
+        actionability
+      }
+      weakSections
+      refined
+    }
+    language
+    model
+    jobId
+    createdAt
+  }
+}
+    `;
+
+/**
+ * __useLatestPsychScreenQuery__
+ *
+ * To run a query within a React component, call `useLatestPsychScreenQuery` and pass it any options that fit your needs.
+ * When your component renders, `useLatestPsychScreenQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useLatestPsychScreenQuery({
+ *   variables: {
+ *      familyMemberId: // value for 'familyMemberId'
+ *   },
+ * });
+ */
+export function useLatestPsychScreenQuery(baseOptions?: Apollo.QueryHookOptions<LatestPsychScreenQuery, LatestPsychScreenQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<LatestPsychScreenQuery, LatestPsychScreenQueryVariables>(LatestPsychScreenDocument, options);
+      }
+export function useLatestPsychScreenLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<LatestPsychScreenQuery, LatestPsychScreenQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<LatestPsychScreenQuery, LatestPsychScreenQueryVariables>(LatestPsychScreenDocument, options);
+        }
+// @ts-ignore
+export function useLatestPsychScreenSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<LatestPsychScreenQuery, LatestPsychScreenQueryVariables>): Apollo.UseSuspenseQueryResult<LatestPsychScreenQuery, LatestPsychScreenQueryVariables>;
+export function useLatestPsychScreenSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<LatestPsychScreenQuery, LatestPsychScreenQueryVariables>): Apollo.UseSuspenseQueryResult<LatestPsychScreenQuery | undefined, LatestPsychScreenQueryVariables>;
+export function useLatestPsychScreenSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<LatestPsychScreenQuery, LatestPsychScreenQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<LatestPsychScreenQuery, LatestPsychScreenQueryVariables>(LatestPsychScreenDocument, options);
+        }
+export type LatestPsychScreenQueryHookResult = ReturnType<typeof useLatestPsychScreenQuery>;
+export type LatestPsychScreenLazyQueryHookResult = ReturnType<typeof useLatestPsychScreenLazyQuery>;
+export type LatestPsychScreenSuspenseQueryHookResult = ReturnType<typeof useLatestPsychScreenSuspenseQuery>;
+export type LatestPsychScreenQueryResult = Apollo.QueryResult<LatestPsychScreenQuery, LatestPsychScreenQueryVariables>;
 export const LinkContactToIssueDocument = gql`
     mutation LinkContactToIssue($issueId: Int!, $contactId: Int!) {
   linkContactToIssue(issueId: $issueId, contactId: $contactId) {
@@ -15715,6 +15971,59 @@ export type ProtocolsQueryHookResult = ReturnType<typeof useProtocolsQuery>;
 export type ProtocolsLazyQueryHookResult = ReturnType<typeof useProtocolsLazyQuery>;
 export type ProtocolsSuspenseQueryHookResult = ReturnType<typeof useProtocolsSuspenseQuery>;
 export type ProtocolsQueryResult = Apollo.QueryResult<ProtocolsQuery, ProtocolsQueryVariables>;
+export const PsychScreensDocument = gql`
+    query PsychScreens($familyMemberId: Int) {
+  psychScreens(familyMemberId: $familyMemberId) {
+    id
+    familyMemberId
+    recommendation
+    confidence
+    iatrogenicLikelihood
+    observationWindow {
+      phase
+      daysSinceStop
+      reassessInDays
+    }
+    createdAt
+  }
+}
+    `;
+
+/**
+ * __usePsychScreensQuery__
+ *
+ * To run a query within a React component, call `usePsychScreensQuery` and pass it any options that fit your needs.
+ * When your component renders, `usePsychScreensQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = usePsychScreensQuery({
+ *   variables: {
+ *      familyMemberId: // value for 'familyMemberId'
+ *   },
+ * });
+ */
+export function usePsychScreensQuery(baseOptions?: Apollo.QueryHookOptions<PsychScreensQuery, PsychScreensQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<PsychScreensQuery, PsychScreensQueryVariables>(PsychScreensDocument, options);
+      }
+export function usePsychScreensLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<PsychScreensQuery, PsychScreensQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<PsychScreensQuery, PsychScreensQueryVariables>(PsychScreensDocument, options);
+        }
+// @ts-ignore
+export function usePsychScreensSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<PsychScreensQuery, PsychScreensQueryVariables>): Apollo.UseSuspenseQueryResult<PsychScreensQuery, PsychScreensQueryVariables>;
+export function usePsychScreensSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<PsychScreensQuery, PsychScreensQueryVariables>): Apollo.UseSuspenseQueryResult<PsychScreensQuery | undefined, PsychScreensQueryVariables>;
+export function usePsychScreensSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<PsychScreensQuery, PsychScreensQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<PsychScreensQuery, PsychScreensQueryVariables>(PsychScreensDocument, options);
+        }
+export type PsychScreensQueryHookResult = ReturnType<typeof usePsychScreensQuery>;
+export type PsychScreensLazyQueryHookResult = ReturnType<typeof usePsychScreensLazyQuery>;
+export type PsychScreensSuspenseQueryHookResult = ReturnType<typeof usePsychScreensSuspenseQuery>;
+export type PsychScreensQueryResult = Apollo.QueryResult<PsychScreensQuery, PsychScreensQueryVariables>;
 export const RecordCognitiveBaselineDocument = gql`
     mutation RecordCognitiveBaseline($protocolId: ID!, $input: CognitiveScoresInput!) {
   recordCognitiveBaseline(protocolId: $protocolId, input: $input) {

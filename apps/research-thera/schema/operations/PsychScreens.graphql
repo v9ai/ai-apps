@@ -1,0 +1,15 @@
+query PsychScreens($familyMemberId: Int) {
+  psychScreens(familyMemberId: $familyMemberId) {
+    id
+    familyMemberId
+    recommendation
+    confidence
+    iatrogenicLikelihood
+    observationWindow {
+      phase
+      daysSinceStop
+      reassessInDays
+    }
+    createdAt
+  }
+}
