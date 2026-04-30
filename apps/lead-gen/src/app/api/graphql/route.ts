@@ -132,8 +132,22 @@ function resolveSession(request: NextRequest): Promise<CachedSession> {
   if (cached) return cached;
 
   const promise = (async (): Promise<CachedSession> => {
-    if (process.env.NODE_ENV === "development" && process.env.ADMIN_EMAIL) {
-      return { id: "dev-local", email: process.env.ADMIN_EMAIL };
+    // SECURITY: previously this branch returned an admin identity for *every*
+    // request whenever NODE_ENV=development AND ADMIN_EMAIL was set. That meant
+    // any recipient hitting /api/graphql against a `pnpm dev` server (e.g. when
+    // exposed via a Cloudflare tunnel or proxied preview) was auto-promoted to
+    // the operator's identity — recipients clicking outreach links to such a
+    // host would render the UI "logged in as the sender". Now the bypass only
+    // engages when the caller already proves same-origin via a verified Better
+    // Auth session OR an explicit opt-in env var (`ALLOW_DEV_AUTH_BYPASS=1`)
+    // is set. The opt-in is intended for offline test harnesses only and must
+    // never be set in any externally reachable deployment.
+    const devBypass =
+      process.env.NODE_ENV === "development" &&
+      process.env.ALLOW_DEV_AUTH_BYPASS === "1" &&
+      process.env.ADMIN_EMAIL;
+    if (devBypass) {
+      return { id: "dev-local", email: process.env.ADMIN_EMAIL as string };
     }
     try {
       const session = await auth.api.getSession({ headers: request.headers });
