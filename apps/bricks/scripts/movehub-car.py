@@ -3,6 +3,19 @@ from pybricks.pupdevices import Motor, Remote
 from pybricks.parameters import Port, Button, Color, Stop
 from pybricks.tools import wait
 
+# --- Config ---------------------------------------------------------------
+# Drive: ports A + B run as a tank-style pair (one inverted).
+# Steering: optional motor on port D, returns to center on release.
+DRIVE_SPEED = 1000        # deg/s for drive motors
+STEER_SPEED = 500         # deg/s for steering motor
+STEER_ANGLE = 45          # max steering angle, ± degrees
+
+# Battery monitor
+BATTERY_LOW_MV = 7200
+CHECK_INTERVAL_MS = 5000
+LOW_BATTERY_WARN_MS = 60000
+
+# --- Hardware -------------------------------------------------------------
 hub = MoveHub()
 
 motor_a = Motor(Port.A)
@@ -19,21 +32,17 @@ remote = Remote(timeout=None)
 hub.light.on(Color.GREEN)
 wait(500)
 
-DRIVE_SPEED = 10000  # max speed, deg/s (clamped to hardware limit)
-STEER_SPEED = 500    # deg/s for steering movement
-STEER_ANGLE = 45     # fixed 45° left/right
-
+# --- State ----------------------------------------------------------------
 was_steering = False
-
-# Battery monitoring
-BATTERY_LOW_MV = 7200
-CHECK_INTERVAL_MS = 5000
-LOW_BATTERY_WARN_MS = 60000
-
 low_battery_timer = 0
 last_check = 0
 battery_warning = False
 
+# --- Main loop ------------------------------------------------------------
+# Button map:
+#   RIGHT_PLUS / RIGHT_MINUS → drive forward / backward
+#   LEFT_PLUS  / LEFT_MINUS  → steer ±STEER_ANGLE (auto-center on release)
+#   CENTER                   → emergency stop
 while True:
     pressed = remote.buttons.pressed()
 
@@ -43,10 +52,11 @@ while True:
         if steering:
             steering.stop()
         hub.light.on(Color.RED)
+        remote.light.on(Color.RED)
         wait(50)
         continue
 
-    # RIGHT +/- : drive forward / backward
+    # Drive
     if Button.RIGHT_PLUS in pressed:
         motor_a.run(DRIVE_SPEED)
         motor_b.run(-DRIVE_SPEED)
@@ -57,7 +67,7 @@ while True:
         motor_a.stop()
         motor_b.stop()
 
-    # LEFT +/- : fixed 30° steering, auto-center on release
+    # Steer
     is_steering = Button.LEFT_PLUS in pressed or Button.LEFT_MINUS in pressed
     if steering:
         if Button.LEFT_PLUS in pressed:
@@ -80,7 +90,7 @@ while True:
             low_battery_timer += CHECK_INTERVAL_MS
             battery_warning = low_battery_timer <= LOW_BATTERY_WARN_MS
 
-    # Hub light feedback (battery warning overrides)
+    # Hub light: battery warning > driving direction > idle
     if battery_warning:
         hub.light.on(Color.YELLOW)
     elif Button.RIGHT_PLUS in pressed:
