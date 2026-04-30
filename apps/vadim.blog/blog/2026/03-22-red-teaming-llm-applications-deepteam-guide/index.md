@@ -19,6 +19,8 @@ The stakes are not hypothetical. Stanford researchers found that GPT-4 **halluci
 
 Red teaming is the disciplined, automated process of finding these systemic flaws before they reach production. In this guide, I'll walk through a production implementation using [DeepTeam](https://github.com/confident-ai/deepteam), an open-source adversarial testing framework. We'll move beyond theory into the mechanics of architecting your judge model, enforcing safety thresholds in CI, and grounding everything in two real case studies: a high-stakes therapeutic audio agent for children, and a [6-agent adversarial pipeline](https://github.com/v9ai/ai-apps/tree/main/apps/law-adversarial) that stress-tests legal briefs using the same adversarial structure that has powered legal systems for centuries.
 
+<!-- truncate -->
+
 ## What DeepTeam Is and Why You Need It Now
 [DeepTeam](https://github.com/confident-ai/deepteam) is a penetration testing toolkit purpose-built for AI systems. While its sibling project, DeepEval, focuses on quality metrics like hallucination rates, DeepTeam focuses exclusively on safety: can your agent be manipulated? Its architecture is built on four components: **Vulnerabilities** (what you test for), **Attacks** (how adversarial inputs are generated), **Model Callbacks** (your target agent), and **Risk Assessment** (scoring and reporting).
 

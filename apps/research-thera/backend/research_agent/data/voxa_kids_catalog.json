@@ -1,2146 +1,3568 @@
 {
   "count": 428,
-  "source": "sitemap_books_ro.xml.gz (filtered kids heuristic)",
+  "good_count": 40,
+  "broken_count": 388,
+  "source": "voxa.ro product pages (playwright scrape)",
   "audiobooks": [
     {
       "slug": "1001-nopti-de-cazare-intr-un-singur-candidat",
       "url": "https://voxa.ro/audiobooks/1001-nopti-de-cazare-intr-un-singur-candidat",
-      "title_hint": "1001 Nopti De Cazare Intr Un Singur Candidat"
+      "title_hint": "1001 Nopti De Cazare Intr Un Singur Candidat",
+      "title": "1001 nopți de cazare într-un singur candidat",
+      "authors": [
+        "Cațavencii"
+      ],
+      "narrators": [
+        "Robert Mihăilescu"
+      ],
+      "duration_text": "3 min",
+      "duration_minutes": 3,
+      "description": "Descarcă audiobook-urile preferate și bucură-te de ele chiar și când nu ai conexiune la internet.",
+      "cover_url": "https://media.voxa.ro/voxa-production/uploads/resource/image/145f5dad-31cf-42c6-805c-80f333fdbefc/default_160x160_coperta_1001_nopti_de_cazare_intr_un_singur_candidat_1713522829.jpg",
+      "collection": null,
+      "publisher": "Cațavencii",
+      "categories": null,
+      "age_band": null,
+      "broken": false
     },
     {
       "slug": "11-octombrie-in-cautarea-lui-mickey-de-cristal",
       "url": "https://voxa.ro/audiobooks/11-octombrie-in-cautarea-lui-mickey-de-cristal",
-      "title_hint": "11 Octombrie In Cautarea Lui Mickey De Cristal"
+      "title_hint": "11 Octombrie In Cautarea Lui Mickey De Cristal",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "12-august-aventura-in-spatiu",
       "url": "https://voxa.ro/audiobooks/12-august-aventura-in-spatiu",
-      "title_hint": "12 August Aventura In Spatiu"
+      "title_hint": "12 August Aventura In Spatiu",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "17-iulie-aripa-zanei",
       "url": "https://voxa.ro/audiobooks/17-iulie-aripa-zanei",
-      "title_hint": "17 Iulie Aripa Zanei"
+      "title_hint": "17 Iulie Aripa Zanei",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "17-septembrie-intoarcerea-lui-peter-pan",
       "url": "https://voxa.ro/audiobooks/17-septembrie-intoarcerea-lui-peter-pan",
-      "title_hint": "17 Septembrie Intoarcerea Lui Peter Pan"
+      "title_hint": "17 Septembrie Intoarcerea Lui Peter Pan",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "2-aprilie-mickey-si-oul-fermecat",
       "url": "https://voxa.ro/audiobooks/2-aprilie-mickey-si-oul-fermecat",
-      "title_hint": "2 Aprilie Mickey Si Oul Fermecat"
+      "title_hint": "2 Aprilie Mickey Si Oul Fermecat",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "2-noiembrie-superaventura-lui-mickey",
       "url": "https://voxa.ro/audiobooks/2-noiembrie-superaventura-lui-mickey",
-      "title_hint": "2 Noiembrie Superaventura Lui Mickey"
+      "title_hint": "2 Noiembrie Superaventura Lui Mickey",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "20-iunie-matusa-aventuroasa",
       "url": "https://voxa.ro/audiobooks/20-iunie-matusa-aventuroasa",
-      "title_hint": "20 Iunie Matusa Aventuroasa"
+      "title_hint": "20 Iunie Matusa Aventuroasa",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "20-septembrie-ferma-lui-mickey-si-donald",
       "url": "https://voxa.ro/audiobooks/20-septembrie-ferma-lui-mickey-si-donald",
-      "title_hint": "20 Septembrie Ferma Lui Mickey Si Donald"
+      "title_hint": "20 Septembrie Ferma Lui Mickey Si Donald",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "23-octombrie-expozitia-de-arta-a-lui-mickey",
       "url": "https://voxa.ro/audiobooks/23-octombrie-expozitia-de-arta-a-lui-mickey",
-      "title_hint": "23 Octombrie Expozitia De Arta A Lui Mickey"
+      "title_hint": "23 Octombrie Expozitia De Arta A Lui Mickey",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "24-decembrie-mickey-il-salveaza-pe-mos-craciun",
       "url": "https://voxa.ro/audiobooks/24-decembrie-mickey-il-salveaza-pe-mos-craciun",
-      "title_hint": "24 Decembrie Mickey Il Salveaza Pe Mos Craciun"
+      "title_hint": "24 Decembrie Mickey Il Salveaza Pe Mos Craciun",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "25-aprilie-cometa-lui-mickey",
       "url": "https://voxa.ro/audiobooks/25-aprilie-cometa-lui-mickey",
-      "title_hint": "25 Aprilie Cometa Lui Mickey"
+      "title_hint": "25 Aprilie Cometa Lui Mickey",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "26-aprilie-hook-scufita-rosie",
       "url": "https://voxa.ro/audiobooks/26-aprilie-hook-scufita-rosie",
-      "title_hint": "26 Aprilie Hook Scufita Rosie"
+      "title_hint": "26 Aprilie Hook Scufita Rosie",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "26-noiembrie-aventura-gainii-de-la-club",
       "url": "https://voxa.ro/audiobooks/26-noiembrie-aventura-gainii-de-la-club",
-      "title_hint": "26 Noiembrie Aventura Gainii De La Club"
+      "title_hint": "26 Noiembrie Aventura Gainii De La Club",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "27-martie-mesajul-lui-mickey-de-pe-marte",
       "url": "https://voxa.ro/audiobooks/27-martie-mesajul-lui-mickey-de-pe-marte",
-      "title_hint": "27 Martie Mesajul Lui Mickey De Pe Marte"
+      "title_hint": "27 Martie Mesajul Lui Mickey De Pe Marte",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "29-octombrie-marele-concert-al-trupei-lui-mickey",
       "url": "https://voxa.ro/audiobooks/29-octombrie-marele-concert-al-trupei-lui-mickey",
-      "title_hint": "29 Octombrie Marele Concert Al Trupei Lui Mickey"
+      "title_hint": "29 Octombrie Marele Concert Al Trupei Lui Mickey",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "3-iunie-mickey-merge-la-pescuit",
       "url": "https://voxa.ro/audiobooks/3-iunie-mickey-merge-la-pescuit",
-      "title_hint": "3 Iunie Mickey Merge La Pescuit"
+      "title_hint": "3 Iunie Mickey Merge La Pescuit",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "3-mai-mainile-ajutatoare-ale-lui-mickey",
       "url": "https://voxa.ro/audiobooks/3-mai-mainile-ajutatoare-ale-lui-mickey",
-      "title_hint": "3 Mai Mainile Ajutatoare Ale Lui Mickey"
+      "title_hint": "3 Mai Mainile Ajutatoare Ale Lui Mickey",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "3-martie-mickey-in-tara-minunilor",
       "url": "https://voxa.ro/audiobooks/3-martie-mickey-in-tara-minunilor",
-      "title_hint": "3 Martie Mickey In Tara Minunilor"
+      "title_hint": "3 Martie Mickey In Tara Minunilor",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "3-octombrie-scufita-rosie-minnie",
       "url": "https://voxa.ro/audiobooks/3-octombrie-scufita-rosie-minnie",
-      "title_hint": "3 Octombrie Scufita Rosie Minnie"
+      "title_hint": "3 Octombrie Scufita Rosie Minnie",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "31-decembrie-aventura-lui-donald-la-patinoar",
       "url": "https://voxa.ro/audiobooks/31-decembrie-aventura-lui-donald-la-patinoar",
-      "title_hint": "31 Decembrie Aventura Lui Donald La Patinoar"
+      "title_hint": "31 Decembrie Aventura Lui Donald La Patinoar",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "31-ianuarie-slujba-cea-mare-a-lui-mickey",
       "url": "https://voxa.ro/audiobooks/31-ianuarie-slujba-cea-mare-a-lui-mickey",
-      "title_hint": "31 Ianuarie Slujba Cea Mare A Lui Mickey"
+      "title_hint": "31 Ianuarie Slujba Cea Mare A Lui Mickey",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "31-iulie-trenuletul-lui-mickey",
       "url": "https://voxa.ro/audiobooks/31-iulie-trenuletul-lui-mickey",
-      "title_hint": "31 Iulie Trenuletul Lui Mickey"
+      "title_hint": "31 Iulie Trenuletul Lui Mickey",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "4-50-from-paddington",
       "url": "https://voxa.ro/audiobooks/4-50-from-paddington",
-      "title_hint": "4 50 From Paddington"
+      "title_hint": "4 50 From Paddington",
+      "title": "4.50 From Paddington",
+      "authors": [
+        "Agatha Christie"
+      ],
+      "narrators": [
+        "Jane Collingwood"
+      ],
+      "duration_text": "3h 10m",
+      "duration_minutes": 190,
+      "description": "Collins brings the Queen of Crime, Agatha Christie, to English language learners.Collins brings the Queen of Crime, Agatha Christie, to English language learners.Agatha Christie is the most widely published author of all time and in any language. Now Collins has adapted her famous detective novels for English language learners. These carefully abridged versions are shorter with the language targeted at learners of English.A woman is murdered on a train.When Miss Marple telephones her friend Lucy Eyelesbarrowand asks her to go undercover to investigate, Lucy quickly accepts the challenge!Who is the dead woman? What was the motive for her murder? And why was the body thrown from the train and later hidden at Rutherford Hall?When a second murder takes place, everyone at Rutherford Hall seems in danger, so Miss Marple sets a trap to catch the murderer.Agatha Christie is known throughout the world as the Queen of Crime. Her books have sold over a billion copies in English with another billion in over 70 foreign languages. She is the most widely published author of all time and in any language, outsold only by the Bible and Shakespeare. She is the author of 80 crime novels and short stor",
+      "cover_url": "https://media.voxa.ro/voxa-production/uploads/resource/image/65be941f-4ad5-4d74-9977-909e595dd16a/default_160x160_coperta_4_50_from_paddington_1674660213.jpg",
+      "collection": null,
+      "publisher": "HarperCollins Publishers",
+      "categories": null,
+      "age_band": null,
+      "broken": false
     },
     {
       "slug": "4-50-from-paddington-2",
       "url": "https://voxa.ro/audiobooks/4-50-from-paddington-2",
-      "title_hint": "4 50 From Paddington 2"
+      "title_hint": "4 50 From Paddington 2",
+      "title": "4.50 from Paddington",
+      "authors": [
+        "Agatha Christie"
+      ],
+      "narrators": [
+        "Emilia Fox"
+      ],
+      "duration_text": "8h 8m",
+      "duration_minutes": 488,
+      "description": "Two trainsSide by side for a brief momentIn that moment, a murderTwo trainsSide by side for a brief momentIn that moment, a murderElspeth McGillicuddy is positive she witnessed a man strangling a woman to death.But it was only the merest glimpse through a carriage window as the trains drew parallel.She is the only witness, there are no suspects, and, most importantly, there is no corpse.Who, apart from her friend Jane Marple, would take her seriously?Never underestimate Miss Marple‘All crime writers around the globe owe Agatha Christie a massive debt.’Peter James‘Never a dull moment.’The Times‘Without a doubt, the greatest mystery writer of all time’ – Ragnar Jonasson‘A hundred years after her first novel, and we are all still standing in her shadow’ – Andrew Taylor‘She gives us an insight into human nature that few, if any, have surpassed’ – Susan Lewis‘Dame Agatha has sold more books than all besides Shakespeare and the Bible’ – David Baldacci‘All crime fiction writers around the globe owe Agatha Christie a massive debt’ – Peter James‘Reading a perfectly plotted Agatha Christie is like crunching into a perfect apple: that pure, crisp, absolute satisfaction.’ – Tana FrenchAgatha C",
+      "cover_url": "https://media.voxa.ro/voxa-production/uploads/resource/image/dfd4cde9-8758-4866-8ae5-4839ea16f2fb/default_160x160_coperta_4_50_from_paddington_1674725918.jpg",
+      "collection": null,
+      "publisher": "HarperCollins Publishers",
+      "categories": null,
+      "age_band": null,
+      "broken": false
     },
     {
       "slug": "4-50-from-paddington-3",
       "url": "https://voxa.ro/audiobooks/4-50-from-paddington-3",
-      "title_hint": "4 50 From Paddington 3"
+      "title_hint": "4 50 From Paddington 3",
+      "title": "4.50 From Paddington",
+      "authors": [
+        "Agatha Christie"
+      ],
+      "narrators": [
+        "Jane Collingwood"
+      ],
+      "duration_text": "3h 25m",
+      "duration_minutes": 205,
+      "description": "Collins brings the Queen of Crime, Agatha Christie, to English language learners.",
+      "cover_url": "https://media.voxa.ro/voxa-production/uploads/resource/image/ec4a5096-7c6a-4978-b191-2c0cc75ba3bd/default_160x160_coperta_4_50_from_paddington_1674730276.jpg",
+      "collection": null,
+      "publisher": "HarperCollins Publishers",
+      "categories": null,
+      "age_band": null,
+      "broken": false
     },
     {
       "slug": "6-octombrie-drumetia-lui-mickey",
       "url": "https://voxa.ro/audiobooks/6-octombrie-drumetia-lui-mickey",
-      "title_hint": "6 Octombrie Drumetia Lui Mickey"
+      "title_hint": "6 Octombrie Drumetia Lui Mickey",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "6-septembrie-mickey-si-vrejul-de-fasole",
       "url": "https://voxa.ro/audiobooks/6-septembrie-mickey-si-vrejul-de-fasole",
-      "title_hint": "6 Septembrie Mickey Si Vrejul De Fasole"
+      "title_hint": "6 Septembrie Mickey Si Vrejul De Fasole",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "7-iulie-aventuri-in-tabara",
       "url": "https://voxa.ro/audiobooks/7-iulie-aventuri-in-tabara",
-      "title_hint": "7 Iulie Aventuri In Tabara"
+      "title_hint": "7 Iulie Aventuri In Tabara",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "9-iunie-mickey-la-vanatoare-de-comori",
       "url": "https://voxa.ro/audiobooks/9-iunie-mickey-la-vanatoare-de-comori",
-      "title_hint": "9 Iunie Mickey La Vanatoare De Comori"
+      "title_hint": "9 Iunie Mickey La Vanatoare De Comori",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "a-bear-called-paddington",
       "url": "https://voxa.ro/audiobooks/a-bear-called-paddington",
-      "title_hint": "A Bear Called Paddington"
+      "title_hint": "A Bear Called Paddington",
+      "title": "A Bear Called Paddington",
+      "authors": [
+        "Michael Bond"
+      ],
+      "narrators": [
+        "Stephen Fry"
+      ],
+      "duration_text": "2h 39m",
+      "duration_minutes": 159,
+      "description": "The classic story of Paddington, the bear from Darkest Peru, who was found lost on Paddington Station.",
+      "cover_url": "https://media.voxa.ro/voxa-production/uploads/resource/image/767bf68d-02c2-4b85-b862-c16d17cc0632/default_160x160_coperta_a_bear_called_paddington_1674641554.jpg",
+      "collection": null,
+      "publisher": "HarperCollins Publishers",
+      "categories": null,
+      "age_band": null,
+      "broken": false
     },
     {
       "slug": "a-single-breath-2",
       "url": "https://voxa.ro/audiobooks/a-single-breath-2",
-      "title_hint": "A Single Breath 2"
+      "title_hint": "A Single Breath 2",
+      "title": "A Single Breath",
+      "authors": [
+        "Lucy Clarke"
+      ],
+      "narrators": [
+        "Noreen Leighton"
+      ],
+      "duration_text": "11h 48m",
+      "duration_minutes": 708,
+      "description": "The deeper the water, the darker the secretsThe deeper the water, the darker the secretsThere were so many times I thought about telling you the truth, Eva. What stopped me was always the same thing…When Eva’s husband Jackson tragically drowns, she longs to meet his estranged family. The journey takes her to Jackson’s brother’s doorstep on a remote Tasmanian island. As strange details about her husband’s past begin to emerge, memories of the man she married start slipping through her fingers like sand, as everything she ever knew and loved about him is thrown into question. Now she’s no longer sure whether it was Jackson she fell in love with – or someone else entirely…The truth is, it was all a lie . . .Praise for THE SEA SISTERS“a terrific summer read” Richard & Judy Summer Book Club‘Essential reading if you have a sister, as Clarke has totally nailed the complexities of that relationship. It’s perfectly paced …oh, you’ll want to quit your job and go travelling’. HEAT‘You don’t have to go on your hols to appreciate this amazing beach read – the captivating story will send you to far-flung, exotic destinations… A gripping, unpredictable page-turner.’ NOW‘Lucy Clarke’s debut novel ",
+      "cover_url": "https://media.voxa.ro/voxa-production/uploads/resource/image/8a9ee455-fc99-4066-aca0-464197b777ec/default_160x160_coperta_a_single_breath_1674647017.jpg",
+      "collection": null,
+      "publisher": "HarperCollins Publishers",
+      "categories": null,
+      "age_band": null,
+      "broken": false
     },
     {
       "slug": "a-single-thread",
       "url": "https://voxa.ro/audiobooks/a-single-thread",
-      "title_hint": "A Single Thread"
+      "title_hint": "A Single Thread",
+      "title": "A Single Thread",
+      "authors": [
+        "Tracy Chevalier"
+      ],
+      "narrators": [
+        "Fenella Woolgar"
+      ],
+      "duration_text": "10h 51m",
+      "duration_minutes": 651,
+      "description": "FROM THE GLOBALLY BESTSELLING AUTHOR OF GIRL WITH A PEARL EARRING‘Bittersweet … dazzling’ Guardian‘Deeply pleasurable … the ending made me cry’ The Times‘Told with a wealth of detail and narrative intensity’ Penelope LivelyFROM THE GLOBALLY BESTSELLING AUTHOR OF GIRL WITH A PEARL EARRING‘Bittersweet … dazzling’ Guardian‘Deeply pleasurable … the ending made me cry’ The Times‘Told with a wealth of detail and narrative intensity’ Penelope LivelyViolet is 38.The First World War took everything from her. Her brother, her fiancé – and her future. She is now considered a ‘surplus woman’.But Violet is also fiercely independent and determined. Escaping her suffocating mother, she moves to Winchester to start a new life –a change that will require courage, resilience and acts of quiet rebellion. And when whispers of another world war surface, she must live with a secret that could change everything…‘Bittersweet … dazzling’ Guardian‘Tracy Chevalier shows once again her ability to illuminate ordinary lives and to pay attention to those most often ignored … movingly examines hidden depths beneath quiet exteriors’ Sunday Times‘Writing with quiet but devastating empathy, Tracy Chevalier pinpoints",
+      "cover_url": "https://media.voxa.ro/voxa-production/uploads/resource/image/67268a1e-afd7-42f7-aad2-c848fa99a236/default_160x160_coperta_a_single_thread_1674655605.jpg",
+      "collection": null,
+      "publisher": "HarperCollins Publishers",
+      "categories": null,
+      "age_band": null,
+      "broken": false
     },
     {
       "slug": "a-stitch-in-time",
       "url": "https://voxa.ro/audiobooks/a-stitch-in-time",
-      "title_hint": "A Stitch In Time"
+      "title_hint": "A Stitch In Time",
+      "title": "A Stitch in Time",
+      "authors": [
+        "Penelope Lively"
+      ],
+      "narrators": [
+        "Lucy Scott"
+      ],
+      "duration_text": "4h 38m",
+      "duration_minutes": 278,
+      "description": "Maria is always getting lost in the secret world of her imagination…A ghostly mystery and winner of the Whitbread Award,republished in the Collins Modern Classics range.Maria is always getting lost in the secret world of her imagination…A ghostly mystery and winner of the Whitbread Award,republished in the Collins Modern Classics range.Maria likes to be alone with her thoughts. She talks to animals and objects, and generally prefers them to people. But whilst on holiday she begins to hear things that aren’t there – a swing creaking, a dog barking – and when she sees a Victorian embroidered picture, Maria feels a strange connection with the ten-year-old, Harriet, who stitched it.But what happened to her? As Maria becomes more lost in Harriet’s world, she grows convinced that something tragic occurred…Perfect for fans of ghostly mysteries like ‘Tom’s Midnight Garden’.“Gentle and humorous with a touch of mystery.” Michelle Magorian, bestselling author of ‘Goodnight, Mister Tom’Penelope Lively spent her early childhood in Egypt before coming to England aged twelve. She is an award-winning writer for adults and children, with prizes including the Booker, Whitbread and Carnegie to her na",
+      "cover_url": "https://media.voxa.ro/voxa-production/uploads/resource/image/b1b234dd-6f46-402d-9915-72b5bb0c4fcf/default_160x160_coperta_a_stitch_in_time_1674748841.jpg",
+      "collection": null,
+      "publisher": "HarperCollins Publishers",
+      "categories": null,
+      "age_band": null,
+      "broken": false
     },
     {
       "slug": "a-tragic-kind-of-wonderful",
       "url": "https://voxa.ro/audiobooks/a-tragic-kind-of-wonderful",
-      "title_hint": "A Tragic Kind Of Wonderful"
+      "title_hint": "A Tragic Kind Of Wonderful",
+      "title": "A Tragic Kind of Wonderful",
+      "authors": [
+        "Eric Lindstrom"
+      ],
+      "narrators": [
+        "Katharine Mangold"
+      ],
+      "duration_text": "6h 18m",
+      "duration_minutes": 378,
+      "description": "The heart-rending and inspiring novel from the critically acclaimed author of NOT IF I SEE YOU FIRST.",
+      "cover_url": "https://media.voxa.ro/voxa-production/uploads/resource/image/3e002e21-3372-4247-87b6-a201f2650eb3/default_160x160_coperta_a_tragic_kind_of_wonderful_1674653710.jpg",
+      "collection": null,
+      "publisher": "HarperCollins Publishers",
+      "categories": null,
+      "age_band": null,
+      "broken": false
     },
     {
       "slug": "a-year-of-being-single",
       "url": "https://voxa.ro/audiobooks/a-year-of-being-single",
-      "title_hint": "A Year Of Being Single"
+      "title_hint": "A Year Of Being Single",
+      "title": "A Year of Being Single",
+      "authors": [
+        "Fiona Collins"
+      ],
+      "narrators": [
+        "Elisabeth Hopper"
+      ],
+      "duration_text": "10h 43m",
+      "duration_minutes": 643,
+      "description": "‘A fabulously entertaining story!’ –Rachel’s Random Reads (top 1,000 Amazon Reviewer)Three friends. One year. Absolutely no men…‘A fabulously entertaining story!’ –Rachel’s Random Reads (top 1,000 Amazon Reviewer)Three friends. One year. Absolutely no men…Imogen is supposed to be on the most romantic weekend of her life and instead she’s quickly realised that her current boyfriend definitely isn’t ‘The One’ and actually One Big Mistake.Frankie is fed up. Fed up of her good-for-nothing husband and her four, unappreciative children. Well, they hardly notice her anyway, maybe it’s time to shake it up a little…Grace thought she had the perfect life. Gorgeous little boy and perfect, hardworking husband. Or rather, she did, until she realised her husband was shagging his ‘work’.These single ladies don’t need to put a ring on it…right?Perfect for fans of Jane Costello, Helen Fielding and Fiona Gibson, don’t miss this brilliant debut bestseller from Fiona Collins!What readers are saying about A Year of Being Single:‘It’s harder than it seems to stay single for a year…a fabulously entertaining story!’ – Rachel’s Random Reads (top 1000 Amazon Reviewer)‘A laugh-out-loud hilarious book with a ",
+      "cover_url": "https://media.voxa.ro/voxa-production/uploads/resource/image/1edd9b61-4d1e-4d87-81f0-38ecd768554b/default_160x160_coperta_a_year_of_being_single_1674726815.jpg",
+      "collection": null,
+      "publisher": "HarperCollins Publishers",
+      "categories": null,
+      "age_band": null,
+      "broken": false
     },
     {
       "slug": "actioneaza-si-gandeste-ca-micul-print-liber-visator-curios-altruist-fermecator-onest-bland-ingenuu",
       "url": "https://voxa.ro/audiobooks/actioneaza-si-gandeste-ca-micul-print-liber-visator-curios-altruist-fermecator-onest-bland-ingenuu",
-      "title_hint": "Actioneaza Si Gandeste Ca Micul Print Liber Visator Curios Altruist Fermecator Onest Bland Ingenuu"
+      "title_hint": "Actioneaza Si Gandeste Ca Micul Print Liber Visator Curios Altruist Fermecator Onest Bland Ingenuu",
+      "title": "Actioneaza si gandeste ca Micul Print. Liber, visator, curios, altruist, fermecator, onest, bland, ingenuu",
+      "authors": [
+        "Stéphane Garnier"
+      ],
+      "narrators": [
+        "Dana Săvuică"
+      ],
+      "duration_text": "2h 16m",
+      "duration_minutes": 136,
+      "description": "Actioneaza si gandeste ca Micul Print. Liber, visator, curios, altruist, fermecator, onest, bland, ingenuu",
+      "cover_url": "https://media.voxa.ro/voxa-production/uploads/resource/image/1e4946d7-ae88-4fa1-bff9-5be4e560a506/default_160x160_coperta_actioneaza_si_gandeste_ca_micul_print_liber_visator_curios_altruist_fermecator_onest_bland_ingenuu_1674142164.jpg",
+      "collection": null,
+      "publisher": "Editura NICULESCU",
+      "categories": null,
+      "age_band": null,
+      "broken": false
     },
     {
       "slug": "ajuta-ti-copilul-sa-creasca-prin-metoda-montessori",
       "url": "https://voxa.ro/audiobooks/ajuta-ti-copilul-sa-creasca-prin-metoda-montessori",
-      "title_hint": "Ajuta Ti Copilul Sa Creasca Prin Metoda Montessori"
+      "title_hint": "Ajuta Ti Copilul Sa Creasca Prin Metoda Montessori",
+      "title": "Ajută-ți copilul să crească prin metoda Montessori",
+      "authors": [
+        "Marjorie Schneider",
+        "Sophie Nanteuil"
+      ],
+      "narrators": [
+        "Ioana Chicet Macoveiciuc"
+      ],
+      "duration_text": "54 min",
+      "duration_minutes": 54,
+      "description": "În această carte practică vei descoperi principiile de bază ale metodei Montessori, care se axează pe autonomia copilului, ținând cont de personalitatea acestuia și de ritmul propriu de dezvoltare, dar și pe rolul de observator al părintelui mai degrabă decât de jucător.",
+      "cover_url": "https://media.voxa.ro/voxa-production/uploads/resource/image/b0588673-b8c6-4180-a7c2-6697fed8fc69/default_160x160_coperta_ajuta_ti_copilul_sa_creasca_prin_metoda_montessori_1716873008.jpg",
+      "collection": null,
+      "publisher": "Voxa",
+      "categories": "Parenting și familieCopii și familieVoxa OriginalsEducație aleasă",
+      "age_band": "child",
+      "broken": false
     },
     {
       "slug": "ajuta-ti-copilul-sa-se-concentreze-si-sa-se-linisteasca",
       "url": "https://voxa.ro/audiobooks/ajuta-ti-copilul-sa-se-concentreze-si-sa-se-linisteasca",
-      "title_hint": "Ajuta Ti Copilul Sa Se Concentreze Si Sa Se Linisteasca"
+      "title_hint": "Ajuta Ti Copilul Sa Se Concentreze Si Sa Se Linisteasca",
+      "title": "Ajută-ți copilul să se concentreze și să se liniștească",
+      "authors": [
+        "Laura Caldironi"
+      ],
+      "narrators": [
+        "Ioana Chicet Macoveiciuc"
+      ],
+      "duration_text": "1h 50m",
+      "duration_minutes": 110,
+      "description": "Copil adesea turbulent, mult prea de agitat, care întâmpină dificultăți de concentrare și de canalizare a energiei sale debordante, riscând izolarea... Iată câteva atitudini ce ar putea fi traduse prin simptome ale hiperactivității sau prin expresia nefericirii copilului tău, și care vă împovărează viețile. În calitate de părinte, dispui de resursele necesare pentru a-ți asculta, îndruma și tempera copilul.",
+      "cover_url": "https://media.voxa.ro/voxa-production/uploads/resource/image/62838b28-901a-4fed-b990-db3b89f1bafe/default_160x160_coperta_ajuta_ti_copilul_sa_se_concentreze_si_sa_se_linisteasca_1747227657.jpg",
+      "collection": null,
+      "publisher": "Voxa",
+      "categories": "Parenting și familieCopii și familieVoxa OriginalsEducație aleasă",
+      "age_band": "child",
+      "broken": false
     },
     {
       "slug": "ajuta-ti-copilul-sa-se-dezvolte-prin-metoda-montessori-de-la-0-la-3-ani",
       "url": "https://voxa.ro/audiobooks/ajuta-ti-copilul-sa-se-dezvolte-prin-metoda-montessori-de-la-0-la-3-ani",
-      "title_hint": "Ajuta Ti Copilul Sa Se Dezvolte Prin Metoda Montessori De La 0 La 3 Ani"
+      "title_hint": "Ajuta Ti Copilul Sa Se Dezvolte Prin Metoda Montessori De La 0 La 3 Ani",
+      "title": "Ajuta-ti copilul sa se dezvolte prin metoda Montessori. De la 0 la 3 ani",
+      "authors": [
+        "Maud Grelet"
+      ],
+      "narrators": [
+        "Ioana Chicet Macoveiciuc"
+      ],
+      "duration_text": "1h 38m",
+      "duration_minutes": 98,
+      "description": "Metoda Montessori, creată acum mai bine de un secol, nu numai că și-a demonstrat rezultatele, dar manifestă o fascinație constantă asupra părinților preocupați de creșterea și de educația copiilor lor.",
+      "cover_url": "https://media.voxa.ro/voxa-production/uploads/resource/image/ab9c6b18-50ff-42a1-bb84-9724c0a33641/default_160x160_coperta_ajuta_ti_copilul_sa_se_dezvolte_prin_metoda_montessori_de_la_0_la_3_ani_1714374783.jpg",
+      "collection": null,
+      "publisher": "Voxa",
+      "categories": "Parenting și familieCopii și familieEducație aleasă",
+      "age_band": "child",
+      "broken": false
     },
     {
       "slug": "ajuta-ti-copilul-sa-se-vindece-de-trauma-ghidul-parintilor-pentru-sustinerea-mecanismelor-naturale-de-vindecare-a-copilului-prin-joc-si-conectare",
       "url": "https://voxa.ro/audiobooks/ajuta-ti-copilul-sa-se-vindece-de-trauma-ghidul-parintilor-pentru-sustinerea-mecanismelor-naturale-de-vindecare-a-copilului-prin-joc-si-conectare",
-      "title_hint": "Ajuta Ti Copilul Sa Se Vindece De Trauma Ghidul Parintilor Pentru Sustinerea Mecanismelor Naturale De Vindecare A Copilului Prin Joc Si Conectare"
+      "title_hint": "Ajuta Ti Copilul Sa Se Vindece De Trauma Ghidul Parintilor Pentru Sustinerea Mecanismelor Naturale De Vindecare A Copilului Prin Joc Si Conectare",
+      "title": "Ajută-ți copilul să se vindece de traumă - Ghidul părinților pentru susținerea mecanismelor naturale de vindecare a copilului prin joc și conectare",
+      "authors": [
+        "Aletha Solter"
+      ],
+      "narrators": [
+        "Rodica Culcer"
+      ],
+      "duration_text": "5h 33m",
+      "duration_minutes": 333,
+      "description": "Ajută-ți copilul să se vindece de traumă - Ghidul părinților pentru susținerea mecanismelor naturale de vindecare a copilului prin joc și conectare",
+      "cover_url": "https://media.voxa.ro/voxa-production/uploads/resource/image/a782f464-a27f-4715-89a4-53e20dfc07cb/default_160x160_coperta_ajuta_ti_copilul_sa_se_vindece_de_trauma_ghidul_parintilor_pentru_sustinerea_mecanismelor_naturale_de_vindecare_a_copilului_prin_joc_si_conectare_1710496287.jpg",
+      "collection": "Parenting (Parentaj)",
+      "publisher": "Editura Herald",
+      "categories": "Parenting și familieCopii și familieParenting",
+      "age_band": "child",
+      "broken": false
     },
     {
       "slug": "ajuta-ti-copilul-sa-si-dezvolte-increderea-in-sine-3",
       "url": "https://voxa.ro/audiobooks/ajuta-ti-copilul-sa-si-dezvolte-increderea-in-sine-3",
-      "title_hint": "Ajuta Ti Copilul Sa Si Dezvolte Increderea In Sine 3"
+      "title_hint": "Ajuta Ti Copilul Sa Si Dezvolte Increderea In Sine 3",
+      "title": "Ajuta-ti copilul sa-si dezvolte increderea in sine",
+      "authors": [
+        "Corinne Roehrig"
+      ],
+      "narrators": [
+        "Ioana Chicet Macoveiciuc"
+      ],
+      "duration_text": "1h 30m",
+      "duration_minutes": 90,
+      "description": "Copil care se subevaluează, care nu e sigur pe el, care se izolează, e lipsit de autonomie, sau, dimpotrivă, e pus pe ceartă, ține piept... Iată câteva tipuri de comportament care se traduc prin lipsa încrederii în sine și care-i îngreunează viața de zi cu zi, făcând-o insuportabilă. În calitate de părinte, îți poți ajuta copilul să capete această încredere care îi lipsește, deoarece ea se hrănește din iubirea și dovezile noastre de afecțiune. În această lucrare practică:",
+      "cover_url": "https://media.voxa.ro/voxa-production/uploads/resource/image/492fbcd3-fa97-40cd-829f-26c0c58da9ac/default_160x160_coperta_ajuta_ti_copilul_sa_si_dezvolte_increderea_in_sine_1715067043.jpg",
+      "collection": null,
+      "publisher": "Voxa",
+      "categories": "Parenting și familieCopii și familieVoxa OriginalsEducație aleasă",
+      "age_band": "child",
+      "broken": false
     },
     {
       "slug": "ajuta-ti-copilul-sa-si-gestioneze-mai-bine-emotiile-2",
       "url": "https://voxa.ro/audiobooks/ajuta-ti-copilul-sa-si-gestioneze-mai-bine-emotiile-2",
-      "title_hint": "Ajuta Ti Copilul Sa Si Gestioneze Mai Bine Emotiile 2"
+      "title_hint": "Ajuta Ti Copilul Sa Si Gestioneze Mai Bine Emotiile 2",
+      "title": "Ajută‑ți copilul să‑și gestioneze mai bine emoțiile",
+      "authors": [
+        "Laura Caldironi"
+      ],
+      "narrators": [
+        "Ioana Chicet Macoveiciuc"
+      ],
+      "duration_text": "1h 37m",
+      "duration_minutes": 97,
+      "description": "Copilul tău se înfurie când se simte neliniștit, își pierde cumpătul când i se pun întrebări, izbucnește în plâns la cea mai mică observație? Toate acestea sunt semnele incapacității lui de a-și gestiona emoțiile. În această carte practică vei descoperi:",
+      "cover_url": "https://media.voxa.ro/voxa-production/uploads/resource/image/e0a98f57-8a9e-4cda-9a4e-26d1fd8abab9/default_160x160_coperta_ajuta_ti_copilul_sa_si_gestioneze_mai_bine_emotiile_1747227678.jpg",
+      "collection": null,
+      "publisher": "Voxa",
+      "categories": "Parenting și familieCopii și familieVoxa OriginalsEducație aleasă",
+      "age_band": "child",
+      "broken": false
     },
     {
       "slug": "aladdin-and-his-wonderful-lamp",
       "url": "https://voxa.ro/audiobooks/aladdin-and-his-wonderful-lamp",
-      "title_hint": "Aladdin And His Wonderful Lamp"
+      "title_hint": "Aladdin And His Wonderful Lamp",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "aladdin-and-the-magic-lamp-2",
       "url": "https://voxa.ro/audiobooks/aladdin-and-the-magic-lamp-2",
-      "title_hint": "Aladdin And The Magic Lamp 2"
+      "title_hint": "Aladdin And The Magic Lamp 2",
+      "title": "Aladdin And The Magic Lamp",
+      "authors": [
+        "Storytime"
+      ],
+      "narrators": [
+        "Nikki Delgado"
+      ],
+      "duration_text": "5 min",
+      "duration_minutes": 5,
+      "description": "Storytime is a brilliant story magazine sparkling with fun stories and gorgeous illustrations. This leading kids magazine is packed with magical fairy tales, new stories, funny poems, awesome animals, myths and legends, puzzles, games and much more!",
+      "cover_url": "https://media.voxa.ro/voxa-production/uploads/resource/image/61e8a3c5-70d8-48d7-8cb3-756b8dee863c/default_160x160_coperta_aladdin_and_the_magic_lamp_1695635866.jpg",
+      "collection": "Storytime Magazine",
+      "publisher": "Voxa",
+      "categories": null,
+      "age_band": null,
+      "broken": false
     },
     {
       "slug": "aladdin-and-the-princess-2",
       "url": "https://voxa.ro/audiobooks/aladdin-and-the-princess-2",
-      "title_hint": "Aladdin And The Princess 2"
+      "title_hint": "Aladdin And The Princess 2",
+      "title": "Aladdin and the Princess",
+      "authors": [
+        "Storytime"
+      ],
+      "narrators": [
+        "Alastair Cameron"
+      ],
+      "duration_text": "8 min",
+      "duration_minutes": 8,
+      "description": "Storytime is a brilliant story magazine sparkling with fun stories and gorgeous illustrations. This leading kids magazine is packed with magical fairy tales, new stories, funny poems, awesome animals, myths and legends, puzzles, games and much more!",
+      "cover_url": "https://media.voxa.ro/voxa-production/uploads/resource/image/9176c1a7-6410-4b75-ab5e-665b33de338b/default_160x160_coperta_aladdin_and_the_princess_1695638091.jpg",
+      "collection": "Storytime Magazine",
+      "publisher": "Voxa",
+      "categories": null,
+      "age_band": null,
+      "broken": false
     },
     {
       "slug": "aladdin-and-the-wonderful-lamp",
       "url": "https://voxa.ro/audiobooks/aladdin-and-the-wonderful-lamp",
-      "title_hint": "Aladdin And The Wonderful Lamp"
+      "title_hint": "Aladdin And The Wonderful Lamp",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "alba-ca-zapada",
       "url": "https://voxa.ro/audiobooks/alba-ca-zapada",
-      "title_hint": "Alba Ca Zapada"
+      "title_hint": "Alba Ca Zapada",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "ali-baba-and-his-brother-2",
       "url": "https://voxa.ro/audiobooks/ali-baba-and-his-brother-2",
-      "title_hint": "Ali Baba And His Brother 2"
+      "title_hint": "Ali Baba And His Brother 2",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "ali-baba-and-the-forty-thieves",
       "url": "https://voxa.ro/audiobooks/ali-baba-and-the-forty-thieves",
-      "title_hint": "Ali Baba And The Forty Thieves"
+      "title_hint": "Ali Baba And The Forty Thieves",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "ali-in-wonderland",
       "url": "https://voxa.ro/audiobooks/ali-in-wonderland",
-      "title_hint": "Ali In Wonderland"
+      "title_hint": "Ali In Wonderland",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "alice-in-tara-minunilor-disney-audiobook",
       "url": "https://voxa.ro/audiobooks/alice-in-tara-minunilor-disney-audiobook",
-      "title_hint": "Alice In Tara Minunilor Disney Audiobook"
+      "title_hint": "Alice In Tara Minunilor Disney Audiobook",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "alice-in-wonderland-2",
       "url": "https://voxa.ro/audiobooks/alice-in-wonderland-2",
-      "title_hint": "Alice In Wonderland 2"
+      "title_hint": "Alice In Wonderland 2",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "alice-in-wonderland-3",
       "url": "https://voxa.ro/audiobooks/alice-in-wonderland-3",
-      "title_hint": "Alice In Wonderland 3"
+      "title_hint": "Alice In Wonderland 3",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "alice-in-wonderland-4",
       "url": "https://voxa.ro/audiobooks/alice-in-wonderland-4",
-      "title_hint": "Alice In Wonderland 4"
+      "title_hint": "Alice In Wonderland 4",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "alice-s-adventures-in-wonderland",
       "url": "https://voxa.ro/audiobooks/alice-s-adventures-in-wonderland",
-      "title_hint": "Alice S Adventures In Wonderland"
+      "title_hint": "Alice S Adventures In Wonderland",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "alice-s-adventures-in-wonderland-12",
       "url": "https://voxa.ro/audiobooks/alice-s-adventures-in-wonderland-12",
-      "title_hint": "Alice S Adventures In Wonderland 12"
+      "title_hint": "Alice S Adventures In Wonderland 12",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "alice-s-adventures-in-wonderland-14",
       "url": "https://voxa.ro/audiobooks/alice-s-adventures-in-wonderland-14",
-      "title_hint": "Alice S Adventures In Wonderland 14"
+      "title_hint": "Alice S Adventures In Wonderland 14",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "alice-s-adventures-in-wonderland-and-through-the-looking-glass-2",
       "url": "https://voxa.ro/audiobooks/alice-s-adventures-in-wonderland-and-through-the-looking-glass-2",
-      "title_hint": "Alice S Adventures In Wonderland And Through The Looking Glass 2"
+      "title_hint": "Alice S Adventures In Wonderland And Through The Looking Glass 2",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "alice-s-adventures-in-wonderland-golden-deer-classics",
       "url": "https://voxa.ro/audiobooks/alice-s-adventures-in-wonderland-golden-deer-classics",
-      "title_hint": "Alice S Adventures In Wonderland Golden Deer Classics"
+      "title_hint": "Alice S Adventures In Wonderland Golden Deer Classics",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "amintiri-din-copilarie-adaptare",
       "url": "https://voxa.ro/audiobooks/amintiri-din-copilarie-adaptare",
-      "title_hint": "Amintiri Din Copilarie Adaptare"
+      "title_hint": "Amintiri Din Copilarie Adaptare",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "anger-releasing",
       "url": "https://voxa.ro/audiobooks/anger-releasing",
-      "title_hint": "Anger Releasing"
+      "title_hint": "Anger Releasing",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "anna-karenina-mari-opere-din-literatura-rusa-povestite-copiilor",
       "url": "https://voxa.ro/audiobooks/anna-karenina-mari-opere-din-literatura-rusa-povestite-copiilor",
-      "title_hint": "Anna Karenina Mari Opere Din Literatura Rusa Povestite Copiilor"
+      "title_hint": "Anna Karenina Mari Opere Din Literatura Rusa Povestite Copiilor",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "arabian-nights-aladdin-and-the-magic-lamp-easy-classics-2",
       "url": "https://voxa.ro/audiobooks/arabian-nights-aladdin-and-the-magic-lamp-easy-classics-2",
-      "title_hint": "Arabian Nights Aladdin And The Magic Lamp Easy Classics 2"
+      "title_hint": "Arabian Nights Aladdin And The Magic Lamp Easy Classics 2",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "arabian-nights-ali-baba-and-the-forty-thieves-easy-classics-2",
       "url": "https://voxa.ro/audiobooks/arabian-nights-ali-baba-and-the-forty-thieves-easy-classics-2",
-      "title_hint": "Arabian Nights Ali Baba And The Forty Thieves Easy Classics 2"
+      "title_hint": "Arabian Nights Ali Baba And The Forty Thieves Easy Classics 2",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "ariciul-aramis-si-aventurile-lui-de-alina-chirila-1",
       "url": "https://voxa.ro/audiobooks/ariciul-aramis-si-aventurile-lui-de-alina-chirila-1",
-      "title_hint": "Ariciul Aramis Si Aventurile Lui De Alina Chirila 1"
+      "title_hint": "Ariciul Aramis Si Aventurile Lui De Alina Chirila 1",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "ariciul-aramis-si-aventurile-lui-de-alina-chirila-2",
       "url": "https://voxa.ro/audiobooks/ariciul-aramis-si-aventurile-lui-de-alina-chirila-2",
-      "title_hint": "Ariciul Aramis Si Aventurile Lui De Alina Chirila 2"
+      "title_hint": "Ariciul Aramis Si Aventurile Lui De Alina Chirila 2",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "ariciul-aramis-si-aventurile-lui-de-alina-chirila-3",
       "url": "https://voxa.ro/audiobooks/ariciul-aramis-si-aventurile-lui-de-alina-chirila-3",
-      "title_hint": "Ariciul Aramis Si Aventurile Lui De Alina Chirila 3"
+      "title_hint": "Ariciul Aramis Si Aventurile Lui De Alina Chirila 3",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "aurora-si-dragonul-cel-folositor-alba-ca-zapada-si-magia-prieteniei",
       "url": "https://voxa.ro/audiobooks/aurora-si-dragonul-cel-folositor-alba-ca-zapada-si-magia-prieteniei",
-      "title_hint": "Aurora Si Dragonul Cel Folositor Alba Ca Zapada Si Magia Prieteniei"
+      "title_hint": "Aurora Si Dragonul Cel Folositor Alba Ca Zapada Si Magia Prieteniei",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "aventura-intergalactica-a-lui-jamie-drake",
       "url": "https://voxa.ro/audiobooks/aventura-intergalactica-a-lui-jamie-drake",
-      "title_hint": "Aventura Intergalactica A Lui Jamie Drake"
+      "title_hint": "Aventura Intergalactica A Lui Jamie Drake",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "aventuri-cu-pettson-si-findus",
       "url": "https://voxa.ro/audiobooks/aventuri-cu-pettson-si-findus",
-      "title_hint": "Aventuri Cu Pettson Si Findus"
+      "title_hint": "Aventuri Cu Pettson Si Findus",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "aventuri-in-tren-crima-din-safari-star",
       "url": "https://voxa.ro/audiobooks/aventuri-in-tren-crima-din-safari-star",
-      "title_hint": "Aventuri In Tren Crima Din Safari Star"
+      "title_hint": "Aventuri In Tren Crima Din Safari Star",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "aventuri-in-tren-hotul-din-highland-falcon",
       "url": "https://voxa.ro/audiobooks/aventuri-in-tren-hotul-din-highland-falcon",
-      "title_hint": "Aventuri In Tren Hotul Din Highland Falcon"
+      "title_hint": "Aventuri In Tren Hotul Din Highland Falcon",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "aventuri-in-tren-rapirea-din-california",
       "url": "https://voxa.ro/audiobooks/aventuri-in-tren-rapirea-din-california",
-      "title_hint": "Aventuri In Tren Rapirea Din California"
+      "title_hint": "Aventuri In Tren Rapirea Din California",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "aventuri-la-ham-hotel-cheryl-certareata",
       "url": "https://voxa.ro/audiobooks/aventuri-la-ham-hotel-cheryl-certareata",
-      "title_hint": "Aventuri La Ham Hotel Cheryl Certareata"
+      "title_hint": "Aventuri La Ham Hotel Cheryl Certareata",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "aventuri-la-ham-hotel-cooper-curajosul",
       "url": "https://voxa.ro/audiobooks/aventuri-la-ham-hotel-cooper-curajosul",
-      "title_hint": "Aventuri La Ham Hotel Cooper Curajosul"
+      "title_hint": "Aventuri La Ham Hotel Cooper Curajosul",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "aventuri-la-ham-hotel-marley-cel-murdar",
       "url": "https://voxa.ro/audiobooks/aventuri-la-ham-hotel-marley-cel-murdar",
-      "title_hint": "Aventuri La Ham Hotel Marley Cel Murdar"
+      "title_hint": "Aventuri La Ham Hotel Marley Cel Murdar",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "aventuri-la-ham-hotel-moody-cea-murdara",
       "url": "https://voxa.ro/audiobooks/aventuri-la-ham-hotel-moody-cea-murdara",
-      "title_hint": "Aventuri La Ham Hotel Moody Cea Murdara"
+      "title_hint": "Aventuri La Ham Hotel Moody Cea Murdara",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "aventuri-la-ham-hotel-pookie-puiul-mamei",
       "url": "https://voxa.ro/audiobooks/aventuri-la-ham-hotel-pookie-puiul-mamei",
-      "title_hint": "Aventuri La Ham Hotel Pookie Puiul Mamei"
+      "title_hint": "Aventuri La Ham Hotel Pookie Puiul Mamei",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "aventuri-la-miau-motel-arly-artagoasa",
       "url": "https://voxa.ro/audiobooks/aventuri-la-miau-motel-arly-artagoasa",
-      "title_hint": "Aventuri La Miau Motel Arly Artagoasa"
+      "title_hint": "Aventuri La Miau Motel Arly Artagoasa",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "aventuri-la-miau-motel-marty-magicianul",
       "url": "https://voxa.ro/audiobooks/aventuri-la-miau-motel-marty-magicianul",
-      "title_hint": "Aventuri La Miau Motel Marty Magicianul"
+      "title_hint": "Aventuri La Miau Motel Marty Magicianul",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "aventurile-lui-huckleberry-finn-2",
       "url": "https://voxa.ro/audiobooks/aventurile-lui-huckleberry-finn-2",
-      "title_hint": "Aventurile Lui Huckleberry Finn 2"
+      "title_hint": "Aventurile Lui Huckleberry Finn 2",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "aventurile-lui-huckleberry-finn-3",
       "url": "https://voxa.ro/audiobooks/aventurile-lui-huckleberry-finn-3",
-      "title_hint": "Aventurile Lui Huckleberry Finn 3"
+      "title_hint": "Aventurile Lui Huckleberry Finn 3",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "aventurile-lui-pinocchio",
       "url": "https://voxa.ro/audiobooks/aventurile-lui-pinocchio",
-      "title_hint": "Aventurile Lui Pinocchio"
+      "title_hint": "Aventurile Lui Pinocchio",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "aventurile-lui-robin-hood-2",
       "url": "https://voxa.ro/audiobooks/aventurile-lui-robin-hood-2",
-      "title_hint": "Aventurile Lui Robin Hood 2"
+      "title_hint": "Aventurile Lui Robin Hood 2",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "aventurile-lui-sherlock-holmes",
       "url": "https://voxa.ro/audiobooks/aventurile-lui-sherlock-holmes",
-      "title_hint": "Aventurile Lui Sherlock Holmes"
+      "title_hint": "Aventurile Lui Sherlock Holmes",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "aventurile-lui-sindbad-marinarul",
       "url": "https://voxa.ro/audiobooks/aventurile-lui-sindbad-marinarul",
-      "title_hint": "Aventurile Lui Sindbad Marinarul"
+      "title_hint": "Aventurile Lui Sindbad Marinarul",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "aventurile-lui-tom-sawyer",
       "url": "https://voxa.ro/audiobooks/aventurile-lui-tom-sawyer",
-      "title_hint": "Aventurile Lui Tom Sawyer"
+      "title_hint": "Aventurile Lui Tom Sawyer",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "aventurile-lui-tom-sawyer-3",
       "url": "https://voxa.ro/audiobooks/aventurile-lui-tom-sawyer-3",
-      "title_hint": "Aventurile Lui Tom Sawyer 3"
+      "title_hint": "Aventurile Lui Tom Sawyer 3",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "aventurile-lui-tom-sawyer-4",
       "url": "https://voxa.ro/audiobooks/aventurile-lui-tom-sawyer-4",
-      "title_hint": "Aventurile Lui Tom Sawyer 4"
+      "title_hint": "Aventurile Lui Tom Sawyer 4",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "aventurile-lui-tom-sawyer-adaptare",
       "url": "https://voxa.ro/audiobooks/aventurile-lui-tom-sawyer-adaptare",
-      "title_hint": "Aventurile Lui Tom Sawyer Adaptare"
+      "title_hint": "Aventurile Lui Tom Sawyer Adaptare",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "baba-yaga-2",
       "url": "https://voxa.ro/audiobooks/baba-yaga-2",
-      "title_hint": "Baba Yaga 2"
+      "title_hint": "Baba Yaga 2",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "baba-yaga-s-winter-escape-2",
       "url": "https://voxa.ro/audiobooks/baba-yaga-s-winter-escape-2",
-      "title_hint": "Baba Yaga S Winter Escape 2"
+      "title_hint": "Baba Yaga S Winter Escape 2",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "bambi",
       "url": "https://voxa.ro/audiobooks/bambi",
-      "title_hint": "Bambi"
+      "title_hint": "Bambi",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "bambi-on-ice-2",
       "url": "https://voxa.ro/audiobooks/bambi-on-ice-2",
-      "title_hint": "Bambi On Ice 2"
+      "title_hint": "Bambi On Ice 2",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "bastet-goes-missing-2",
       "url": "https://voxa.ro/audiobooks/bastet-goes-missing-2",
-      "title_hint": "Bastet Goes Missing 2"
+      "title_hint": "Bastet Goes Missing 2",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "bebelusul-meu-intelege-tot-cum-sa-crestem-copii-sanatosi-prin-parentaj-constient",
       "url": "https://voxa.ro/audiobooks/bebelusul-meu-intelege-tot-cum-sa-crestem-copii-sanatosi-prin-parentaj-constient",
-      "title_hint": "Bebelusul Meu Intelege Tot Cum Sa Crestem Copii Sanatosi Prin Parentaj Constient"
+      "title_hint": "Bebelusul Meu Intelege Tot Cum Sa Crestem Copii Sanatosi Prin Parentaj Constient",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "betrayal",
       "url": "https://voxa.ro/audiobooks/betrayal",
-      "title_hint": "Betrayal"
+      "title_hint": "Betrayal",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "betrayal-of-trust",
       "url": "https://voxa.ro/audiobooks/betrayal-of-trust",
-      "title_hint": "Betrayal Of Trust"
+      "title_hint": "Betrayal Of Trust",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "betrayal-of-trust-2",
       "url": "https://voxa.ro/audiobooks/betrayal-of-trust-2",
-      "title_hint": "Betrayal Of Trust 2"
+      "title_hint": "Betrayal Of Trust 2",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "blabababa",
       "url": "https://voxa.ro/audiobooks/blabababa",
-      "title_hint": "Blabababa"
+      "title_hint": "Blabababa",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "black-water-rising",
       "url": "https://voxa.ro/audiobooks/black-water-rising",
-      "title_hint": "Black Water Rising"
+      "title_hint": "Black Water Rising",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "blood-of-wonderland",
       "url": "https://voxa.ro/audiobooks/blood-of-wonderland",
-      "title_hint": "Blood Of Wonderland"
+      "title_hint": "Blood Of Wonderland",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "caldura-cuibului-parintesc-educa-ti-copilul-cu-blandete-si-ajuta-l-sa-devina-independent-2",
       "url": "https://voxa.ro/audiobooks/caldura-cuibului-parintesc-educa-ti-copilul-cu-blandete-si-ajuta-l-sa-devina-independent-2",
-      "title_hint": "Caldura Cuibului Parintesc Educa Ti Copilul Cu Blandete Si Ajuta L Sa Devina Independent 2"
+      "title_hint": "Caldura Cuibului Parintesc Educa Ti Copilul Cu Blandete Si Ajuta L Sa Devina Independent 2",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "caleb-s-crossing",
       "url": "https://voxa.ro/audiobooks/caleb-s-crossing",
-      "title_hint": "Caleb S Crossing"
+      "title_hint": "Caleb S Crossing",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "capra-cu-trei-iezi",
       "url": "https://voxa.ro/audiobooks/capra-cu-trei-iezi",
-      "title_hint": "Capra Cu Trei Iezi"
+      "title_hint": "Capra Cu Trei Iezi",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "cartea-copiilor-pierduti",
       "url": "https://voxa.ro/audiobooks/cartea-copiilor-pierduti",
-      "title_hint": "Cartea Copiilor Pierduti"
+      "title_hint": "Cartea Copiilor Pierduti",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "cartea-junglei-disney",
       "url": "https://voxa.ro/audiobooks/cartea-junglei-disney",
-      "title_hint": "Cartea Junglei Disney"
+      "title_hint": "Cartea Junglei Disney",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "cele-cinci-limbaje-de-iubire-ale-copiilor",
       "url": "https://voxa.ro/audiobooks/cele-cinci-limbaje-de-iubire-ale-copiilor",
-      "title_hint": "Cele Cinci Limbaje De Iubire Ale Copiilor"
+      "title_hint": "Cele Cinci Limbaje De Iubire Ale Copiilor",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "cenusareasa",
       "url": "https://voxa.ro/audiobooks/cenusareasa",
-      "title_hint": "Cenusareasa"
+      "title_hint": "Cenusareasa",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "cenusareasa-la-petrecerea-craciunului-tiana-si-magia-sarbatorilor",
       "url": "https://voxa.ro/audiobooks/cenusareasa-la-petrecerea-craciunului-tiana-si-magia-sarbatorilor",
-      "title_hint": "Cenusareasa La Petrecerea Craciunului Tiana Si Magia Sarbatorilor"
+      "title_hint": "Cenusareasa La Petrecerea Craciunului Tiana Si Magia Sarbatorilor",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "chasing-harry-winston",
       "url": "https://voxa.ro/audiobooks/chasing-harry-winston",
-      "title_hint": "Chasing Harry Winston"
+      "title_hint": "Chasing Harry Winston",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "chasing-redbird",
       "url": "https://voxa.ro/audiobooks/chasing-redbird",
-      "title_hint": "Chasing Redbird"
+      "title_hint": "Chasing Redbird",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "chasing-the-light",
       "url": "https://voxa.ro/audiobooks/chasing-the-light",
-      "title_hint": "Chasing The Light"
+      "title_hint": "Chasing The Light",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "chasing-the-moon",
       "url": "https://voxa.ro/audiobooks/chasing-the-moon",
-      "title_hint": "Chasing The Moon"
+      "title_hint": "Chasing The Moon",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "chasing-the-sun",
       "url": "https://voxa.ro/audiobooks/chasing-the-sun",
-      "title_hint": "Chasing The Sun"
+      "title_hint": "Chasing The Sun",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "choosing-to-stay",
       "url": "https://voxa.ro/audiobooks/choosing-to-stay",
-      "title_hint": "Choosing To Stay"
+      "title_hint": "Choosing To Stay",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "cinci-motive-pentru-care-sa-lasi-copiii-sa-se-plictiseasca-in-vacanta",
       "url": "https://voxa.ro/audiobooks/cinci-motive-pentru-care-sa-lasi-copiii-sa-se-plictiseasca-in-vacanta",
-      "title_hint": "Cinci Motive Pentru Care Sa Lasi Copiii Sa Se Plictiseasca In Vacanta"
+      "title_hint": "Cinci Motive Pentru Care Sa Lasi Copiii Sa Se Plictiseasca In Vacanta",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "cleansing-the-mind-of-the-accumulation-of-time",
       "url": "https://voxa.ro/audiobooks/cleansing-the-mind-of-the-accumulation-of-time",
-      "title_hint": "Cleansing The Mind Of The Accumulation Of Time"
+      "title_hint": "Cleansing The Mind Of The Accumulation Of Time",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "cleansing-the-subconscious",
       "url": "https://voxa.ro/audiobooks/cleansing-the-subconscious",
-      "title_hint": "Cleansing The Subconscious"
+      "title_hint": "Cleansing The Subconscious",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "closing-costs",
       "url": "https://voxa.ro/audiobooks/closing-costs",
-      "title_hint": "Closing Costs"
+      "title_hint": "Closing Costs",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "conecteaza-te-cu-copilul-tau",
       "url": "https://voxa.ro/audiobooks/conecteaza-te-cu-copilul-tau",
-      "title_hint": "Conecteaza Te Cu Copilul Tau"
+      "title_hint": "Conecteaza Te Cu Copilul Tau",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "copiii-adulti-ai-parintilor-imaturi-emotional-cum-te-poti-vindeca-de-parintii-distanti-lipsiti-de-empatie-egoisti",
       "url": "https://voxa.ro/audiobooks/copiii-adulti-ai-parintilor-imaturi-emotional-cum-te-poti-vindeca-de-parintii-distanti-lipsiti-de-empatie-egoisti",
-      "title_hint": "Copiii Adulti Ai Parintilor Imaturi Emotional Cum Te Poti Vindeca De Parintii Distanti Lipsiti De Empatie Egoisti"
+      "title_hint": "Copiii Adulti Ai Parintilor Imaturi Emotional Cum Te Poti Vindeca De Parintii Distanti Lipsiti De Empatie Egoisti",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "copiii-capitanului-grant-in-america-de-sud",
       "url": "https://voxa.ro/audiobooks/copiii-capitanului-grant-in-america-de-sud",
-      "title_hint": "Copiii Capitanului Grant In America De Sud"
+      "title_hint": "Copiii Capitanului Grant In America De Sud",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "copiii-capitanului-grant-in-australia",
       "url": "https://voxa.ro/audiobooks/copiii-capitanului-grant-in-australia",
-      "title_hint": "Copiii Capitanului Grant In Australia"
+      "title_hint": "Copiii Capitanului Grant In Australia",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "copiii-capitanului-grant-in-oceanul-pacific",
       "url": "https://voxa.ro/audiobooks/copiii-capitanului-grant-in-oceanul-pacific",
-      "title_hint": "Copiii Capitanului Grant In Oceanul Pacific"
+      "title_hint": "Copiii Capitanului Grant In Oceanul Pacific",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "copiii-de-pe-volga-audiobook",
       "url": "https://voxa.ro/audiobooks/copiii-de-pe-volga-audiobook",
-      "title_hint": "Copiii De Pe Volga Audiobook"
+      "title_hint": "Copiii De Pe Volga Audiobook",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "copiii-in-fata-ecranelor-cum-ii-protejam-2",
       "url": "https://voxa.ro/audiobooks/copiii-in-fata-ecranelor-cum-ii-protejam-2",
-      "title_hint": "Copiii In Fata Ecranelor Cum Ii Protejam 2"
+      "title_hint": "Copiii In Fata Ecranelor Cum Ii Protejam 2",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "copiii-noptii-2",
       "url": "https://voxa.ro/audiobooks/copiii-noptii-2",
-      "title_hint": "Copiii Noptii 2"
+      "title_hint": "Copiii Noptii 2",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "copilul-care-a-supravietuit-2",
       "url": "https://voxa.ro/audiobooks/copilul-care-a-supravietuit-2",
-      "title_hint": "Copilul Care A Supravietuit 2"
+      "title_hint": "Copilul Care A Supravietuit 2",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "copilul-din-fiecare",
       "url": "https://voxa.ro/audiobooks/copilul-din-fiecare",
-      "title_hint": "Copilul Din Fiecare"
+      "title_hint": "Copilul Din Fiecare",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "copilul-invizibil-editie-actualizata-si-revizuita",
       "url": "https://voxa.ro/audiobooks/copilul-invizibil-editie-actualizata-si-revizuita",
-      "title_hint": "Copilul Invizibil Editie Actualizata Si Revizuita"
+      "title_hint": "Copilul Invizibil Editie Actualizata Si Revizuita",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "copilul-meu-are-personalitate",
       "url": "https://voxa.ro/audiobooks/copilul-meu-are-personalitate",
-      "title_hint": "Copilul Meu Are Personalitate"
+      "title_hint": "Copilul Meu Are Personalitate",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "copilul-meu-cel-mare-este-gelos",
       "url": "https://voxa.ro/audiobooks/copilul-meu-cel-mare-este-gelos",
-      "title_hint": "Copilul Meu Cel Mare Este Gelos"
+      "title_hint": "Copilul Meu Cel Mare Este Gelos",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "copilul-meu-nu-vrea-sa-mearga-la-scoala",
       "url": "https://voxa.ro/audiobooks/copilul-meu-nu-vrea-sa-mearga-la-scoala",
-      "title_hint": "Copilul Meu Nu Vrea Sa Mearga La Scoala"
+      "title_hint": "Copilul Meu Nu Vrea Sa Mearga La Scoala",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "corpul-nu-minte-niciodata-vindecarea-traumelor-copilului-interior",
       "url": "https://voxa.ro/audiobooks/corpul-nu-minte-niciodata-vindecarea-traumelor-copilului-interior",
-      "title_hint": "Corpul Nu Minte Niciodata Vindecarea Traumelor Copilului Interior"
+      "title_hint": "Corpul Nu Minte Niciodata Vindecarea Traumelor Copilului Interior",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "creierul-copilului-tau",
       "url": "https://voxa.ro/audiobooks/creierul-copilului-tau",
-      "title_hint": "Creierul Copilului Tau"
+      "title_hint": "Creierul Copilului Tau",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "cromwell-s-blessing",
       "url": "https://voxa.ro/audiobooks/cromwell-s-blessing",
-      "title_hint": "Cromwell S Blessing"
+      "title_hint": "Cromwell S Blessing",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "cum-ii-ajutam-pe-copii-sa-faca-fata-traumelor",
       "url": "https://voxa.ro/audiobooks/cum-ii-ajutam-pe-copii-sa-faca-fata-traumelor",
-      "title_hint": "Cum Ii Ajutam Pe Copii Sa Faca Fata Traumelor"
+      "title_hint": "Cum Ii Ajutam Pe Copii Sa Faca Fata Traumelor",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "cum-sa-fii-un-parinte-mai-bun-ajuta-ti-copilul-sa-invete-din-greseli",
       "url": "https://voxa.ro/audiobooks/cum-sa-fii-un-parinte-mai-bun-ajuta-ti-copilul-sa-invete-din-greseli",
-      "title_hint": "Cum Sa Fii Un Parinte Mai Bun Ajuta Ti Copilul Sa Invete Din Greseli"
+      "title_hint": "Cum Sa Fii Un Parinte Mai Bun Ajuta Ti Copilul Sa Invete Din Greseli",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "cum-sa-le-vorbim-copiilor-astfel-incat-sa-ne-asculte-ghid-de-supravietuire-pentru-parinti-cu-copii-de-2-7-ani",
       "url": "https://voxa.ro/audiobooks/cum-sa-le-vorbim-copiilor-astfel-incat-sa-ne-asculte-ghid-de-supravietuire-pentru-parinti-cu-copii-de-2-7-ani",
-      "title_hint": "Cum Sa Le Vorbim Copiilor Astfel Incat Sa Ne Asculte Ghid De Supravietuire Pentru Parinti Cu Copii De 2 7 Ani"
+      "title_hint": "Cum Sa Le Vorbim Copiilor Astfel Incat Sa Ne Asculte Ghid De Supravietuire Pentru Parinti Cu Copii De 2 7 Ani",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "cum-sa-te-gestionezi-singur-ce-este-un-lider",
       "url": "https://voxa.ro/audiobooks/cum-sa-te-gestionezi-singur-ce-este-un-lider",
-      "title_hint": "Cum Sa Te Gestionezi Singur Ce Este Un Lider"
+      "title_hint": "Cum Sa Te Gestionezi Singur Ce Este Un Lider",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "cuvinte-pe-care-sa-nu-le-spui-niciodata-copilului-tau",
       "url": "https://voxa.ro/audiobooks/cuvinte-pe-care-sa-nu-le-spui-niciodata-copilului-tau",
-      "title_hint": "Cuvinte Pe Care Sa Nu Le Spui Niciodata Copilului Tau"
+      "title_hint": "Cuvinte Pe Care Sa Nu Le Spui Niciodata Copilului Tau",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "daca-spui-cuiva-o-poveste-adevarata-despre-crima-secrete-de-familie-si-unitatea-de-nezdruncinat-a-unor-copii-2",
       "url": "https://voxa.ro/audiobooks/daca-spui-cuiva-o-poveste-adevarata-despre-crima-secrete-de-familie-si-unitatea-de-nezdruncinat-a-unor-copii-2",
-      "title_hint": "Daca Spui Cuiva O Poveste Adevarata Despre Crima Secrete De Familie Si Unitatea De Nezdruncinat A Unor Copii 2"
+      "title_hint": "Daca Spui Cuiva O Poveste Adevarata Despre Crima Secrete De Familie Si Unitatea De Nezdruncinat A Unor Copii 2",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "dana-budeanu-pentru-prea-multi-copii-mama-este-facebook-si-tata-e-tiktok-pe-drept-cuvant-16",
       "url": "https://voxa.ro/audiobooks/dana-budeanu-pentru-prea-multi-copii-mama-este-facebook-si-tata-e-tiktok-pe-drept-cuvant-16",
-      "title_hint": "Dana Budeanu Pentru Prea Multi Copii Mama Este Facebook Si Tata E Tiktok Pe Drept Cuvant 16"
+      "title_hint": "Dana Budeanu Pentru Prea Multi Copii Mama Este Facebook Si Tata E Tiktok Pe Drept Cuvant 16",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "daruieste-iubirea-care-vindeca-cum-sa-reconstruiesti-conexiunea-cu-copilul-tau-devenind-un-parinte-constient-terapia-imago",
       "url": "https://voxa.ro/audiobooks/daruieste-iubirea-care-vindeca-cum-sa-reconstruiesti-conexiunea-cu-copilul-tau-devenind-un-parinte-constient-terapia-imago",
-      "title_hint": "Daruieste Iubirea Care Vindeca Cum Sa Reconstruiesti Conexiunea Cu Copilul Tau Devenind Un Parinte Constient Terapia Imago"
+      "title_hint": "Daruieste Iubirea Care Vindeca Cum Sa Reconstruiesti Conexiunea Cu Copilul Tau Devenind Un Parinte Constient Terapia Imago",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "descopera-aptitudinile-copilului-tau-inteligenta-multipla",
       "url": "https://voxa.ro/audiobooks/descopera-aptitudinile-copilului-tau-inteligenta-multipla",
-      "title_hint": "Descopera Aptitudinile Copilului Tau Inteligenta Multipla"
+      "title_hint": "Descopera Aptitudinile Copilului Tau Inteligenta Multipla",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "descopera-psihologia-psihologia-copilului",
       "url": "https://voxa.ro/audiobooks/descopera-psihologia-psihologia-copilului",
-      "title_hint": "Descopera Psihologia Psihologia Copilului"
+      "title_hint": "Descopera Psihologia Psihologia Copilului",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "destinul-lupului-singuratic-3",
       "url": "https://voxa.ro/audiobooks/destinul-lupului-singuratic-3",
-      "title_hint": "Destinul Lupului Singuratic 3"
+      "title_hint": "Destinul Lupului Singuratic 3",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "dezvoltare-personala-pe-intelesul-copiilor-i-imi-dezvolt-forta-mentala-si-invat-din-fiecare-experienta-noua",
       "url": "https://voxa.ro/audiobooks/dezvoltare-personala-pe-intelesul-copiilor-i-imi-dezvolt-forta-mentala-si-invat-din-fiecare-experienta-noua",
-      "title_hint": "Dezvoltare Personala Pe Intelesul Copiilor I Imi Dezvolt Forta Mentala Si Invat Din Fiecare Experienta Noua"
+      "title_hint": "Dezvoltare Personala Pe Intelesul Copiilor I Imi Dezvolt Forta Mentala Si Invat Din Fiecare Experienta Noua",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "dezvoltare-personala-pe-intelesul-copiilor-ii-gandesc-pozitiv-si-depasesc-toate-provocarile",
       "url": "https://voxa.ro/audiobooks/dezvoltare-personala-pe-intelesul-copiilor-ii-gandesc-pozitiv-si-depasesc-toate-provocarile",
-      "title_hint": "Dezvoltare Personala Pe Intelesul Copiilor Ii Gandesc Pozitiv Si Depasesc Toate Provocarile"
+      "title_hint": "Dezvoltare Personala Pe Intelesul Copiilor Ii Gandesc Pozitiv Si Depasesc Toate Provocarile",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "dezvoltare-personala-pe-intelesul-copiilor-iii-imi-aleg-obiectivele-si-le-indeplinesc",
       "url": "https://voxa.ro/audiobooks/dezvoltare-personala-pe-intelesul-copiilor-iii-imi-aleg-obiectivele-si-le-indeplinesc",
-      "title_hint": "Dezvoltare Personala Pe Intelesul Copiilor Iii Imi Aleg Obiectivele Si Le Indeplinesc"
+      "title_hint": "Dezvoltare Personala Pe Intelesul Copiilor Iii Imi Aleg Obiectivele Si Le Indeplinesc",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "din-calatoriile-unei-femei-cu-suflet-de-copil",
       "url": "https://voxa.ro/audiobooks/din-calatoriile-unei-femei-cu-suflet-de-copil",
-      "title_hint": "Din Calatoriile Unei Femei Cu Suflet De Copil"
+      "title_hint": "Din Calatoriile Unei Femei Cu Suflet De Copil",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "dirk-bones-and-the-mystery-of-the-missing-books",
       "url": "https://voxa.ro/audiobooks/dirk-bones-and-the-mystery-of-the-missing-books",
-      "title_hint": "Dirk Bones And The Mystery Of The Missing Books"
+      "title_hint": "Dirk Bones And The Mystery Of The Missing Books",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "disney-alice-in-tara-minunilor",
       "url": "https://voxa.ro/audiobooks/disney-alice-in-tara-minunilor",
-      "title_hint": "Disney Alice In Tara Minunilor"
+      "title_hint": "Disney Alice In Tara Minunilor",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "disney-clubul-lui-mickey-mouse-invitatie-la-picnic-biblioteca-magica",
       "url": "https://voxa.ro/audiobooks/disney-clubul-lui-mickey-mouse-invitatie-la-picnic-biblioteca-magica",
-      "title_hint": "Disney Clubul Lui Mickey Mouse Invitatie La Picnic Biblioteca Magica"
+      "title_hint": "Disney Clubul Lui Mickey Mouse Invitatie La Picnic Biblioteca Magica",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "disney-frumoasa-si-bestia",
       "url": "https://voxa.ro/audiobooks/disney-frumoasa-si-bestia",
-      "title_hint": "Disney Frumoasa Si Bestia"
+      "title_hint": "Disney Frumoasa Si Bestia",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "disney-garda-felina",
       "url": "https://voxa.ro/audiobooks/disney-garda-felina",
-      "title_hint": "Disney Garda Felina"
+      "title_hint": "Disney Garda Felina",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "disney-in-cautarea-lui-dory-biblioteca-magica-2",
       "url": "https://voxa.ro/audiobooks/disney-in-cautarea-lui-dory-biblioteca-magica-2",
-      "title_hint": "Disney In Cautarea Lui Dory Biblioteca Magica 2"
+      "title_hint": "Disney In Cautarea Lui Dory Biblioteca Magica 2",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "disney-junior-7-povesti-pentru-toata-saptamana",
       "url": "https://voxa.ro/audiobooks/disney-junior-7-povesti-pentru-toata-saptamana",
-      "title_hint": "Disney Junior 7 Povesti Pentru Toata Saptamana"
+      "title_hint": "Disney Junior 7 Povesti Pentru Toata Saptamana",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "disney-masini-3",
       "url": "https://voxa.ro/audiobooks/disney-masini-3",
-      "title_hint": "Disney Masini 3"
+      "title_hint": "Disney Masini 3",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "disney-primele-mele-povesti-de-noapte-buna-in-asteptarea-lui-mos-craciun",
       "url": "https://voxa.ro/audiobooks/disney-primele-mele-povesti-de-noapte-buna-in-asteptarea-lui-mos-craciun",
-      "title_hint": "Disney Primele Mele Povesti De Noapte Buna In Asteptarea Lui Mos Craciun"
+      "title_hint": "Disney Primele Mele Povesti De Noapte Buna In Asteptarea Lui Mos Craciun",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "disney-printese-povesti-despre-prietenie-biblioteca-magica",
       "url": "https://voxa.ro/audiobooks/disney-printese-povesti-despre-prietenie-biblioteca-magica",
-      "title_hint": "Disney Printese Povesti Despre Prietenie Biblioteca Magica"
+      "title_hint": "Disney Printese Povesti Despre Prietenie Biblioteca Magica",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "disney-regatul-de-gheata-biblioteca-magica",
       "url": "https://voxa.ro/audiobooks/disney-regatul-de-gheata-biblioteca-magica",
-      "title_hint": "Disney Regatul De Gheata Biblioteca Magica"
+      "title_hint": "Disney Regatul De Gheata Biblioteca Magica",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "disney-regatul-de-gheata-ii-povestea-filmului",
       "url": "https://voxa.ro/audiobooks/disney-regatul-de-gheata-ii-povestea-filmului",
-      "title_hint": "Disney Regatul De Gheata Ii Povestea Filmului"
+      "title_hint": "Disney Regatul De Gheata Ii Povestea Filmului",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "disney-vaiana-biblioteca-magica",
       "url": "https://voxa.ro/audiobooks/disney-vaiana-biblioteca-magica",
-      "title_hint": "Disney Vaiana Biblioteca Magica"
+      "title_hint": "Disney Vaiana Biblioteca Magica",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "doar-copiii-care-mor-mai-pot-scoate-parlamentul-romaniei-din-teroarea-ong-urilor",
       "url": "https://voxa.ro/audiobooks/doar-copiii-care-mor-mai-pot-scoate-parlamentul-romaniei-din-teroarea-ong-urilor",
-      "title_hint": "Doar Copiii Care Mor Mai Pot Scoate Parlamentul Romaniei Din Teroarea Ong Urilor"
+      "title_hint": "Doar Copiii Care Mor Mai Pot Scoate Parlamentul Romaniei Din Teroarea Ong Urilor",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "doris-the-singing-cow-2",
       "url": "https://voxa.ro/audiobooks/doris-the-singing-cow-2",
-      "title_hint": "Doris The Singing Cow 2"
+      "title_hint": "Doris The Singing Cow 2",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "dosarele-criminalilor-in-serie",
       "url": "https://voxa.ro/audiobooks/dosarele-criminalilor-in-serie",
-      "title_hint": "Dosarele Criminalilor In Serie"
+      "title_hint": "Dosarele Criminalilor In Serie",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "drama-copilului-interior-prizonieri-ai-copilariei-in-cautarea-adevaratului-sine",
       "url": "https://voxa.ro/audiobooks/drama-copilului-interior-prizonieri-ai-copilariei-in-cautarea-adevaratului-sine",
-      "title_hint": "Drama Copilului Interior Prizonieri Ai Copilariei In Cautarea Adevaratului Sine"
+      "title_hint": "Drama Copilului Interior Prizonieri Ai Copilariei In Cautarea Adevaratului Sine",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "dumbo",
       "url": "https://voxa.ro/audiobooks/dumbo",
-      "title_hint": "Dumbo"
+      "title_hint": "Dumbo",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "e10-alba-ca-zapada-si-cei-sapte-pitici",
       "url": "https://voxa.ro/audiobooks/e10-alba-ca-zapada-si-cei-sapte-pitici",
-      "title_hint": "E10 Alba Ca Zapada Si Cei Sapte Pitici"
+      "title_hint": "E10 Alba Ca Zapada Si Cei Sapte Pitici",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "e12-bambi",
       "url": "https://voxa.ro/audiobooks/e12-bambi",
-      "title_hint": "E12 Bambi"
+      "title_hint": "E12 Bambi",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "e14-pinocchio",
       "url": "https://voxa.ro/audiobooks/e14-pinocchio",
-      "title_hint": "E14 Pinocchio"
+      "title_hint": "E14 Pinocchio",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "e17-dumbo",
       "url": "https://voxa.ro/audiobooks/e17-dumbo",
-      "title_hint": "E17 Dumbo"
+      "title_hint": "E17 Dumbo",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "e32-star-o-pisicuta-singura-in-noapte",
       "url": "https://voxa.ro/audiobooks/e32-star-o-pisicuta-singura-in-noapte",
-      "title_hint": "E32 Star O Pisicuta Singura In Noapte"
+      "title_hint": "E32 Star O Pisicuta Singura In Noapte",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "e33-charlie-pisoiul-singuratic",
       "url": "https://voxa.ro/audiobooks/e33-charlie-pisoiul-singuratic",
-      "title_hint": "E33 Charlie Pisoiul Singuratic"
+      "title_hint": "E33 Charlie Pisoiul Singuratic",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "e35-oscar-se-simte-singur",
       "url": "https://voxa.ro/audiobooks/e35-oscar-se-simte-singur",
-      "title_hint": "E35 Oscar Se Simte Singur"
+      "title_hint": "E35 Oscar Se Simte Singur",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "e40-micii-eroi-astrid-lindgren",
       "url": "https://voxa.ro/audiobooks/e40-micii-eroi-astrid-lindgren",
-      "title_hint": "E40 Micii Eroi Astrid Lindgren"
+      "title_hint": "E40 Micii Eroi Astrid Lindgren",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "e42-puiul-de-lup-singuratic",
       "url": "https://voxa.ro/audiobooks/e42-puiul-de-lup-singuratic",
-      "title_hint": "E42 Puiul De Lup Singuratic"
+      "title_hint": "E42 Puiul De Lup Singuratic",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "e44-tiger-un-pisoi-dornic-de-aventura",
       "url": "https://voxa.ro/audiobooks/e44-tiger-un-pisoi-dornic-de-aventura",
-      "title_hint": "E44 Tiger Un Pisoi Dornic De Aventura"
+      "title_hint": "E44 Tiger Un Pisoi Dornic De Aventura",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "e6-peter-pan",
       "url": "https://voxa.ro/audiobooks/e6-peter-pan",
-      "title_hint": "E6 Peter Pan"
+      "title_hint": "E6 Peter Pan",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "e7-jess-catelusa-singuratica",
       "url": "https://voxa.ro/audiobooks/e7-jess-catelusa-singuratica",
-      "title_hint": "E7 Jess Catelusa Singuratica"
+      "title_hint": "E7 Jess Catelusa Singuratica",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "e8-cenusareasa",
       "url": "https://voxa.ro/audiobooks/e8-cenusareasa",
-      "title_hint": "E8 Cenusareasa"
+      "title_hint": "E8 Cenusareasa",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "eliberarea-copilului-interior-cum-sa-identifici-si-sa-vindeci-traumele-copilariei-2",
       "url": "https://voxa.ro/audiobooks/eliberarea-copilului-interior-cum-sa-identifici-si-sa-vindeci-traumele-copilariei-2",
-      "title_hint": "Eliberarea Copilului Interior Cum Sa Identifici Si Sa Vindeci Traumele Copilariei 2"
+      "title_hint": "Eliberarea Copilului Interior Cum Sa Identifici Si Sa Vindeci Traumele Copilariei 2",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "eliberarea-copilului-interior-cum-sa-identifici-si-sa-vindeci-traumele-copilariei-enhanced-experience",
       "url": "https://voxa.ro/audiobooks/eliberarea-copilului-interior-cum-sa-identifici-si-sa-vindeci-traumele-copilariei-enhanced-experience",
-      "title_hint": "Eliberarea Copilului Interior Cum Sa Identifici Si Sa Vindeci Traumele Copilariei Enhanced Experience"
+      "title_hint": "Eliberarea Copilului Interior Cum Sa Identifici Si Sa Vindeci Traumele Copilariei Enhanced Experience",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "erasing-someone-from-your-mind-hypnosis-subliminal-sleep-programming",
       "url": "https://voxa.ro/audiobooks/erasing-someone-from-your-mind-hypnosis-subliminal-sleep-programming",
-      "title_hint": "Erasing Someone From Your Mind Hypnosis Subliminal Sleep Programming"
+      "title_hint": "Erasing Someone From Your Mind Hypnosis Subliminal Sleep Programming",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "essential-doris-lessing",
       "url": "https://voxa.ro/audiobooks/essential-doris-lessing",
-      "title_hint": "Essential Doris Lessing"
+      "title_hint": "Essential Doris Lessing",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "evadarea-din-ghetou-uimitoarea-poveste-a-copilului-care-a-fugit-de-nazisti-2",
       "url": "https://voxa.ro/audiobooks/evadarea-din-ghetou-uimitoarea-poveste-a-copilului-care-a-fugit-de-nazisti-2",
-      "title_hint": "Evadarea Din Ghetou Uimitoarea Poveste A Copilului Care A Fugit De Nazisti 2"
+      "title_hint": "Evadarea Din Ghetou Uimitoarea Poveste A Copilului Care A Fugit De Nazisti 2",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "even-more-funny-paddington-stories",
       "url": "https://voxa.ro/audiobooks/even-more-funny-paddington-stories",
-      "title_hint": "Even More Funny Paddington Stories"
+      "title_hint": "Even More Funny Paddington Stories",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "fara-copii",
       "url": "https://voxa.ro/audiobooks/fara-copii",
-      "title_hint": "Fara Copii"
+      "title_hint": "Fara Copii",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "farewell-to-manzanar",
       "url": "https://voxa.ro/audiobooks/farewell-to-manzanar",
-      "title_hint": "Farewell To Manzanar"
+      "title_hint": "Farewell To Manzanar",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "fat-frumos-din-lacrima",
       "url": "https://voxa.ro/audiobooks/fat-frumos-din-lacrima",
-      "title_hint": "Fat Frumos Din Lacrima"
+      "title_hint": "Fat Frumos Din Lacrima",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "favourite-paddington-stories",
       "url": "https://voxa.ro/audiobooks/favourite-paddington-stories",
-      "title_hint": "Favourite Paddington Stories"
+      "title_hint": "Favourite Paddington Stories",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "felicitari-pentru-absolvirea-gradinitei",
       "url": "https://voxa.ro/audiobooks/felicitari-pentru-absolvirea-gradinitei",
-      "title_hint": "Felicitari Pentru Absolvirea Gradinitei"
+      "title_hint": "Felicitari Pentru Absolvirea Gradinitei",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "fii-prietenul-tau-cel-mai-bun-pentru-copii",
       "url": "https://voxa.ro/audiobooks/fii-prietenul-tau-cel-mai-bun-pentru-copii",
-      "title_hint": "Fii Prietenul Tau Cel Mai Bun Pentru Copii"
+      "title_hint": "Fii Prietenul Tau Cel Mai Bun Pentru Copii",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "fireborn-twelve-and-the-frozen-forest",
       "url": "https://voxa.ro/audiobooks/fireborn-twelve-and-the-frozen-forest",
-      "title_hint": "Fireborn Twelve And The Frozen Forest"
+      "title_hint": "Fireborn Twelve And The Frozen Forest",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "five-days-missing",
       "url": "https://voxa.ro/audiobooks/five-days-missing",
-      "title_hint": "Five Days Missing"
+      "title_hint": "Five Days Missing",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "focusing-concentration",
       "url": "https://voxa.ro/audiobooks/focusing-concentration",
-      "title_hint": "Focusing Concentration"
+      "title_hint": "Focusing Concentration",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "fram-ursul-polar",
       "url": "https://voxa.ro/audiobooks/fram-ursul-polar",
-      "title_hint": "Fram Ursul Polar"
+      "title_hint": "Fram Ursul Polar",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "fram-ursul-polar-adaptare",
       "url": "https://voxa.ro/audiobooks/fram-ursul-polar-adaptare",
-      "title_hint": "Fram Ursul Polar Adaptare"
+      "title_hint": "Fram Ursul Polar Adaptare",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "fratii-karamazov-mari-opere-din-literatura-rusa-povestite-copiilor-nivelul-6",
       "url": "https://voxa.ro/audiobooks/fratii-karamazov-mari-opere-din-literatura-rusa-povestite-copiilor-nivelul-6",
-      "title_hint": "Fratii Karamazov Mari Opere Din Literatura Rusa Povestite Copiilor Nivelul 6"
+      "title_hint": "Fratii Karamazov Mari Opere Din Literatura Rusa Povestite Copiilor Nivelul 6",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "frica-si-anxietatea-copilului-solutii-practice-pentru-a-l-ajuta-sa-le-depaseasca-2",
       "url": "https://voxa.ro/audiobooks/frica-si-anxietatea-copilului-solutii-practice-pentru-a-l-ajuta-sa-le-depaseasca-2",
-      "title_hint": "Frica Si Anxietatea Copilului Solutii Practice Pentru A L Ajuta Sa Le Depaseasca 2"
+      "title_hint": "Frica Si Anxietatea Copilului Solutii Practice Pentru A L Ajuta Sa Le Depaseasca 2",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "funny-paddington-stories",
       "url": "https://voxa.ro/audiobooks/funny-paddington-stories",
-      "title_hint": "Funny Paddington Stories"
+      "title_hint": "Funny Paddington Stories",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "great-bazaar-and-brayan-s-gold",
       "url": "https://voxa.ro/audiobooks/great-bazaar-and-brayan-s-gold",
-      "title_hint": "Great Bazaar And Brayan S Gold"
+      "title_hint": "Great Bazaar And Brayan S Gold",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "henny-penny-and-the-wonderfood-2",
       "url": "https://voxa.ro/audiobooks/henny-penny-and-the-wonderfood-2",
-      "title_hint": "Henny Penny And The Wonderfood 2"
+      "title_hint": "Henny Penny And The Wonderfood 2",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "her-last-betrayal",
       "url": "https://voxa.ro/audiobooks/her-last-betrayal",
-      "title_hint": "Her Last Betrayal"
+      "title_hint": "Her Last Betrayal",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "her-last-betrayal-2",
       "url": "https://voxa.ro/audiobooks/her-last-betrayal-2",
-      "title_hint": "Her Last Betrayal 2"
+      "title_hint": "Her Last Betrayal 2",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "hero-rising",
       "url": "https://voxa.ro/audiobooks/hero-rising",
-      "title_hint": "Hero Rising"
+      "title_hint": "Hero Rising",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "how-to-play-golf-the-natural-way-using-your-mind-and-body",
       "url": "https://voxa.ro/audiobooks/how-to-play-golf-the-natural-way-using-your-mind-and-body",
-      "title_hint": "How To Play Golf The Natural Way Using Your Mind And Body"
+      "title_hint": "How To Play Golf The Natural Way Using Your Mind And Body",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "identificarea-starii-emotionale-pentru-copii",
       "url": "https://voxa.ro/audiobooks/identificarea-starii-emotionale-pentru-copii",
-      "title_hint": "Identificarea Starii Emotionale Pentru Copii"
+      "title_hint": "Identificarea Starii Emotionale Pentru Copii",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "increasing-communication",
       "url": "https://voxa.ro/audiobooks/increasing-communication",
-      "title_hint": "Increasing Communication"
+      "title_hint": "Increasing Communication",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "inteligenta-emotionala-pe-intelesul-copiilor-eliza-nu-se-da-batuta",
       "url": "https://voxa.ro/audiobooks/inteligenta-emotionala-pe-intelesul-copiilor-eliza-nu-se-da-batuta",
-      "title_hint": "Inteligenta Emotionala Pe Intelesul Copiilor Eliza Nu Se Da Batuta"
+      "title_hint": "Inteligenta Emotionala Pe Intelesul Copiilor Eliza Nu Se Da Batuta",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "inteligenta-emotionala-pe-intelesul-copiilor-rebeca-invinge-ingrijorarea",
       "url": "https://voxa.ro/audiobooks/inteligenta-emotionala-pe-intelesul-copiilor-rebeca-invinge-ingrijorarea",
-      "title_hint": "Inteligenta Emotionala Pe Intelesul Copiilor Rebeca Invinge Ingrijorarea"
+      "title_hint": "Inteligenta Emotionala Pe Intelesul Copiilor Rebeca Invinge Ingrijorarea",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "inteligenta-emotionala-pe-intelesul-copiilor-robert-nu-se-mai-enerveaza",
       "url": "https://voxa.ro/audiobooks/inteligenta-emotionala-pe-intelesul-copiilor-robert-nu-se-mai-enerveaza",
-      "title_hint": "Inteligenta Emotionala Pe Intelesul Copiilor Robert Nu Se Mai Enerveaza"
+      "title_hint": "Inteligenta Emotionala Pe Intelesul Copiilor Robert Nu Se Mai Enerveaza",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "intre-parinte-si-copil-audiobook",
       "url": "https://voxa.ro/audiobooks/intre-parinte-si-copil-audiobook",
-      "title_hint": "Intre Parinte Si Copil Audiobook"
+      "title_hint": "Intre Parinte Si Copil Audiobook",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "istoria-lumii-pentru-copii-al-doilea-razboi-mondial",
       "url": "https://voxa.ro/audiobooks/istoria-lumii-pentru-copii-al-doilea-razboi-mondial",
-      "title_hint": "Istoria Lumii Pentru Copii Al Doilea Razboi Mondial"
+      "title_hint": "Istoria Lumii Pentru Copii Al Doilea Razboi Mondial",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "istoria-lumii-pentru-copii-cucerirea-spatiului",
       "url": "https://voxa.ro/audiobooks/istoria-lumii-pentru-copii-cucerirea-spatiului",
-      "title_hint": "Istoria Lumii Pentru Copii Cucerirea Spatiului"
+      "title_hint": "Istoria Lumii Pentru Copii Cucerirea Spatiului",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "istoria-lumii-pentru-copii-razboiul-de-secesiune-si-cucerirea-vestului",
       "url": "https://voxa.ro/audiobooks/istoria-lumii-pentru-copii-razboiul-de-secesiune-si-cucerirea-vestului",
-      "title_hint": "Istoria Lumii Pentru Copii Razboiul De Secesiune Si Cucerirea Vestului"
+      "title_hint": "Istoria Lumii Pentru Copii Razboiul De Secesiune Si Cucerirea Vestului",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "istoria-lumii-pentru-copii-revolutia-rusa",
       "url": "https://voxa.ro/audiobooks/istoria-lumii-pentru-copii-revolutia-rusa",
-      "title_hint": "Istoria Lumii Pentru Copii Revolutia Rusa"
+      "title_hint": "Istoria Lumii Pentru Copii Revolutia Rusa",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "it-s-a-wonderful-life",
       "url": "https://voxa.ro/audiobooks/it-s-a-wonderful-life",
-      "title_hint": "It S A Wonderful Life"
+      "title_hint": "It S A Wonderful Life",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "jasmine-petitoarea-cenusareasa",
       "url": "https://voxa.ro/audiobooks/jasmine-petitoarea-cenusareasa",
-      "title_hint": "Jasmine Petitoarea Cenusareasa"
+      "title_hint": "Jasmine Petitoarea Cenusareasa",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "jean-piaget-limbajul-si-gandirea-copilului",
       "url": "https://voxa.ro/audiobooks/jean-piaget-limbajul-si-gandirea-copilului",
-      "title_hint": "Jean Piaget Limbajul Si Gandirea Copilului"
+      "title_hint": "Jean Piaget Limbajul Si Gandirea Copilului",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "jocul-atasamentului-rezolvarea-problemelor-de-comportament-ale-copilului-prin-joaca-ras-si-conectare",
       "url": "https://voxa.ro/audiobooks/jocul-atasamentului-rezolvarea-problemelor-de-comportament-ale-copilului-prin-joaca-ras-si-conectare",
-      "title_hint": "Jocul Atasamentului Rezolvarea Problemelor De Comportament Ale Copilului Prin Joaca Ras Si Conectare"
+      "title_hint": "Jocul Atasamentului Rezolvarea Problemelor De Comportament Ale Copilului Prin Joaca Ras Si Conectare",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "kamdev-singh",
       "url": "https://voxa.ro/audiobooks/kamdev-singh",
-      "title_hint": "Kamdev Singh"
+      "title_hint": "Kamdev Singh",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "krondor-the-betrayal",
       "url": "https://voxa.ro/audiobooks/krondor-the-betrayal",
-      "title_hint": "Krondor The Betrayal"
+      "title_hint": "Krondor The Betrayal",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "lee-s-lieutenants-singapore-s-old-guard",
       "url": "https://voxa.ro/audiobooks/lee-s-lieutenants-singapore-s-old-guard",
-      "title_hint": "Lee S Lieutenants Singapore S Old Guard"
+      "title_hint": "Lee S Lieutenants Singapore S Old Guard",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "libera-un-copil-si-o-tara-la-sfarsitul-istoriei-2",
       "url": "https://voxa.ro/audiobooks/libera-un-copil-si-o-tara-la-sfarsitul-istoriei-2",
-      "title_hint": "Libera Un Copil Si O Tara La Sfarsitul Istoriei 2"
+      "title_hint": "Libera Un Copil Si O Tara La Sfarsitul Istoriei 2",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "lies-we-sing-to-the-sea",
       "url": "https://voxa.ro/audiobooks/lies-we-sing-to-the-sea",
-      "title_hint": "Lies We Sing To The Sea"
+      "title_hint": "Lies We Sing To The Sea",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "liniste-si-calm-pentru-copii",
       "url": "https://voxa.ro/audiobooks/liniste-si-calm-pentru-copii",
-      "title_hint": "Liniste Si Calm Pentru Copii"
+      "title_hint": "Liniste Si Calm Pentru Copii",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "local-woman-missing",
       "url": "https://voxa.ro/audiobooks/local-woman-missing",
-      "title_hint": "Local Woman Missing"
+      "title_hint": "Local Woman Missing",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "losing-it",
       "url": "https://voxa.ro/audiobooks/losing-it",
-      "title_hint": "Losing It"
+      "title_hint": "Losing It",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "losing-it-2",
       "url": "https://voxa.ro/audiobooks/losing-it-2",
-      "title_hint": "Losing It 2"
+      "title_hint": "Losing It 2",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "losing-juliet",
       "url": "https://voxa.ro/audiobooks/losing-juliet",
-      "title_hint": "Losing Juliet"
+      "title_hint": "Losing Juliet",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "losing-young",
       "url": "https://voxa.ro/audiobooks/losing-young",
-      "title_hint": "Losing Young"
+      "title_hint": "Losing Young",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "love-from-paddington",
       "url": "https://voxa.ro/audiobooks/love-from-paddington",
-      "title_hint": "Love From Paddington"
+      "title_hint": "Love From Paddington",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "maya-and-the-rising-dark",
       "url": "https://voxa.ro/audiobooks/maya-and-the-rising-dark",
-      "title_hint": "Maya And The Rising Dark"
+      "title_hint": "Maya And The Rising Dark",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "mica-sirena-in-cautarea-darurilor-aurora-si-surprizele-craciunului",
       "url": "https://voxa.ro/audiobooks/mica-sirena-in-cautarea-darurilor-aurora-si-surprizele-craciunului",
-      "title_hint": "Mica Sirena In Cautarea Darurilor Aurora Si Surprizele Craciunului"
+      "title_hint": "Mica Sirena In Cautarea Darurilor Aurora Si Surprizele Craciunului",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "micul-print",
       "url": "https://voxa.ro/audiobooks/micul-print",
-      "title_hint": "Micul Print"
+      "title_hint": "Micul Print",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "micul-print-2",
       "url": "https://voxa.ro/audiobooks/micul-print-2",
-      "title_hint": "Micul Print 2"
+      "title_hint": "Micul Print 2",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "micul-print-4",
       "url": "https://voxa.ro/audiobooks/micul-print-4",
-      "title_hint": "Micul Print 4"
+      "title_hint": "Micul Print 4",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "mindfulness-pentru-copii",
       "url": "https://voxa.ro/audiobooks/mindfulness-pentru-copii",
-      "title_hint": "Mindfulness Pentru Copii"
+      "title_hint": "Mindfulness Pentru Copii",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "minnie-and-winnie-2",
       "url": "https://voxa.ro/audiobooks/minnie-and-winnie-2",
-      "title_hint": "Minnie And Winnie 2"
+      "title_hint": "Minnie And Winnie 2",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "missing-2",
       "url": "https://voxa.ro/audiobooks/missing-2",
-      "title_hint": "Missing 2"
+      "title_hint": "Missing 2",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "missing-presumed",
       "url": "https://voxa.ro/audiobooks/missing-presumed",
-      "title_hint": "Missing Presumed"
+      "title_hint": "Missing Presumed",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "missing-sisters",
       "url": "https://voxa.ro/audiobooks/missing-sisters",
-      "title_hint": "Missing Sisters"
+      "title_hint": "Missing Sisters",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "mitul-copilului-rasfatat-de-la-educatia-prin-pedepse-si-recompense-la-arta-de-a-creste-un-copil-cu-stima-de-sine-responsabil-si-empatic-cu-cei-din-jur",
       "url": "https://voxa.ro/audiobooks/mitul-copilului-rasfatat-de-la-educatia-prin-pedepse-si-recompense-la-arta-de-a-creste-un-copil-cu-stima-de-sine-responsabil-si-empatic-cu-cei-din-jur",
-      "title_hint": "Mitul Copilului Rasfatat De La Educatia Prin Pedepse Si Recompense La Arta De A Creste Un Copil Cu Stima De Sine Responsabil Si Empatic Cu Cei Din Jur"
+      "title_hint": "Mitul Copilului Rasfatat De La Educatia Prin Pedepse Si Recompense La Arta De A Creste Un Copil Cu Stima De Sine Responsabil Si Empatic Cu Cei Din Jur",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "more-about-paddington",
       "url": "https://voxa.ro/audiobooks/more-about-paddington",
-      "title_hint": "More About Paddington"
+      "title_hint": "More About Paddington",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "more-funny-paddington-stories",
       "url": "https://voxa.ro/audiobooks/more-funny-paddington-stories",
-      "title_hint": "More Funny Paddington Stories"
+      "title_hint": "More Funny Paddington Stories",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "mowgli-all-of-the-mowgli-stories-from-the-jungle-books",
       "url": "https://voxa.ro/audiobooks/mowgli-all-of-the-mowgli-stories-from-the-jungle-books",
-      "title_hint": "Mowgli All Of The Mowgli Stories From The Jungle Books"
+      "title_hint": "Mowgli All Of The Mowgli Stories From The Jungle Books",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "mrs-mohr-goes-missing",
       "url": "https://voxa.ro/audiobooks/mrs-mohr-goes-missing",
-      "title_hint": "Mrs Mohr Goes Missing"
+      "title_hint": "Mrs Mohr Goes Missing",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "my-sister-is-missing",
       "url": "https://voxa.ro/audiobooks/my-sister-is-missing",
-      "title_hint": "My Sister Is Missing"
+      "title_hint": "My Sister Is Missing",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "nathalia-buttface-and-the-embarrassing-camp-catastrophe",
       "url": "https://voxa.ro/audiobooks/nathalia-buttface-and-the-embarrassing-camp-catastrophe",
-      "title_hint": "Nathalia Buttface And The Embarrassing Camp Catastrophe"
+      "title_hint": "Nathalia Buttface And The Embarrassing Camp Catastrophe",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "nathalia-buttface-and-the-most-embarrassing-dad-in-the-world",
       "url": "https://voxa.ro/audiobooks/nathalia-buttface-and-the-most-embarrassing-dad-in-the-world",
-      "title_hint": "Nathalia Buttface And The Most Embarrassing Dad In The World"
+      "title_hint": "Nathalia Buttface And The Most Embarrassing Dad In The World",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "nathalia-buttface-and-the-most-embarrassing-five-minutes-of-fame-ever",
       "url": "https://voxa.ro/audiobooks/nathalia-buttface-and-the-most-embarrassing-five-minutes-of-fame-ever",
-      "title_hint": "Nathalia Buttface And The Most Embarrassing Five Minutes Of Fame Ever"
+      "title_hint": "Nathalia Buttface And The Most Embarrassing Five Minutes Of Fame Ever",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "nathalia-buttface-and-the-most-epically-embarrassing-trip-ever",
       "url": "https://voxa.ro/audiobooks/nathalia-buttface-and-the-most-epically-embarrassing-trip-ever",
-      "title_hint": "Nathalia Buttface And The Most Epically Embarrassing Trip Ever"
+      "title_hint": "Nathalia Buttface And The Most Epically Embarrassing Trip Ever",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "nathalia-buttface-and-the-totally-embarrassing-bridesmaid-disaster",
       "url": "https://voxa.ro/audiobooks/nathalia-buttface-and-the-totally-embarrassing-bridesmaid-disaster",
-      "title_hint": "Nathalia Buttface And The Totally Embarrassing Bridesmaid Disaster"
+      "title_hint": "Nathalia Buttface And The Totally Embarrassing Bridesmaid Disaster",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "naughtiest-unicorn-on-holiday-and-winter-wonderland",
       "url": "https://voxa.ro/audiobooks/naughtiest-unicorn-on-holiday-and-winter-wonderland",
-      "title_hint": "Naughtiest Unicorn On Holiday And Winter Wonderland"
+      "title_hint": "Naughtiest Unicorn On Holiday And Winter Wonderland",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "noi-copiii-din-bahnhof-zoo-audiobook",
       "url": "https://voxa.ro/audiobooks/noi-copiii-din-bahnhof-zoo-audiobook",
-      "title_hint": "Noi Copiii Din Bahnhof Zoo Audiobook"
+      "title_hint": "Noi Copiii Din Bahnhof Zoo Audiobook",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "o-aventura-italiana-2",
       "url": "https://voxa.ro/audiobooks/o-aventura-italiana-2",
-      "title_hint": "O Aventura Italiana 2"
+      "title_hint": "O Aventura Italiana 2",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "paddington",
       "url": "https://voxa.ro/audiobooks/paddington",
-      "title_hint": "Paddington"
+      "title_hint": "Paddington",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "paddington-abroad",
       "url": "https://voxa.ro/audiobooks/paddington-abroad",
-      "title_hint": "Paddington Abroad"
+      "title_hint": "Paddington Abroad",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "paddington-and-the-busy-day",
       "url": "https://voxa.ro/audiobooks/paddington-and-the-busy-day",
-      "title_hint": "Paddington And The Busy Day"
+      "title_hint": "Paddington And The Busy Day",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "paddington-and-the-christmas-surprise",
       "url": "https://voxa.ro/audiobooks/paddington-and-the-christmas-surprise",
-      "title_hint": "Paddington And The Christmas Surprise"
+      "title_hint": "Paddington And The Christmas Surprise",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "paddington-and-the-grand-tour",
       "url": "https://voxa.ro/audiobooks/paddington-and-the-grand-tour",
-      "title_hint": "Paddington And The Grand Tour"
+      "title_hint": "Paddington And The Grand Tour",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "paddington-and-the-marmalade-maze",
       "url": "https://voxa.ro/audiobooks/paddington-and-the-marmalade-maze",
-      "title_hint": "Paddington And The Marmalade Maze"
+      "title_hint": "Paddington And The Marmalade Maze",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "paddington-and-the-tutti-frutti-rainbow",
       "url": "https://voxa.ro/audiobooks/paddington-and-the-tutti-frutti-rainbow",
-      "title_hint": "Paddington And The Tutti Frutti Rainbow"
+      "title_hint": "Paddington And The Tutti Frutti Rainbow",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "paddington-at-large",
       "url": "https://voxa.ro/audiobooks/paddington-at-large",
-      "title_hint": "Paddington At Large"
+      "title_hint": "Paddington At Large",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "paddington-at-st-paul-s",
       "url": "https://voxa.ro/audiobooks/paddington-at-st-paul-s",
-      "title_hint": "Paddington At St Paul S"
+      "title_hint": "Paddington At St Paul S",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "paddington-at-the-carnival",
       "url": "https://voxa.ro/audiobooks/paddington-at-the-carnival",
-      "title_hint": "Paddington At The Carnival"
+      "title_hint": "Paddington At The Carnival",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "paddington-at-the-circus",
       "url": "https://voxa.ro/audiobooks/paddington-at-the-circus",
-      "title_hint": "Paddington At The Circus"
+      "title_hint": "Paddington At The Circus",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "paddington-at-the-fair",
       "url": "https://voxa.ro/audiobooks/paddington-at-the-fair",
-      "title_hint": "Paddington At The Fair"
+      "title_hint": "Paddington At The Fair",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "paddington-at-the-palace",
       "url": "https://voxa.ro/audiobooks/paddington-at-the-palace",
-      "title_hint": "Paddington At The Palace"
+      "title_hint": "Paddington At The Palace",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "paddington-at-the-zoo",
       "url": "https://voxa.ro/audiobooks/paddington-at-the-zoo",
-      "title_hint": "Paddington At The Zoo"
+      "title_hint": "Paddington At The Zoo",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "paddington-at-work",
       "url": "https://voxa.ro/audiobooks/paddington-at-work",
-      "title_hint": "Paddington At Work"
+      "title_hint": "Paddington At Work",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "paddington-goes-for-gold",
       "url": "https://voxa.ro/audiobooks/paddington-goes-for-gold",
-      "title_hint": "Paddington Goes For Gold"
+      "title_hint": "Paddington Goes For Gold",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "paddington-goes-to-hospital",
       "url": "https://voxa.ro/audiobooks/paddington-goes-to-hospital",
-      "title_hint": "Paddington Goes To Hospital"
+      "title_hint": "Paddington Goes To Hospital",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "paddington-goes-to-town",
       "url": "https://voxa.ro/audiobooks/paddington-goes-to-town",
-      "title_hint": "Paddington Goes To Town"
+      "title_hint": "Paddington Goes To Town",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "paddington-helps-out",
       "url": "https://voxa.ro/audiobooks/paddington-helps-out",
-      "title_hint": "Paddington Helps Out"
+      "title_hint": "Paddington Helps Out",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "paddington-here-and-now",
       "url": "https://voxa.ro/audiobooks/paddington-here-and-now",
-      "title_hint": "Paddington Here And Now"
+      "title_hint": "Paddington Here And Now",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "paddington-in-hot-water",
       "url": "https://voxa.ro/audiobooks/paddington-in-hot-water",
-      "title_hint": "Paddington In Hot Water"
+      "title_hint": "Paddington In Hot Water",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "paddington-in-the-garden",
       "url": "https://voxa.ro/audiobooks/paddington-in-the-garden",
-      "title_hint": "Paddington In The Garden"
+      "title_hint": "Paddington In The Garden",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "paddington-marches-on",
       "url": "https://voxa.ro/audiobooks/paddington-marches-on",
-      "title_hint": "Paddington Marches On"
+      "title_hint": "Paddington Marches On",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "paddington-minds-the-house",
       "url": "https://voxa.ro/audiobooks/paddington-minds-the-house",
-      "title_hint": "Paddington Minds The House"
+      "title_hint": "Paddington Minds The House",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "paddington-on-top",
       "url": "https://voxa.ro/audiobooks/paddington-on-top",
-      "title_hint": "Paddington On Top"
+      "title_hint": "Paddington On Top",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "paddington-races-ahead",
       "url": "https://voxa.ro/audiobooks/paddington-races-ahead",
-      "title_hint": "Paddington Races Ahead"
+      "title_hint": "Paddington Races Ahead",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "paddington-s-easter-egg-hunt",
       "url": "https://voxa.ro/audiobooks/paddington-s-easter-egg-hunt",
-      "title_hint": "Paddington S Easter Egg Hunt"
+      "title_hint": "Paddington S Easter Egg Hunt",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "paddington-s-finest-hour",
       "url": "https://voxa.ro/audiobooks/paddington-s-finest-hour",
-      "title_hint": "Paddington S Finest Hour"
+      "title_hint": "Paddington S Finest Hour",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "paddington-s-party-tricks",
       "url": "https://voxa.ro/audiobooks/paddington-s-party-tricks",
-      "title_hint": "Paddington S Party Tricks"
+      "title_hint": "Paddington S Party Tricks",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "paddington-s-trick-or-treat",
       "url": "https://voxa.ro/audiobooks/paddington-s-trick-or-treat",
-      "title_hint": "Paddington S Trick Or Treat"
+      "title_hint": "Paddington S Trick Or Treat",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "paddington-takes-the-air",
       "url": "https://voxa.ro/audiobooks/paddington-takes-the-air",
-      "title_hint": "Paddington Takes The Air"
+      "title_hint": "Paddington Takes The Air",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "paddington-takes-the-test",
       "url": "https://voxa.ro/audiobooks/paddington-takes-the-test",
-      "title_hint": "Paddington Takes The Test"
+      "title_hint": "Paddington Takes The Test",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "paddington-the-artist",
       "url": "https://voxa.ro/audiobooks/paddington-the-artist",
-      "title_hint": "Paddington The Artist"
+      "title_hint": "Paddington The Artist",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "paddington-turns-detective-and-other-funny-stories",
       "url": "https://voxa.ro/audiobooks/paddington-turns-detective-and-other-funny-stories",
-      "title_hint": "Paddington Turns Detective And Other Funny Stories"
+      "title_hint": "Paddington Turns Detective And Other Funny Stories",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "parintele-constient-cum-sa-ne-transformam-pe-noi-pentru-a-avea-copii-puternici-2",
       "url": "https://voxa.ro/audiobooks/parintele-constient-cum-sa-ne-transformam-pe-noi-pentru-a-avea-copii-puternici-2",
-      "title_hint": "Parintele Constient Cum Sa Ne Transformam Pe Noi Pentru A Avea Copii Puternici 2"
+      "title_hint": "Parintele Constient Cum Sa Ne Transformam Pe Noi Pentru A Avea Copii Puternici 2",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "peter-pan",
       "url": "https://voxa.ro/audiobooks/peter-pan",
-      "title_hint": "Peter Pan"
+      "title_hint": "Peter Pan",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "peter-pan-4",
       "url": "https://voxa.ro/audiobooks/peter-pan-4",
-      "title_hint": "Peter Pan 4"
+      "title_hint": "Peter Pan 4",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "peter-pan-5",
       "url": "https://voxa.ro/audiobooks/peter-pan-5",
-      "title_hint": "Peter Pan 5"
+      "title_hint": "Peter Pan 5",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "phoenix-rising",
       "url": "https://voxa.ro/audiobooks/phoenix-rising",
-      "title_hint": "Phoenix Rising"
+      "title_hint": "Phoenix Rising",
+      "title": "Phoenix Rising",
+      "authors": [
+        "Pip Ballantine",
+        "Tee Morris"
+      ],
+      "narrators": [
+        "James Langton"
+      ],
+      "duration_text": "13h 46m",
+      "duration_minutes": 826,
+      "description": "Evil is most assuredly afoot—and Britain’s fate rests in the hands of an alluring renegade . . . and a librarian.",
+      "cover_url": "https://media.voxa.ro/voxa-production/uploads/resource/image/8a929a1c-e752-4bd9-951b-adc593e08ac5/default_160x160_coperta_phoenix_rising_1666661333.jpg",
+      "collection": null,
+      "publisher": "HarperAudio",
+      "categories": null,
+      "age_band": null,
+      "broken": false
     },
     {
       "slug": "pinocchio",
       "url": "https://voxa.ro/audiobooks/pinocchio",
-      "title_hint": "Pinocchio"
+      "title_hint": "Pinocchio",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "pinocchio-8",
       "url": "https://voxa.ro/audiobooks/pinocchio-8",
-      "title_hint": "Pinocchio 8"
+      "title_hint": "Pinocchio 8",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "pisces-rising",
       "url": "https://voxa.ro/audiobooks/pisces-rising",
-      "title_hint": "Pisces Rising"
+      "title_hint": "Pisces Rising",
+      "title": "Pisces Rising",
+      "authors": [
+        "Dick Sutphen"
+      ],
+      "narrators": [
+        "Dick Sutphen"
+      ],
+      "duration_text": "2h 44m",
+      "duration_minutes": 164,
+      "description": "Psychic Stephanie Chaldean is the guru of \"Autonomy,\" a metaphysical commune in Montana's Bitterroot Valley-home to 400 open-minded New Agers who share her dream of a better life. Stephanie has predicted that first Japan, then New York, and finally California would sink beneath the sea just prior to a polar-axis shift. The demise of Japan focuses national attention on her radical teachings. Using the publicity, she launches a weekly TV show and builds a huge pyramid center. The book begins with the fall of New York. Here is an excerpt:",
+      "cover_url": "https://media.voxa.ro/voxa-production/uploads/resource/image/e1141249-3a41-4fd6-8434-fd86fd1bd988/default_160x160_coperta_pisces_rising.jpg",
+      "collection": null,
+      "publisher": "Hay House",
+      "categories": null,
+      "age_band": null,
+      "broken": false
     },
     {
       "slug": "pisicuta-alba-ca-zapada-2",
       "url": "https://voxa.ro/audiobooks/pisicuta-alba-ca-zapada-2",
-      "title_hint": "Pisicuta Alba Ca Zapada 2"
+      "title_hint": "Pisicuta Alba Ca Zapada 2",
+      "title": "Pisicuța albă ca zăpada",
+      "authors": [
+        "Holly Webb"
+      ],
+      "narrators": [
+        "Emilia Bebu"
+      ],
+      "duration_text": "1h 38m",
+      "duration_minutes": 98,
+      "description": "Bel se teme să petreacă zilele rămase până la Crăciun cu bunica ei la Casa Stejarul, un cămin de bătrâni aflat într-o casă victoriană. Conacul e frumos, dar straniu, iar fotografia fetiței care a locuit demult acolo o neliniștește. Într-o noapte, Bel vede în grădină o pisică albă și se ia după ea. Însă dincolo de pădurice e o altă lume, o lume de demult, care pare că o așteaptă...",
+      "cover_url": "https://media.voxa.ro/voxa-production/uploads/resource/image/015d004c-8103-4e92-9e7b-9c583657d1e7/default_160x160_coperta_pisicuta_alba_ca_zapada_1666095494.jpg",
+      "collection": "Prima mea Lectură",
+      "publisher": "Editura Litera",
+      "categories": "Povești pentru copiiCopii și familiePovești",
+      "age_band": "child",
+      "broken": false
     },
     {
       "slug": "povesti-corecte-politic-de-adormit-copiii-audiobook",
       "url": "https://voxa.ro/audiobooks/povesti-corecte-politic-de-adormit-copiii-audiobook",
-      "title_hint": "Povesti Corecte Politic De Adormit Copiii Audiobook"
+      "title_hint": "Povesti Corecte Politic De Adormit Copiii Audiobook",
+      "title": "Povești corecte politic de adormit copiii (audiobook)",
+      "authors": [
+        "James Finn Garner"
+      ],
+      "narrators": [
+        "Radu Paraschivescu"
+      ],
+      "duration_text": "5h 48m",
+      "duration_minutes": 348,
+      "description": "„Corectitudinea politică este acea boală cu transmitere mintală care desființează diferența și pune în locul ei mediocritatea călduță.“ — RADU PARASCHIVESCU",
+      "cover_url": "https://media.voxa.ro/voxa-production/uploads/resource/image/2893b6c9-2caa-4e26-a70f-417d82275dd5/default_160x160_coperta_povesti_corecte_politic_de_adormit_copiii_audiobook_1677625630.jpg",
+      "collection": "În afara colecțiilor",
+      "publisher": "Humanitas",
+      "categories": null,
+      "age_band": "child",
+      "broken": false
     },
     {
       "slug": "povesti-cu-femei-maritate",
       "url": "https://voxa.ro/audiobooks/povesti-cu-femei-maritate",
-      "title_hint": "Povesti Cu Femei Maritate"
+      "title_hint": "Povesti Cu Femei Maritate",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "povestile-de-aur-ale-copilariei",
       "url": "https://voxa.ro/audiobooks/povestile-de-aur-ale-copilariei",
-      "title_hint": "Povestile De Aur Ale Copilariei"
+      "title_hint": "Povestile De Aur Ale Copilariei",
+      "title": "Poveștile de aur ale copilăriei",
+      "authors": [
+        "Tony Wolf"
+      ],
+      "narrators": [
+        "Eveline Păuna"
+      ],
+      "duration_text": "6h 30m",
+      "duration_minutes": 390,
+      "description": "Prințese care așteaptă să fie salvate și cavaleri curajoși, animale viclene și creaturi magice, zâne bune și vrăjitoare rele, împărății îndepărtate și prieteni apropiați își dau întâlnire, ca prin farmec, în această carte.",
+      "cover_url": "https://media.voxa.ro/voxa-production/uploads/resource/image/3eb6d377-0fbf-40a8-b45a-eeb66a64c264/default_160x160_coperta_povestile_de_aur_ale_copilariei.jpg",
+      "collection": "Povești și Poezii Ilustrate",
+      "publisher": "Editura Litera",
+      "categories": "Ficțiune pentru copiiCopii și familiePovești pentru copii",
+      "age_band": "child",
+      "broken": false
     },
     {
       "slug": "primele-mele-povesti-scufita-rosie-si-alte-cinci-povesti-minunate",
       "url": "https://voxa.ro/audiobooks/primele-mele-povesti-scufita-rosie-si-alte-cinci-povesti-minunate",
-      "title_hint": "Primele Mele Povesti Scufita Rosie Si Alte Cinci Povesti Minunate"
+      "title_hint": "Primele Mele Povesti Scufita Rosie Si Alte Cinci Povesti Minunate",
+      "title": "Primele mele povesti. Scufita Rosie si alte cinci povesti minunate",
+      "authors": [
+        "Crescence Bouvarel",
+        "Gretchen von S.",
+        "Lucie Brunelliere"
+      ],
+      "narrators": [
+        "Ioana Mărcoiu"
+      ],
+      "duration_text": "31 min",
+      "duration_minutes": 31,
+      "description": "de: Crescence Bouvarel,Gretchen von S.,Lucie Brunelliere,Pascal Vilcollet,Rosalinde Bonnet,Ursula Bucher",
+      "cover_url": "https://media.voxa.ro/voxa-production/uploads/resource/image/c0980946-39bd-4992-8d5d-cfa38a4ffb17/default_160x160_coperta_primele_mele_povesti_scufita_rosie_si_alte_cinci_povesti_minunate_1711637493.jpg",
+      "collection": null,
+      "publisher": "Editura NICULESCU",
+      "categories": "Povești pentru copiiCopii și familie",
+      "age_band": "child",
+      "broken": false
     },
     {
       "slug": "printesele-rosii-femei-si-barbati-parinti-si-copii-in-ideologia-si-cotidianul-comunist",
       "url": "https://voxa.ro/audiobooks/printesele-rosii-femei-si-barbati-parinti-si-copii-in-ideologia-si-cotidianul-comunist",
-      "title_hint": "Printesele Rosii Femei Si Barbati Parinti Si Copii In Ideologia Si Cotidianul Comunist"
+      "title_hint": "Printesele Rosii Femei Si Barbati Parinti Si Copii In Ideologia Si Cotidianul Comunist",
+      "title": "Prințesele roșii. Femei și bărbați, părinți și copii în ideologia și cotidianul comunist",
+      "authors": [
+        "Lavinia Betea"
+      ],
+      "narrators": [
+        "Monica Davidescu"
+      ],
+      "duration_text": "14h 5m",
+      "duration_minutes": 845,
+      "description": "Prințesele roșii. Femei și bărbați, părinți și copii în ideologia și cotidianul comunist",
+      "cover_url": "https://media.voxa.ro/voxa-production/uploads/resource/image/5b659276-7eec-40d1-b5be-1b527a2964cd/default_160x160_coperta_printesele_rosii_femei_si_barbati_parinti_si_copii_in_ideologia_si_cotidianul_comunist_1725872313.jpg",
+      "collection": "Corint Istorie Autori Români",
+      "publisher": "Corint",
+      "categories": null,
+      "age_band": "child",
+      "broken": false
     },
     {
       "slug": "punguta-cu-doi-bani",
       "url": "https://voxa.ro/audiobooks/punguta-cu-doi-bani",
-      "title_hint": "Punguta Cu Doi Bani"
+      "title_hint": "Punguta Cu Doi Bani",
+      "title": "Punguța cu doi bani",
+      "authors": [
+        "***"
+      ],
+      "narrators": [
+        "Alexandra Fasola"
+      ],
+      "duration_text": "6 min",
+      "duration_minutes": 6,
+      "description": "Descarcă audiobook-urile preferate și bucură-te de ele chiar și când nu ai conexiune la internet.",
+      "cover_url": "https://media.voxa.ro/voxa-production/uploads/resource/image/0f8ad5f9-6a80-4602-9811-8a6f00af94d5/default_160x160_coperta_punguta_cu_doi_bani_1717050554.jpg",
+      "collection": null,
+      "publisher": "Voxa",
+      "categories": "Ficțiune pentru copiiCopii și familieVacanța Mare",
+      "age_band": "child",
+      "broken": false
     },
     {
       "slug": "punguta-cu-doi-bani-ursul-pacalit-de-vulpe",
       "url": "https://voxa.ro/audiobooks/punguta-cu-doi-bani-ursul-pacalit-de-vulpe",
-      "title_hint": "Punguta Cu Doi Bani Ursul Pacalit De Vulpe"
+      "title_hint": "Punguta Cu Doi Bani Ursul Pacalit De Vulpe",
+      "title": "Punguța cu doi bani. Ursul păcălit de vulpe",
+      "authors": [
+        "Ion Creangă"
+      ],
+      "narrators": [
+        "Sidonia Ganea"
+      ],
+      "duration_text": "16 min",
+      "duration_minutes": 16,
+      "description": "În această colecţie sunt incluse 100 de titluri reprezentative din folclorul românesc şi din opera marilor scriitori români. Textele sunt recomandate spre lectură elevilor, conform programei şcolare.",
+      "cover_url": "https://media.voxa.ro/voxa-production/uploads/resource/image/2b66bed8-f675-477f-bbed-fd0bddfbd24d/default_160x160_coperta_punguta_cu_doi_bani_ursul_pacalit_de_vulpe.jpg",
+      "collection": "Lecturi școlare",
+      "publisher": "Editura Litera",
+      "categories": "Ficțiune pentru copiiCopii și familiePoveștiPovești românești",
+      "age_band": "child",
+      "broken": false
     },
     {
       "slug": "race-to-the-frozen-north",
       "url": "https://voxa.ro/audiobooks/race-to-the-frozen-north",
-      "title_hint": "Race To The Frozen North"
+      "title_hint": "Race To The Frozen North",
+      "title": "Race to the Frozen North",
+      "authors": [
+        "Catherine Johnson"
+      ],
+      "narrators": [
+        "Ako Mitchell"
+      ],
+      "duration_text": "1h 54m",
+      "duration_minutes": 114,
+      "description": "A thrilling fictionalised account of the life of Matthew Henson, the first African-American man to travel to the North Pole, from the Carnegie nominated author Catherine Johnson.",
+      "cover_url": "https://media.voxa.ro/voxa-production/uploads/resource/image/f7da8cb1-c4f4-41ad-985b-20fab7d50b94/default_160x160_coperta_race_to_the_frozen_north_1719581553.jpg",
+      "collection": null,
+      "publisher": "HarperCollins Publishers",
+      "categories": null,
+      "age_band": null,
+      "broken": false
     },
     {
       "slug": "rain-rising",
       "url": "https://voxa.ro/audiobooks/rain-rising",
-      "title_hint": "Rain Rising"
+      "title_hint": "Rain Rising",
+      "title": "Rain Rising",
+      "authors": [
+        "Courtne Comrie"
+      ],
+      "narrators": [
+        "Angel Pean"
+      ],
+      "duration_text": "4h 54m",
+      "duration_minutes": 294,
+      "description": "An inspiring debut middle grade novel-in-verse about Rain, who must overcome sadness after her all-star brother is badly beaten up at a frat party. Genesis Begins Again meets Brown Girl Dreaming in this powerful story of perseverance, family, and hope.",
+      "cover_url": "https://media.voxa.ro/voxa-production/uploads/resource/image/e41028b0-85b2-4e8f-97f9-d20f8acc4090/default_160x160_coperta_rain_rising_1665130872.jpg",
+      "collection": null,
+      "publisher": "HarperCollins",
+      "categories": null,
+      "age_band": null,
+      "broken": false
     },
     {
       "slug": "raising-boys",
       "url": "https://voxa.ro/audiobooks/raising-boys",
-      "title_hint": "Raising Boys"
+      "title_hint": "Raising Boys",
+      "title": "Raising Boys",
+      "authors": [
+        "Steve Biddulph"
+      ],
+      "narrators": [
+        "Damien Warren-Smith"
+      ],
+      "duration_text": "6h 28m",
+      "duration_minutes": 388,
+      "description": "A word of mouth bestseller which has become one of the best loved and most successful books in the parenting field. With around 20% new material, Steve Biddulph’s Raising Boys is to be re-released this month with some startling new research on what helps – and what harms – boys.A word of mouth bestseller which has become one of the best loved and most successful books in the parenting field. With around 20% new material, Steve Biddulph’s Raising Boys is to be re-released this month with some startling new research on what helps – and what harms – boys.In this expanded and updated edition, Steve Biddulph shares and gives practical and honest advice to parents so they can recognise the different stages of boyhood and learn how to raise happy, confident and kind young men.Boys need to be parented in a different way from girls with their own very special psychological and physical make-up. Home, society and education have failed boys badly – and these failures lead to unhappy men who cannot fully become happy, responsible, emotionally-confident adults.While it is essential that boys spend more time learning about manhood from their fathers, Biddulph updates his classic to include helpf",
+      "cover_url": "https://media.voxa.ro/voxa-production/uploads/resource/image/9d67be3b-d622-4f15-9f3d-8ba33d4bf491/default_160x160_coperta_raising_boys_1674728634.jpg",
+      "collection": null,
+      "publisher": "HarperCollins Publishers",
+      "categories": null,
+      "age_band": null,
+      "broken": false
     },
     {
       "slug": "raising-boys-in-the-21st-century",
       "url": "https://voxa.ro/audiobooks/raising-boys-in-the-21st-century",
-      "title_hint": "Raising Boys In The 21st Century"
+      "title_hint": "Raising Boys In The 21st Century",
+      "title": "Raising Boys in the 21st Century",
+      "authors": [
+        "Steve Biddulph"
+      ],
+      "narrators": [
+        "Damien Warren-Smith"
+      ],
+      "duration_text": "7h 1m",
+      "duration_minutes": 421,
+      "description": "A word of mouth bestseller which has become one of the best loved and most successful books in the parenting field. With around 20% new material, Steve Biddulph’s Raising Boys includes some startling new research on what helps – and what harms – boys.",
+      "cover_url": "https://media.voxa.ro/voxa-production/uploads/resource/image/3dd34c9e-d758-474e-bdb3-4c39f839c6e0/default_160x160_coperta_raising_boys_in_the_21st_century_1674735057.jpg",
+      "collection": null,
+      "publisher": "HarperCollins Publishers",
+      "categories": null,
+      "age_band": null,
+      "broken": false
     },
     {
       "slug": "raising-girls",
       "url": "https://voxa.ro/audiobooks/raising-girls",
-      "title_hint": "Raising Girls"
+      "title_hint": "Raising Girls",
+      "title": "Raising Girls",
+      "authors": [
+        "Steve Biddulph"
+      ],
+      "narrators": [
+        "Damien Warren-Smith"
+      ],
+      "duration_text": "7h 32m",
+      "duration_minutes": 452,
+      "description": "Steve Biddulph’s Raising Boys was a global phenomenon. The first book in a generation to look at boys’ specific needs, parents loved its clarity and warm insights into their sons’ inner world. But today, things have changed. It’s girls that are in trouble.Steve Biddulph’s Raising Boys was a global phenomenon. The first book in a generation to look at boys’ specific needs, parents loved its clarity and warm insights into their sons’ inner world. But today, things have changed. It’s girls that are in trouble.There has been a sudden and universal deterioration in girls’ mental health, starting in primary school and devastating the teen years.Steve Biddulph’s Raising Girls is both a guidebook and a call-to-arms for parents. The five key stages of girlhood are laid out so that you know exactly what matters at which age, and how to build strength and connectedness into your daughter from infancy onwards.Raising Girls is both fierce and tender in its mission to help girls more at every age. It’s a book for parents who love their daughters deeply, whether they are newborns, teenagers, young women – or anywhere in between.Feeling secure, becoming an explorer, getting along with others, find",
+      "cover_url": "https://media.voxa.ro/voxa-production/uploads/resource/image/18b4a1a0-9758-413c-886a-44c0babc688d/default_160x160_coperta_raising_girls_1674728651.jpg",
+      "collection": null,
+      "publisher": "HarperCollins Publishers",
+      "categories": null,
+      "age_band": null,
+      "broken": false
     },
     {
       "slug": "raising-them-right",
       "url": "https://voxa.ro/audiobooks/raising-them-right",
-      "title_hint": "Raising Them Right"
+      "title_hint": "Raising Them Right",
+      "title": "Raising Them Right",
+      "authors": [
+        "Kyle Spencer"
+      ],
+      "narrators": [
+        "Kyle Spencer"
+      ],
+      "duration_text": "10h 13m",
+      "duration_minutes": 613,
+      "description": "A riveting behind-the-scenes account of the new stars of the far right—and how they’ve partnered with billionaire donors, idealogues, and political insiders to build the most powerful youth movement the American right has ever seen",
+      "cover_url": "https://media.voxa.ro/voxa-production/uploads/resource/image/a01bd2f3-4dfd-4429-a614-f5ef821ad318/default_160x160_coperta_raising_them_right_1665128640.jpg",
+      "collection": null,
+      "publisher": "HarperAudio",
+      "categories": null,
+      "age_band": null,
+      "broken": false
     },
     {
       "slug": "rattlesnake-crossing",
       "url": "https://voxa.ro/audiobooks/rattlesnake-crossing",
-      "title_hint": "Rattlesnake Crossing"
+      "title_hint": "Rattlesnake Crossing",
+      "title": "Rattlesnake Crossing",
+      "authors": [
+        "J. A. Jance"
+      ],
+      "narrators": [
+        "C. J. Critt"
+      ],
+      "duration_text": "12h 30m",
+      "duration_minutes": 750,
+      "description": "Sheriff Joanna Brady is the law in Cochise County, and she will never allow her personal trials to interfere with the job she was elected to do—especially now that death has invaded Bisbee, Arizona, and has shattered the small desert town's fragile peace.",
+      "cover_url": "https://media.voxa.ro/voxa-production/uploads/resource/image/a306beab-0379-4d1e-8e97-a72d360b566c/default_160x160_coperta_rattlesnake_crossing_1666630671.jpg",
+      "collection": null,
+      "publisher": "HarperAudio",
+      "categories": null,
+      "age_band": null,
+      "broken": false
     },
     {
       "slug": "razboi-si-pace-mari-opere-din-literatura-rusa-povestite-copiilor",
       "url": "https://voxa.ro/audiobooks/razboi-si-pace-mari-opere-din-literatura-rusa-povestite-copiilor",
-      "title_hint": "Razboi Si Pace Mari Opere Din Literatura Rusa Povestite Copiilor"
+      "title_hint": "Razboi Si Pace Mari Opere Din Literatura Rusa Povestite Copiilor",
+      "title": "Război și pace. Mari opere din literatura rusă povestite copiilor",
+      "authors": [
+        "Lev Tolstoi"
+      ],
+      "narrators": [
+        "Cristina Stănciulescu"
+      ],
+      "duration_text": "1h 0m",
+      "duration_minutes": 60,
+      "description": "Stângaci și timid, Pierre nu e nici pe departe la fel de atrăgător precum prietenul său, Andrei. După moartea tatălui, Pierre moștenește o avere considerabilă, care îl transformă într-unul dintre cei mai populari tineri din înalta societate. Căsătorit în grabă cu persoana nepotrivită, Pierre trebuie să-și dea seama cine este și ce-și dorește cu adevărat de la viață. Între timp, Andrei se îndrăgostește de Natașa, fermecătoarea prietenă a lui Pierre, iar războiul franco-rus amenință să ajungă la Moscova.",
+      "cover_url": "https://media.voxa.ro/voxa-production/uploads/resource/image/a27bb6ec-0c03-4015-be23-b082f7015ce4/default_160x160_coperta_razboi_si_pace_mari_opere_din_literatura_rusa_povestite_copiilor.jpg",
+      "collection": "Prima mea lectura",
+      "publisher": "Editura Litera",
+      "categories": "Ficțiune pentru copiiCopii și familiePovești pentru copii",
+      "age_band": "child",
+      "broken": false
     },
     {
       "slug": "razboi-si-pace-mari-opere-din-literatura-rusa-povestite-copiilor-2",
       "url": "https://voxa.ro/audiobooks/razboi-si-pace-mari-opere-din-literatura-rusa-povestite-copiilor-2",
-      "title_hint": "Razboi Si Pace Mari Opere Din Literatura Rusa Povestite Copiilor 2"
+      "title_hint": "Razboi Si Pace Mari Opere Din Literatura Rusa Povestite Copiilor 2",
+      "title": "Război și pace. Mari opere din literatura rusă povestite copiilor",
+      "authors": [
+        "Lev Tolstoi"
+      ],
+      "narrators": [
+        "Dan Murzea"
+      ],
+      "duration_text": "1h 0m",
+      "duration_minutes": 60,
+      "description": "Stângaci și timid, Pierre nu e nici pe departe la fel de atrăgător precum prietenul său, Andrei. După moartea tatălui, Pierre moștenește o avere considerabilă, care îl transformă într-unul dintre cei mai populari tineri din înalta societate. Căsătorit în grabă cu persoana nepotrivită, Pierre trebuie să-și dea seama cine este și ce-și dorește cu adevărat de la viață. Între timp, Andrei se îndrăgostește de Natașa, fermecătoarea prietenă a lui Pierre, iar războiul franco-rus amenință să ajungă la Moscova.",
+      "cover_url": "https://media.voxa.ro/voxa-production/uploads/resource/image/df451c6d-a7af-4810-8c67-75cc56d17286/default_160x160_coperta_razboi_si_pace_mari_opere_din_literatura_rusa_povestite_copiilor.jpg",
+      "collection": "Prima mea Lectură",
+      "publisher": "Editura Litera",
+      "categories": "Ficțiune pentru copiiCopii și familie",
+      "age_band": "child",
+      "broken": false
     },
     {
       "slug": "razboiul-prin-ochii-unui-copil-2",
       "url": "https://voxa.ro/audiobooks/razboiul-prin-ochii-unui-copil-2",
-      "title_hint": "Razboiul Prin Ochii Unui Copil 2"
+      "title_hint": "Razboiul Prin Ochii Unui Copil 2",
+      "title": "Razboiul prin ochii unui copil",
+      "authors": [
+        "Yeva Skalietska"
+      ],
+      "narrators": [
+        "Laila Abdel Hafiz"
+      ],
+      "duration_text": "2h 53m",
+      "duration_minutes": 173,
+      "description": "„Cartea Yevei Skalietska este strigătul de neputință și curaj, totodată, al unei fetițe alungate din raiul ei de Acasă. O Evă prigonită iarăși de cel rău.",
+      "cover_url": "https://media.voxa.ro/voxa-production/uploads/resource/image/043565e8-818d-44ed-939e-67659ac400f9/default_160x160_coperta_razboiul_prin_ochii_unui_copil_1672837417.jpg",
+      "collection": null,
+      "publisher": "Editura Bookzone",
+      "categories": null,
+      "age_band": null,
+      "broken": false
     },
     {
       "slug": "redactia-lupilor-singuratici",
       "url": "https://voxa.ro/audiobooks/redactia-lupilor-singuratici",
-      "title_hint": "Redactia Lupilor Singuratici"
+      "title_hint": "Redactia Lupilor Singuratici",
+      "title": "Redacția lupilor singuratici",
+      "authors": [
+        "Robert Turcescu"
+      ],
+      "narrators": [
+        "Robert Mihăilescu"
+      ],
+      "duration_text": "4 min",
+      "duration_minutes": 4,
+      "description": "Ziariștii buni încă mai există, dar a dispărut redacția. Locul care te făcea să simți că aparții unei echipe, că, la o adică, nu ești singur, că ai „spate”.",
+      "cover_url": "https://media.voxa.ro/voxa-production/uploads/resource/image/d7b0702a-e5e9-4fc2-83bc-575fa212470c/default_160x160_coperta_redactia_lupilor_singuratici_1716291362.jpg",
+      "collection": null,
+      "publisher": "Canal 33",
+      "categories": null,
+      "age_band": null,
+      "broken": false
     },
     {
       "slug": "relaxare-pentru-copii-prin-sunet-si-ascultare",
       "url": "https://voxa.ro/audiobooks/relaxare-pentru-copii-prin-sunet-si-ascultare",
-      "title_hint": "Relaxare Pentru Copii Prin Sunet Si Ascultare"
+      "title_hint": "Relaxare Pentru Copii Prin Sunet Si Ascultare",
+      "title": "Relaxare pentru copii - prin sunet și ascultare",
+      "authors": [
+        "Trezirea Interioară"
+      ],
+      "narrators": [
+        "Oana Ștefan"
+      ],
+      "duration_text": "7 min",
+      "duration_minutes": 7,
+      "description": "Practica de mindfulness pentru copii, adesea folosește unul dintre cele 5 simțuri, pentru centrare. Iată care sunt motivele:",
+      "cover_url": "https://media.voxa.ro/voxa-production/uploads/resource/image/6806cedd-6b72-462f-8aa3-abf94447fe55/default_160x160_coperta_relaxare_pentru_copii_prin_sunet_si_ascultare_1740751346.jpg",
+      "collection": "Liniște pentru tine",
+      "publisher": "Trezirea interioară",
+      "categories": null,
+      "age_band": "child",
+      "broken": false
     },
     {
       "slug": "rising-star",
       "url": "https://voxa.ro/audiobooks/rising-star",
-      "title_hint": "Rising Star"
+      "title_hint": "Rising Star",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "rising-storm",
       "url": "https://voxa.ro/audiobooks/rising-storm",
-      "title_hint": "Rising Storm"
+      "title_hint": "Rising Storm",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "risingtidefallingstar",
       "url": "https://voxa.ro/audiobooks/risingtidefallingstar",
-      "title_hint": "Risingtidefallingstar"
+      "title_hint": "Risingtidefallingstar",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "rx-17-series-rising-above-negativity",
       "url": "https://voxa.ro/audiobooks/rx-17-series-rising-above-negativity",
-      "title_hint": "Rx 17 Series Rising Above Negativity"
+      "title_hint": "Rx 17 Series Rising Above Negativity",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "saptamana-analfabetului-functional-si-ipocrizia-liberalilor",
       "url": "https://voxa.ro/audiobooks/saptamana-analfabetului-functional-si-ipocrizia-liberalilor",
-      "title_hint": "Saptamana Analfabetului Functional Si Ipocrizia Liberalilor"
+      "title_hint": "Saptamana Analfabetului Functional Si Ipocrizia Liberalilor",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "scars-of-my-guardian-angel",
       "url": "https://voxa.ro/audiobooks/scars-of-my-guardian-angel",
-      "title_hint": "Scars Of My Guardian Angel"
+      "title_hint": "Scars Of My Guardian Angel",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "schoolgirl-missing",
       "url": "https://voxa.ro/audiobooks/schoolgirl-missing",
-      "title_hint": "Schoolgirl Missing"
+      "title_hint": "Schoolgirl Missing",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "scorpion-betrayal",
       "url": "https://voxa.ro/audiobooks/scorpion-betrayal",
-      "title_hint": "Scorpion Betrayal"
+      "title_hint": "Scorpion Betrayal",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "scrisoare-pentru-renul-mosului-de-mihaela-mocanu",
       "url": "https://voxa.ro/audiobooks/scrisoare-pentru-renul-mosului-de-mihaela-mocanu",
-      "title_hint": "Scrisoare Pentru Renul Mosului De Mihaela Mocanu"
+      "title_hint": "Scrisoare Pentru Renul Mosului De Mihaela Mocanu",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "sea-witch-rising",
       "url": "https://voxa.ro/audiobooks/sea-witch-rising",
-      "title_hint": "Sea Witch Rising"
+      "title_hint": "Sea Witch Rising",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "secretul-succesului-de-ce-unii-copii-vor-reusi-in-viata-iar-altii-vor-esua",
       "url": "https://voxa.ro/audiobooks/secretul-succesului-de-ce-unii-copii-vor-reusi-in-viata-iar-altii-vor-esua",
-      "title_hint": "Secretul Succesului De Ce Unii Copii Vor Reusi In Viata Iar Altii Vor Esua"
+      "title_hint": "Secretul Succesului De Ce Unii Copii Vor Reusi In Viata Iar Altii Vor Esua",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "shaman-s-crossing",
       "url": "https://voxa.ro/audiobooks/shaman-s-crossing",
-      "title_hint": "Shaman S Crossing"
+      "title_hint": "Shaman S Crossing",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "sidney-sheldon-s-chasing-tomorrow",
       "url": "https://voxa.ro/audiobooks/sidney-sheldon-s-chasing-tomorrow",
-      "title_hint": "Sidney Sheldon S Chasing Tomorrow"
+      "title_hint": "Sidney Sheldon S Chasing Tomorrow",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "sing",
       "url": "https://voxa.ro/audiobooks/sing",
-      "title_hint": "Sing"
+      "title_hint": "Sing",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "sing-a-song-of-sixpence",
       "url": "https://voxa.ro/audiobooks/sing-a-song-of-sixpence",
-      "title_hint": "Sing A Song Of Sixpence"
+      "title_hint": "Sing A Song Of Sixpence",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "sing-me-forgotten",
       "url": "https://voxa.ro/audiobooks/sing-me-forgotten",
-      "title_hint": "Sing Me Forgotten"
+      "title_hint": "Sing Me Forgotten",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "sing-your-name-out-loud",
       "url": "https://voxa.ro/audiobooks/sing-your-name-out-loud",
-      "title_hint": "Sing Your Name Out Loud"
+      "title_hint": "Sing Your Name Out Loud",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "single-carefree-mellow",
       "url": "https://voxa.ro/audiobooks/single-carefree-mellow",
-      "title_hint": "Single Carefree Mellow"
+      "title_hint": "Single Carefree Mellow",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "singularity",
       "url": "https://voxa.ro/audiobooks/singularity",
-      "title_hint": "Singularity"
+      "title_hint": "Singularity",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "singuratate",
       "url": "https://voxa.ro/audiobooks/singuratate",
-      "title_hint": "Singuratate"
+      "title_hint": "Singuratate",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "smartphone-ul-copilariei",
       "url": "https://voxa.ro/audiobooks/smartphone-ul-copilariei",
-      "title_hint": "Smartphone Ul Copilariei"
+      "title_hint": "Smartphone Ul Copilariei",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "solo-cum-sa-lucrezi-singur-si-sa-nu-iti-pierzi-mintile",
       "url": "https://voxa.ro/audiobooks/solo-cum-sa-lucrezi-singur-si-sa-nu-iti-pierzi-mintile",
-      "title_hint": "Solo Cum Sa Lucrezi Singur Si Sa Nu Iti Pierzi Mintile"
+      "title_hint": "Solo Cum Sa Lucrezi Singur Si Sa Nu Iti Pierzi Mintile",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "splat-the-cat-splat-the-cat-sings-flat",
       "url": "https://voxa.ro/audiobooks/splat-the-cat-splat-the-cat-sings-flat",
-      "title_hint": "Splat The Cat Splat The Cat Sings Flat"
+      "title_hint": "Splat The Cat Splat The Cat Sings Flat",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "state-of-wonder",
       "url": "https://voxa.ro/audiobooks/state-of-wonder",
-      "title_hint": "State Of Wonder"
+      "title_hint": "State Of Wonder",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "steve-biddulph-s-raising-boys",
       "url": "https://voxa.ro/audiobooks/steve-biddulph-s-raising-boys",
-      "title_hint": "Steve Biddulph S Raising Boys"
+      "title_hint": "Steve Biddulph S Raising Boys",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "tales-of-wonder",
       "url": "https://voxa.ro/audiobooks/tales-of-wonder",
-      "title_hint": "Tales Of Wonder"
+      "title_hint": "Tales Of Wonder",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "tantra-meditations-for-couples-and-singles",
       "url": "https://voxa.ro/audiobooks/tantra-meditations-for-couples-and-singles",
-      "title_hint": "Tantra Meditations For Couples And Singles"
+      "title_hint": "Tantra Meditations For Couples And Singles",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "tarzan-and-the-golden-lion",
       "url": "https://voxa.ro/audiobooks/tarzan-and-the-golden-lion",
-      "title_hint": "Tarzan And The Golden Lion"
+      "title_hint": "Tarzan And The Golden Lion",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "tatal-celuilalt-copil-2",
       "url": "https://voxa.ro/audiobooks/tatal-celuilalt-copil-2",
-      "title_hint": "Tatal Celuilalt Copil 2"
+      "title_hint": "Tatal Celuilalt Copil 2",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-adventures-of-paddington",
       "url": "https://voxa.ro/audiobooks/the-adventures-of-paddington",
-      "title_hint": "The Adventures Of Paddington"
+      "title_hint": "The Adventures Of Paddington",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-adventures-of-paddington-first-halloween",
       "url": "https://voxa.ro/audiobooks/the-adventures-of-paddington-first-halloween",
-      "title_hint": "The Adventures Of Paddington First Halloween"
+      "title_hint": "The Adventures Of Paddington First Halloween",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-adventures-of-paddington-first-snow",
       "url": "https://voxa.ro/audiobooks/the-adventures-of-paddington-first-snow",
-      "title_hint": "The Adventures Of Paddington First Snow"
+      "title_hint": "The Adventures Of Paddington First Snow",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-adventures-of-paddington-love-day",
       "url": "https://voxa.ro/audiobooks/the-adventures-of-paddington-love-day",
-      "title_hint": "The Adventures Of Paddington Love Day"
+      "title_hint": "The Adventures Of Paddington Love Day",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-adventures-of-paddington-summer-games",
       "url": "https://voxa.ro/audiobooks/the-adventures-of-paddington-summer-games",
-      "title_hint": "The Adventures Of Paddington Summer Games"
+      "title_hint": "The Adventures Of Paddington Summer Games",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-adventures-of-paddington-the-christmas-wish",
       "url": "https://voxa.ro/audiobooks/the-adventures-of-paddington-the-christmas-wish",
-      "title_hint": "The Adventures Of Paddington The Christmas Wish"
+      "title_hint": "The Adventures Of Paddington The Christmas Wish",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-adventures-of-paddington-the-wrong-list",
       "url": "https://voxa.ro/audiobooks/the-adventures-of-paddington-the-wrong-list",
-      "title_hint": "The Adventures Of Paddington The Wrong List"
+      "title_hint": "The Adventures Of Paddington The Wrong List",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-adventures-of-pinocchio",
       "url": "https://voxa.ro/audiobooks/the-adventures-of-pinocchio",
-      "title_hint": "The Adventures Of Pinocchio"
+      "title_hint": "The Adventures Of Pinocchio",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-adventures-of-pinocchio-2",
       "url": "https://voxa.ro/audiobooks/the-adventures-of-pinocchio-2",
-      "title_hint": "The Adventures Of Pinocchio 2"
+      "title_hint": "The Adventures Of Pinocchio 2",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-adventures-of-pinocchio-3",
       "url": "https://voxa.ro/audiobooks/the-adventures-of-pinocchio-3",
-      "title_hint": "The Adventures Of Pinocchio 3"
+      "title_hint": "The Adventures Of Pinocchio 3",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-alice-behind-wonderland",
       "url": "https://voxa.ro/audiobooks/the-alice-behind-wonderland",
-      "title_hint": "The Alice Behind Wonderland"
+      "title_hint": "The Alice Behind Wonderland",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-bear-and-the-trolls-2",
       "url": "https://voxa.ro/audiobooks/the-bear-and-the-trolls-2",
-      "title_hint": "The Bear And The Trolls 2"
+      "title_hint": "The Bear And The Trolls 2",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-betrayal-2",
       "url": "https://voxa.ro/audiobooks/the-betrayal-2",
-      "title_hint": "The Betrayal 2"
+      "title_hint": "The Betrayal 2",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-betrayal-of-anne-frank",
       "url": "https://voxa.ro/audiobooks/the-betrayal-of-anne-frank",
-      "title_hint": "The Betrayal Of Anne Frank"
+      "title_hint": "The Betrayal Of Anne Frank",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-book-of-hidden-wonders",
       "url": "https://voxa.ro/audiobooks/the-book-of-hidden-wonders",
-      "title_hint": "The Book Of Hidden Wonders"
+      "title_hint": "The Book Of Hidden Wonders",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-book-of-wonders",
       "url": "https://voxa.ro/audiobooks/the-book-of-wonders",
-      "title_hint": "The Book Of Wonders"
+      "title_hint": "The Book Of Wonders",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-chronicles-of-narnia-complete-audio-collection",
       "url": "https://voxa.ro/audiobooks/the-chronicles-of-narnia-complete-audio-collection",
-      "title_hint": "The Chronicles Of Narnia Complete Audio Collection"
+      "title_hint": "The Chronicles Of Narnia Complete Audio Collection",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-classic-children-s-singalong-collection-apusskidu",
       "url": "https://voxa.ro/audiobooks/the-classic-children-s-singalong-collection-apusskidu",
-      "title_hint": "The Classic Children S Singalong Collection Apusskidu"
+      "title_hint": "The Classic Children S Singalong Collection Apusskidu",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-complete-alice-in-wonderland-collection",
       "url": "https://voxa.ro/audiobooks/the-complete-alice-in-wonderland-collection",
-      "title_hint": "The Complete Alice In Wonderland Collection"
+      "title_hint": "The Complete Alice In Wonderland Collection",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-first-tarzan-of-the-apes-collection",
       "url": "https://voxa.ro/audiobooks/the-first-tarzan-of-the-apes-collection",
-      "title_hint": "The First Tarzan Of The Apes Collection"
+      "title_hint": "The First Tarzan Of The Apes Collection",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-helsingor-sewing-club",
       "url": "https://voxa.ro/audiobooks/the-helsingor-sewing-club",
-      "title_hint": "The Helsingor Sewing Club"
+      "title_hint": "The Helsingor Sewing Club",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-house-of-frozen-dreams",
       "url": "https://voxa.ro/audiobooks/the-house-of-frozen-dreams",
-      "title_hint": "The House Of Frozen Dreams"
+      "title_hint": "The House Of Frozen Dreams",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-jungle-book-8",
       "url": "https://voxa.ro/audiobooks/the-jungle-book-8",
-      "title_hint": "The Jungle Book 8"
+      "title_hint": "The Jungle Book 8",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-jungle-book-9",
       "url": "https://voxa.ro/audiobooks/the-jungle-book-9",
-      "title_hint": "The Jungle Book 9"
+      "title_hint": "The Jungle Book 9",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-jungle-books",
       "url": "https://voxa.ro/audiobooks/the-jungle-books",
-      "title_hint": "The Jungle Books"
+      "title_hint": "The Jungle Books",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-kissing-game",
       "url": "https://voxa.ro/audiobooks/the-kissing-game",
-      "title_hint": "The Kissing Game"
+      "title_hint": "The Kissing Game",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-little-singing-frog-2",
       "url": "https://voxa.ro/audiobooks/the-little-singing-frog-2",
-      "title_hint": "The Little Singing Frog 2"
+      "title_hint": "The Little Singing Frog 2",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-missing",
       "url": "https://voxa.ro/audiobooks/the-missing",
-      "title_hint": "The Missing"
+      "title_hint": "The Missing",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-missing-and-the-dead",
       "url": "https://voxa.ro/audiobooks/the-missing-and-the-dead",
-      "title_hint": "The Missing And The Dead"
+      "title_hint": "The Missing And The Dead",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-missing-attorney",
       "url": "https://voxa.ro/audiobooks/the-missing-attorney",
-      "title_hint": "The Missing Attorney"
+      "title_hint": "The Missing Attorney",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-missing-husband",
       "url": "https://voxa.ro/audiobooks/the-missing-husband",
-      "title_hint": "The Missing Husband"
+      "title_hint": "The Missing Husband",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-missing-twin",
       "url": "https://voxa.ro/audiobooks/the-missing-twin",
-      "title_hint": "The Missing Twin"
+      "title_hint": "The Missing Twin",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-missing-wife",
       "url": "https://voxa.ro/audiobooks/the-missing-wife",
-      "title_hint": "The Missing Wife"
+      "title_hint": "The Missing Wife",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-missing-wife-2",
       "url": "https://voxa.ro/audiobooks/the-missing-wife-2",
-      "title_hint": "The Missing Wife 2"
+      "title_hint": "The Missing Wife 2",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-paddington-mystery",
       "url": "https://voxa.ro/audiobooks/the-paddington-mystery",
-      "title_hint": "The Paddington Mystery"
+      "title_hint": "The Paddington Mystery",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-queen-s-rising",
       "url": "https://voxa.ro/audiobooks/the-queen-s-rising",
-      "title_hint": "The Queen S Rising"
+      "title_hint": "The Queen S Rising",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-raising-of-a-rebel",
       "url": "https://voxa.ro/audiobooks/the-raising-of-a-rebel",
-      "title_hint": "The Raising Of A Rebel"
+      "title_hint": "The Raising Of A Rebel",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-rift-uprising",
       "url": "https://voxa.ro/audiobooks/the-rift-uprising",
-      "title_hint": "The Rift Uprising"
+      "title_hint": "The Rift Uprising",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-sing-of-the-shore",
       "url": "https://voxa.ro/audiobooks/the-sing-of-the-shore",
-      "title_hint": "The Sing Of The Shore"
+      "title_hint": "The Sing Of The Shore",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-singing-seamstress-2",
       "url": "https://voxa.ro/audiobooks/the-singing-seamstress-2",
-      "title_hint": "The Singing Seamstress 2"
+      "title_hint": "The Singing Seamstress 2",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-singing-tortoise-2",
       "url": "https://voxa.ro/audiobooks/the-singing-tortoise-2",
-      "title_hint": "The Singing Tortoise 2"
+      "title_hint": "The Singing Tortoise 2",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-single-girl-s-to-do-list",
       "url": "https://voxa.ro/audiobooks/the-single-girl-s-to-do-list",
-      "title_hint": "The Single Girl S To Do List"
+      "title_hint": "The Single Girl S To Do List",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-singles-game",
       "url": "https://voxa.ro/audiobooks/the-singles-game",
-      "title_hint": "The Singles Game"
+      "title_hint": "The Singles Game",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-wind-singer",
       "url": "https://voxa.ro/audiobooks/the-wind-singer",
-      "title_hint": "The Wind Singer"
+      "title_hint": "The Wind Singer",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-wonder-games-2",
       "url": "https://voxa.ro/audiobooks/the-wonder-games-2",
-      "title_hint": "The Wonder Games 2"
+      "title_hint": "The Wonder Games 2",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-wonder-of-it-all",
       "url": "https://voxa.ro/audiobooks/the-wonder-of-it-all",
-      "title_hint": "The Wonder Of It All"
+      "title_hint": "The Wonder Of It All",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-wonder-of-it-all-2",
       "url": "https://voxa.ro/audiobooks/the-wonder-of-it-all-2",
-      "title_hint": "The Wonder Of It All 2"
+      "title_hint": "The Wonder Of It All 2",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-wonderful-adventures-of-nils",
       "url": "https://voxa.ro/audiobooks/the-wonderful-adventures-of-nils",
-      "title_hint": "The Wonderful Adventures Of Nils"
+      "title_hint": "The Wonderful Adventures Of Nils",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-wonderful-garden",
       "url": "https://voxa.ro/audiobooks/the-wonderful-garden",
-      "title_hint": "The Wonderful Garden"
+      "title_hint": "The Wonderful Garden",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-wonderful-sheep-2",
       "url": "https://voxa.ro/audiobooks/the-wonderful-sheep-2",
-      "title_hint": "The Wonderful Sheep 2"
+      "title_hint": "The Wonderful Sheep 2",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-wonderful-visit",
       "url": "https://voxa.ro/audiobooks/the-wonderful-visit",
-      "title_hint": "The Wonderful Visit"
+      "title_hint": "The Wonderful Visit",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-wonderful-visit-2",
       "url": "https://voxa.ro/audiobooks/the-wonderful-visit-2",
-      "title_hint": "The Wonderful Visit 2"
+      "title_hint": "The Wonderful Visit 2",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-wonderful-wizard-of-oz",
       "url": "https://voxa.ro/audiobooks/the-wonderful-wizard-of-oz",
-      "title_hint": "The Wonderful Wizard Of Oz"
+      "title_hint": "The Wonderful Wizard Of Oz",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-wonderful-wizard-of-oz-2",
       "url": "https://voxa.ro/audiobooks/the-wonderful-wizard-of-oz-2",
-      "title_hint": "The Wonderful Wizard Of Oz 2"
+      "title_hint": "The Wonderful Wizard Of Oz 2",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-wonderful-wizard-of-oz-8",
       "url": "https://voxa.ro/audiobooks/the-wonderful-wizard-of-oz-8",
-      "title_hint": "The Wonderful Wizard Of Oz 8"
+      "title_hint": "The Wonderful Wizard Of Oz 8",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "the-wonders-we-seek-thirty-incredible-muslims-who-helped-shape-the-world-unabr",
       "url": "https://voxa.ro/audiobooks/the-wonders-we-seek-thirty-incredible-muslims-who-helped-shape-the-world-unabr",
-      "title_hint": "The Wonders We Seek Thirty Incredible Muslims Who Helped Shape The World Unabr"
+      "title_hint": "The Wonders We Seek Thirty Incredible Muslims Who Helped Shape The World Unabr",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "tibetan-singing-bowls-singing-bowl-meditation",
       "url": "https://voxa.ro/audiobooks/tibetan-singing-bowls-singing-bowl-meditation",
-      "title_hint": "Tibetan Singing Bowls Singing Bowl Meditation"
+      "title_hint": "Tibetan Singing Bowls Singing Bowl Meditation",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "tibetan-singing-bowls-with-ocean-waves-for-meditation-and-well-being-deep-sleep-healing-hypnosis-chakra-balancing",
       "url": "https://voxa.ro/audiobooks/tibetan-singing-bowls-with-ocean-waves-for-meditation-and-well-being-deep-sleep-healing-hypnosis-chakra-balancing",
-      "title_hint": "Tibetan Singing Bowls With Ocean Waves For Meditation And Well Being Deep Sleep Healing Hypnosis Chakra Balancing"
+      "title_hint": "Tibetan Singing Bowls With Ocean Waves For Meditation And Well Being Deep Sleep Healing Hypnosis Chakra Balancing",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "tibetan-sound-healing-tibetan-singing-bowls-singing-bowl-meditation",
       "url": "https://voxa.ro/audiobooks/tibetan-sound-healing-tibetan-singing-bowls-singing-bowl-meditation",
-      "title_hint": "Tibetan Sound Healing Tibetan Singing Bowls Singing Bowl Meditation"
+      "title_hint": "Tibetan Sound Healing Tibetan Singing Bowls Singing Bowl Meditation",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "tine-ti-copiii-aproape-de-ce-parintii-trebuie-sa-conteze-mai-mult-decat-anturajul-2",
       "url": "https://voxa.ro/audiobooks/tine-ti-copiii-aproape-de-ce-parintii-trebuie-sa-conteze-mai-mult-decat-anturajul-2",
-      "title_hint": "Tine Ti Copiii Aproape De Ce Parintii Trebuie Sa Conteze Mai Mult Decat Anturajul 2"
+      "title_hint": "Tine Ti Copiii Aproape De Ce Parintii Trebuie Sa Conteze Mai Mult Decat Anturajul 2",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "tis-the-season-to-be-single",
       "url": "https://voxa.ro/audiobooks/tis-the-season-to-be-single",
-      "title_hint": "Tis The Season To Be Single"
+      "title_hint": "Tis The Season To Be Single",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "totul-pentru-un-singur-om-totul-pentru-victorie",
       "url": "https://voxa.ro/audiobooks/totul-pentru-un-singur-om-totul-pentru-victorie",
-      "title_hint": "Totul Pentru Un Singur Om Totul Pentru Victorie"
+      "title_hint": "Totul Pentru Un Singur Om Totul Pentru Victorie",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "totul-pentru-un-singur-om-totul-pentru-victorie-2",
       "url": "https://voxa.ro/audiobooks/totul-pentru-un-singur-om-totul-pentru-victorie-2",
-      "title_hint": "Totul Pentru Un Singur Om Totul Pentru Victorie 2"
+      "title_hint": "Totul Pentru Un Singur Om Totul Pentru Victorie 2",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "un-singur-lucru",
       "url": "https://voxa.ro/audiobooks/un-singur-lucru",
-      "title_hint": "Un Singur Lucru"
+      "title_hint": "Un Singur Lucru",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "unexpected-blessings",
       "url": "https://voxa.ro/audiobooks/unexpected-blessings",
-      "title_hint": "Unexpected Blessings"
+      "title_hint": "Unexpected Blessings",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "vampire-kisses-2-kissing-coffins",
       "url": "https://voxa.ro/audiobooks/vampire-kisses-2-kissing-coffins",
-      "title_hint": "Vampire Kisses 2 Kissing Coffins"
+      "title_hint": "Vampire Kisses 2 Kissing Coffins",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "viata-si-moartea-copiilor-nostri",
       "url": "https://voxa.ro/audiobooks/viata-si-moartea-copiilor-nostri",
-      "title_hint": "Viata Si Moartea Copiilor Nostri"
+      "title_hint": "Viata Si Moartea Copiilor Nostri",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "where-the-seals-sing",
       "url": "https://voxa.ro/audiobooks/where-the-seals-sing",
-      "title_hint": "Where The Seals Sing"
+      "title_hint": "Where The Seals Sing",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "william-walker-si-aventurierii-sai",
       "url": "https://voxa.ro/audiobooks/william-walker-si-aventurierii-sai",
-      "title_hint": "William Walker Si Aventurierii Sai"
+      "title_hint": "William Walker Si Aventurierii Sai",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "winnie-nelson",
       "url": "https://voxa.ro/audiobooks/winnie-nelson",
-      "title_hint": "Winnie Nelson"
+      "title_hint": "Winnie Nelson",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "wonderful-nature-gentle-nature-sounds-without-music",
       "url": "https://voxa.ro/audiobooks/wonderful-nature-gentle-nature-sounds-without-music",
-      "title_hint": "Wonderful Nature Gentle Nature Sounds Without Music"
+      "title_hint": "Wonderful Nature Gentle Nature Sounds Without Music",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "year-of-wonder",
       "url": "https://voxa.ro/audiobooks/year-of-wonder",
-      "title_hint": "Year Of Wonder"
+      "title_hint": "Year Of Wonder",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "year-of-wonders",
       "url": "https://voxa.ro/audiobooks/year-of-wonders",
-      "title_hint": "Year Of Wonders"
+      "title_hint": "Year Of Wonders",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "zana-maseluta",
       "url": "https://voxa.ro/audiobooks/zana-maseluta",
-      "title_hint": "Zana Maseluta"
+      "title_hint": "Zana Maseluta",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "zana-portocala",
       "url": "https://voxa.ro/audiobooks/zana-portocala",
-      "title_hint": "Zana Portocala"
+      "title_hint": "Zana Portocala",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "zana-zorilor-si-alte-povesti",
       "url": "https://voxa.ro/audiobooks/zana-zorilor-si-alte-povesti",
-      "title_hint": "Zana Zorilor Si Alte Povesti"
+      "title_hint": "Zana Zorilor Si Alte Povesti",
+      "broken": true,
+      "error": "voxa returned error page"
     },
     {
       "slug": "zoe-la-zoo-puiul-de-leu-singuratic",
       "url": "https://voxa.ro/audiobooks/zoe-la-zoo-puiul-de-leu-singuratic",
-      "title_hint": "Zoe La Zoo Puiul De Leu Singuratic"
+      "title_hint": "Zoe La Zoo Puiul De Leu Singuratic",
+      "broken": true,
+      "error": "voxa returned error page"
     }
   ]
 }

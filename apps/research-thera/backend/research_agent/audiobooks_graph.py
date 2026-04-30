@@ -40,12 +40,19 @@ BOGDAN_FAMILY_MEMBER_ID = 2
 _VOXA_CATALOG_PATH = Path(__file__).resolve().parent / "data" / "voxa_kids_catalog.json"
 try:
     with open(_VOXA_CATALOG_PATH, encoding="utf-8") as _f:
-        _VOXA_CATALOG = json.load(_f).get("audiobooks", [])
+        _VOXA_CATALOG_RAW = json.load(_f).get("audiobooks", [])
 except Exception as _exc:
     print(f"[audiobooks] failed to load voxa catalog: {_exc}")
-    _VOXA_CATALOG = []
+    _VOXA_CATALOG_RAW = []
+
+# Only entries whose product page actually rendered (i.e. the scraper got real
+# title/cover/etc.) are considered pickable. Broken sitemap entries return
+# Voxa's 500 page when clicked; offering them defeats the deeper-integration
+# goal.
+_VOXA_CATALOG = [e for e in _VOXA_CATALOG_RAW if not e.get("broken") and e.get("title")]
 _VOXA_URL_SET = {entry["url"] for entry in _VOXA_CATALOG if entry.get("url")}
 _VOXA_SLUG_SET = {entry["slug"] for entry in _VOXA_CATALOG if entry.get("slug")}
+_VOXA_BY_URL = {entry["url"]: entry for entry in _VOXA_CATALOG if entry.get("url")}
 
 ROMANIAN_INSTRUCTION = (
     "IMPORTANT: Respond entirely in Romanian for all free-text fields "
@@ -461,17 +468,35 @@ async def collect_context(state: AudiobooksState) -> dict:
             "of the named concerns or evidence-based techniques."
         )
 
-    # Build the Voxa catalog block — DeepSeek must pick ONLY from these URLs.
+    # Build the Voxa catalog block — DeepSeek must pick ONLY from these URLs,
+    # and now sees real scraped metadata (title, authors, narrators, duration,
+    # description) for each entry, so picks can be content-aware not slug-aware.
     catalog_lines: list[str] = []
     for entry in _VOXA_CATALOG:
-        catalog_lines.append(f"- [{entry['title_hint']}] {entry['url']}")
+        bits = [entry["title"]]
+        authors = entry.get("authors") or []
+        if authors:
+            bits.append(f"de {', '.join(authors[:2])}")
+        narrators = entry.get("narrators") or []
+        if narrators:
+            bits.append(f"narator {', '.join(narrators[:2])}")
+        if entry.get("duration_minutes"):
+            bits.append(f"{entry['duration_minutes']}min")
+        if entry.get("age_band"):
+            bits.append(f"audience:{entry['age_band']}")
+        head = " · ".join(bits)
+        desc = (entry.get("description") or "").strip()[:280]
+        line = f"- [{head}]\n    URL: {entry['url']}"
+        if desc:
+            line += f"\n    Despre: {desc}"
+        catalog_lines.append(line)
     catalog_block = (
-        f"## Voxa Kids' Catalog ({len(_VOXA_CATALOG)} real audiobook URLs)\n"
-        "These are the ONLY audiobooks you may recommend. Each line is "
-        "[title-hint-from-slug] <url>. The title-hint is auto-derived; pick the "
-        "Romanian title you actually know matches that URL/slug. NEVER invent a URL "
-        "or use one not in this list.\n\n"
-        + "\n".join(catalog_lines)
+        f"## Voxa Catalog ({len(_VOXA_CATALOG)} verified audiobooks with full metadata)\n"
+        "These are the ONLY audiobooks you may recommend. Each entry shows the "
+        "real Voxa title, author(s), narrator(s), duration, and a description "
+        "snippet — use them to make content-aware picks. Set `voxaUrl` to the "
+        "exact URL shown. NEVER invent a URL or use one not in this list.\n\n"
+        + "\n\n".join(catalog_lines)
     )
 
     prompt_parts = [
@@ -624,9 +649,35 @@ def _coerce_audiobook(raw: dict) -> Optional[dict]:
     if not voxa_url or voxa_url not in _VOXA_URL_SET:
         return None
 
-    cover_url = raw.get("coverUrl") or raw.get("cover_url")
-    if not isinstance(cover_url, str) or not cover_url.strip():
-        cover_url = None
+    # Pull verified metadata from the catalog and OVERRIDE the LLM's guesses.
+    # The catalog values come from the actual Voxa product page, the LLM's
+    # values are inferred from the slug — always prefer the real ones.
+    cat = _VOXA_BY_URL.get(voxa_url)
+    cover_url: Optional[str] = None
+    if cat:
+        if cat.get("title"):
+            title = cat["title"]
+        if cat.get("authors"):
+            authors = cat["authors"]
+        if cat.get("narrators"):
+            narrators = cat["narrators"]
+        if cat.get("duration_minutes"):
+            length_minutes = cat["duration_minutes"]
+        if cat.get("age_band"):
+            age_band = cat["age_band"]
+        if cat.get("cover_url"):
+            cover_url = cat["cover_url"]
+        # Description: prefer real Voxa description over LLM's. The whyRecommended
+        # stays LLM-generated since that's the personalized therapy framing.
+        if cat.get("description"):
+            description = cat["description"][:1200]
+
+    # cover_url already populated above from the catalog; if catalog didn't have
+    # one, fall back to whatever the LLM provided (then validate).
+    if cover_url is None:
+        cover_url = raw.get("coverUrl") or raw.get("cover_url")
+        if not isinstance(cover_url, str) or not cover_url.strip():
+            cover_url = None
 
     description = (raw.get("description") or "").strip()
     why = (raw.get("whyRecommended") or raw.get("why_recommended") or "").strip()

@@ -15,6 +15,8 @@ Your RAG pipeline passes all 20 of your hand-written test questions. It retrieve
 
 This guide shows how to close that gap. We walk through a production implementation that generates 330+ synthetic test cases from 55 AI engineering lessons, evaluates a [LangGraph](https://langchain-ai.github.io/langgraph/)-based RAG pipeline across 10+ metrics, and runs hyperparameter sweeps to find optimal retrieval configurations — all automated with DeepEval and pytest.
 
+<!-- truncate -->
+
 ## The Production RAG Testing Challenge: Why Manual Evaluation Fails
 
 Every RAG pipeline begins with a promise: retrieve grounded context, generate accurate answers. The standard verification method — perhaps 20 "golden" Q&A pairs written during development — is fundamentally broken for three reasons.

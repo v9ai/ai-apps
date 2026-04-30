@@ -79,6 +79,7 @@ const config: Config = {
           feedOptions: {
             type: ["rss", "atom"],
             xslt: true,
+            limit: 3,
           },
           // Useful options to enforce blogging best practices
           onInlineTags: "ignore",

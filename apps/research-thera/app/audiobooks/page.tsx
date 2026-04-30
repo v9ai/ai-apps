@@ -134,7 +134,28 @@ export default function AudiobooksPage() {
               return (
                 <Card key={ab.id} variant="surface">
                   <Flex direction="column" gap="3" p="4">
-                    <Flex justify="between" align="start" gap="3">
+                    <Flex align="start" gap="3">
+                      {ab.coverUrl && (
+                        <Box
+                          style={{
+                            flexShrink: 0,
+                            width: 96,
+                            height: 96,
+                            borderRadius: 6,
+                            overflow: "hidden",
+                            background: "var(--gray-3)",
+                          }}
+                        >
+                          <img
+                            src={ab.coverUrl}
+                            alt={ab.title}
+                            width={96}
+                            height={96}
+                            style={{ width: 96, height: 96, objectFit: "cover", display: "block" }}
+                            loading="lazy"
+                          />
+                        </Box>
+                      )}
                       <Flex direction="column" gap="1" style={{ flex: 1, minWidth: 0 }}>
                         <Flex align="center" gap="2" wrap="wrap">
                           <Text
