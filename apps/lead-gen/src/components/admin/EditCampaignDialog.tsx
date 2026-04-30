@@ -22,12 +22,32 @@ import {
   PlusIcon,
   Pencil1Icon,
   StopIcon,
+  MagicWandIcon,
+  RocketIcon,
 } from "@radix-ui/react-icons";
 import {
   useGetEmailCampaignQuery,
   useUpdateCampaignMutation,
   useLaunchEmailCampaignMutation,
+  useGenerateCampaignSequenceMutation,
 } from "@/__generated__/hooks";
+
+type PersonaBlock = {
+  persona_title: string;
+  subject: string;
+  html: string;
+  text: string;
+  recipient_emails: string[];
+};
+
+function isPersonaBlock(v: unknown): v is PersonaBlock {
+  return (
+    typeof v === "object" &&
+    v !== null &&
+    typeof (v as PersonaBlock).persona_title === "string" &&
+    Array.isArray((v as PersonaBlock).recipient_emails)
+  );
+}
 
 interface EditCampaignDialogProps {
   campaignId: string;
@@ -48,6 +68,7 @@ export function EditCampaignDialog({
   const [emails, setEmails] = useState<
     Array<{ subject: string; body: string }>
   >([]);
+  const [personaBlocks, setPersonaBlocks] = useState<PersonaBlock[]>([]);
   const [subjectInput, setSubjectInput] = useState("");
   const [bodyInput, setBodyInput] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -61,6 +82,8 @@ export function EditCampaignDialog({
   const [updateCampaign, { loading: updating }] = useUpdateCampaignMutation();
   const [launchCampaign, { loading: launching }] =
     useLaunchEmailCampaignMutation();
+  const [generateSequence, { loading: generating }] =
+    useGenerateCampaignSequenceMutation();
 
   useEffect(() => {
     if (data?.emailCampaign) {
@@ -74,7 +97,15 @@ export function EditCampaignDialog({
             typeof data.emailCampaign.sequence === "string"
               ? JSON.parse(data.emailCampaign.sequence)
               : data.emailCampaign.sequence;
-          if (Array.isArray(seq)) setEmails(seq);
+          if (Array.isArray(seq)) {
+            if (seq.length > 0 && seq.every(isPersonaBlock)) {
+              setPersonaBlocks(seq as PersonaBlock[]);
+              setEmails([]);
+            } else {
+              setEmails(seq);
+              setPersonaBlocks([]);
+            }
+          }
         } catch {
           /* ignore */
         }
@@ -167,6 +198,27 @@ export function EditCampaignDialog({
       setError(err instanceof Error ? err.message : "Launch failed");
     }
   };
+
+  const currentThreshold =
+    data?.emailCampaign?.personaMatchThreshold ?? 0.55;
+
+  const runGenerate = async (threshold: number) => {
+    setError(null);
+    try {
+      await generateSequence({
+        variables: { campaignId, personaMatchThreshold: threshold },
+      });
+      setSuccess(`Generated emails at threshold ${threshold.toFixed(2)}`);
+      setTimeout(() => setSuccess(null), 3000);
+      await refetch();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Generation failed");
+    }
+  };
+
+  const handleGenerate = () => runGenerate(currentThreshold);
+  const handleImprove = () =>
+    runGenerate(Math.min(0.85, currentThreshold + 0.15));
 
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
