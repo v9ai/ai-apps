@@ -160,6 +160,9 @@ class EmailOutreachState(TypedDict, total=False):
     html: str
     contact_id: int | None
     product_aware: bool
+    # short-circuit signal — set when the recipient is opted-out / bounced / replied
+    # values: "replied" | "unsubscribed" | "bounced" | "complained" | "stopped" | None
+    skip_reason: str | None
 
 
 class AdminChatState(TypedDict, total=False):

@@ -345,6 +345,33 @@ export default function ThemeDetailPage() {
                     py: "2",
                   })}
                 >
+                  {m.image_url ? (
+                    <img
+                      src={m.image_url}
+                      alt={m.name}
+                      className={css({
+                        w: "20",
+                        h: "20",
+                        objectFit: "cover",
+                        rounded: "lg",
+                        border: "2px solid",
+                        borderColor: "plate.border",
+                        flexShrink: 0,
+                      })}
+                    />
+                  ) : (
+                    <div
+                      className={css({
+                        w: "20",
+                        h: "20",
+                        rounded: "lg",
+                        bg: "plate.raised",
+                        border: "2px solid",
+                        borderColor: "plate.border",
+                        flexShrink: 0,
+                      })}
+                    />
+                  )}
                   <div className={css({ flex: 1, minW: 0 })}>
                     <div
                       className={css({
@@ -379,17 +406,6 @@ export default function ThemeDetailPage() {
                           TOP PICK
                         </span>
                       )}
-                      {m.sub_theme && (
-                        <span
-                          className={css({
-                            fontSize: "2xs",
-                            fontWeight: "700",
-                            color: "ink.muted",
-                          })}
-                        >
-                          · {m.sub_theme}
-                        </span>
-                      )}
                     </div>
                     <span
                       className={css({
@@ -399,21 +415,13 @@ export default function ThemeDetailPage() {
                         mt: "0.5",
                       })}
                     >
-                      by {m.designer} · {m.moc_id}
+                      <strong className={css({ color: "ink.secondary" })}>
+                        {m.num_parts.toLocaleString()} pcs
+                      </strong>{" "}
+                      · by {m.designer} · {m.moc_id}
                       {m.year ? ` · ${m.year}` : ""}
-                      {m.num_parts ? ` · ${m.num_parts} pcs` : ""}
+                      {m.anchor_set ? ` · alt of ${m.anchor_set}` : ""}
                     </span>
-                    {m.description && (
-                      <p
-                        className={css({
-                          mt: "1",
-                          fontSize: "xs",
-                          color: "ink.secondary",
-                        })}
-                      >
-                        {m.description}
-                      </p>
-                    )}
                   </div>
                   <button
                     onClick={() => handleAdoptDiscovered(m)}

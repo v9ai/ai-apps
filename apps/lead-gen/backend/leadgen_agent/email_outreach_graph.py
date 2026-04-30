@@ -2,6 +2,7 @@
 
 Flow:
     lookup_contact
+      → check_stop_conditions  (skip if recipient already replied / bounced / unsubscribed)
       → load_product_context   (personas + outreach_templates from products row)
       → match_persona          (score contact role vs personas, cache to contact_persona_scores)
       → select_template        (pick template keyed on matched persona)
@@ -9,9 +10,11 @@ Flow:
       → draft                  (template scaffold when product-aware, else free-form)
       → format_html
 
-Produces {subject, text, html, contact_id, product_aware}. When `product_id`
-is absent or persona match falls below threshold, the graph preserves the
-legacy free-form behaviour (no template, no regressions for plain campaigns).
+Produces {subject, text, html, contact_id, product_aware, skip_reason}. When
+`product_id` is absent or persona match falls below threshold, the graph
+preserves the legacy free-form behaviour (no template, no regressions for plain
+campaigns). When ``skip_reason`` is set the graph short-circuits before any
+LLM/IO work and returns an empty draft for the resolver layer to handle.
 """
 
 from __future__ import annotations
@@ -71,6 +74,81 @@ async def lookup_contact(state: EmailOutreachState) -> dict:
                 }
     except Exception:
         return {"contact_id": None}
+
+
+# Status / classification values on contact_emails that mean "do not re-email
+# this recipient." Mirrors the resend webhook (status='bounced'|'complained',
+# followup_status='stopped') and the reply classifier
+# (reply_classification IN {'unsubscribe','bounced'}).
+_SKIP_STATUS = {
+    "bounced": "bounced",
+    "complained": "unsubscribed",
+}
+_SKIP_REPLY_CLASSIFICATION = {
+    "unsubscribe": "unsubscribed",
+    "bounced": "bounced",
+    # 'not_interested' is intentionally NOT in this set — a single soft-no does
+    # not justify a permanent skip; that's a campaign-strategy decision the
+    # resolver layer can layer on later.
+}
+_SKIP_FOLLOWUP_STATUS = {
+    "stopped": "stopped",
+}
+
+
+async def check_stop_conditions(state: EmailOutreachState) -> dict:
+    """Short-circuit if the contact already replied / bounced / unsubscribed.
+
+    Reads the most-recent ``contact_emails`` rows for ``contact_id`` and decides
+    whether to skip. Sets ``skip_reason`` on the state so downstream nodes (and
+    the resolver layer) can detect it. The actual short-circuit is wired via a
+    conditional edge in :func:`build_graph`.
+    """
+    contact_id = state.get("contact_id")
+    if not contact_id:
+        return {"skip_reason": None}
+    dsn = _dsn()
+    if not dsn:
+        return {"skip_reason": None}
+    try:
+        with psycopg.connect(dsn, autocommit=True, connect_timeout=5) as conn:
+            with conn.cursor() as cur:
+                # Pull the recent send/receive history. We look at the latest 10
+                # rows so a single stale 'sent' doesn't mask a later 'bounced'.
+                cur.execute(
+                    """
+                    SELECT status, followup_status, reply_received, reply_classification
+                    FROM contact_emails
+                    WHERE contact_id = %s
+                    ORDER BY created_at DESC
+                    LIMIT 10
+                    """,
+                    (int(contact_id),),
+                )
+                rows = cur.fetchall()
+    except Exception:
+        return {"skip_reason": None}
+    if not rows:
+        return {"skip_reason": None}
+
+    for status, followup_status, reply_received, reply_classification in rows:
+        status_n = _norm(status)
+        followup_n = _norm(followup_status)
+        reply_class_n = _norm(reply_classification)
+        if reply_received:
+            return {"skip_reason": "replied"}
+        if reply_class_n in _SKIP_REPLY_CLASSIFICATION:
+            return {"skip_reason": _SKIP_REPLY_CLASSIFICATION[reply_class_n]}
+        if status_n in _SKIP_STATUS:
+            return {"skip_reason": _SKIP_STATUS[status_n]}
+        if followup_n in _SKIP_FOLLOWUP_STATUS:
+            return {"skip_reason": _SKIP_FOLLOWUP_STATUS[followup_n]}
+    return {"skip_reason": None}
+
+
+def _route_after_stop_check(state: EmailOutreachState) -> str:
+    """Conditional-edge selector: skip the rest of the graph if flagged."""
+    return "skip" if state.get("skip_reason") else "continue"
 
 
 async def load_product_context(state: EmailOutreachState) -> dict:

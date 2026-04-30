@@ -184,135 +184,27 @@ Copy `.env.example` to `.env.local`. Key groups: `NEON_DATABASE_URL`, Better Aut
 
 ---
 
-## Autonomous Self-Improvement Team
+## B2B Lead Generation Pipeline
 
-Goal-driven team of 5 specialists focused on helping find a fully remote global AI engineering role. Grounded in autonomous agent research (AutoRefine, Meta Context Engineering, CASTER, ROMA, Phase Transition theory).
-
-### Structure
-
-| Path | Agent | Mission |
-|---|---|---|
-| `.claude/skills/improve-mine/SKILL.md` | Pipeline Monitor | Is the pipeline healthy? Are AI jobs flowing? |
-| `.claude/skills/improve-audit/SKILL.md` | Discovery Expander | Find more companies hiring AI engineers remotely worldwide |
-| `.claude/skills/improve-evolve/SKILL.md` | Classifier Tuner | Reduce missed opportunities in remote global classification |
-| `.claude/skills/improve-apply/SKILL.md` | Skill Optimizer | Better AI/ML skill taxonomy, extraction, and matching |
-| `.claude/skills/improve-meta/SKILL.md` | Strategy Brain | Coordinate toward the goal: get hired |
-| `.claude/commands/improve.md` | Orchestrator | Entry point and team coordination |
+Full-lifecycle pipeline implemented as a Python LangGraph at `backend/leadgen_agent/pipeline_graph.py`, driven by `backend/scripts/leadgen_metal_cli.py` and exposed via the `Makefile`.
 
 ### Commands
 
 | Command | Action |
 |---|---|
-| `/improve` | Full autonomous cycle (Strategy Brain decides what to do) |
-| `/improve status` | Pipeline health check |
-| `/improve discover` | Find new AI engineering job sources |
-| `/improve classify` | Tune classification accuracy |
-| `/improve skills` | Optimize AI/ML skill matching |
+| `make start` | Full batch cycle (discover → enrich → contacts + qa → outreach). Pass `DOMAINS=...` to scope. |
+| `make start-status` | Show pipeline status and phase detection |
+| `make start-top N=50` | Show top leads (defaults to 20) |
 
-### Goal Phases
+All three call `cd backend && uv run python scripts/leadgen_metal_cli.py <subcommand>`.
 
-| Phase | Focus | Trigger |
-|---|---|---|
-| **BUILDING** | Discovery + classification | < 5 AI jobs/week |
-| **OPTIMIZING** | Classifier + skills | Jobs flowing but low relevance |
+### Pipeline shape
 
-### Integration
+`discover → enrich → contacts + qa-audit → outreach`
 
-- **stop_hook.py** + **improvement_agent.py** → session scoring and learning
-- **Strategy Enforcer** → validates changes align with optimization strategy
-- State files in `~/.claude/state/` → continuity across sessions
+Dependency graph: discover (no deps) → enrich (needs companies) → contacts + qa-audit (parallel after enrichment) → outreach (needs verified contacts, plan-approval required). Run state lives in `~/.claude/state/pipeline-*.json`.
 
----
-
-## Autonomous Codebase Self-Improvement Team
-
-Separate team focused purely on code quality, performance, type safety, security, and dead code — independent of business goals.
-
-### Structure
-
-| Path | Agent | Role |
-|---|---|---|
-| `.claude/skills/codefix-mine/SKILL.md` | Trajectory Miner | Mine session transcripts for code quality patterns |
-| `.claude/skills/codefix-audit/SKILL.md` | Codebase Auditor | Deep code investigation with file:line findings |
-| `.claude/skills/codefix-evolve/SKILL.md` | Skill Evolver | Improve skills, prompts, CLAUDE.md |
-| `.claude/skills/codefix-apply/SKILL.md` | Code Improver | Implement fixes (perf, types, security, dead code) |
-| `.claude/skills/codefix-verify/SKILL.md` | Verification Gate | Validate changes, run builds, catch regressions |
-| `.claude/skills/codefix-meta/SKILL.md` | Meta-Optimizer | Coordinate, prioritize, track progress |
-| `.claude/commands/codefix.md` | Orchestrator | Entry point |
-
-### Commands
-
-| Command | Action |
-|---|---|
-| `/codefix` | Full autonomous cycle |
-| `/codefix audit [target]` | Targeted audit (resolvers, workers, security, types, etc.) |
-| `/codefix apply` | Implement pending findings |
-| `/codefix verify` | Verify recent changes |
-| `/codefix status` | Show meta-state |
-
-### Pipeline: `mine → audit → evolve/apply → verify`
-
-Safety: Max 3 code changes + 2 skill evolutions per cycle. Phase detection (IMPROVEMENT/SATURATION/COLLAPSE_RISK). Mandatory verification. State in `~/.claude/state/codefix-*.json`.
-
----
-
-## B2B Lead Generation Pipeline Team
-
-Full-lifecycle agent team for the actual lead generation pipeline. Uses Claude Code native agent teams with full parity: dynamic task claiming, dependency graphs, bidirectional messaging, plan-approval gates for outreach.
-
-### Structure
-
-| Path | Agent | Mission |
-|---|---|---|
-| `.claude/skills/pipeline-meta/SKILL.md` | Pipeline Coordinator | Batch strategy, ICP targeting, phase detection |
-| `.claude/skills/pipeline-discover/SKILL.md` | Discovery Scout | Web search, directories, Ashby boards, Common Crawl |
-| `.claude/skills/pipeline-enrich/SKILL.md` | Enrichment Specialist | Category, AI tier, ATS, tech stack, services |
-| `.claude/skills/pipeline-contacts/SKILL.md` | Contact Hunter | Email discovery, verification, LinkedIn, scoring |
-| `.claude/skills/pipeline-outreach/SKILL.md` | Outreach Composer | Email drafting, campaigns (plan-approval required) |
-| `.claude/skills/pipeline-qa/SKILL.md` | QA Auditor | Dedup, completeness, deliverability, score validation |
-| `.claude/commands/agents.md` | Orchestrator | Unified dispatcher for all agent teams |
-
-### Commands
-
-| Command | Action |
-|---|---|
-| `/agents pipeline` | Full batch cycle (discover → enrich → contact → outreach) |
-| `/agents pipeline discover [vertical]` | Discovery-only for a specific vertical |
-| `/agents pipeline enrich` | Enrich un-enriched companies in DB |
-| `/agents pipeline outreach` | Draft + send campaigns for ready contacts |
-| `/agents pipeline status` | Show funnel metrics across all stages |
-| `make start` | Launch full pipeline from terminal |
-
-### Pipeline: `discover → enrich → contacts + qa-audit → outreach`
-
-Dependency graph: discover (no deps) → enrich (needs companies) → contacts + qa-audit (parallel after enrichment) → outreach (needs verified contacts, plan-approval required). State in `~/.claude/state/pipeline-*.json`.
-
----
-
-## Competing Hypotheses Research Squad
-
-Ad-hoc research team for deep company investigation. Created per target, destroyed after synthesis. Uses a "competing hypotheses" protocol where agents actively debate and challenge each other's findings.
-
-### Structure
-
-| Path | Agent | Mission |
-|---|---|---|
-| `.claude/skills/research-analyst/SKILL.md` | Company Analyst | Tech stack, funding, growth, AI adoption, news |
-| `.claude/skills/research-hiring/SKILL.md` | Hiring Intel | Open roles, ATS boards, team growth, org structure |
-| `.claude/skills/research-icp/SKILL.md` | ICP Matcher | Score against ICP: remote? AI? Stage? DM access? |
-| `.claude/commands/agents.md` | Orchestrator | Unified dispatcher (research section) |
-
-### Commands
-
-| Command | Action |
-|---|---|
-| `/agents research {company}` | Full research squad with debate protocol |
-| `/agents research batch {c1} {c2} ...` | Parallel research squads, comparative summary |
-| `/agents research score {company}` | Quick ICP scoring only (single agent, no debate) |
-
-### Pipeline: `parallel research → debate → synthesize`
-
-Debate protocol: agents cross-read findings, challenge weak claims, resolve conflicts, update confidence scores. Synthesis produces GO/NO-GO/NEEDS-MORE-INFO verdict with outreach strategy. State in `~/.claude/state/research-*.json`.
+`research_agent_graph.py` is also callable via `runGraph('research_agent_graph')` for ad-hoc per-company investigation — no orchestrator skill exists.
 
 ---
 
