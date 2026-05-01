@@ -1,25 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isAdminEmail } from "@/lib/admin";
 import { auth } from "@/lib/auth/server";
-import { runGraph, LangGraphError } from "@/lib/langgraph-client";
+import { runCompanyQa, LangGraphError } from "@/lib/langgraph-client";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-type QaTabSummary = {
-  total: number;
-  false_positive: number;
-  weak: number;
-  clean: number;
-  by_reason: Record<string, number>;
-  tab: string;
-};
-
-type QaTabResult = {
-  summary?: QaTabSummary;
-  qa_issues?: string[];
-  _error?: string;
-};
 
 /**
  * POST /api/admin/qa-tab
@@ -52,7 +37,7 @@ export async function POST(request: NextRequest) {
     : "sales-tech";
   const limit =
     typeof body.limit === "number" && Number.isFinite(body.limit)
-      ? Math.max(1, Math.min(Math.floor(body.limit), 200))
+      ? Math.floor(body.limit)
       : 25;
   const companyIds = Array.isArray(body.companyIds)
     ? body.companyIds
@@ -61,18 +46,7 @@ export async function POST(request: NextRequest) {
     : undefined;
 
   try {
-    const result = await runGraph<QaTabResult>(
-      "company_qa",
-      {
-        tab,
-        limit,
-        ...(companyIds && companyIds.length > 0 ? { company_ids: companyIds } : {}),
-      },
-      // The graph runs one DeepSeek call per company sequentially. Budget
-      // ~6s/company for cold container + retries, capped at the Vercel 300s
-      // ceiling for serverless functions.
-      { timeoutMs: Math.min(300_000, 30_000 + limit * 6_000) },
-    );
+    const result = await runCompanyQa({ tab, limit, companyIds });
     if (result._error) {
       return NextResponse.json(
         { error: "graph_error", detail: result._error },
