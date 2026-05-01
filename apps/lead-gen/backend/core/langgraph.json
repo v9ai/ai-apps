@@ -38,6 +38,7 @@
     "score_contact": "leadgen_agent.score_contact_graph:graph",
     "vertical_discovery": "leadgen_agent.vertical_discovery_graph:graph",
     "pipeline": "leadgen_agent.pipeline_graph:graph",
+    "sales_tech_outreach": "leadgen_agent.sales_tech_outreach_graph:graph",
     "consultancies_discovery": "leadgen_agent.consultancies_discovery_graph:graph",
     "consultancies_brave_discovery": "leadgen_agent.consultancies_brave_discovery_graph:graph",
     "consultancies_enrich": "leadgen_agent.consultancies_enrich_graph:graph",

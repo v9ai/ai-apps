@@ -139,6 +139,11 @@ def _build_optional_graphs(checkpointer: Any) -> dict[str, Any]:
         ("vertical_discovery", "leadgen_agent.vertical_discovery_graph", "build_graph"),
         ("pipeline", "leadgen_agent.pipeline_graph", "build_graph"),
         (
+            "sales_tech_outreach",
+            "leadgen_agent.sales_tech_outreach_graph",
+            "build_graph",
+        ),
+        (
             "consultancies_discovery",
             "leadgen_agent.consultancies_discovery_graph",
             "build_graph",
