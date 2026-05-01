@@ -136,6 +136,8 @@ interface IncomingJob {
   company?: unknown;
   url?: unknown;
   companyLinkedinUrl?: unknown;
+  companyKey?: unknown;
+  source?: unknown;
   location?: unknown;
   salary?: unknown;
   description?: unknown;
@@ -157,6 +159,13 @@ interface ValidJob {
   company: string;
   url: string;
   companyLinkedinUrl: string | null;
+  // Optional explicit company key — used by non-LinkedIn sources (Ashby etc.)
+  // where the slug is the canonical identity. When null, falls back to the
+  // LinkedIn URL → slug → name heuristic in `companyKey()`.
+  companyKey: string | null;
+  // Where this job came from. Defaults to "linkedin" for back-compat with
+  // the chrome-extension flow; Ashby ingest sends "ashby:<slug>".
+  source: string;
   location: string | null;
   salary: string | null;
   description: string | null;
@@ -314,6 +323,8 @@ function validateJobs(input: unknown): {
       company: company ?? "",
       url,
       companyLinkedinUrl: asString(raw?.companyLinkedinUrl),
+      companyKey: asString(raw?.companyKey),
+      source: asString(raw?.source) ?? "linkedin",
       location: asString(raw?.location),
       // Voyager's formattedSalary is cleaner than the card's DOM string;
       // prefer it when present so the typed `salary` column gets the best.
@@ -415,8 +426,11 @@ async function handleJobsD1Import(req: Request, env: Env): Promise<Response> {
 
   // 1. Upsert companies. INSERT OR IGNORE so re-imports don't error;
   //    company_id is left NULL on jobs without a parsed company.
+  //    Sources like Ashby send `companyKey` directly (the board slug is
+  //    canonical) so we skip the LinkedIn-URL heuristic in `companyKey()`.
   const keyByJob: Array<string | null> = kept.map((j) =>
-    j.company ? companyKey(j.company, j.companyLinkedinUrl) : null,
+    j.companyKey ??
+    (j.company ? companyKey(j.company, j.companyLinkedinUrl) : null),
   );
   const uniqueKeys = Array.from(
     new Set(keyByJob.filter((k): k is string => k !== null)),
@@ -494,14 +508,14 @@ async function handleJobsD1Import(req: Request, env: Env): Promise<Response> {
       newOpportunityId(),
       j.title,
       j.url,
-      "linkedin",
+      j.source,
       j.archived ? "archived" : "open",
       j.description,
       JSON.stringify({
         scrapedAt: new Date().toISOString(),
         ...j.metadataExtras,
       }),
-      JSON.stringify(["linkedin"]),
+      JSON.stringify([j.source]),
       keyByJob[i] ? companyIdMap.get(keyByJob[i] as string) ?? null : null,
       j.location,
       j.salary,

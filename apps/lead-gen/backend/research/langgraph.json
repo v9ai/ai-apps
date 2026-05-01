@@ -1,15 +1,19 @@
 {
   "$schema": "https://langgra.ph/schema.json",
-  "dependencies": ["."],
+  "dependencies": [
+    "."
+  ],
   "graphs": {
     "research_agent": "leadgen_agent.research_agent_graph:graph",
     "scholar": "research_graphs.scholar:graph",
     "lead_papers": "leadgen_agent.lead_papers_graph:graph",
-    "common_crawl": "leadgen_agent.common_crawl_graph:graph",
+    "common_crawl": "research_graphs.common_crawl:graph",
     "agentic_search": "leadgen_agent.agentic_search_graph:graph",
     "agentic_discovery": "leadgen_agent.agentic_search_graph:discovery_graph",
     "gh_patterns": "leadgen_agent.gh_patterns_graph:graph"
   },
-  "http": { "app": "app:app" },
+  "http": {
+    "app": "app:app"
+  },
   "env": ".env"
 }

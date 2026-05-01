@@ -1,25 +1,24 @@
 """Per-board Ashby ingest graph.
 
-Pulls one Ashby public job board (``slug``) into the lead-gen Neon DB:
+Pulls one Ashby public job board (``slug``):
 
-    fetch  →  link_company  →  upsert_opportunities  →  emit_intent_signal
+    fetch  →  link_company  →  post_to_d1  →  emit_intent_signal
+
+Storage split (matches the LinkedIn-extension precedent):
+- **D1** (Cloudflare, via the edge worker `agenticleadgen-edge`) is the
+  canonical home for ``opportunities``. We POST batches to
+  ``${LEAD_GEN_EDGE_URL}/api/jobs/d1/import`` with bearer ``JOBS_D1_TOKEN``.
+- **Neon** still owns ``companies`` (``link_company``) and ``intent_signals``
+  (``emit_intent_signal``) so company-level views and freshness/decay
+  scoring keep working without cross-DB joins.
+
+The edge worker accepts a per-job ``source`` field (defaults to ``linkedin``
+for back-compat) — we send ``ashby:<slug>`` and a ``companyKey=<slug>``
+override so the D1 ``companies`` row gets the canonical Ashby slug as its
+key, not a LinkedIn-URL-derived heuristic.
 
 State is a ``TypedDict``; **every** field a node returns must be declared
-here, otherwise LangGraph silently drops it (memory:
-``feedback_langgraph_typeddict_drops_fields``).
-
-Mapping from Ashby JSON → ``opportunities``:
-    url           ← applyUrl
-    source        ← f"ashby:{slug}"
-    raw_context   ← descriptionPlain
-    metadata      ← JSON of full Ashby payload (incl. compensation)
-    tags          ← JSON of [workplaceType, employmentType, "remote" if isRemote]
-    title         ← title
-    first_seen    ← only set on insert
-    last_seen     ← refreshed every run
-
-Idempotency: ``ON CONFLICT (url) DO UPDATE SET ...``. The unique partial
-index ``opportunities_url_unique`` (migration 0082) guards this.
+(memory: ``feedback_langgraph_typeddict_drops_fields``).
 """
 
 from __future__ import annotations
@@ -28,11 +27,11 @@ import json
 import logging
 import math
 import os
-import secrets
-import time
+import re
 from datetime import datetime, timedelta, timezone
 from typing import Any, TypedDict
 
+import httpx
 import psycopg
 from langgraph.graph import END, START, StateGraph
 
@@ -71,8 +70,24 @@ def _dsn() -> str:
     return dsn
 
 
-def _opp_id() -> str:
-    return f"opp_{int(time.time() * 1000)}_{secrets.token_hex(4)}"
+_WHITESPACE_RE = re.compile(r"\s+")
+
+
+def _clean_title(s: str) -> str:
+    return _WHITESPACE_RE.sub(" ", s or "").strip() or "(untitled)"
+
+
+def _job_tags(job: dict[str, Any]) -> list[str]:
+    tags: list[str] = []
+    if job.get("workplaceType"):
+        tags.append(str(job["workplaceType"]).lower())
+    if job.get("employmentType"):
+        tags.append(str(job["employmentType"]).lower())
+    if job.get("isRemote"):
+        tags.append("remote")
+    # Dedup while preserving order — workplaceType="Remote" + isRemote=true
+    # would otherwise emit two "remote" tags.
+    return list(dict.fromkeys(tags))
 
 
 # ── Node 1: fetch ─────────────────────────────────────────────────────────────
@@ -150,86 +165,75 @@ async def link_company(state: AshbyIngestState) -> dict[str, Any]:
     return {"company_id": company_id}
 
 
-# ── Node 3: upsert_opportunities ──────────────────────────────────────────────
+# ── Node 3: post_to_d1 ────────────────────────────────────────────────────────
 
 
-async def upsert_opportunities(state: AshbyIngestState) -> dict[str, Any]:
+async def post_to_d1(state: AshbyIngestState) -> dict[str, Any]:
+    """POST the Ashby jobs as a batch to the edge-worker D1 import route.
+
+    The edge worker (apps/lead-gen/edge/src/index.ts → handleJobsD1Import)
+    upserts companies + opportunities in D1, deduping on ``url``. We send
+    ``source='ashby:<slug>'`` and ``companyKey=<slug>`` so D1's
+    ``companies.key`` matches the canonical Ashby slug.
+    """
     if state.get("_error"):
         return {"inserted": 0, "updated": 0}
     slug = (state.get("slug") or "").strip().lower()
     jobs = state.get("jobs") or []
-    company_id = state.get("company_id")
     if not jobs:
         return {"inserted": 0, "updated": 0}
 
-    inserted = 0
-    updated = 0
-    now = datetime.now(timezone.utc).isoformat()
-    source = f"ashby:{slug}"
+    edge_url = os.environ.get("LEAD_GEN_EDGE_URL", "").rstrip("/")
+    token = os.environ.get("JOBS_D1_TOKEN", "").strip()
+    if not edge_url or not token:
+        return {"_error": "LEAD_GEN_EDGE_URL / JOBS_D1_TOKEN not set"}
+
+    company_display = slug.replace("-", " ").title()
+    payload_jobs: list[dict[str, Any]] = []
+    for job in jobs:
+        url = job.get("applyUrl")
+        if not url:
+            continue
+        payload_jobs.append({
+            "title": _clean_title(job.get("title") or ""),
+            "company": company_display,
+            "companyKey": slug,
+            "source": f"ashby:{slug}",
+            "url": url,
+            "location": job.get("location"),
+            "description": job.get("descriptionPlain"),
+            "postedAt": job.get("publishedAt"),
+            "workplaceType": job.get("workplaceType"),
+            "employmentType": job.get("employmentType"),
+            "externalApplyUrl": url,
+        })
+
+    if not payload_jobs:
+        return {"inserted": 0, "updated": 0}
 
     try:
-        conn = psycopg.connect(_dsn(), autocommit=False, connect_timeout=10)
-    except psycopg.Error as exc:
-        log.warning("opportunities connect failed: %s", exc)
-        return {"_error": f"opportunities connect: {exc}"}
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            resp = await client.post(
+                f"{edge_url}/api/jobs/d1/import",
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "content-type": "application/json",
+                },
+                json={"jobs": payload_jobs},
+            )
+            resp.raise_for_status()
+            body = resp.json()
+    except httpx.HTTPError as exc:
+        log.warning("d1 import HTTP error slug=%s: %s", slug, exc)
+        return {"_error": f"d1 import: {exc}"}
 
-    try:
-        with conn.cursor() as cur:
-            for job in jobs:
-                url = job.get("applyUrl")
-                if not url:
-                    continue
-                title = job.get("title") or "(untitled)"
-                raw_context = job.get("descriptionPlain") or ""
-                metadata = json.dumps({
-                    "ashby": {k: v for k, v in job.items() if k != "raw"},
-                    "source_slug": slug,
-                })
-                tags_arr = []
-                if job.get("workplaceType"):
-                    tags_arr.append(str(job["workplaceType"]).lower())
-                if job.get("employmentType"):
-                    tags_arr.append(str(job["employmentType"]).lower())
-                if job.get("isRemote"):
-                    tags_arr.append("remote")
-                tags = json.dumps(tags_arr)
-
-                cur.execute(
-                    """
-                    INSERT INTO opportunities
-                      (id, title, url, source, status, raw_context, metadata,
-                       tags, company_id, first_seen, last_seen, created_at, updated_at)
-                    VALUES (%s, %s, %s, %s, 'open', %s, %s, %s, %s, %s, %s, %s, %s)
-                    ON CONFLICT (url) WHERE url IS NOT NULL DO UPDATE SET
-                      title       = EXCLUDED.title,
-                      source      = EXCLUDED.source,
-                      raw_context = EXCLUDED.raw_context,
-                      metadata    = EXCLUDED.metadata,
-                      tags        = EXCLUDED.tags,
-                      company_id  = COALESCE(opportunities.company_id, EXCLUDED.company_id),
-                      last_seen   = EXCLUDED.last_seen,
-                      updated_at  = EXCLUDED.updated_at
-                    RETURNING (xmax = 0) AS inserted
-                    """,
-                    (
-                        _opp_id(), title, url, source, raw_context, metadata, tags,
-                        company_id, now, now, now, now,
-                    ),
-                )
-                row = cur.fetchone()
-                if row and row[0]:
-                    inserted += 1
-                else:
-                    updated += 1
-        conn.commit()
-    except psycopg.Error as exc:
-        conn.rollback()
-        log.warning("opportunities upsert failed: %s", exc)
-        return {"_error": f"opportunities upsert: {exc}"}
-    finally:
-        conn.close()
-
-    log.info("ashby_ingest slug=%s inserted=%d updated=%d", slug, inserted, updated)
+    inserted = int(body.get("inserted") or 0)
+    detail = body.get("detail") or {}
+    updated = int(detail.get("skippedExisting") or 0)
+    log.info(
+        "ashby_ingest→d1 slug=%s sent=%d inserted=%d existing=%d",
+        slug, len(payload_jobs), inserted, updated,
+    )
     return {"inserted": inserted, "updated": updated}
 
 
@@ -310,12 +314,12 @@ def build_graph(checkpointer: Any = None) -> Any:
     g = StateGraph(AshbyIngestState)
     g.add_node("fetch", fetch)
     g.add_node("link_company", link_company)
-    g.add_node("upsert_opportunities", upsert_opportunities)
+    g.add_node("post_to_d1", post_to_d1)
     g.add_node("emit_intent_signal", emit_intent_signal)
     g.add_edge(START, "fetch")
     g.add_edge("fetch", "link_company")
-    g.add_edge("link_company", "upsert_opportunities")
-    g.add_edge("upsert_opportunities", "emit_intent_signal")
+    g.add_edge("link_company", "post_to_d1")
+    g.add_edge("post_to_d1", "emit_intent_signal")
     g.add_edge("emit_intent_signal", END)
     return g.compile(checkpointer=checkpointer)
 

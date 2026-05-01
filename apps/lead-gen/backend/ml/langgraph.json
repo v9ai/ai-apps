@@ -1,6 +1,8 @@
 {
   "$schema": "https://langgra.ph/schema.json",
-  "dependencies": ["."],
+  "dependencies": [
+    "."
+  ],
   "graphs": {
     "bge_m3_embed": "ml_graphs.bge_m3_embed:graph",
     "jobbert_ner": "ml_graphs.jobbert_ner:graph"

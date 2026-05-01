@@ -85,8 +85,12 @@ _HIGH_SIGNAL_ANCHORS = re.compile(
     r"how it works|features?|why|about|api)\b",
     re.IGNORECASE,
 )
-_MAX_FETCH_PAGES = 12
+_MAX_FETCH_PAGES = 18
 _MAX_FETCH_BUDGET_S = 90.0
+_LOCALE_PREFIX_RE = re.compile(
+    r"^/(?:es|fr|de|ja|zh|pt|it|nl|ko|ru|tr|pl|sv|da|no|fi|ar|he|cs|hu|ro|uk|vi|id|th)(?:/|$)",
+    re.IGNORECASE,
+)
 _FETCH_TIMEOUT_S = 12.0
 _MAX_PER_PAGE_CHARS = 6000
 _MAX_TOTAL_PROMPT_CHARS = 18_000
@@ -175,6 +179,10 @@ def _normalize_url(base: str, href: str) -> str | None:
     if p.scheme not in {"http", "https"}:
         return None
     if _apex_host(p.netloc) != _apex_host(urlparse(base).netloc):
+        return None
+    # Drop locale-prefixed mirrors (/es/pricing, /fr/pricing) — they dilute
+    # the candidate budget without adding new content.
+    if _LOCALE_PREFIX_RE.match(p.path or "/"):
         return None
     return p._replace(fragment="").geturl()
 

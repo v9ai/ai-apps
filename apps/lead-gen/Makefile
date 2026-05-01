@@ -30,7 +30,7 @@ hooks-status:
 
 # ── App ────────────────────────────────────────────────────────
 
-.PHONY: dev backend-dev backend-dev-ml backend-dev-research backend-dev-full deep-scrape build lint codegen deploy db-generate db-migrate db-studio icp-embed-serve gen-langgraph-json check-langgraph-json
+.PHONY: dev backend-dev backend-dev-ml backend-dev-research backend-dev-full deep-scrape build lint codegen deploy db-generate db-migrate db-studio icp-embed-serve gen-langgraph-json gen-langgraph-json-core gen-langgraph-json-ml gen-langgraph-json-research check-langgraph-json check-langgraph-json-core check-langgraph-json-ml check-langgraph-json-research
 
 dev:
 	pnpm dev
@@ -42,16 +42,35 @@ dev:
 backend-dev:
 	pnpm backend-dev
 
-# Regenerate backend/core/langgraph.json from the Python registry.
-# Source of truth: backend/leadgen_agent/registry.py.
-gen-langgraph-json:
-	cd backend && uv run python -m scripts.gen_langgraph_json
+# Regenerate every container's langgraph.json from its Python registry.
+# Sources of truth:
+#   core     → backend/leadgen_agent/registry.py
+#   ml       → backend/ml/ml_graphs/registry.py        (needs --extra ml)
+#   research → backend/research/research_graphs/registry.py
+gen-langgraph-json: gen-langgraph-json-core gen-langgraph-json-ml gen-langgraph-json-research
 
-# CI guard: fail if langgraph.json is stale or any registered graph fails to
-# resolve (typo, missing module, missing symbol). Run before pushing changes
-# to backend/leadgen_agent/registry.py or the graph modules it points at.
-check-langgraph-json:
-	cd backend && uv run python -m scripts.gen_langgraph_json --check
+gen-langgraph-json-core:
+	cd backend && uv run python -m scripts.gen_langgraph_json --container core
+
+gen-langgraph-json-ml:
+	cd backend && ML_EAGER_LOAD=0 uv run --extra ml python -m scripts.gen_langgraph_json --container ml
+
+gen-langgraph-json-research:
+	cd backend && uv run python -m scripts.gen_langgraph_json --container research
+
+# CI guard: fail if any langgraph.json is stale or any registered graph
+# fails to resolve (typo, missing module, missing symbol). Run before
+# pushing changes to a registry or any graph module it points at.
+check-langgraph-json: check-langgraph-json-core check-langgraph-json-ml check-langgraph-json-research
+
+check-langgraph-json-core:
+	cd backend && uv run python -m scripts.gen_langgraph_json --container core --check
+
+check-langgraph-json-ml:
+	cd backend && ML_EAGER_LOAD=0 uv run --extra ml python -m scripts.gen_langgraph_json --container ml --check
+
+check-langgraph-json-research:
+	cd backend && uv run python -m scripts.gen_langgraph_json --container research --check
 
 # ml container's langgraph dev on :8003 — torch + transformers required.
 # Prerequisite: `cd backend && uv sync --extra ml` to install the ml deps.

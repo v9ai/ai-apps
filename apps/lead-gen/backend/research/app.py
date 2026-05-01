@@ -26,6 +26,7 @@ Run locally:
 from __future__ import annotations
 
 import asyncio
+import importlib
 import logging
 import os
 import uuid
@@ -39,17 +40,7 @@ from pydantic import BaseModel
 from leadgen_agent.auth import make_bearer_token_middleware
 from leadgen_agent.observability import make_request_id_middleware
 
-# Import the 6 source graphs. Five have ``build_graph(checkpointer)``; the
-# scholar wrapper defined in research_graphs.scholar does too.
-from leadgen_agent.agentic_search_graph import (
-    build_discovery_graph as _build_agentic_discovery,
-    build_search_graph as _build_agentic_search,
-)
-from leadgen_agent.gh_patterns_graph import graph as _gh_patterns_graph
-from leadgen_agent.lead_papers_graph import build_graph as _build_lead_papers
-from leadgen_agent.research_agent_graph import build_graph as _build_research_agent
-
-from research_graphs.scholar import build_graph as _build_scholar
+from research_graphs.registry import GRAPHS, GraphSpec
 
 log = logging.getLogger("leadgen_research")
 
@@ -64,63 +55,32 @@ BearerTokenMiddleware = make_bearer_token_middleware(
     "RESEARCH_INTERNAL_AUTH_TOKEN", public_paths=_PUBLIC_PATHS
 )
 
-# CF Container wall-clock is 5 min (default). A WARC fetch over Common Crawl
-# averages ~2–4s per record at WARC_CONCURRENCY=8, so anything beyond ~80
-# pages cannot reliably finish before the Container is killed — and the
-# common_crawl graph has only a single node so the checkpointer cannot
-# resume mid-fetch. Cap aggressively here to fail fast instead of silently
-# truncating mid-run.
-_COMMON_CRAWL_MAX_PAGES_LIMIT = 80
-
 # Bound the in-memory async-run registry to avoid unbounded growth across the
 # Container's 30-minute idle window when many fire-and-forget runs are issued.
 _ASYNC_RUNS_CAP = 256
 
 
-def _build_common_crawl(checkpointer: Any) -> Any:
-    """common_crawl_graph has no public build_graph; it compiles at import.
+def _compile_one(spec: GraphSpec, checkpointer: Any) -> Any:
+    """Compile one research graph from its registry spec.
 
-    Recompile here with the shared checkpointer so long-running crawls can
-    resume across restarts.
+    A spec with ``builder_attr=None`` references a precompiled graph (e.g.
+    ``gh_patterns``); use the module-level instance directly. Otherwise call
+    the named builder with the supplied checkpointer.
     """
-    from langgraph.graph import END, START, StateGraph
+    mod = importlib.import_module(spec.module)
+    if spec.builder_attr is None:
+        return getattr(mod, spec.compiled_attr)
+    return getattr(mod, spec.builder_attr)(checkpointer)
 
-    from leadgen_agent.common_crawl_graph import fetch_domain
 
-    async def run_node(state: dict[str, Any]) -> dict[str, Any]:
-        domain = state.get("domain")
-        if not isinstance(domain, str) or not domain:
-            raise ValueError("domain is required")
-        max_pages = int(state.get("max_pages") or 15)
-        if max_pages > _COMMON_CRAWL_MAX_PAGES_LIMIT:
-            log.warning(
-                "common_crawl: capping max_pages from %s to %s (CF Container wall-clock budget)",
-                max_pages,
-                _COMMON_CRAWL_MAX_PAGES_LIMIT,
-            )
-            max_pages = _COMMON_CRAWL_MAX_PAGES_LIMIT
-        if max_pages < 1:
-            raise ValueError("max_pages must be >= 1")
-        dry_run = bool(state.get("dry_run") or False)
-        stats = await fetch_domain(domain, max_pages, dry_run)
-        return {
-            "stats": {
-                "domain": stats.domain,
-                "crawl_id": stats.crawl_id,
-                "pages_fetched": stats.pages_fetched,
-                "pages_skipped_dedup": stats.pages_skipped_dedup,
-                "persons_found": stats.persons_found,
-                "emails_found": stats.emails_found,
-                "contacts_upserted": stats.contacts_upserted,
-                "snapshots_written": stats.snapshots_written,
-            }
-        }
-
-    g: StateGraph = StateGraph(dict)
-    g.add_node("run", run_node)
-    g.add_edge(START, "run")
-    g.add_edge("run", END)
-    return g.compile(checkpointer=checkpointer)
+def _compile_all(checkpointer: Any) -> dict[str, Any]:
+    out: dict[str, Any] = {}
+    for spec in GRAPHS:
+        try:
+            out[spec.assistant_id] = _compile_one(spec, checkpointer)
+        except Exception:  # noqa: BLE001
+            log.exception("research graph compile failed: %s", spec.assistant_id)
+    return out
 
 
 @asynccontextmanager
@@ -137,20 +97,7 @@ async def lifespan(app: FastAPI):
 
     async with AsyncPostgresSaver.from_conn_string(db_url) as checkpointer:
         await checkpointer.setup()
-        app.state.graphs = {
-            "research_agent": _build_research_agent(checkpointer),
-            "scholar": _build_scholar(checkpointer),
-            "lead_papers": _build_lead_papers(checkpointer),
-            "common_crawl": _build_common_crawl(checkpointer),
-            "agentic_search": _build_agentic_search(checkpointer),
-            "agentic_discovery": _build_agentic_discovery(checkpointer),
-            # gh_patterns_graph.build_graph() doesn't accept a checkpointer
-            # argument today; reuse the module-level compiled graph. State is
-            # still persisted to Neon by the graph itself (gh_org_patterns /
-            # gh_contributor_embeddings tables), so missing checkpoint resume
-            # is not a correctness concern here.
-            "gh_patterns": _gh_patterns_graph,
-        }
+        app.state.graphs = _compile_all(checkpointer)
         log.info(
             "research container: compiled graphs=%s",
             list(app.state.graphs),

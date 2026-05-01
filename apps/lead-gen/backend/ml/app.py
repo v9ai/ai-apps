@@ -17,6 +17,7 @@ but we wire the checkpointer anyway for shape-parity with the core container.
 
 from __future__ import annotations
 
+import importlib
 import logging
 import os
 import uuid
@@ -36,10 +37,7 @@ from pydantic import BaseModel  # noqa: E402
 from leadgen_agent.auth import make_bearer_token_middleware  # noqa: E402
 from leadgen_agent.observability import make_request_id_middleware  # noqa: E402
 
-# Import the compiled graphs. Each module eagerly loads its model at import
-# time (gated by ML_EAGER_LOAD) so the first request is fast.
-from ml_graphs.bge_m3_embed import graph as bge_m3_embed_graph  # noqa: E402
-from ml_graphs.jobbert_ner import graph as jobbert_ner_graph  # noqa: E402
+from ml_graphs.registry import GRAPHS, GraphSpec  # noqa: E402
 
 log = logging.getLogger("leadgen_ml")
 
@@ -53,11 +51,6 @@ _models_ready: bool = False
 # letting one container's secret rotate without invalidating the other.
 BearerTokenMiddleware = make_bearer_token_middleware("ML_INTERNAL_AUTH_TOKEN")
 
-# Module-level readiness flag flipped by the lifespan after model warm-up
-# completes. /health reports it so CF / load balancers don't route traffic to
-# a Container whose JobBERT singletons are still downloading multi-GB weights.
-_models_ready: bool = False
-
 
 async def _warm_models() -> None:
     """Force singleton load for both model stacks before /health reports OK.
@@ -98,43 +91,27 @@ async def _warm_models() -> None:
         log.exception("model warm-up failed; first request will retry")
 
 
-async def _warm_models() -> None:
-    """Force singleton load for both model stacks before /health reports OK.
+def _compile_one(spec: GraphSpec, checkpointer: Any) -> Any:
+    """Compile one ml graph from its registry spec.
 
-    bge_m3_embed already eager-loads on import (gated by ML_EAGER_LOAD), but
-    jobbert_ner is purely lazy — the first /runs/wait pays the JobBERT-v3 +
-    skill-classifier load cost (multi-GB on a cold image with no baked
-    weights). Run both warmups off the event loop so the lifespan stays
-    snappy and exceptions surface in logs without aborting startup (the
-    Container should still come up; first request will retry the load).
+    All ml graphs are precompiled at import time (``builder_attr=None``); the
+    checkpointer is wired only when a builder exists, kept for shape parity
+    with the core container's loader.
     """
-    global _models_ready
-    if os.environ.get("ML_EAGER_LOAD", "1") != "1":
-        log.info("ML_EAGER_LOAD=0 — skipping model warm-up")
-        _models_ready = True
-        return
+    mod = importlib.import_module(spec.module)
+    if spec.builder_attr is None:
+        return getattr(mod, spec.compiled_attr)
+    return getattr(mod, spec.builder_attr)(checkpointer)
 
-    import anyio  # local import keeps lifespan import graph slim
 
-    def _warm_bge() -> None:
-        from ml_graphs.bge_m3_embed import _get_model
-
-        _get_model()
-
-    def _warm_jobbert() -> None:
-        # Touch both the embedder and the NER classifier singletons.
-        from leadgen_agent.jobbert_infer import _get_classifier, _get_embedder
-
-        _get_embedder()
-        _get_classifier()
-
-    try:
-        await anyio.to_thread.run_sync(_warm_bge)
-        await anyio.to_thread.run_sync(_warm_jobbert)
-        _models_ready = True
-        log.info("ml model singletons warm")
-    except Exception:  # noqa: BLE001 — surface in logs, don't kill the process
-        log.exception("model warm-up failed; first request will retry")
+def _compile_all(checkpointer: Any) -> dict[str, Any]:
+    out: dict[str, Any] = {}
+    for spec in GRAPHS:
+        try:
+            out[spec.assistant_id] = _compile_one(spec, checkpointer)
+        except Exception:  # noqa: BLE001
+            log.exception("ml graph compile failed: %s", spec.assistant_id)
+    return out
 
 
 @asynccontextmanager
@@ -150,10 +127,7 @@ async def lifespan(app: FastAPI):
             "NEON_DATABASE_URL/DATABASE_URL unset — running ml graphs without "
             "a Postgres checkpointer. Threads will not persist across restarts."
         )
-        app.state.graphs = {
-            "bge_m3_embed": bge_m3_embed_graph,
-            "jobbert_ner": jobbert_ner_graph,
-        }
+        app.state.graphs = _compile_all(checkpointer=None)
         await _warm_models()
         yield
         return
@@ -166,10 +140,7 @@ async def lifespan(app: FastAPI):
         # expose the pre-compiled graphs. The checkpointer context is kept
         # open for shape-parity with the core container and for future
         # graphs that may want it.
-        app.state.graphs = {
-            "bge_m3_embed": bge_m3_embed_graph,
-            "jobbert_ner": jobbert_ner_graph,
-        }
+        app.state.graphs = _compile_all(checkpointer)
         await _warm_models()
         log.info("ml graphs ready: %s", list(app.state.graphs))
         yield
