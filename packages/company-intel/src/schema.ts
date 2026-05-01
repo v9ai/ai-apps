@@ -58,6 +58,11 @@ export const companies = pgTable("companies", {
 
   blocked: boolean("blocked").notNull().default(false),
 
+  // Verdict from leadgen_agent.company_qa_graph (migration 0081). Surfaces
+  // false-positive / weak-lead detection on a tab (e.g. /companies?tab=sales-tech).
+  qa_verdict: jsonb("qa_verdict").$type<QaVerdict>(),
+  qa_verdict_at: text("qa_verdict_at"),
+
   deep_analysis: text("deep_analysis"),
 
   email: text("email"),
