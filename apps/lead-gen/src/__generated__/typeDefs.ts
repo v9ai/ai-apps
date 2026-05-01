@@ -251,6 +251,7 @@ input CompanyImportInput {
   linkedin_url: String
   location: String
   name: String!
+  service_taxonomy: [String!]
   size: String
   website: String
 }

@@ -380,6 +380,7 @@ input CompanyImportInput {
   size: String
   description: String
   industry: String
+  service_taxonomy: [String!]
 }
 
 type ImportCompaniesResult {

@@ -11,6 +11,10 @@ import { browsePeople, importPeopleFromCurrentPage, setPeopleCancelled } from ".
 import { findRelatedCompanies, setFindRelatedCancelled } from "./find-related";
 import { scrapeCompanyFull, setCompanyScraperCancelled } from "./company-scraper";
 import { scrapePeoplePostsFromCompanyPage, setPeoplePostsCancelled } from "./people-posts-scraper";
+import {
+  parseProductCategoriesFromUrl,
+  taxonomyForCategoryIds,
+} from "./linkedin-product-categories";
 
 // ── Dev hot-reload via WebSocket ──────────────────────────────────────
 if (import.meta.env.DEV) {
@@ -1600,12 +1604,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // which upserts into Neon's companies table.
   if (message.action === "browseProductCompanies") {
     const tabId = sender.tab?.id;
-    console.log("[BG] browseProductCompanies from tab", tabId, "url=", sender.tab?.url);
+    const sourceUrl = sender.tab?.url;
+    console.log("[BG] browseProductCompanies from tab", tabId, "url=", sourceUrl);
     if (!tabId) {
       sendResponse({ success: false, error: "No tab ID" });
       return true;
     }
     sendResponse({ success: true });
+
+    const categoryIds = parseProductCategoriesFromUrl(sourceUrl);
+    const serviceTaxonomy = taxonomyForCategoryIds(categoryIds);
+    console.log(
+      "[BG] browseProductCompanies categories=",
+      JSON.stringify(categoryIds),
+      "taxonomy=",
+      JSON.stringify(serviceTaxonomy),
+    );
 
     const startedAt = Date.now();
 
@@ -1663,7 +1677,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           seenUrls.add(c.linkedin_url!);
           return true;
         })
-        .map((c) => ({ name: c.name!, linkedin_url: c.linkedin_url! }));
+        .map((c) => ({
+          name: c.name!,
+          linkedin_url: c.linkedin_url!,
+          ...(serviceTaxonomy.length > 0 ? { service_taxonomy: serviceTaxonomy } : {}),
+        }));
 
       savePromise = savePromise.then(async () => {
         if (batch.length === 0) {
@@ -1749,6 +1767,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           description?: string;
           location?: string;
           industry?: string;
+          service_taxonomy?: string[];
         }> = [];
 
         const flushDeepBatch = async () => {
@@ -1815,6 +1834,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 description: descriptionParts.join("\n") || undefined,
                 location: data.location || undefined,
                 industry: data.industry || undefined,
+                ...(serviceTaxonomy.length > 0
+                  ? { service_taxonomy: serviceTaxonomy }
+                  : {}),
               });
               deepEnriched++;
               consecutiveEmpty = 0;

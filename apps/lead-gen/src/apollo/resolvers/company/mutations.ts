@@ -56,6 +56,23 @@ function stripNulls<T extends Record<string, unknown>>(obj: T): { [K in keyof T]
   return result as { [K in keyof T]: Exclude<T[K], null> };
 }
 
+function mergeTaxonomy(
+  existingRaw: string | null | undefined,
+  incoming: string[],
+): string[] | null {
+  if (incoming.length === 0) return null;
+  const existing = safeJsonParse<string[]>(existingRaw, []);
+  const seen = new Set<string>();
+  const merged: string[] = [];
+  for (const v of [...existing, ...incoming]) {
+    if (typeof v !== "string" || v.length === 0) continue;
+    if (seen.has(v)) continue;
+    seen.add(v);
+    merged.push(v);
+  }
+  return merged;
+}
+
 function requireAdmin(context: GraphQLContext): void {
   if (!context.userId) {
     throw new GraphQLError("Authentication required", { extensions: { code: "UNAUTHENTICATED" } });
@@ -669,6 +686,7 @@ export const companyMutations = {
       try {
         const key = input.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
         const linkedinUrl = input.linkedin_url?.replace(/\/$/, "") ?? null;
+        const incomingTaxonomy = (input.service_taxonomy ?? []).filter(Boolean);
 
         // Pre-check by linkedin_url: catches the case where two different name
         // spellings produce different `key`s but point at the same company.
@@ -680,6 +698,7 @@ export const companyMutations = {
             .where(eq(companies.linkedin_url, linkedinUrl))
             .limit(1);
           if (existing) {
+            const mergedTaxonomy = mergeTaxonomy(existing.service_taxonomy, incomingTaxonomy);
             const [updated] = await context.db
               .update(companies)
               .set({
@@ -688,6 +707,9 @@ export const companyMutations = {
                 location: sql`COALESCE(${companies.location}, ${input.location ?? null})`,
                 industry: sql`COALESCE(${companies.industry}, ${input.industry ?? null})`,
                 size: sql`COALESCE(${companies.size}, ${input.size ?? null})`,
+                ...(mergedTaxonomy !== null
+                  ? { service_taxonomy: JSON.stringify(mergedTaxonomy) }
+                  : {}),
                 updated_at: sql`now()::text`,
               })
               .where(eq(companies.id, existing.id))
@@ -707,6 +729,8 @@ export const companyMutations = {
             size: input.size ?? null,
             description: input.description ?? null,
             industry: input.industry ?? null,
+            service_taxonomy:
+              incomingTaxonomy.length > 0 ? JSON.stringify(incomingTaxonomy) : null,
           }).onConflictDoUpdate({
             target: companies.key,
             set: {
@@ -716,6 +740,14 @@ export const companyMutations = {
               location: sql`COALESCE(${companies.location}, excluded.location)`,
               industry: sql`COALESCE(${companies.industry}, excluded.industry)`,
               size: sql`COALESCE(${companies.size}, excluded.size)`,
+              service_taxonomy: sql`(
+                SELECT to_jsonb(ARRAY(
+                  SELECT DISTINCT jsonb_array_elements_text(
+                    COALESCE(NULLIF(${companies.service_taxonomy}, '')::jsonb, '[]'::jsonb)
+                    || COALESCE(NULLIF(excluded.service_taxonomy, '')::jsonb, '[]'::jsonb)
+                  )
+                ))::text
+              )`,
               updated_at: sql`now()::text`,
             },
           }).returning();

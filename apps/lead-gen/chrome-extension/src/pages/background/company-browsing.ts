@@ -635,6 +635,7 @@ export async function saveCompanyBatch(
     description?: string;
     location?: string;
     industry?: string;
+    service_taxonomy?: string[];
   }>,
 ): Promise<number> {
   console.log(`[SaveBatch] ${batch.length} companies:`, batch.map(c => c.name).join(", "));

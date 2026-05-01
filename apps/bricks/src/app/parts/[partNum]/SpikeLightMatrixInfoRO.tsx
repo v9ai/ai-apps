@@ -193,7 +193,7 @@ lights.on([
 ])`}</code>
 
       <p className={para}>
-        Script rulabil complet (cu hub <span className={inlineCode}>EssentialHub</span>):{" "}
+        Script rulabil complet (cu hub <span className={inlineCode}>CityHub</span>):{" "}
         <a
           href="/scripts/slovenia"
           className={css({

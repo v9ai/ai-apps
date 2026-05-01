@@ -1,9 +1,9 @@
-from pybricks.hubs import EssentialHub
+from pybricks.hubs import CityHub
 from pybricks.pupdevices import ColorLightMatrix
 from pybricks.parameters import Port, Color
 from pybricks.tools import wait
 
-hub = EssentialHub()
+hub = CityHub()
 lights = ColorLightMatrix(Port.A)
 
 # Steagul Sloveniei: 3 dungi orizontale — alb (sus), albastru (mijloc), rosu (jos).
