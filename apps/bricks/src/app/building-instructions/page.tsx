@@ -19,7 +19,6 @@ const INSTRUCTIONS: Instruction[] = [
     title: "LEGO Official — Set 6499548",
     file: "6499548.pdf",
     source: "https://www.lego.com/cdn/product-assets/product.bi.core.pdf/6499548.pdf",
-    directHref: "https://www.lego.com/cdn/product-assets/product.bi.core.pdf/6499548.pdf",
   },
 ];
 
