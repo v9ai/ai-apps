@@ -2685,6 +2685,11 @@ export type QueryLinkedinPostsArgs = {
 };
 
 
+export type QueryOpportunitiesPageArgs = {
+  companyId?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
 export type QueryOpportunityByUrlArgs = {
   url: Scalars['String']['input'];
 };

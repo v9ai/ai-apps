@@ -61,3 +61,45 @@ query OpportunitiesPage {
     }
   }
 }
+
+query CompanyOpportunitiesPage($companyId: Int!) {
+  opportunitiesPage(companyId: $companyId) {
+    opportunities {
+      id
+      title
+      url
+      source
+      status
+      rewardText
+      rewardUsd
+      score
+      tags
+      applied
+      appliedAt
+      applicationStatus
+      firstSeen
+      createdAt
+      companyName
+      companyKey
+      contactFirstName
+      contactLastName
+      contactSlug
+      contactPosition
+    }
+    d1Pending {
+      id
+      title
+      url
+      source
+      status
+      tags
+      location
+      salary
+      archived
+      createdAt
+      updatedAt
+      companyName
+      companyKey
+    }
+  }
+}

@@ -2688,6 +2688,11 @@ export type QueryLinkedinPostsArgs = {
 };
 
 
+export type QueryOpportunitiesPageArgs = {
+  companyId?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
 export type QueryOpportunityByUrlArgs = {
   url: Scalars['String']['input'];
 };
@@ -6039,7 +6044,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   linkedinPost?: Resolver<Maybe<ResolversTypes['LinkedInPost']>, ParentType, ContextType, RequireFields<QueryLinkedinPostArgs, 'id'>>;
   linkedinPosts?: Resolver<Array<ResolversTypes['LinkedInPost']>, ParentType, ContextType, Partial<QueryLinkedinPostsArgs>>;
   mlStats?: Resolver<ResolversTypes['MLStats'], ParentType, ContextType>;
-  opportunitiesPage?: Resolver<ResolversTypes['OpportunitiesPagePayload'], ParentType, ContextType>;
+  opportunitiesPage?: Resolver<ResolversTypes['OpportunitiesPagePayload'], ParentType, ContextType, Partial<QueryOpportunitiesPageArgs>>;
   opportunityByUrl?: Resolver<Maybe<ResolversTypes['Opportunity']>, ParentType, ContextType, RequireFields<QueryOpportunityByUrlArgs, 'url'>>;
   product?: Resolver<Maybe<ResolversTypes['Product']>, ParentType, ContextType, RequireFields<QueryProductArgs, 'id'>>;
   productBySlug?: Resolver<Maybe<ResolversTypes['Product']>, ParentType, ContextType, RequireFields<QueryProductBySlugArgs, 'slug'>>;

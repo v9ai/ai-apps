@@ -2688,6 +2688,11 @@ export type QueryLinkedinPostsArgs = {
 };
 
 
+export type QueryOpportunitiesPageArgs = {
+  companyId?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
 export type QueryOpportunityByUrlArgs = {
   url: Scalars['String']['input'];
 };
@@ -4708,6 +4713,13 @@ export type OpportunitiesPageQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type OpportunitiesPageQuery = { __typename?: 'Query', opportunitiesPage: { __typename?: 'OpportunitiesPagePayload', opportunities: Array<{ __typename?: 'OpportunityListItem', id: string, title: string, url: string | null, source: string | null, status: string, rewardText: string | null, rewardUsd: number | null, score: number | null, tags: Array<string>, applied: boolean, appliedAt: string | null, applicationStatus: string | null, firstSeen: string | null, createdAt: string, companyName: string | null, companyKey: string | null, contactFirstName: string | null, contactLastName: string | null, contactSlug: string | null, contactPosition: string | null }>, d1Pending: Array<{ __typename?: 'D1OpportunityItem', id: string, title: string, url: string | null, source: string | null, status: string, tags: string | null, location: string | null, salary: string | null, archived: number, createdAt: string, updatedAt: string, companyName: string | null, companyKey: string | null }>, evalReport: { __typename?: 'OpportunityEvalReport', goldenCount: number, excludedCount: number, nullScoreCount: number, timestamp: string, scoring: { __typename?: 'OpportunityScoringMetrics', accuracy: number, precision: number, recall: number, f1: number, aucRoc: number, ndcgAt10: number }, sourceBreakdown: Array<{ __typename?: 'OpportunitySourceStat', source: string, total: number, positive: number, negative: number, precision: number, avgScore: number }> } | null } };
+
+export type CompanyOpportunitiesPageQueryVariables = Exact<{
+  companyId: Scalars['Int']['input'];
+}>;
+
+
+export type CompanyOpportunitiesPageQuery = { __typename?: 'Query', opportunitiesPage: { __typename?: 'OpportunitiesPagePayload', opportunities: Array<{ __typename?: 'OpportunityListItem', id: string, title: string, url: string | null, source: string | null, status: string, rewardText: string | null, rewardUsd: number | null, score: number | null, tags: Array<string>, applied: boolean, appliedAt: string | null, applicationStatus: string | null, firstSeen: string | null, createdAt: string, companyName: string | null, companyKey: string | null, contactFirstName: string | null, contactLastName: string | null, contactSlug: string | null, contactPosition: string | null }>, d1Pending: Array<{ __typename?: 'D1OpportunityItem', id: string, title: string, url: string | null, source: string | null, status: string, tags: string | null, location: string | null, salary: string | null, archived: number, createdAt: string, updatedAt: string, companyName: string | null, companyKey: string | null }> } };
 
 export type ProductCoreFragment = { __typename?: 'Product', id: number, slug: string, name: string, url: string, domain: string | null, description: string | null, highlights: any | null, icpAnalysis: any | null, icpAnalyzedAt: string | null, pricingAnalysis: any | null, pricingAnalyzedAt: string | null, gtmAnalysis: any | null, gtmAnalyzedAt: string | null, intelReport: any | null, intelReportAt: string | null, positioningAnalysis: any | null, publishedAt: string | null, createdBy: string | null, createdAt: string, updatedAt: string };
 
@@ -9177,6 +9189,85 @@ export type OpportunitiesPageQueryHookResult = ReturnType<typeof useOpportunitie
 export type OpportunitiesPageLazyQueryHookResult = ReturnType<typeof useOpportunitiesPageLazyQuery>;
 export type OpportunitiesPageSuspenseQueryHookResult = ReturnType<typeof useOpportunitiesPageSuspenseQuery>;
 export type OpportunitiesPageQueryResult = Apollo.QueryResult<OpportunitiesPageQuery, OpportunitiesPageQueryVariables>;
+export const CompanyOpportunitiesPageDocument = gql`
+    query CompanyOpportunitiesPage($companyId: Int!) {
+  opportunitiesPage(companyId: $companyId) {
+    opportunities {
+      id
+      title
+      url
+      source
+      status
+      rewardText
+      rewardUsd
+      score
+      tags
+      applied
+      appliedAt
+      applicationStatus
+      firstSeen
+      createdAt
+      companyName
+      companyKey
+      contactFirstName
+      contactLastName
+      contactSlug
+      contactPosition
+    }
+    d1Pending {
+      id
+      title
+      url
+      source
+      status
+      tags
+      location
+      salary
+      archived
+      createdAt
+      updatedAt
+      companyName
+      companyKey
+    }
+  }
+}
+    `;
+
+/**
+ * __useCompanyOpportunitiesPageQuery__
+ *
+ * To run a query within a React component, call `useCompanyOpportunitiesPageQuery` and pass it any options that fit your needs.
+ * When your component renders, `useCompanyOpportunitiesPageQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useCompanyOpportunitiesPageQuery({
+ *   variables: {
+ *      companyId: // value for 'companyId'
+ *   },
+ * });
+ */
+export function useCompanyOpportunitiesPageQuery(baseOptions: Apollo.QueryHookOptions<CompanyOpportunitiesPageQuery, CompanyOpportunitiesPageQueryVariables> & ({ variables: CompanyOpportunitiesPageQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<CompanyOpportunitiesPageQuery, CompanyOpportunitiesPageQueryVariables>(CompanyOpportunitiesPageDocument, options);
+      }
+export function useCompanyOpportunitiesPageLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<CompanyOpportunitiesPageQuery, CompanyOpportunitiesPageQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<CompanyOpportunitiesPageQuery, CompanyOpportunitiesPageQueryVariables>(CompanyOpportunitiesPageDocument, options);
+        }
+// @ts-ignore
+export function useCompanyOpportunitiesPageSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<CompanyOpportunitiesPageQuery, CompanyOpportunitiesPageQueryVariables>): Apollo.UseSuspenseQueryResult<CompanyOpportunitiesPageQuery, CompanyOpportunitiesPageQueryVariables>;
+export function useCompanyOpportunitiesPageSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<CompanyOpportunitiesPageQuery, CompanyOpportunitiesPageQueryVariables>): Apollo.UseSuspenseQueryResult<CompanyOpportunitiesPageQuery | undefined, CompanyOpportunitiesPageQueryVariables>;
+export function useCompanyOpportunitiesPageSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<CompanyOpportunitiesPageQuery, CompanyOpportunitiesPageQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<CompanyOpportunitiesPageQuery, CompanyOpportunitiesPageQueryVariables>(CompanyOpportunitiesPageDocument, options);
+        }
+export type CompanyOpportunitiesPageQueryHookResult = ReturnType<typeof useCompanyOpportunitiesPageQuery>;
+export type CompanyOpportunitiesPageLazyQueryHookResult = ReturnType<typeof useCompanyOpportunitiesPageLazyQuery>;
+export type CompanyOpportunitiesPageSuspenseQueryHookResult = ReturnType<typeof useCompanyOpportunitiesPageSuspenseQuery>;
+export type CompanyOpportunitiesPageQueryResult = Apollo.QueryResult<CompanyOpportunitiesPageQuery, CompanyOpportunitiesPageQueryVariables>;
 export const ProductsDocument = gql`
     query Products {
   products {

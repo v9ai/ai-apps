@@ -1714,7 +1714,7 @@ type Query {
   linkedinPosts(companyId: Int, limit: Int, offset: Int, type: LinkedInPostType): [LinkedInPost!]!
   """ML model health and stats"""
   mlStats: MLStats!
-  opportunitiesPage: OpportunitiesPagePayload!
+  opportunitiesPage(companyId: Int): OpportunitiesPagePayload!
   opportunityByUrl(url: String!): Opportunity
   product(id: Int!): Product
   productBySlug(slug: String!): Product

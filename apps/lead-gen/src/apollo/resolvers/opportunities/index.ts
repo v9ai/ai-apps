@@ -130,10 +130,27 @@ const opportunityQueries = {
   ) {
     return context.loaders.opportunitiesByContact.load(args.contactId);
   },
-  async opportunitiesPage(_parent: unknown, _args: unknown, context: GraphQLContext) {
+  async opportunitiesPage(
+    _parent: unknown,
+    args: { companyId?: number | null },
+    context: GraphQLContext,
+  ) {
+    let companyKey: string | null = null;
+    if (args.companyId != null) {
+      const [row] = await context.db
+        .select({ key: companies.key })
+        .from(companies)
+        .where(eq(companies.id, args.companyId))
+        .limit(1);
+      companyKey = row?.key ?? null;
+    }
+
     const [{ pgOpportunities, pendingD1 }, evalReport] = await Promise.all([
-      loadOpportunitiesPageData(),
-      loadEvalReport(context),
+      loadOpportunitiesPageData({
+        companyId: args.companyId ?? undefined,
+        companyKey,
+      }),
+      args.companyId != null ? Promise.resolve(null) : loadEvalReport(context),
     ]);
 
     return {
