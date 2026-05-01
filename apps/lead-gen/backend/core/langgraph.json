@@ -48,7 +48,8 @@
     "consultancies_nl_search": "leadgen_agent.consultancies_nl_search_graph:graph",
     "companies_verify": "leadgen_agent.companies_verify_graph:graph",
     "company_cleanup": "leadgen_agent.company_cleanup_graph:graph",
-    "company_qa": "leadgen_agent.company_qa_graph:graph"
+    "company_qa": "leadgen_agent.company_qa_graph:graph",
+    "sales_tech_feature_graph": "leadgen_agent.sales_tech_feature_graph:graph"
   },
   "http": { "app": "leadgen_agent.custom_app:app" },
   "env": ".env"

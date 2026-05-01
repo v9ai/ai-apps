@@ -164,6 +164,11 @@ def _build_optional_graphs(checkpointer: Any) -> dict[str, Any]:
             "build_graph",
         ),
         ("classify_ai_intent", "leadgen_agent.classify_ai_intent_graph", "build_graph"),
+        (
+            "sales_tech_feature_graph",
+            "leadgen_agent.sales_tech_feature_graph",
+            "build_graph",
+        ),
     ]
     for assistant_id, module_path, attr in optional_specs:
         try:
