@@ -9,7 +9,7 @@ import {
   products,
 } from "@/db/schema";
 import { db as httpDb } from "@/db";
-import { eq, and, or, like, ilike, asc, desc, gte, ne, sql, isNotNull } from "drizzle-orm";
+import { eq, and, or, like, ilike, asc, desc, gte, ne, sql, isNotNull, inArray } from "drizzle-orm";
 import type { GraphQLContext } from "../../context";
 import type {
   QueryCompaniesArgs,
@@ -17,6 +17,7 @@ import type {
   QueryCompany_FactsArgs,
   QueryCompany_SnapshotsArgs,
   QueryFindCompanyArgs,
+  QueryExistingCompanyLinkedinUrlsArgs,
 } from "@/__generated__/resolvers-types";
 import { safeJsonParse } from "./utils";
 import { withEdgeCache } from "../../cache";
@@ -270,6 +271,20 @@ export const companyQueries = {
       console.error("Error finding company:", error);
       return { found: false, company: null };
     }
+  },
+
+  async existingCompanyLinkedinUrls(
+    _parent: unknown,
+    args: QueryExistingCompanyLinkedinUrlsArgs,
+    context: GraphQLContext,
+  ) {
+    if (!args.linkedinUrls?.length) return [];
+    const normalized = args.linkedinUrls.map((u) => u.replace(/\/$/, ""));
+    const rows = await context.db
+      .select({ url: companies.linkedin_url })
+      .from(companies)
+      .where(inArray(companies.linkedin_url, normalized));
+    return rows.map((r) => r.url).filter((u): u is string => !!u);
   },
 
   async similarCompaniesByProfile(

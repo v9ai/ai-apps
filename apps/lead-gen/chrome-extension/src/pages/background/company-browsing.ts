@@ -607,6 +607,26 @@ function extractNextPageUrl(tabId: number): Promise<string | null> {
     .catch(() => null);
 }
 
+async function fetchExistingLinkedinUrls(urls: string[]): Promise<string[]> {
+  if (!urls.length) return [];
+  try {
+    const result = await gqlRequest(
+      `query ExistingCompanyLinkedinUrls($linkedinUrls: [String!]!) {
+        existingCompanyLinkedinUrls(linkedinUrls: $linkedinUrls)
+      }`,
+      { linkedinUrls: urls },
+    );
+    if (result.errors) {
+      console.warn("[BrowseCompanies] dedupe lookup errored:", result.errors[0].message);
+      return [];
+    }
+    return result.data?.existingCompanyLinkedinUrls ?? [];
+  } catch (err) {
+    console.warn("[BrowseCompanies] dedupe lookup threw, falling back to no skip:", err);
+    return [];
+  }
+}
+
 export async function saveCompanyBatch(
   batch: Array<{
     name: string;
@@ -684,7 +704,15 @@ export async function browseCompanies(tabId: number) {
     await randomDelay(2000);
   }
 
-  console.log(`[BrowseCompanies] Phase 2: Visiting ${allCompanyUrls.length} companies...`);
+  // ── Pre-flight: skip URLs already in the DB ──
+  const existing = await fetchExistingLinkedinUrls(allCompanyUrls);
+  const existingSet = new Set(existing.map((u) => u.replace(/\/$/, "")));
+  const toVisit = allCompanyUrls.filter((u) => !existingSet.has(u.replace(/\/$/, "")));
+  const skippedCount = allCompanyUrls.length - toVisit.length;
+
+  console.log(
+    `[BrowseCompanies] Phase 2: Visiting ${toVisit.length} new companies (${skippedCount} already imported)...`,
+  );
 
   // ── Phase 2: Visit each company and extract data ──
   const batch: Array<{
@@ -696,11 +724,11 @@ export async function browseCompanies(tabId: number) {
     industry?: string;
   }> = [];
 
-  for (let i = 0; i < allCompanyUrls.length; i++) {
+  for (let i = 0; i < toVisit.length; i++) {
     if (companyCancelled) break;
 
-    const companyUrl = allCompanyUrls[i];
-    console.log(`[BrowseCompanies] ${i + 1}/${allCompanyUrls.length}: ${companyUrl}`);
+    const companyUrl = toVisit[i];
+    console.log(`[BrowseCompanies] ${i + 1}/${toVisit.length}: ${companyUrl}`);
 
     // Navigate to company "about" page for richer data
     const aboutUrl = companyUrl.replace(/\/$/, "") + "/about/";
@@ -787,6 +815,6 @@ export async function browseCompanies(tabId: number) {
   await waitForTabLoad(tabId);
 
   console.log(
-    `[BrowseCompanies] Complete. Saved ${saved}/${totalProcessed} companies (${filtered} filtered, ${totalRemoteJobs} remote jobs found) from ${page} page(s).`,
+    `[BrowseCompanies] Complete. Saved ${saved}/${totalProcessed} companies (${skippedCount} skipped as duplicates, ${filtered} filtered, ${totalRemoteJobs} remote jobs found) from ${page} page(s).`,
   );
 }

@@ -1706,6 +1706,7 @@ type Query {
   emailThread(contactId: Int!): EmailThread
   emailThreads(classification: String, limit: Int, offset: Int, search: String, sortBy: String): EmailThreadsResult!
   emailsNeedingFollowUp(limit: Int, offset: Int): FollowUpEmailsResult!
+  existingCompanyLinkedinUrls(linkedinUrls: [String!]!): [String!]!
   findCompany(linkedinUrl: String, name: String, website: String): FindCompanyResult!
   intentDashboard(productId: Int): IntentDashboard!
   intentSignals(companyId: Int!, limit: Int, offset: Int, productId: Int, signalType: IntentSignalType): IntentSignalsResponse!

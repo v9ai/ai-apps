@@ -19,6 +19,7 @@ extend type Query {
   ): [CompanySnapshot!]!
   allCompanyTags: [String!]!
   findCompany(name: String, website: String, linkedinUrl: String): FindCompanyResult!
+  existingCompanyLinkedinUrls(linkedinUrls: [String!]!): [String!]!
 
   # Semantic ICP matching (intervention #4). Cosine similarity via pgvector
   # HNSW against companies.profile_embedding / products.icp_embedding

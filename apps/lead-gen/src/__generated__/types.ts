@@ -2391,6 +2391,7 @@ export type Query = {
   emailThread: Maybe<EmailThread>;
   emailThreads: EmailThreadsResult;
   emailsNeedingFollowUp: FollowUpEmailsResult;
+  existingCompanyLinkedinUrls: Array<Scalars['String']['output']>;
   findCompany: FindCompanyResult;
   intentDashboard: IntentDashboard;
   intentSignals: IntentSignalsResponse;
@@ -2642,6 +2643,11 @@ export type QueryEmailThreadsArgs = {
 export type QueryEmailsNeedingFollowUpArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryExistingCompanyLinkedinUrlsArgs = {
+  linkedinUrls: Array<Scalars['String']['input']>;
 };
 
 

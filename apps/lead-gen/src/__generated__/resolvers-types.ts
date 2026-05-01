@@ -2394,6 +2394,7 @@ export type Query = {
   emailThread: Maybe<EmailThread>;
   emailThreads: EmailThreadsResult;
   emailsNeedingFollowUp: FollowUpEmailsResult;
+  existingCompanyLinkedinUrls: Array<Scalars['String']['output']>;
   findCompany: FindCompanyResult;
   intentDashboard: IntentDashboard;
   intentSignals: IntentSignalsResponse;
@@ -2645,6 +2646,11 @@ export type QueryEmailThreadsArgs = {
 export type QueryEmailsNeedingFollowUpArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryExistingCompanyLinkedinUrlsArgs = {
+  linkedinUrls: Array<Scalars['String']['input']>;
 };
 
 
@@ -6026,6 +6032,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   emailThread?: Resolver<Maybe<ResolversTypes['EmailThread']>, ParentType, ContextType, RequireFields<QueryEmailThreadArgs, 'contactId'>>;
   emailThreads?: Resolver<ResolversTypes['EmailThreadsResult'], ParentType, ContextType, Partial<QueryEmailThreadsArgs>>;
   emailsNeedingFollowUp?: Resolver<ResolversTypes['FollowUpEmailsResult'], ParentType, ContextType, Partial<QueryEmailsNeedingFollowUpArgs>>;
+  existingCompanyLinkedinUrls?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType, RequireFields<QueryExistingCompanyLinkedinUrlsArgs, 'linkedinUrls'>>;
   findCompany?: Resolver<ResolversTypes['FindCompanyResult'], ParentType, ContextType, Partial<QueryFindCompanyArgs>>;
   intentDashboard?: Resolver<ResolversTypes['IntentDashboard'], ParentType, ContextType, Partial<QueryIntentDashboardArgs>>;
   intentSignals?: Resolver<ResolversTypes['IntentSignalsResponse'], ParentType, ContextType, RequireFields<QueryIntentSignalsArgs, 'companyId'>>;
