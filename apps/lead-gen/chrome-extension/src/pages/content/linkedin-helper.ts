@@ -2817,13 +2817,15 @@ async function clickProductSearchNext(
   target.scrollIntoView({ block: "center" });
   target.click();
 
+  // Jittered polls — LinkedIn fingerprints constant timing.
+  const jitter = (base: number) => base + Math.floor(Math.random() * base * 0.4);
   let attempts = 0;
   const maxAttempts = 15;
   while (attempts < maxAttempts) {
-    await new Promise((r) => setTimeout(r, 1000));
+    await new Promise((r) => setTimeout(r, jitter(900)));
     const info = getProductSearchPaginationInfo();
     if (info && info.currentPage === expectedNextPage) {
-      await new Promise((r) => setTimeout(r, 1200));
+      await new Promise((r) => setTimeout(r, jitter(1100)));
       return { ok: true };
     }
     attempts++;

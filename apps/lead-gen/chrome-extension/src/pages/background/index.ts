@@ -1739,6 +1739,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
         let deepScraped = 0;
         let deepEnriched = 0;
+        let consecutiveEmpty = 0;
+        const RATE_LIMIT_THRESHOLD = 5;
+        let abortedByRateLimit = false;
         const deepBatch: Array<{
           name: string;
           website?: string;
@@ -1759,6 +1762,31 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           }
         };
 
+        // Auth-wall heuristic — LinkedIn redirects to a sign-in shell when the
+        // session is invalid or rate-limited; we'd otherwise save "Sign in" as
+        // a company name from extractCompanyData's <h1> fallback.
+        const isAuthWallName = (name: string): boolean => {
+          const n = name.trim().toLowerCase();
+          return (
+            n === "sign in" ||
+            n === "join linkedin" ||
+            n === "linkedin" ||
+            n.startsWith("sign in to ") ||
+            n.startsWith("join linkedin")
+          );
+        };
+
+        // Strip /about/, /life/, /jobs/, locale suffixes — keep the canonical
+        // /company/<slug>/ form so the lite save and deep save agree on URL.
+        const canonicalCompanyUrl = (raw: string, fallback: string): string => {
+          try {
+            const u = new URL(raw, "https://www.linkedin.com");
+            const m = u.pathname.match(/^\/company\/([^/]+)/);
+            if (m) return `https://www.linkedin.com/company/${m[1]}/`;
+          } catch { /* fall through */ }
+          return fallback;
+        };
+
         for (const url of urls) {
           const aboutUrl = url.replace(/\/$/, "") + "/about/";
           let scrapeTabId: number | null = null;
@@ -1773,7 +1801,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             await randomDelay(500);
 
             const data = await extractCompanyData(scrapeTabId);
-            if (data && data.name) {
+            if (data && data.name && !isAuthWallName(data.name)) {
               const descriptionParts = [
                 data.description,
                 data.industry ? `Industry: ${data.industry}` : "",
@@ -1783,17 +1811,24 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
               deepBatch.push({
                 name: data.name,
                 website: data.website || undefined,
-                linkedin_url: data.linkedinUrl || url,
+                linkedin_url: canonicalCompanyUrl(data.linkedinUrl ?? "", url),
                 description: descriptionParts.join("\n") || undefined,
                 location: data.location || undefined,
                 industry: data.industry || undefined,
               });
               deepEnriched++;
+              consecutiveEmpty = 0;
+            } else {
+              consecutiveEmpty++;
+              if (data?.name && isAuthWallName(data.name)) {
+                console.warn(`[BG] auth-wall detected for ${url} — name="${data.name}"`);
+              }
             }
           } catch (err) {
             const message = err instanceof Error ? err.message : String(err);
             errors.push({ page: 0, message: `deep-scrape ${url}: ${message}` });
             console.warn(`[BG] deep-scrape failed for ${url}:`, err);
+            consecutiveEmpty++;
           } finally {
             if (scrapeTabId !== null) {
               await chrome.tabs.remove(scrapeTabId).catch(() => {});
@@ -1810,6 +1845,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           if (deepBatch.length >= 10) {
             await flushDeepBatch();
           }
+
+          // Circuit breaker: 5 empties in a row almost always means LinkedIn
+          // is serving a challenge/auth wall. Aborting beats burning through
+          // 200 more pointless tab opens.
+          if (consecutiveEmpty >= RATE_LIMIT_THRESHOLD) {
+            abortedByRateLimit = true;
+            errors.push({
+              page: 0,
+              message: `rate-limit suspected — ${consecutiveEmpty} consecutive empty scrapes, aborting at ${deepScraped}/${urls.length}`,
+            });
+            console.warn(
+              `[BG] aborting Phase 2 after ${consecutiveEmpty} consecutive empty scrapes`,
+            );
+            break;
+          }
+
           await randomDelay(800);
         }
 
@@ -1824,13 +1875,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           inserted: totalImported,
           deepScraped,
           deepEnriched,
+          abortedByRateLimit,
           skipped: 0,
           errors,
           startedAt,
           finishedAt,
           durationMs: finishedAt - startedAt,
-          status:
-            errors.length > 0
+          status: abortedByRateLimit
+            ? `⚠ Rate-limited at ${deepScraped}/${urls.length} — Imported ${totalImported}, Enriched ${deepEnriched}`
+            : errors.length > 0
               ? `Pages ${pagesScraped}/${totalPages} — Imported ${totalImported}, Enriched ${deepEnriched}/${urls.length}, Errors ${errors.length}`
               : `Imported ${totalImported}, Enriched ${deepEnriched}/${urls.length} (${pagesScraped} pages)`,
         };
