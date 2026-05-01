@@ -9,22 +9,17 @@ L = ColorLightMatrix(Port.B)
 
 W, B, R, K = Color.WHITE, Color.BLUE, Color.RED, Color.NONE
 
-# ── Orientare matrice ─────────────────────────────────────────────────
-# Matricea e montata rotita 90° (sens orar). Scriem desenele in forma
-# fizica (asa cum le vede ochiul) si rotate() le adapteaza pentru hardware.
+# Matricea e montata rotita 90° (sens orar). Scriem in spatiu "fizic"
+# (cum vede ochiul) si rot() compenseaza pentru hardware.
 ROTATION = 90
 
-def rotate(p):
+def rot(p):
     if ROTATION == 90:
-        return [p[c * 3 + (2 - r)] for r in range(3) for c in range(3)]
-    if ROTATION == 180:
-        return [p[8 - i] for i in range(9)]
-    if ROTATION == 270:
-        return [p[(2 - c) * 3 + r] for r in range(3) for c in range(3)]
+        return [p[c * 3 + 2 - r] for r in range(3) for c in range(3)]
     return list(p)
 
 SLO_PHYS = [W, W, W, B, B, B, R, R, R]
-SLO = rotate(SLO_PHYS)
+SLO = rot(SLO_PHYS)
 L.on(SLO)
 
 def st():
@@ -32,12 +27,12 @@ def st():
 
 while st(): wait(20)
 
-def show(p, ms):
-    L.on(rotate(p))
+def sh(p, ms):
+    L.on(rot(p))
     wait(ms)
     return st()
 
-# ── Litere 3x3 ────────────────────────────────────────────────────────
+# Litere 3x3 (forma fizica): 3 coloane (top, mid, bot)
 F = {
     "S": ((0, 0, 1), (1, 1, 1), (1, 0, 0)),
     "L": ((1, 1, 1), (0, 0, 1), (0, 0, 1)),
@@ -51,73 +46,53 @@ F = {
 
 def text():
     for ch in "SLOVENIA":
-        if st(): return True
+        if st(): return 1
         ph = [W * 100 if F[ch][c][r] else K for r in range(3) for c in range(3)]
-        L.on(rotate(ph))
+        L.on(rot(ph))
         wait(650)
         L.on([K] * 9)
-        wait(160)
-    return False
+        wait(150)
 
-# ── 5 animatii pentru steag (toate in spatiu fizic) ──────────────────
-ROW_COL = (W, B, R)  # culoarea fiecarui rand fizic
+CR = (W, B, R)
 
-def flag_b(b):
-    return [ROW_COL[r] * b for r in range(3) for _ in range(3)]
+def fl(b):
+    return [CR[r] * b for r in range(3) for _ in range(3)]
 
-# 1. Hold
+# 5 animatii steag
 def f1():
     for _ in range(18):
-        if show(SLO_PHYS, 100): return True
-    return False
+        if sh(SLO_PHYS, 100): return 1
 
-# 2. Breathe
 def f2():
     for _ in range(3):
         for b in (12, 35, 60, 85, 100, 85, 60, 35, 12):
-            if show(flag_b(b), 70): return True
-    return False
+            if sh(fl(b), 70): return 1
 
-# 3. Diagonal wave
-LV = (100, 88, 70, 50, 32, 22, 32, 50, 70, 88)
-NL = len(LV)
+LV = (100, 85, 65, 45, 28, 22, 28, 45, 65, 85)
 def f3():
     for i in range(36):
-        p = []
-        for r in range(3):
-            for c in range(3):
-                p.append(ROW_COL[r] * LV[(i + r + c) % NL])
-        if show(p, 70): return True
-    return False
+        p = [CR[r] * LV[(i + r + c) % 10] for r in range(3) for c in range(3)]
+        if sh(p, 70): return 1
 
-# 4. Sparkle
 def f4():
     for _ in range(32):
         p = list(SLO_PHYS)
         p[urandom.randint(0, 8)] = W * 100
         p[urandom.randint(0, 8)] = W * 100
-        if show(p, 80): return True
-    return False
+        if sh(p, 80): return 1
 
-# 5. Stripe sweep
 def f5():
     for _ in range(3):
-        for active in range(3):
-            p = []
-            for r in range(3):
-                br = 100 if r == active else 18
-                for c in range(3):
-                    p.append(ROW_COL[r] * br)
+        for a in range(3):
+            p = [CR[r] * (100 if r == a else 18) for r in range(3) for _ in range(3)]
             for _ in range(7):
-                if show(p, 100): return True
-    return False
+                if sh(p, 100): return 1
 
-ANIMS = (f1, f2, f3, f4, f5)
+A = (f1, f2, f3, f4, f5)
 
-# ── Bucla principala: text -> 5 animatii -> repeta ───────────────────
 while not st():
     if text(): break
-    for f in ANIMS:
+    for f in A:
         if f(): break
         if st(): break
 
