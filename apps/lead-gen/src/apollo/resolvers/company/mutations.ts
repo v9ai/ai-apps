@@ -56,21 +56,20 @@ function stripNulls<T extends Record<string, unknown>>(obj: T): { [K in keyof T]
   return result as { [K in keyof T]: Exclude<T[K], null> };
 }
 
-function mergeTaxonomy(
-  existingRaw: string | null | undefined,
-  incoming: string[],
-): string[] | null {
-  if (incoming.length === 0) return null;
-  const existing = safeJsonParse<string[]>(existingRaw, []);
-  const seen = new Set<string>();
-  const merged: string[] = [];
-  for (const v of [...existing, ...incoming]) {
-    if (typeof v !== "string" || v.length === 0) continue;
-    if (seen.has(v)) continue;
-    seen.add(v);
-    merged.push(v);
-  }
-  return merged;
+// SQL fragment that merges the existing service_taxonomy text-encoded JSON
+// array with `incoming`, deduping. Result is a text-encoded JSON array.
+// Used in both UPDATE and INSERT-on-conflict paths so semantics stay identical.
+function mergeTaxonomySql(incoming: string[]) {
+  return sql`(
+    SELECT to_jsonb(ARRAY(
+      SELECT DISTINCT t.v
+      FROM jsonb_array_elements_text(
+        COALESCE(NULLIF(${companies.service_taxonomy}, '')::jsonb, '[]'::jsonb)
+        || ${JSON.stringify(incoming)}::jsonb
+      ) AS t(v)
+      WHERE t.v IS NOT NULL AND t.v <> ''
+    ))::text
+  )`;
 }
 
 function requireAdmin(context: GraphQLContext): void {
@@ -698,7 +697,6 @@ export const companyMutations = {
             .where(eq(companies.linkedin_url, linkedinUrl))
             .limit(1);
           if (existing) {
-            const mergedTaxonomy = mergeTaxonomy(existing.service_taxonomy, incomingTaxonomy);
             const [updated] = await context.db
               .update(companies)
               .set({
@@ -707,8 +705,8 @@ export const companyMutations = {
                 location: sql`COALESCE(${companies.location}, ${input.location ?? null})`,
                 industry: sql`COALESCE(${companies.industry}, ${input.industry ?? null})`,
                 size: sql`COALESCE(${companies.size}, ${input.size ?? null})`,
-                ...(mergedTaxonomy !== null
-                  ? { service_taxonomy: JSON.stringify(mergedTaxonomy) }
+                ...(incomingTaxonomy.length > 0
+                  ? { service_taxonomy: mergeTaxonomySql(incomingTaxonomy) }
                   : {}),
                 updated_at: sql`now()::text`,
               })
@@ -740,14 +738,9 @@ export const companyMutations = {
               location: sql`COALESCE(${companies.location}, excluded.location)`,
               industry: sql`COALESCE(${companies.industry}, excluded.industry)`,
               size: sql`COALESCE(${companies.size}, excluded.size)`,
-              service_taxonomy: sql`(
-                SELECT to_jsonb(ARRAY(
-                  SELECT DISTINCT jsonb_array_elements_text(
-                    COALESCE(NULLIF(${companies.service_taxonomy}, '')::jsonb, '[]'::jsonb)
-                    || COALESCE(NULLIF(excluded.service_taxonomy, '')::jsonb, '[]'::jsonb)
-                  )
-                ))::text
-              )`,
+              ...(incomingTaxonomy.length > 0
+                ? { service_taxonomy: mergeTaxonomySql(incomingTaxonomy) }
+                : {}),
               updated_at: sql`now()::text`,
             },
           }).returning();

@@ -627,16 +627,19 @@ async function fetchExistingLinkedinUrls(urls: string[]): Promise<string[]> {
   }
 }
 
+export type CompanyImportBatchInput = {
+  name: string;
+  website?: string;
+  linkedin_url?: string;
+  description?: string;
+  location?: string;
+  industry?: string;
+  size?: string;
+  service_taxonomy?: string[];
+};
+
 export async function saveCompanyBatch(
-  batch: Array<{
-    name: string;
-    website?: string;
-    linkedin_url?: string;
-    description?: string;
-    location?: string;
-    industry?: string;
-    service_taxonomy?: string[];
-  }>,
+  batch: Array<CompanyImportBatchInput>,
 ): Promise<number> {
   console.log(`[SaveBatch] ${batch.length} companies:`, batch.map(c => c.name).join(", "));
   try {

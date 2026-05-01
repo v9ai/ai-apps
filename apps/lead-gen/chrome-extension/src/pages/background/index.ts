@@ -6,7 +6,13 @@ import { importJobsToD1, type D1JobInput } from "../../services/jobs-d1-importer
 import { startKeepAlive, stopKeepAlive, waitForTabLoad, clickSeeMore, randomDelay } from "./tab-utils";
 import { browseProfiles, setBrowseCancelled, extractFullProfileData, parseName, parseHeadline } from "./profile-browsing";
 import { traverseAllSearchPages } from "./people-search-traversal";
-import { browseCompanies, setCompanyCancelled, saveCompanyBatch, extractCompanyData } from "./company-browsing";
+import {
+  browseCompanies,
+  setCompanyCancelled,
+  saveCompanyBatch,
+  extractCompanyData,
+  type CompanyImportBatchInput,
+} from "./company-browsing";
 import { browsePeople, importPeopleFromCurrentPage, setPeopleCancelled } from "./people-scraping";
 import { findRelatedCompanies, setFindRelatedCancelled } from "./find-related";
 import { scrapeCompanyFull, setCompanyScraperCancelled } from "./company-scraper";
@@ -1604,7 +1610,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // which upserts into Neon's companies table.
   if (message.action === "browseProductCompanies") {
     const tabId = sender.tab?.id;
-    const sourceUrl = sender.tab?.url;
+    const m = message as {
+      action: string;
+      sourceUrl?: string;
+      categoryIds?: string[];
+    };
+    const sourceUrl = m.sourceUrl ?? sender.tab?.url;
     console.log("[BG] browseProductCompanies from tab", tabId, "url=", sourceUrl);
     if (!tabId) {
       sendResponse({ success: false, error: "No tab ID" });
@@ -1612,7 +1623,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
     sendResponse({ success: true });
 
-    const categoryIds = parseProductCategoriesFromUrl(sourceUrl);
+    const categoryIds =
+      Array.isArray(m.categoryIds) && m.categoryIds.length > 0
+        ? m.categoryIds
+        : parseProductCategoriesFromUrl(sourceUrl);
     const serviceTaxonomy = taxonomyForCategoryIds(categoryIds);
     console.log(
       "[BG] browseProductCompanies categories=",
@@ -1760,15 +1774,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         let consecutiveEmpty = 0;
         const RATE_LIMIT_THRESHOLD = 5;
         let abortedByRateLimit = false;
-        const deepBatch: Array<{
-          name: string;
-          website?: string;
-          linkedin_url?: string;
-          description?: string;
-          location?: string;
-          industry?: string;
-          service_taxonomy?: string[];
-        }> = [];
+        const deepBatch: Array<CompanyImportBatchInput> = [];
 
         const flushDeepBatch = async () => {
           if (deepBatch.length === 0) return;

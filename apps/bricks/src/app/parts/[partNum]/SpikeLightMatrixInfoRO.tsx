@@ -183,7 +183,8 @@ lights.on([
       <code className={code}>{`from pybricks.pupdevices import ColorLightMatrix
 from pybricks.parameters import Port, Color
 
-lights = ColorLightMatrix(Port.A)
+# Pe CityHub conectam matricea pe portul B.
+lights = ColorLightMatrix(Port.B)
 
 # Steagul Sloveniei (3 dungi orizontale: alb, albastru, rosu)
 lights.on([

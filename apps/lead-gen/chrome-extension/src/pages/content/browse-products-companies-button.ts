@@ -20,6 +20,19 @@ import { registerInStack, unregisterFromStack } from "./floating-stack";
 const BTN_ATTR = "data-lg-browse-products-btn";
 const STACK_PRIORITY = 21;
 
+function parseProductCategoryIdsFromHref(href: string): string[] {
+  try {
+    const u = new URL(href);
+    const raw = u.searchParams.get("productCategory");
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.map((v) => String(v)).filter((v) => v.length > 0);
+  } catch {
+    return [];
+  }
+}
+
 let browseBtn: HTMLButtonElement | null = null;
 let lastUrl = "";
 
@@ -87,7 +100,11 @@ function createButton(): HTMLButtonElement {
     btn.style.backgroundColor = COLOR_BUSY;
 
     safeSendMessage(
-      { action: "browseProductCompanies" },
+      {
+        action: "browseProductCompanies",
+        sourceUrl: window.location.href,
+        categoryIds: parseProductCategoryIdsFromHref(window.location.href),
+      },
       (response) => {
         if (!response?.success) {
           btn.textContent = response?.error || "Failed to start";
