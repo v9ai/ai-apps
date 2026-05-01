@@ -39,24 +39,15 @@ for ch in "SLOVENIA":
     band.append(BLANK)
 band += [BLANK] * 2
 
-# Culorile coloanelor in ordine alb→albastru→rosu (ca pe steag) ca textul
-# sa "treaca" prin culorile drapelului.
-PALETTE = (W, B, R)
-
-# Scroll: pentru fiecare offset, afiseaza band[off:off+3] ca matrice 3x3.
-# (Coloanele in cod sunt deja pe axa scroll-ului; randurile sunt top/mid/bot.)
+# Scroll lent, totul in alb.
 for off in range(len(band) - 2):
     if st(): break
     pixels = []
     for r in range(3):
         for c in range(3):
-            bit = band[off + c][r]
-            if bit:
-                pixels.append(PALETTE[c] * 100)
-            else:
-                pixels.append(K)
+            pixels.append(W * 100 if band[off + c][r] else K)
     L.on(pixels)
-    wait(140)
+    wait(320)
 
 # Final: arata steagul ferm cateva secunde, apoi pulseaza usor.
 L.on(SLO)
