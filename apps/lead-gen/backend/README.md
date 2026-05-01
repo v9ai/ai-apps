@@ -10,9 +10,11 @@ pinned: false
 
 # lead-gen backend
 
-LangGraph graphs (`email_compose`, `email_reply`, `email_outreach`,
-`admin_chat`, `text_to_sql`) under `leadgen_agent/`, consumed by the Next.js
-app via `src/lib/langgraph-client.ts`.
+LangGraph graphs under `leadgen_agent/`, consumed by the Next.js app via
+`src/lib/langgraph-client.ts`. The full set is registered in
+`leadgen_agent/registry.py` (single source of truth); both `langgraph dev`
+and `core/app.py` resolve graph identity from there. To add a graph: drop a
+row in the registry and run `make gen-langgraph-json`.
 
 Two runtimes share the same graph code:
 
