@@ -66,20 +66,18 @@ log = logging.getLogger(__name__)
 _HEURISTIC_PATHS: tuple[str, ...] = (
     "",
     "/pricing",
+    "/product/pricing",
     "/plans",
     "/integrations",
-    "/integration",
     "/customers",
     "/case-studies",
-    "/case-study",
     "/about",
     "/platform",
     "/product",
+    "/products",
+    "/solutions",
     "/security",
     "/trust",
-    "/api",
-    "/docs",
-    "/features",
 )
 _HIGH_SIGNAL_ANCHORS = re.compile(
     r"\b(pricing|plans?|integrations?|case stud|customer|api docs?|developers?|"
@@ -161,6 +159,11 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def _apex_host(host: str) -> str:
+    h = host.lower().split(":", 1)[0]
+    return h[4:] if h.startswith("www.") else h
+
+
 def _normalize_url(base: str, href: str) -> str | None:
     if not href:
         return None
@@ -171,8 +174,7 @@ def _normalize_url(base: str, href: str) -> str | None:
     p = urlparse(full)
     if p.scheme not in {"http", "https"}:
         return None
-    base_host = urlparse(base).netloc.lower()
-    if p.netloc.lower() != base_host:
+    if _apex_host(p.netloc) != _apex_host(urlparse(base).netloc):
         return None
     return p._replace(fragment="").geturl()
 
@@ -291,13 +293,9 @@ async def discover_urls(state: SalesTechFeatureState) -> dict[str, Any]:
                 soup = BeautifulSoup(resp.text, "xml")
                 for loc in soup.find_all("loc"):
                     text = (loc.text or "").strip()
-                    if text and text.startswith(website[:website.find("/", 8) if "/" in website[8:] else None]):
-                        candidates.add(text)
-                    elif text:
-                        # cross-host (rare); only keep same-host
-                        nu = _normalize_url(website, text)
-                        if nu:
-                            candidates.add(nu)
+                    nu = _normalize_url(website, text) if text else None
+                    if nu:
+                        candidates.add(nu)
                 # sitemap-index files reference more sitemaps
                 for sm in soup.find_all("sitemap"):
                     nested = (sm.find("loc").text or "").strip() if sm.find("loc") else ""
