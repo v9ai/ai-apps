@@ -25,11 +25,23 @@ from __future__ import annotations
 import logging
 import os
 import time
+import uuid
 from typing import Any
 
 import psycopg
 
 log = logging.getLogger(__name__)
+
+
+def _config() -> dict[str, Any]:
+    """Build the per-call config LangGraph's AsyncPostgresSaver requires.
+
+    Without a ``thread_id`` the checkpointer raises ``ValueError`` before
+    the first node runs. We mint a fresh UUID per ``ainvoke`` since cron
+    runs are stateless — the discovery/ingest graphs don't read prior
+    checkpoint state, they just need a thread to write under.
+    """
+    return {"configurable": {"thread_id": str(uuid.uuid4())}}
 
 
 # Keywords focused on the user's ICP — remote-friendly AI engineering roles.
@@ -110,12 +122,15 @@ async def run_ashby_nightly(
         }
     else:
         try:
-            disc_state = await discovery.ainvoke({
-                "keywords": list(_ASHBY_NIGHTLY_KEYWORDS),
-                "max_pages": 10,
-                "count": 20,
-                "skip_known": False,  # let ingest dedupe; we want freshness
-            })
+            disc_state = await discovery.ainvoke(
+                {
+                    "keywords": list(_ASHBY_NIGHTLY_KEYWORDS),
+                    "max_pages": 10,
+                    "count": 20,
+                    "skip_known": False,  # let ingest dedupe; we want freshness
+                },
+                config=_config(),
+            )
         except Exception as exc:  # noqa: BLE001
             log.exception("ashby-nightly: discovery failed")
             return {
