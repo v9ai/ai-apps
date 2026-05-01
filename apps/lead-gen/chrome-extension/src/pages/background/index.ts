@@ -6,7 +6,7 @@ import { importJobsToD1, type D1JobInput } from "../../services/jobs-d1-importer
 import { startKeepAlive, stopKeepAlive, waitForTabLoad, clickSeeMore, randomDelay } from "./tab-utils";
 import { browseProfiles, setBrowseCancelled, extractFullProfileData, parseName, parseHeadline } from "./profile-browsing";
 import { traverseAllSearchPages } from "./people-search-traversal";
-import { browseCompanies, setCompanyCancelled, saveCompanyBatch } from "./company-browsing";
+import { browseCompanies, setCompanyCancelled, saveCompanyBatch, extractCompanyData } from "./company-browsing";
 import { browsePeople, importPeopleFromCurrentPage, setPeopleCancelled } from "./people-scraping";
 import { findRelatedCompanies, setFindRelatedCancelled } from "./find-related";
 import { scrapeCompanyFull, setCompanyScraperCancelled } from "./company-scraper";
@@ -1718,19 +1718,112 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         for (const pf of pageFailures) {
           errors.push({ page: pf.page, message: pf.reason });
         }
-        const finishedAt = Date.now();
 
         if (totalImported === 0 && errors.length === 0) {
           await notifyTab({ error: "No companies found across product pages" });
           return;
         }
 
+        // ── Phase 2: deep scrape each company ─────────────────────────
+        // For every unique LinkedIn company URL we collected, open a hidden
+        // background tab on /about/, run extractCompanyData, and re-upsert
+        // with rich fields (website, description, industry, size, location).
+        // importCompanies does onConflictDoUpdate on companies.key, so this
+        // enriches the lite rows we already wrote in Phase 1.
+        const urls = Array.from(seenUrls);
+        await notifyTab({
+          status: `Deep scraping 0/${urls.length}...`,
+          currentPage: pagesScraped,
+          totalPages,
+        });
+
+        let deepScraped = 0;
+        let deepEnriched = 0;
+        const deepBatch: Array<{
+          name: string;
+          website?: string;
+          linkedin_url?: string;
+          description?: string;
+          location?: string;
+          industry?: string;
+        }> = [];
+
+        const flushDeepBatch = async () => {
+          if (deepBatch.length === 0) return;
+          try {
+            await saveCompanyBatch(deepBatch.splice(0));
+          } catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            errors.push({ page: 0, message: `deep-batch-save: ${message}` });
+            console.warn("[BG] deep-batch save failed:", err);
+          }
+        };
+
+        for (const url of urls) {
+          const aboutUrl = url.replace(/\/$/, "") + "/about/";
+          let scrapeTabId: number | null = null;
+          try {
+            const tab = await chrome.tabs.create({ url: aboutUrl, active: false });
+            scrapeTabId = tab.id ?? null;
+            if (!scrapeTabId) throw new Error("Failed to open scrape tab");
+
+            await waitForTabLoad(scrapeTabId, 25000);
+            await randomDelay(2000);
+            await clickSeeMore(scrapeTabId);
+            await randomDelay(500);
+
+            const data = await extractCompanyData(scrapeTabId);
+            if (data && data.name) {
+              const descriptionParts = [
+                data.description,
+                data.industry ? `Industry: ${data.industry}` : "",
+                data.size ? `Size: ${data.size}` : "",
+              ].filter(Boolean);
+
+              deepBatch.push({
+                name: data.name,
+                website: data.website || undefined,
+                linkedin_url: data.linkedinUrl || url,
+                description: descriptionParts.join("\n") || undefined,
+                location: data.location || undefined,
+                industry: data.industry || undefined,
+              });
+              deepEnriched++;
+            }
+          } catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            errors.push({ page: 0, message: `deep-scrape ${url}: ${message}` });
+            console.warn(`[BG] deep-scrape failed for ${url}:`, err);
+          } finally {
+            if (scrapeTabId !== null) {
+              await chrome.tabs.remove(scrapeTabId).catch(() => {});
+            }
+          }
+
+          deepScraped++;
+          await notifyTab({
+            status: `Deep scraping ${deepScraped}/${urls.length} — ${deepEnriched} enriched`,
+            currentPage: pagesScraped,
+            totalPages,
+          });
+
+          if (deepBatch.length >= 10) {
+            await flushDeepBatch();
+          }
+          await randomDelay(800);
+        }
+
+        await flushDeepBatch();
+
+        const finishedAt = Date.now();
         const donePayload = {
           done: true,
           pagesScraped,
           pagesTotal: totalPages,
           pagesFailed: pageFailures.length,
           inserted: totalImported,
+          deepScraped,
+          deepEnriched,
           skipped: 0,
           errors,
           startedAt,
@@ -1738,8 +1831,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           durationMs: finishedAt - startedAt,
           status:
             errors.length > 0
-              ? `Pages ${pagesScraped}/${totalPages} (${pageFailures.length} failed) — Imported ${totalImported}, Errors ${errors.length}`
-              : `Imported ${totalImported} companies (${pagesScraped} pages)`,
+              ? `Pages ${pagesScraped}/${totalPages} — Imported ${totalImported}, Enriched ${deepEnriched}/${urls.length}, Errors ${errors.length}`
+              : `Imported ${totalImported}, Enriched ${deepEnriched}/${urls.length} (${pagesScraped} pages)`,
         };
         console.log("[BG] browseProductCompanies done", JSON.stringify(donePayload));
         await notifyTab(donePayload);

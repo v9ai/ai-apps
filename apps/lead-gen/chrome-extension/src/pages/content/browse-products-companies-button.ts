@@ -121,15 +121,16 @@ function installProgressListener() {
     }
     if (msg.done) {
       const inserted = msg.inserted ?? 0;
-      const skipped = msg.skipped ?? 0;
+      const enriched = msg.deepEnriched ?? 0;
+      const deepScraped = msg.deepScraped ?? 0;
       const errs = Array.isArray(msg.errors) ? msg.errors.length : 0;
       const pagesScraped = msg.pagesScraped ?? 0;
       const pagesTotal = msg.pagesTotal ?? pagesScraped;
       const pagesFailed = msg.pagesFailed ?? 0;
       const summary =
         errs > 0 || pagesFailed > 0
-          ? `Pages ${pagesScraped}/${pagesTotal} (${pagesFailed} failed) — Imported ${inserted}, Skipped ${skipped}, Errors ${errs}`
-          : `✓ Pages ${pagesScraped}/${pagesTotal} — Imported ${inserted}, Skipped ${skipped}`;
+          ? `Pages ${pagesScraped}/${pagesTotal} — Imported ${inserted}, Enriched ${enriched}/${deepScraped}, Errors ${errs}`
+          : `✓ ${pagesScraped} pages — ${inserted} imported, ${enriched}/${deepScraped} enriched`;
       btn.textContent = summary.slice(0, 80);
       btn.style.backgroundColor = errs > 0 || pagesFailed > 0 ? COLOR_ERROR : COLOR_DONE;
       btn.disabled = false;
