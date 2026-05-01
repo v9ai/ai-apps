@@ -638,7 +638,7 @@ export const nodeDetails: Record<string, NodeDetail> = {
 
   // Stage 9: langgraph_backend
   "lg-runtime": {
-    description: "Python backend with 22 graphs declared in backend/langgraph.json. Local dev uses `langgraph dev` on :8002 (in-memory checkpointer). Production is backend/app.py served by Uvicorn as a single-worker FastAPI on :7860, with AsyncPostgresSaver (langgraph.checkpoint.postgres.aio) pointed at Neon's pooled connection so thread state survives restarts and free-tier sleep/wake cycles. Same graph code; flipping LANGGRAPH_URL at the Next.js client is the only cutover.",
+    description: "Python backend with 51 graphs declared in backend/leadgen_agent/registry.py (the single source of truth; backend/core/langgraph.json is generated from it). Local dev uses `langgraph dev` on :8002 (in-memory checkpointer). Production is backend/core/app.py served by Uvicorn as a single-worker FastAPI on :8000, with AsyncPostgresSaver (langgraph.checkpoint.postgres.aio) pointed at Neon's pooled connection so thread state survives restarts and free-tier sleep/wake cycles. Same graph code; flipping LANGGRAPH_URL at the Next.js client is the only cutover.",
     tech: [{ name: "langgraph", version: "0.4+" }, { name: "FastAPI" }, { name: "Uvicorn" }, { name: "AsyncPostgresSaver" }],
     dataIn: "assistant_id + input",
     dataOut: "final graph state",
@@ -646,8 +646,8 @@ export const nodeDetails: Record<string, NodeDetail> = {
     color: "violet",
   },
   "lg-core": {
-    description: "Five core graphs power the product surfaces: email_compose (gather_context → draft → format), email_reply (analyze_inbound → draft → polish), email_outreach (lookup_contact → match_persona → select_template → draft_html), admin_chat (JSON tool-router for count_rows / inspect_schema / query_db), and text_to_sql (understand → identify_tables → generate → validate, read-only SELECT enforced). Seventeen specialized graphs sit alongside them — deep_icp, icp_team, competitors_team, pricing, gtm, positioning, product_intel, freshness, lead_gen_team, classify_paper, contact_enrich (+ sales and paper-author variants), deep_scrape — bringing the declared total in langgraph.json to 22.",
-    tech: [{ name: "5 core graphs" }, { name: "17 specialized" }, { name: "22 declared" }],
+    description: "Five core graphs power the product surfaces: email_compose (gather_context → draft → format), email_reply (analyze_inbound → draft → polish), email_outreach (lookup_contact → match_persona → select_template → draft_html), admin_chat (JSON tool-router for count_rows / inspect_schema / query_db), and text_to_sql (understand → identify_tables → generate → validate, read-only SELECT enforced). Specialized graphs sit alongside them — deep_icp, icp_team, competitors_team, pricing, gtm, positioning, product_intel, freshness, lead_gen_team, classify_paper, contact_enrich (+ sales and paper-author variants), deep_scrape, plus consultancies_* and ashby ingest verticals — for 51 graphs total declared in backend/leadgen_agent/registry.py.",
+    tech: [{ name: "5 core graphs" }, { name: "46 specialized" }, { name: "51 total" }],
     dataIn: "graph input state",
     dataOut: "graph output state",
     insight: "admin_chat uses a JSON tool-router instead of ReAct to avoid LLM tool-call malformed-JSON failures — a whole class of bug worth designing around rather than retrying through.",

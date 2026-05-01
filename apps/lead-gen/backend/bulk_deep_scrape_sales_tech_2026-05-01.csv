@@ -1,0 +1,192 @@
+id,key,name,canonical_domain,website,pages_crawled,emails_n,has_careers,has_pricing,category,ai_tier,score,error,elapsed_s
+40766,morson-edge,Morson Edge,morsongroup.com,https://www.morsongroup.com,1,0,,,CONSULTANCY,0,0.37,,14.52
+40768,ingestible-research-allenai,Allen Institute for AI (AI2),allenai.org,https://allenai.org,14,3,Y,,PRODUCT,2,0.761,,32.08
+40769,ingestible-research-eleuther,EleutherAI,eleuther.ai,https://www.eleuther.ai,14,0,,,PRODUCT,2,0.836,,26.02
+40770,ingestible-research-mila,Mila — Quebec AI Institute,mila.quebec,https://mila.quebec,14,2,,,CONSULTANCY,2,0.669,,36.07
+40771,ingestible-research-laion,LAION,laion.ai,https://laion.ai,14,1,,,PRODUCT,2,0.831,,26.12
+40772,ingestible-research-c4ai,Cohere for AI (C4AI),cohere.com,https://cohere.com/research,14,6,,,PRODUCT,2,0.841,,48.05
+40773,ingestible-research-bigscience,BigScience Workshop,bigscience.huggingface.co,https://bigscience.huggingface.co,1,0,,,,,0.025,,7.4
+40774,ingestible-research-baai,BAAI — Beijing Academy of Artificial Intelligence,baai.ac.cn,https://www.baai.ac.cn/english.html,14,1,,,PRODUCT,2,0.677,,38.8
+40775,ingestible-research-nous,Nous Research (Ingestible scope),nousresearch.com,https://nousresearch.com,14,1,Y,,PRODUCT,2,0.786,,26.5
+40776,ingestible-research-stanford-crfm,Stanford CRFM,crfm.stanford.edu,https://crfm.stanford.edu,1,0,,,,,0.025,,7.65
+40777,ingestible-research-cmu-lti,CMU Language Technologies Institute,lti.cs.cmu.edu,https://www.lti.cs.cmu.edu,14,14,,,PRODUCT,2,0.736,,34.66
+40778,ingestible-research-msr,Microsoft Research,microsoft.com,https://www.microsoft.com/en-us/research/,14,0,Y,,PRODUCT,1,0.691,,45.43
+40779,ingestible-research-fair,Meta FAIR,ai.meta.com,https://ai.meta.com/research/,14,0,,,PRODUCT,2,0.842,,81.01
+40780,ingestible-research-ibm,IBM Research AI,research.ibm.com,https://research.ibm.com,14,1,,,PRODUCT,2,0.841,,34.16
+40781,ingestible-research-hf,Hugging Face Research,huggingface.co,https://huggingface.co/research,14,0,,,,,0.025,,16.05
+40782,ingestible-research-primer,Primer AI (Primer Labs),primer.ai,https://primer.ai,14,0,,,PRODUCT,2,0.839,,26.32
+40783,vadim:gong-io,Gong,gong.io,https://www.gong.io,14,0,,,PRODUCT,2,0.841,,42.79
+40784,vadim:notion-so,Notion,notion.so,https://www.notion.so,1,0,,,PRODUCT,1,0.627,,16.94
+40785,vadim:airtable-com,Airtable,airtable.com,https://www.airtable.com,14,1,,,PRODUCT,1,0.744,,33.4
+40786,vadim:retool-com,Retool,retool.com,https://retool.com,14,0,,,PRODUCT,1,0.741,,35.75
+40787,vadim:linear-app,Linear,linear.app,https://linear.app,14,0,,Y,PRODUCT,1,0.791,,31.57
+40788,vadim:supabase-com,Supabase,supabase.com,https://supabase.com,14,3,,,PRODUCT,1,0.741,,32.81
+40789,vadim:atlassian-com,Atlassian,atlassian.com,https://www.atlassian.com,14,0,,,PRODUCT,1,0.747,,39.6
+40790,vadim:hubspot-com,HubSpot,hubspot.com,https://www.hubspot.com,14,0,,,PRODUCT,1,0.746,,44.86
+40791,vadim:twilio-com,Twilio,twilio.com,https://www.twilio.com,14,0,,Y,PRODUCT,1,0.796,,31.77
+40792,vadim:gitlab-com,GitLab,gitlab.com,https://about.gitlab.com,14,0,,Y,PRODUCT,1,0.794,,35.63
+40793,vadim:toasttab-com,Toast,toasttab.com,https://pos.toasttab.com,14,4,,Y,PRODUCT,0,0.571,,36.17
+40794,vadim:procore-com,Procore,procore.com,https://www.procore.com,14,0,,Y,PRODUCT,1,0.791,,43.59
+40795,vadim:datadoghq-com,Datadog,datadoghq.com,https://www.datadoghq.com,14,3,,Y,PRODUCT,1,0.794,,44.1
+40796,vadim:mongodb-com,MongoDB,mongodb.com,https://www.mongodb.com,14,2,,Y,PRODUCT,1,0.796,,50.74
+40797,vadim:confluent-io,Confluent,confluent.io,https://www.confluent.io,14,3,,,PRODUCT,1,0.741,,46.71
+40798,vadim:ingestible-enterprise-jpmorganchase-com,JPMorgan Chase,jpmorganchase.com,https://jpmorganchase.com,14,1,Y,,PRODUCT,0,0.392,,38.25
+40799,vadim:ingestible-enterprise-pfizer-com,Pfizer,pfizer.com,https://pfizer.com,14,1,,,PRODUCT,0,0.441,,33.46
+40800,vadim:ingestible-enterprise-harvard-edu,Harvard University,harvard.edu,https://harvard.edu,14,1,,,UNKNOWN,0,0.226,,35.36
+40801,vadim:ingestible-enterprise-aws-amazon-com,Amazon Web Services,aws.amazon.com,https://aws.amazon.com,14,8,,,PRODUCT,1,0.746,,52.49
+40802,vadim:ingestible-enterprise-goldmansachs-com,Goldman Sachs,goldmansachs.com,https://goldmansachs.com,14,4,Y,,PRODUCT,0,0.556,,28.94
+40803,vadim:ingestible-enterprise-epic-com,Epic Systems,epic.com,https://epic.com,14,13,,,PRODUCT,0,0.406,,22.96
+40804,vadim:ingestible-enterprise-coursera-org,Coursera,coursera.org,https://coursera.org,14,0,,,PRODUCT,1,0.746,,37.26
+40805,vadim:ingestible-enterprise-siemens-com,Siemens,siemens.com,https://siemens.com,14,7,,,PRODUCT,1,0.744,,32.71
+40806,vadim:ingestible-enterprise-citigroup-com,Citi,citigroup.com,https://citigroup.com,14,3,,,PRODUCT,1,0.721,,34.35
+40807,vadim:ingestible-enterprise-mayoclinic-org,Mayo Clinic,mayoclinic.org,https://mayoclinic.org,14,4,,,CONSULTANCY,0,0.391,,31.88
+40808,vadim:ingestible-enterprise-ibm-com,IBM,ibm.com,https://ibm.com,14,11,,,PRODUCT,1,0.746,,37.84
+40809,vadim:ingestible-enterprise-stanford-edu,Stanford University,stanford.edu,https://stanford.edu,14,1,,,UNKNOWN,0,0.251,,24.88
+40810,vadim:ingestible-enterprise-blackrock-com,BlackRock,blackrock.com,https://blackrock.com,14,0,Y,,PRODUCT,1,0.753,,33.38
+40811,vadim:ingestible-enterprise-unitedhealthgroup-com,UnitedHealth Group,unitedhealthgroup.com,https://unitedhealthgroup.com,14,3,Y,,PRODUCT,1,0.771,,33.58
+40812,vadim:ingestible-enterprise-cigna-com,Cigna,cigna.com,https://cigna.com,14,9,,,PRODUCT,0,0.443,,37.55
+40813,vadim:ingestible-enterprise-pearson-com,Pearson,pearson.com,https://pearson.com,14,0,,,PRODUCT,1,0.716,,40.82
+40814,vadim:ingestible-enterprise-salesforce-com,Salesforce,salesforce.com,https://salesforce.com,14,0,,Y,PRODUCT,1,0.796,,38.92
+40815,vadim:ingestible-enterprise-walmart-com,Walmart,walmart.com,https://walmart.com,14,0,,,PRODUCT,0,0.446,,50.11
+40816,vadim:ingestible-enterprise-anthem-com,Anthem (Elevance Health),anthem.com,https://anthem.com,14,0,,,PRODUCT,0,0.521,,47.58
+40817,vadim:ingestible-enterprise-bnpparibas-com,BNP Paribas,bnpparibas.com,https://bnpparibas.com,1,0,,,PRODUCT,0,0.428,,20.52
+40818,vadim:ingestible-enterprise-coursera-com,Coursera,coursera.com,https://coursera.com,1,0,,,PRODUCT,1,0.723,,17.27
+40819,vadim:ingestible-enterprise-dell-com,Dell Technologies,dell.com,https://dell.com,14,0,,,PRODUCT,1,0.742,,41.92
+40820,vadim:ingestible-startups-copy-ai,Copy.ai,copy.ai,https://copy.ai,14,0,,,PRODUCT,2,0.836,,29.01
+40821,vadim:ingestible-startups-jasper-ai,Jasper,jasper.ai,https://jasper.ai,14,1,Y,Y,PRODUCT,2,0.939,,80.89
+40822,vadim:ingestible-startups-synthesia-io,Synthesia,synthesia.io,https://synthesia.io,14,1,,Y,PRODUCT,2,0.891,,32.47
+40823,vadim:ingestible-startups-glean-com,Glean,glean.com,https://glean.com,14,1,,,PRODUCT,2,0.841,,45.54
+40824,vadim:ingestible-startups-clerk-com,Clerk,clerk.com,https://clerk.com,14,21,,,PRODUCT,0,0.541,,35.98
+40825,vadim:ingestible-startups-lavender-ai,Lavender,lavender.ai,https://lavender.ai,8,0,,,PRODUCT,1,0.657,,26.68
+40826,vadim:ingestible-startups-mutinyhq-com,Mutiny,mutinyhq.com,https://mutinyhq.com,14,2,Y,,PRODUCT,2,0.889,,28.55
+40827,vadim:ingestible-startups-vowel-com,Vowel,vowel.com,https://vowel.com,0,0,,,,,,run_script: exit 1,3.28
+40828,vadim:ingestible-startups-otter-ai,Otter.ai,otter.ai,https://otter.ai,14,2,Y,,PRODUCT,2,0.891,,39.22
+40829,vadim:ingestible-startups-sembly-ai,Sembly,sembly.ai,https://sembly.ai,14,2,,Y,PRODUCT,2,0.886,,33.02
+40830,vadim:ingestible-startups-casetext-com,Casetext,casetext.com,https://casetext.com,0,0,,,,,,run_script: exit 1,3.21
+40831,vadim:ingestible-startups-kirasystems-com,Kira Systems,kirasystems.com,https://kirasystems.com,1,0,,,PRODUCT,1,0.721,,16.63
+40832,vadim:ingestible-startups-bloomberglaw-com,Bloomberg Law,bloomberglaw.com,https://bloomberglaw.com,14,2,,,PRODUCT,0,0.441,,36.44
+40833,vadim:archreview-mid-to-large-tech-companies-stripe-com,Stripe,stripe.com,https://stripe.com,14,2,,Y,PRODUCT,1,0.796,,41.74
+40834,vadim:archreview-mid-to-large-tech-companies-shopify-com,Shopify,shopify.com,https://shopify.com,14,0,,Y,PRODUCT,1,0.796,,34.35
+40835,vadim:archreview-mid-to-large-tech-companies-snowflake-com,Snowflake,snowflake.com,https://snowflake.com,14,2,Y,Y,PRODUCT,1,0.844,,45.17
+40836,vadim:archreview-mid-to-large-tech-companies-cloudflare-com,Cloudflare,cloudflare.com,https://cloudflare.com,14,0,,Y,PRODUCT,1,0.796,,32.09
+40837,vadim:archreview-mid-to-large-tech-companies-snyk-io,Snyk,snyk.io,https://snyk.io,14,2,,,PRODUCT,1,0.741,,37.77
+40838,vadim:archreview-mid-to-large-tech-companies-hashicorp-com,HashiCorp,hashicorp.com,https://hashicorp.com,14,0,,,PRODUCT,0,0.541,,32.69
+40839,vadim:archreview-mid-to-large-tech-companies-okta-com,Okta,okta.com,https://okta.com,14,0,,,PRODUCT,0,0.521,,42.33
+40840,vadim:archreview-mid-to-large-tech-companies-splunk-com,Splunk,splunk.com,https://splunk.com,14,0,,,PRODUCT,1,0.744,,153.3
+40841,vadim:archreview-mid-to-large-tech-companies-lyft-com,Lyft,lyft.com,https://lyft.com,14,3,,,PRODUCT,0,0.522,,36.29
+40842,vadim:archreview-regulated-industry-software-teams-barclays-com,Barclays,barclays.com,https://barclays.com,1,0,,,PRODUCT,0,0.441,,22.65
+40843,vadim:archreview-regulated-industry-software-teams-db-com,Deutsche Bank,db.com,https://db.com,14,0,Y,,PRODUCT,0,0.511,,44.78
+40844,vadim:archreview-regulated-industry-software-teams-gov-uk,UK Government Digital Service,gov.uk,https://gov.uk,14,0,,,PRODUCT,0,0.482,,22.06
+40845,vadim:archreview-regulated-industry-software-teams-va-gov,U.S. Department of Veterans Affairs,va.gov,https://va.gov,2,0,,,UNKNOWN,0,0.211,,19.82
+40846,vadim:archreview-regulated-industry-software-teams-roche-com,Roche,roche.com,https://roche.com,14,1,,,PRODUCT,0,0.546,,27.65
+40847,vadim:archreview-regulated-industry-software-teams-siemens-healthineers-com,Siemens Healthineers,siemens-healthineers.com,https://siemens-healthineers.com,14,8,Y,,PRODUCT,1,0.796,,36.45
+40848,vadim:archreview-regulated-industry-software-teams-allianz-com,Allianz,allianz.com,https://allianz.com,14,4,Y,,PRODUCT,0,0.386,,25.86
+40849,vadim:archreview-regulated-industry-software-teams-humana-com,Humana,humana.com,https://humana.com,0,0,,,,,,run_script: exit 1,3.02
+40850,vadim:archreview-regulated-industry-software-teams-cibc-com,Canadian Imperial Bank of Commerce,cibc.com,https://cibc.com,14,1,Y,,PRODUCT,0,0.511,,38.89
+40851,vadim:archreview-engineering-teams-with-legacy-codebases-att-com,AT&T,att.com,https://att.com,14,1,,Y,PRODUCT,0,0.596,,69.32
+40852,vadim:archreview-engineering-teams-with-legacy-codebases-verizon-com,Verizon,verizon.com,https://verizon.com,14,0,,,PRODUCT,0,0.448,,41.77
+40853,vadim:archreview-engineering-teams-with-legacy-codebases-ford-com,Ford Motor Company,ford.com,https://ford.com,14,0,,,PRODUCT,0,0.341,,43.25
+40854,vadim:archreview-engineering-teams-with-legacy-codebases-gm-com,General Motors,gm.com,https://gm.com,14,1,,,PRODUCT,0,0.446,,45.09
+40855,vadim:archreview-engineering-teams-with-legacy-codebases-oracle-com,Oracle,oracle.com,https://oracle.com,1,0,,,,,0.025,,7.93
+40856,vadim:archreview-engineering-teams-with-legacy-codebases-sap-com,SAP,sap.com,https://sap.com,14,0,,,PRODUCT,1,0.746,,34.42
+40857,vadim:archreview-engineering-teams-with-legacy-codebases-cisco-com,Cisco,cisco.com,https://cisco.com,14,0,,,PRODUCT,1,0.742,,48.61
+40858,vadim:archreview-engineering-teams-with-legacy-codebases-boeing-com,Boeing,boeing.com,https://boeing.com,14,1,Y,,PRODUCT,0,0.576,,42.35
+40859,vadim:archreview-engineering-teams-with-legacy-codebases-delta-com,Delta Air Lines,delta.com,https://delta.com,0,0,,,,,,run_script: exit 1,2.99
+40860,vadim:onboardingtutor-tech-companies-with-complex-codebases-airbnb-com,Airbnb,airbnb.com,https://airbnb.com,14,0,,,PRODUCT,0,0.443,,47.86
+40861,vadim:onboardingtutor-tech-companies-with-complex-codebases-uber-com,Uber,uber.com,https://uber.com,14,0,Y,,PRODUCT,0,0.491,,43.84
+40862,vadim:onboardingtutor-tech-companies-with-complex-codebases-slack-com,Slack,slack.com,https://slack.com,14,0,,Y,PRODUCT,1,0.794,,34.52
+40863,vadim:onboardingtutor-tech-companies-with-complex-codebases-doordash-com,DoorDash,doordash.com,https://doordash.com,0,0,,,,,,run_script: exit 1,4.93
+40864,vadim:onboardingtutor-tech-companies-with-complex-codebases-pinterest-com,Pinterest,pinterest.com,https://pinterest.com,1,0,,,,,0.025,,8.12
+40865,vadim:onboardingtutor-tech-companies-with-complex-codebases-figma-com,Figma,figma.com,https://figma.com,14,0,,Y,PRODUCT,1,0.791,,40.54
+40866,vadim:onboardingtutor-companies-with-regulatory-compliance-nee-mod-uk,UK Ministry of Defence,mod.uk,https://mod.uk,0,0,,,,,,run_script: exit 1,3.52
+40867,vadim:onboardingtutor-companies-with-regulatory-compliance-nee-hsbc-com,HSBC,hsbc.com,https://hsbc.com,0,0,,,,,,run_script: exit 1,70.01
+40868,vadim:onboardingtutor-companies-with-regulatory-compliance-nee-kp-org,Kaiser Permanente,kp.org,https://kp.org,1,0,,,PRODUCT,0,0.428,,20.19
+40869,vadim:onboardingtutor-companies-with-regulatory-compliance-nee-worldbank-org,World Bank,worldbank.org,https://worldbank.org,14,6,Y,,CONSULTANCY,0,0.341,,32.23
+40870,vadim:onboardingtutor-companies-with-regulatory-compliance-nee-federalreserve-gov,Federal Reserve Bank,federalreserve.gov,https://federalreserve.gov,14,2,Y,,UNKNOWN,0,0.246,,29.28
+40871,vadim:onboardingtutor-organizations-with-distributed-knowledge-google-com,Google,google.com,https://google.com,14,0,,,PRODUCT,1,0.742,,26.14
+40872,vadim:onboardingtutor-organizations-with-distributed-knowledge-meta-com,Meta,meta.com,https://meta.com,14,0,,,PRODUCT,1,0.636,,129.32
+40873,vadim:onboardingtutor-organizations-with-distributed-knowledge-apple-com,Apple,apple.com,https://apple.com,14,0,,,PRODUCT,0,0.547,,27.75
+40874,vadim:onboardingtutor-organizations-with-distributed-knowledge-netflix-com,Netflix,netflix.com,https://netflix.com,14,1,,,PRODUCT,0,0.506,,25.15
+40875,vadim:onboardingtutor-organizations-with-distributed-knowledge-intercom-com,Intercom,intercom.com,https://intercom.com,14,0,,Y,PRODUCT,1,0.791,,33.6
+40876,vadim:onboardingtutor-organizations-with-distributed-knowledge-notion-com,Notion,notion.com,https://notion.com,14,2,,Y,PRODUCT,1,0.792,,33.71
+40877,g2i-inc,G2i Inc.,g2i.co,https://g2i.co,8,1,,,STAFFING,1,0.589,,33.56
+40878,acquisity-ai,Acquisity AI,acquisity.ai,https://www.acquisity.ai/,4,2,,,PRODUCT,2,0.771,,20.32
+40938,reply-io,Reply.io,reply.io,https://reply.io,14,0,,Y,PRODUCT,1,0.791,,31.1
+40939,lemlist-com,Lemlist,lemlist.com,https://lemlist.com,14,0,,,PRODUCT,1,0.741,,43.23
+40940,woodpecker-co,Woodpecker,woodpecker.co,https://woodpecker.co,4,1,,,PRODUCT,0,0.428,,17.69
+40941,klenty-com,Klenty,klenty.com,https://klenty.com,14,3,,,PRODUCT,0,0.536,,151.62
+40942,apollo-io,Apollo.io,apollo.io,https://apollo.io,14,5,,,PRODUCT,1,0.741,,37.18
+40943,instantly-ai,Instantly.ai,instantly.ai,https://instantly.ai,14,2,Y,Y,PRODUCT,1,0.816,,81.97
+40944,smartlead-ai,Smartlead.ai,smartlead.ai,https://smartlead.ai,14,0,,Y,PRODUCT,2,0.891,,35.01
+40945,outplayhq-com,Outplay,outplayhq.com,https://outplayhq.com,1,0,,,PRODUCT,0,0.432,,17.47
+40946,saleshandy-com,Saleshandy,saleshandy.com,https://saleshandy.com,14,34,,,PRODUCT,1,0.721,,35.15
+40947,mixmax-com,Mixmax,mixmax.com,https://mixmax.com,14,1,,Y,PRODUCT,1,0.789,,51.37
+40948,close-com,Close,close.com,https://close.com,14,1,,,PRODUCT,1,0.736,,26.68
+40949,breakcold-com,Breakcold,breakcold.com,https://breakcold.com,14,3,,,PRODUCT,1,0.736,,34.14
+40950,lagrowthmachine-com,LaGrowthMachine,lagrowthmachine.com,https://lagrowthmachine.com,14,0,,,PRODUCT,1,0.719,,29.99
+40951,snov-io,Snov.io,snov.io,https://snov.io,14,2,,Y,PRODUCT,1,0.791,,28.01
+40952,clay-com,Clay,clay.com,https://clay.com,14,1,Y,Y,PRODUCT,1,0.841,,58.4
+40953,overloop-com,Overloop,overloop.com,https://overloop.com,14,2,,Y,PRODUCT,2,0.889,,33.29
+40954,mailshake-com,Mailshake,mailshake.com,https://mailshake.com,14,1,,Y,PRODUCT,1,0.771,,27.02
+40955,yesware-com,Yesware,yesware.com,https://yesware.com,14,2,,Y,PRODUCT,0,0.591,,35.52
+40956,outreachbin-com,OutreachBin,outreachbin.com,https://outreachbin.com,14,0,,Y,PRODUCT,0,0.586,,32.9
+40957,quickmail-io,QuickMail.io,quickmail.io,https://quickmail.io,1,0,,,PRODUCT,0,0.428,,14.57
+40958,fireflies-ai,Fireflies.ai,fireflies.ai,https://fireflies.ai,14,2,,,PRODUCT,2,0.841,,39.64
+40959,meetgeek-ai,Meetgeek,meetgeek.ai,https://meetgeek.ai,14,1,,,PRODUCT,2,0.841,,36.67
+40960,tavus-io,Tavus,tavus.io,https://tavus.io,12,1,,,PRODUCT,2,0.831,,64.89
+40961,avoma-com,Avoma,avoma.com,https://avoma.com,14,1,Y,Y,PRODUCT,2,0.941,,48.6
+40962,fathom-video,Fathom,fathom.video,https://fathom.video,1,0,,,PRODUCT,2,0.791,,22.18
+40963,calendly-com,Calendly,calendly.com,https://calendly.com,14,2,,Y,PRODUCT,0,0.589,,36.81
+40964,nureply-com,Nureply,nureply.com,https://nureply.com,14,0,,Y,PRODUCT,2,0.886,,31.12
+40965,relevanceai-com,Relevance AI,relevanceai.com,https://relevanceai.com,14,0,,,PRODUCT,2,0.839,,34.6
+40966,11x-ai,11x.ai,11x.ai,https://11x.ai,14,0,,,PRODUCT,2,0.841,,30.94
+40967,github.com/athensresearch,Athens Research,,https://github.com/athensresearch/athens,14,0,,,PRODUCT,0,0.52,,29.68
+40968,education.gov.uk,Department for Education - Digital,education.gov.uk,http://education.gov.uk/,14,2,,,UNKNOWN,1,0.451,,24.58
+40969,github.com/rax-maas,Monitoring as a Service,,https://github.com/rax-maas,14,4,,,PRODUCT,0,0.527,,26.6
+40970,gds.blog.gov.uk,Government Digital Service,gds.blog.gov.uk,https://gds.blog.gov.uk/,8,4,,,CONSULTANCY,0,0.291,,22.04
+40971,nr2f1.org,NR2F1 Foundation,nr2f1.org,https://nr2f1.org,14,5,,,UNKNOWN,0,0.167,,26.39
+40972,github.com/shortrib-labs,Shortrib Labs,,https://github.com/shortrib-labs,14,3,,,PRODUCT,0,0.527,,26.71
+40973,sa4s-serc.github.io,SA4S,sa4s-serc.github.io,https://sa4s-serc.github.io/,1,0,,,,,0.025,,90.27
+40974,github.com/ProteinGym,ProteinGym,,https://github.com/ProteinGym,14,5,,,PRODUCT,1,0.69,,26.28
+40975,a.ml,AML,a.ml,https://a.ml,4,0,,,,,0.025,,10.47
+40976,calgarysoftwarecrafters.github.io,Calgary Software Crafters,calgarysoftwarecrafters.github.io,https://calgarysoftwarecrafters.github.io/,4,1,,,,,0.025,,13.22
+40977,sortitionfoundation.org,Sortition Foundation,sortitionfoundation.org,https://www.sortitionfoundation.org/,14,0,,,CONSULTANCY,0,0.381,,33.47
+40978,github.com/dp-icea,dp-icea,,https://github.com/dp-icea,14,0,,,PRODUCT,0,0.423,,35.84
+40979,wuespace.de,WüSpace e. V.,wuespace.de,https://www.wuespace.de/,1,0,,,,,0.025,,7.81
+40980,github.com/Redmine-tools,Redmine-tools,,https://github.com/Redmine-tools,14,0,,,PRODUCT,0,0.448,,24.5
+40981,ansiblemiddleware.com,Ansible Middleware,ansiblemiddleware.com,https://ansiblemiddleware.com,14,0,,,PRODUCT,0,0.428,,23.73
+40982,scilifelab.se,Science For Life Laboratory,scilifelab.se,http://www.scilifelab.se,14,16,Y,,PRODUCT,0,0.591,,31.59
+41123,enginy,Enginy,,http://www.linkedin.com/company/enginyai/?showInNetworkFollowers=true,14,15,Y,,PRODUCT,2,0.886,,44.24
+41124,unify,Unify,,http://www.linkedin.com/company/unifygtm/?showInNetworkFollowers=true,14,0,Y,,PRODUCT,1,0.791,,46.78
+41125,leadfeeder,Leadfeeder,,http://www.linkedin.com/company/leadfeeder/?showInNetworkFollowers=true,14,1,Y,,PRODUCT,1,0.769,,74.82
+41126,origami,Origami,,http://www.linkedin.com/company/origamiagents/?showInNetworkFollowers=true,14,0,Y,,PRODUCT,2,0.849,,39.85
+41127,surfe,Surfe,,http://www.linkedin.com/company/surfe/?showInNetworkFollowers=true,14,0,Y,,PRODUCT,0,0.589,,36.98
+41128,ocean-io,Ocean.io,,http://www.linkedin.com/company/ocean.io/?showInNetworkFollowers=true,14,0,Y,,PRODUCT,1,0.766,,42.12
+41129,leadinfo,Leadinfo,,http://www.linkedin.com/company/leadinfo/?showInNetworkFollowers=true,14,0,Y,,PRODUCT,0,0.486,,42.02
+41130,scileads,SciLeads,,http://www.linkedin.com/company/scileads/?showInNetworkFollowers=true,14,0,Y,,PRODUCT,0,0.486,,30.06
+41131,clodura-ai,Clodura.AI,,http://www.linkedin.com/company/clodura-systems/?showInNetworkFollowers=true,14,0,,,PRODUCT,1,0.741,,37.27
+41132,goodtherapy,GoodTherapy,,http://www.linkedin.com/company/goodtherapy-org/?showInNetworkFollowers=true,14,0,Y,,PRODUCT,0,0.501,,33.52
+41133,leadzen-ai,Leadzen.ai,,http://www.linkedin.com/company/leadzen-ai/product/helpfulPeople,14,4,,,PRODUCT,0,0.443,,26.37
+41134,bettercontact,BetterContact,,http://www.linkedin.com/company/bettercontact/?showInNetworkFollowers=true,14,0,Y,,PRODUCT,1,0.662,,33.39
+41135,coingate,CoinGate,,http://www.linkedin.com/company/coingate/?showInNetworkFollowers=true,14,0,Y,,PRODUCT,0,0.328,,38.64
+41136,anybiz-new-era-of-b2b-lead-generation,AnyBiz - New era of B2B lead generation.,,http://www.linkedin.com/in/jack-byrne1,14,0,,,UNKNOWN,0,0.003,,35.6
+41137,cello,Cello,,http://www.linkedin.com/company/joincello/?showInNetworkFollowers=true,14,0,Y,,PRODUCT,1,0.771,,37.2
+41138,leadgenerator-io,Leadgenerator.io,,http://www.linkedin.com/in/petemoores,14,0,,,CONSULTANCY,0,0.386,,40.96
+41139,datalane,DataLane,,http://www.linkedin.com/company/datalaneco/?showInNetworkFollowers=true,14,0,Y,,PRODUCT,1,0.786,,46.47
+41140,halda-ai,Halda.AI,,https://halda.ai/,14,0,,,PRODUCT,2,0.836,,37.63
+41141,yuccan-lead,Yuccan Lead,,http://www.linkedin.com/company/yuccan-lead/product/helpfulPeople,14,0,,,PRODUCT,0,0.436,,43.82
+41142,sparklane,Sparklane,,http://www.linkedin.com/company/sparklane/?showInNetworkFollowers=true,14,0,Y,,PRODUCT,1,0.758,,72.31
+41143,traceparts,TraceParts,,http://www.linkedin.com/in/gr%C3%A9goire-alleaume-ba60b0b3,14,4,Y,,UNKNOWN,0,0.32,,39.32
+41144,leadfuze,LeadFuze,,http://www.linkedin.com/in/jack-byrne1,14,1,Y,,UNKNOWN,0,0.053,,39.36
+41145,scalelist,Scalelist,,http://www.linkedin.com/in/tarun-datagardener,14,1,,,UNKNOWN,0,0.065,,33.66
+41146,alf-insight,ALF Insight,,http://www.linkedin.com/company/alf-insight/?showInNetworkFollowers=true,14,0,Y,,PRODUCT,0,0.486,,48.67
+41147,willbe,Willbe,,http://www.linkedin.com/in/celiadelahozsacasa,14,0,,,CONSULTANCY,1,0.503,,37.61
+41148,smartcrm-ia,SmartCRM IA,,http://www.linkedin.com/company/smartcrm-ia/product/helpfulPeople,14,4,,,PRODUCT,0,0.436,,30.52
+41149,arounddeal,AroundDeal,,http://www.linkedin.com/company/arounddeal/?showInNetworkFollowers=true,14,0,Y,,PRODUCT,1,0.786,,35.7
+41150,reachstream,ReachStream,,https://www.reachstream.com/,13,2,,Y,PRODUCT,0,0.546,,24.1
+41151,tomba-io,tomba.io,,http://www.linkedin.com/company/tomba-io/?showInNetworkFollowers=true,14,0,Y,,PRODUCT,0,0.586,,35.6
+41152,kumo,Kumo,,http://www.linkedin.com/company/withkumo/?showInNetworkFollowers=true,14,0,Y,,PRODUCT,1,0.672,,33.32
+41153,pipelyne,Pipelyne,,http://www.linkedin.com/company/pipelyne/?showInNetworkFollowers=true,14,0,Y,,PRODUCT,0,0.44,,31.43
+41154,leadguru-io,Leadguru.io,,http://www.linkedin.com/in/alex-jahani-ai-infrastructure-recruiter,14,3,Y,,UNKNOWN,0,0.31,,34.46
+41155,omkar,Omkar,,http://www.linkedin.com/company/omkar-cloud/product/helpfulPeople,14,4,,,PRODUCT,1,0.736,,42.98
+41156,s-online,SíOnline,,https://sionline.es/,6,2,,,PRODUCT,0,0.27,,17.49
