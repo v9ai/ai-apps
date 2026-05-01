@@ -791,3 +791,28 @@ class ProductIntelState(TypedDict, total=False):
     report: dict[str, Any]
     # Carries per-node telemetry; merged across parallel fan-out writes.
     graph_meta: Annotated[dict[str, Any], _merge_graph_meta]
+
+
+class ExtractStackState(TypedDict, total=False):
+    """State for ``extract_stack_graph`` — required-stack extraction from a JD.
+
+    Output shape mirrors ``src/lib/skills/schema.ts`` (``JobSkillsOutput``)
+    extended with ``summary`` / ``confidence`` / ``model`` / ``graph_meta``
+    so the resolver can persist provenance alongside the skills.
+
+    Every output key is declared here; LangGraph silently drops fields a node
+    returns that aren't in the TypedDict (see project memory).
+    """
+    # input
+    raw_jd: str
+    title: str
+    # internal
+    sections: dict[str, str]              # {required, nice_to_have, responsibilities, other}
+    raw_mentions: list[dict[str, Any]]    # [{phrase, sentence, section}]
+    canonical: list[dict[str, Any]]       # [{tag, phrase, sentence, section}]
+    # output — JobSkill[] = {tag, level, confidence, evidence, escoLabel?}
+    skills: list[dict[str, Any]]
+    summary: str
+    confidence: float
+    model: str
+    graph_meta: dict[str, Any]

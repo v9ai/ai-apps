@@ -310,6 +310,24 @@ export interface DeepICPResult {
   graph_meta?: DeepICPGraphMeta;
 }
 
+export type ExtractStackLevel = "required" | "nice_to_have" | "optional";
+
+export interface ExtractedSkill {
+  tag: string;
+  level: ExtractStackLevel;
+  confidence: number;
+  evidence: string;
+  escoLabel?: string;
+}
+
+export interface ExtractStackResult {
+  skills: ExtractedSkill[];
+  summary: string;
+  confidence: number;
+  model: string;
+  graph_meta: Record<string, unknown>;
+}
+
 // ── Typed wrappers ─────────────────────────────────────────
 
 export function textToSql(
