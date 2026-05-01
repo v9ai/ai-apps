@@ -68,8 +68,15 @@ _FULLY_REMOTE_RE = re.compile(r"\b(fully\s+remote|100\s*%\s*remote)\b", re.IGNOR
 
 _REMOTE_WORKPLACE_TYPES: frozenset[str] = frozenset({"remote", "fully remote"})
 
-# Description scan budget — Ashby ``descriptionPlain`` can be many KB; the
-# AI-vs-not signal lives in the first paragraph.
+# Description scan budget for the **remote** detector. Bounded because Ashby
+# ``descriptionPlain`` can be many KB and the "fully remote" / "100% remote"
+# signal lives in the first paragraph.
+#
+# The AI-role classifier intentionally does **not** scan the description —
+# Ashby boards reliably contain company-tagline boilerplate ("we build AI
+# applications", "framework for building AI applications") that produced
+# false positives like "Senior Security Engineer" and "Deployed Engineer".
+# Even AI-first companies label their AI roles in the title.
 _DESC_SCAN_CHARS = 2000
 
 
