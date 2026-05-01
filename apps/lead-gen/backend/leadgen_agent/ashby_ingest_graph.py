@@ -36,7 +36,7 @@ from typing import Any, TypedDict
 import psycopg
 from langgraph.graph import END, START, StateGraph
 
-from .ashby_client import AshbyClient, AshbyJob
+from .ashby_client import AshbyClient
 
 log = logging.getLogger(__name__)
 
@@ -73,17 +73,6 @@ def _dsn() -> str:
 
 def _opp_id() -> str:
     return f"opp_{int(time.time() * 1000)}_{secrets.token_hex(4)}"
-
-
-def _job_tags(j: AshbyJob) -> list[str]:
-    out: list[str] = []
-    if j.workplaceType:
-        out.append(str(j.workplaceType).lower())
-    if j.employmentType:
-        out.append(str(j.employmentType).lower())
-    if j.isRemote:
-        out.append("remote")
-    return out
 
 
 # ── Node 1: fetch ─────────────────────────────────────────────────────────────

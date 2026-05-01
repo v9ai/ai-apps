@@ -170,6 +170,8 @@ def _build_optional_graphs(checkpointer: Any) -> dict[str, Any]:
             "build_graph",
         ),
         ("extract_stack", "leadgen_agent.extract_stack_graph", "build_graph"),
+        ("ashby_ingest", "leadgen_agent.ashby_ingest_graph", "build_graph"),
+        ("ashby_discovery", "leadgen_agent.ashby_discovery_graph", "build_graph"),
     ]
     for assistant_id, module_path, attr in optional_specs:
         try:
