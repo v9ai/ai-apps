@@ -22,6 +22,17 @@ export interface D1JobInput {
   salary?: string | null;
   description?: string | null;
   archived?: boolean;
+  // Voyager enrichment — populated when getJobPostingDetail succeeds.
+  postedAt?: string | null;
+  workplaceType?: string | null;       // "REMOTE" | "ON_SITE" | "HYBRID"
+  employmentType?: string | null;      // "FULL_TIME" | "PART_TIME" | "CONTRACT" | "INTERNSHIP"
+  experienceLevel?: string | null;
+  applicantCount?: number | null;
+  externalApplyUrl?: string | null;
+  voyagerUrn?: string | null;
+  state?: string | null;               // "LISTED" | "CLOSED" | "EXPIRED"
+  easyApply?: boolean | null;
+  formattedSalary?: string | null;
 }
 
 export interface ImportJobsToD1Response {

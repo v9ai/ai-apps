@@ -16,6 +16,7 @@ import {
 import { browsePeople, importPeopleFromCurrentPage, setPeopleCancelled } from "./people-scraping";
 import { findRelatedCompanies, setFindRelatedCancelled } from "./find-related";
 import { scrapeCompanyFull, setCompanyScraperCancelled } from "./company-scraper";
+import { getJobPostingDetail } from "../../services/voyager-jobs";
 import { scrapePeoplePostsFromCompanyPage, setPeoplePostsCancelled } from "./people-posts-scraper";
 import {
   parseProductCategoriesFromUrl,
@@ -1196,6 +1197,50 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
+  // ── Voyager enrichment bridge: content scripts can't read JSESSIONID via
+  // chrome.cookies API, so they proxy per-card detail fetches through the
+  // background. Returns a trimmed enrichment shape (or null on failure) so
+  // the caller never has to handle exceptions across the message channel.
+  if (message.action === "getVoyagerJobDetail") {
+    const { jobPostingId } = message as { jobPostingId?: string };
+    if (!jobPostingId || !/^\d+$/.test(jobPostingId)) {
+      sendResponse({ ok: false, error: "Missing or invalid jobPostingId" });
+      return true;
+    }
+    (async () => {
+      try {
+        const d = await getJobPostingDetail(jobPostingId);
+        const postedAt =
+          d.listedAt ||
+          (typeof d.listedAtTimestamp === "number"
+            ? new Date(d.listedAtTimestamp * 1000).toISOString()
+            : null);
+        sendResponse({
+          ok: true,
+          enrichment: {
+            postedAt,
+            workplaceType: d.workplaceType ?? null,
+            employmentType: d.employmentType ?? null,
+            experienceLevel: d.experienceLevel ?? null,
+            applicantCount: typeof d.applicantCount === "number" ? d.applicantCount : null,
+            externalApplyUrl: d.externalApplyUrl ?? null,
+            voyagerUrn: d.entityUrn ?? null,
+            state: d.state ?? null,
+            easyApply: typeof d.easyApply === "boolean" ? d.easyApply : null,
+            formattedSalary: d.formattedSalary ?? null,
+            fullDescription: d.fullDescription || null,
+          },
+        });
+      } catch (err) {
+        sendResponse({
+          ok: false,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+    })();
+    return true;
+  }
+
   // ── Bulk import: every visible LinkedIn job-search card → D1 opportunities ──
   //
   // Two paths:
@@ -1253,6 +1298,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     let totalValid = 0;
     let totalExtracted = 0;
     let totalDescriptions = 0;
+    let totalVoyagerEnriched = 0;
+    let totalVoyagerFailed = 0;
     let pagesSaved = 0;
     const errors: ImportError[] = [];
     const pageStats: PageStat[] = [];
@@ -1289,6 +1336,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           skippedNoTitle?: number;
           skippedNoUrl?: number;
           descriptionsCaptured?: number;
+          voyagerEnriched?: number;
+          voyagerFailed?: number;
         };
         jobs?: Array<{
           title?: string;
@@ -1299,6 +1348,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           salary?: string;
           description?: string;
           archived?: boolean;
+          postedAt?: string | null;
+          workplaceType?: string | null;
+          employmentType?: string | null;
+          experienceLevel?: string | null;
+          applicantCount?: number | null;
+          externalApplyUrl?: string | null;
+          voyagerUrn?: string | null;
+          state?: string | null;
+          easyApply?: boolean | null;
+          formattedSalary?: string | null;
         }>;
         companies?: Array<{ name?: string; linkedin_url?: string }>;
       };
@@ -1328,12 +1387,24 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           salary: j.salary ?? null,
           description: j.description ?? null,
           archived: !!j.archived,
+          postedAt: j.postedAt ?? null,
+          workplaceType: j.workplaceType ?? null,
+          employmentType: j.employmentType ?? null,
+          experienceLevel: j.experienceLevel ?? null,
+          applicantCount: j.applicantCount ?? null,
+          externalApplyUrl: j.externalApplyUrl ?? null,
+          voyagerUrn: j.voyagerUrn ?? null,
+          state: j.state ?? null,
+          easyApply: j.easyApply ?? null,
+          formattedSalary: j.formattedSalary ?? null,
         }));
 
       const extracted = counters.extracted ?? pageJobs.length;
       totalExtracted += extracted;
       totalValid += payload.length;
       totalDescriptions += counters.descriptionsCaptured ?? 0;
+      totalVoyagerEnriched += counters.voyagerEnriched ?? 0;
+      totalVoyagerFailed += counters.voyagerFailed ?? 0;
 
       savePromise = savePromise.then(async () => {
         const t0 = Date.now();
