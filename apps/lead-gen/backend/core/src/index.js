@@ -43,6 +43,16 @@ export class CoreContainer extends Container {
 
       // LinkedIn scorer reload — extension-scoped secret, independent rotation.
       SCORER_AUTH_TOKEN: env.SCORER_AUTH_TOKEN ?? "",
+
+      // Ashby ingest writes its opportunities into D1 via the agenticleadgen-edge
+      // Worker (apps/lead-gen/edge). The cron tick runs ashby_ingest_graph
+      // server-side, which posts to ${LEAD_GEN_EDGE_URL}/api/jobs/d1/import
+      // with bearer JOBS_D1_TOKEN. Both forwarded so /cron/tick succeeds.
+      LEAD_GEN_EDGE_URL: env.LEAD_GEN_EDGE_URL ?? "",
+      JOBS_D1_TOKEN: env.JOBS_D1_TOKEN ?? "",
+
+      // Brave Search powers ashby_discovery's slug harvesting.
+      BRAVE_SEARCH_API_KEY: env.BRAVE_SEARCH_API_KEY ?? "",
     };
   }
 }

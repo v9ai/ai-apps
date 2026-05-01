@@ -115,6 +115,36 @@ export const mlResolvers = {
         .slice(0, limit);
     },
 
+    async recommendedRemoteAiCompanies(
+      _parent: unknown,
+      args: { limit?: number; minRemoteAiRoles?: number },
+      context: GraphQLContext,
+    ) {
+      const limit = args.limit ?? 20;
+      const minRoles = args.minRemoteAiRoles ?? 1;
+
+      const rows = await context.db
+        .select()
+        .from(companies)
+        .where(
+          and(
+            eq(companies.blocked, false),
+            sql`${companies.remote_ai_role_count_30d} >= ${minRoles}`,
+          ),
+        )
+        .orderBy(desc(companies.remote_ai_role_count_30d))
+        .limit(limit * 2);
+
+      return rows
+        .map(c => {
+          const features = extractICPFeatures(c);
+          const { score, reasons } = scoreICP(features);
+          return { company: c, score, reasons };
+        })
+        .sort((a, b) => b.score - a.score)
+        .slice(0, limit);
+    },
+
     async recommendedContacts(
       _parent: unknown,
       args: { companyId: number; limit?: number },

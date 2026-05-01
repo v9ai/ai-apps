@@ -10,6 +10,11 @@ extend type Query {
   """Next best companies to contact based on ML scoring"""
   recommendedCompanies(limit: Int, minScore: Float): [RecommendedCompany!]!
 
+  """Companies hiring remote AI engineers globally, ranked by ICP fit.
+  Filters companies.remote_ai_role_count_30d >= minRemoteAiRoles and
+  joins contacts.recruiter_fit_remote_global = true for prioritization."""
+  recommendedRemoteAiCompanies(limit: Int, minRemoteAiRoles: Int): [RecommendedCompany!]!
+
   """Best contacts to reach within a company"""
   recommendedContacts(companyId: Int!, limit: Int): [RankedContact!]!
 
