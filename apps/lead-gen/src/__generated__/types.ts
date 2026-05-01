@@ -1543,6 +1543,7 @@ export type Mutation = {
   enrichAIContactsForCompany: EnrichAiContactsBulkResult;
   enrichContactPapersAndTags: EnrichContactPapersResult;
   enrichOpportunityCandidates: EnrichAiContactsBulkResult;
+  extractOpportunityStack: OpportunityStackResult;
   findCompanyEmails: EnhanceAllContactsResult;
   findContactEmail: FindContactEmailResult;
   findDecisionMaker: FindDecisionMakerResponse;
@@ -1854,6 +1855,11 @@ export type MutationEnrichContactPapersAndTagsArgs = {
 
 
 export type MutationEnrichOpportunityCandidatesArgs = {
+  opportunityId: Scalars['String']['input'];
+};
+
+
+export type MutationExtractOpportunityStackArgs = {
   opportunityId: Scalars['String']['input'];
 };
 
@@ -2246,6 +2252,15 @@ export type OpportunityListItem = {
   url: Maybe<Scalars['String']['output']>;
 };
 
+export type OpportunityRequiredSkill = {
+  __typename: 'OpportunityRequiredSkill';
+  confidence: Scalars['Float']['output'];
+  escoLabel: Maybe<Scalars['String']['output']>;
+  evidence: Scalars['String']['output'];
+  level: Scalars['String']['output'];
+  tag: Scalars['String']['output'];
+};
+
 export type OpportunityScoringMetrics = {
   __typename: 'OpportunityScoringMetrics';
   accuracy: Scalars['Float']['output'];
@@ -2264,6 +2279,14 @@ export type OpportunitySourceStat = {
   precision: Scalars['Float']['output'];
   source: Scalars['String']['output'];
   total: Scalars['Int']['output'];
+};
+
+export type OpportunityStackResult = {
+  __typename: 'OpportunityStackResult';
+  confidence: Scalars['Float']['output'];
+  model: Scalars['String']['output'];
+  skills: Array<OpportunityRequiredSkill>;
+  summary: Scalars['String']['output'];
 };
 
 export type PreviewEmailInput = {

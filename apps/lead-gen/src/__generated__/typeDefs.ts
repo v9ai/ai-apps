@@ -1428,6 +1428,7 @@ type Mutation {
   enrichAIContactsForCompany(companyId: Int!): EnrichAIContactsBulkResult!
   enrichContactPapersAndTags(contactId: Int!): EnrichContactPapersResult!
   enrichOpportunityCandidates(opportunityId: String!): EnrichAIContactsBulkResult!
+  extractOpportunityStack(opportunityId: String!): OpportunityStackResult!
   findCompanyEmails(companyId: Int!): EnhanceAllContactsResult!
   findContactEmail(contactId: Int!): FindContactEmailResult!
   findDecisionMaker(id: Int, key: String): FindDecisionMakerResponse!
@@ -1565,6 +1566,14 @@ type OpportunityListItem {
   url: String
 }
 
+type OpportunityRequiredSkill {
+  confidence: Float!
+  escoLabel: String
+  evidence: String!
+  level: String!
+  tag: String!
+}
+
 type OpportunityScoringMetrics {
   accuracy: Float!
   aucRoc: Float!
@@ -1581,6 +1590,13 @@ type OpportunitySourceStat {
   precision: Float!
   source: String!
   total: Int!
+}
+
+type OpportunityStackResult {
+  confidence: Float!
+  model: String!
+  skills: [OpportunityRequiredSkill!]!
+  summary: String!
 }
 
 input PreviewEmailInput {

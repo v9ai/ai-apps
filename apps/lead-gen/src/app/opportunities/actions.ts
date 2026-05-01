@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { checkIsAdmin } from "@/lib/admin";
 import { db } from "@/db";
 import { opportunities, companies, blockedLocations } from "@/db/schema";
+import { extractStack, type ExtractStackResult } from "@/lib/langgraph-client";
 
 export async function deleteOpportunity(id: string) {
   const { isAdmin } = await checkIsAdmin();
@@ -257,6 +258,71 @@ export async function hideD1Opportunity(id: string): Promise<HideResult> {
 
   revalidatePath("/opportunities");
   return { ok: true };
+}
+
+type ExtractStackActionResult =
+  | { ok: true; result: ExtractStackResult }
+  | { error: string };
+
+export async function extractOpportunityStackAction(
+  id: string,
+): Promise<ExtractStackActionResult> {
+  const { isAdmin } = await checkIsAdmin();
+  if (!isAdmin) return { error: "Forbidden" };
+
+  const [row] = await db
+    .select({
+      title: opportunities.title,
+      raw_context: opportunities.raw_context,
+      metadata: opportunities.metadata,
+    })
+    .from(opportunities)
+    .where(eq(opportunities.id, id))
+    .limit(1);
+
+  if (!row) return { error: "Not found" };
+  const rawJd = row.raw_context ?? "";
+  if (rawJd.trim().length < 40) {
+    return { error: "raw_context too short to extract from" };
+  }
+
+  let result: ExtractStackResult;
+  try {
+    result = await extractStack({ rawJd, title: row.title });
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : String(err) };
+  }
+
+  let mergedMetadata: Record<string, unknown> = {};
+  if (row.metadata) {
+    try {
+      const parsed = JSON.parse(row.metadata);
+      if (parsed && typeof parsed === "object") {
+        mergedMetadata = parsed as Record<string, unknown>;
+      }
+    } catch {
+      mergedMetadata = { _raw: row.metadata };
+    }
+  }
+  mergedMetadata.required_stack = {
+    skills: result.skills,
+    summary: result.summary,
+    confidence: result.confidence,
+    model: result.model,
+    extracted_at: new Date().toISOString(),
+  };
+
+  await db
+    .update(opportunities)
+    .set({
+      metadata: JSON.stringify(mergedMetadata),
+      updated_at: new Date().toISOString(),
+    })
+    .where(eq(opportunities.id, id));
+
+  revalidatePath(`/opportunities/${id}`);
+  revalidatePath("/opportunities");
+  return { ok: true, result };
 }
 
 type BlockLocResult = { ok: true; pattern: string } | { error: string };

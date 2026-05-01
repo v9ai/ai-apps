@@ -1546,6 +1546,7 @@ export type Mutation = {
   enrichAIContactsForCompany: EnrichAiContactsBulkResult;
   enrichContactPapersAndTags: EnrichContactPapersResult;
   enrichOpportunityCandidates: EnrichAiContactsBulkResult;
+  extractOpportunityStack: OpportunityStackResult;
   findCompanyEmails: EnhanceAllContactsResult;
   findContactEmail: FindContactEmailResult;
   findDecisionMaker: FindDecisionMakerResponse;
@@ -1857,6 +1858,11 @@ export type MutationEnrichContactPapersAndTagsArgs = {
 
 
 export type MutationEnrichOpportunityCandidatesArgs = {
+  opportunityId: Scalars['String']['input'];
+};
+
+
+export type MutationExtractOpportunityStackArgs = {
   opportunityId: Scalars['String']['input'];
 };
 
@@ -2249,6 +2255,15 @@ export type OpportunityListItem = {
   url: Maybe<Scalars['String']['output']>;
 };
 
+export type OpportunityRequiredSkill = {
+  __typename?: 'OpportunityRequiredSkill';
+  confidence: Scalars['Float']['output'];
+  escoLabel: Maybe<Scalars['String']['output']>;
+  evidence: Scalars['String']['output'];
+  level: Scalars['String']['output'];
+  tag: Scalars['String']['output'];
+};
+
 export type OpportunityScoringMetrics = {
   __typename?: 'OpportunityScoringMetrics';
   accuracy: Scalars['Float']['output'];
@@ -2267,6 +2282,14 @@ export type OpportunitySourceStat = {
   precision: Scalars['Float']['output'];
   source: Scalars['String']['output'];
   total: Scalars['Int']['output'];
+};
+
+export type OpportunityStackResult = {
+  __typename?: 'OpportunityStackResult';
+  confidence: Scalars['Float']['output'];
+  model: Scalars['String']['output'];
+  skills: Array<OpportunityRequiredSkill>;
+  summary: Scalars['String']['output'];
 };
 
 export type PreviewEmailInput = {
@@ -4264,8 +4287,10 @@ export type ResolversTypes = {
   Opportunity: ResolverTypeWrapper<Partial<Opportunity>>;
   OpportunityEvalReport: ResolverTypeWrapper<Partial<OpportunityEvalReport>>;
   OpportunityListItem: ResolverTypeWrapper<Partial<OpportunityListItem>>;
+  OpportunityRequiredSkill: ResolverTypeWrapper<Partial<OpportunityRequiredSkill>>;
   OpportunityScoringMetrics: ResolverTypeWrapper<Partial<OpportunityScoringMetrics>>;
   OpportunitySourceStat: ResolverTypeWrapper<Partial<OpportunitySourceStat>>;
+  OpportunityStackResult: ResolverTypeWrapper<Partial<OpportunityStackResult>>;
   PreviewEmailInput: ResolverTypeWrapper<Partial<PreviewEmailInput>>;
   PricingTier: ResolverTypeWrapper<Partial<PricingTier>>;
   Product: ResolverTypeWrapper<Partial<Product>>;
@@ -4522,8 +4547,10 @@ export type ResolversParentTypes = {
   Opportunity: Partial<Opportunity>;
   OpportunityEvalReport: Partial<OpportunityEvalReport>;
   OpportunityListItem: Partial<OpportunityListItem>;
+  OpportunityRequiredSkill: Partial<OpportunityRequiredSkill>;
   OpportunityScoringMetrics: Partial<OpportunityScoringMetrics>;
   OpportunitySourceStat: Partial<OpportunitySourceStat>;
+  OpportunityStackResult: Partial<OpportunityStackResult>;
   PreviewEmailInput: Partial<PreviewEmailInput>;
   PricingTier: Partial<PricingTier>;
   Product: Partial<Product>;
@@ -5793,6 +5820,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   enrichAIContactsForCompany?: Resolver<ResolversTypes['EnrichAIContactsBulkResult'], ParentType, ContextType, RequireFields<MutationEnrichAiContactsForCompanyArgs, 'companyId'>>;
   enrichContactPapersAndTags?: Resolver<ResolversTypes['EnrichContactPapersResult'], ParentType, ContextType, RequireFields<MutationEnrichContactPapersAndTagsArgs, 'contactId'>>;
   enrichOpportunityCandidates?: Resolver<ResolversTypes['EnrichAIContactsBulkResult'], ParentType, ContextType, RequireFields<MutationEnrichOpportunityCandidatesArgs, 'opportunityId'>>;
+  extractOpportunityStack?: Resolver<ResolversTypes['OpportunityStackResult'], ParentType, ContextType, RequireFields<MutationExtractOpportunityStackArgs, 'opportunityId'>>;
   findCompanyEmails?: Resolver<ResolversTypes['EnhanceAllContactsResult'], ParentType, ContextType, RequireFields<MutationFindCompanyEmailsArgs, 'companyId'>>;
   findContactEmail?: Resolver<ResolversTypes['FindContactEmailResult'], ParentType, ContextType, RequireFields<MutationFindContactEmailArgs, 'contactId'>>;
   findDecisionMaker?: Resolver<ResolversTypes['FindDecisionMakerResponse'], ParentType, ContextType, Partial<MutationFindDecisionMakerArgs>>;
@@ -5918,6 +5946,14 @@ export type OpportunityListItemResolvers<ContextType = GraphQLContext, ParentTyp
   url?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
 };
 
+export type OpportunityRequiredSkillResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['OpportunityRequiredSkill'] = ResolversParentTypes['OpportunityRequiredSkill']> = {
+  confidence?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  escoLabel?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  evidence?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  level?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  tag?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
 export type OpportunityScoringMetricsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['OpportunityScoringMetrics'] = ResolversParentTypes['OpportunityScoringMetrics']> = {
   accuracy?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   aucRoc?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
@@ -5934,6 +5970,13 @@ export type OpportunitySourceStatResolvers<ContextType = GraphQLContext, ParentT
   precision?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   source?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   total?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+};
+
+export type OpportunityStackResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['OpportunityStackResult'] = ResolversParentTypes['OpportunityStackResult']> = {
+  confidence?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  model?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  skills?: Resolver<Array<ResolversTypes['OpportunityRequiredSkill']>, ParentType, ContextType>;
+  summary?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 };
 
 export type PricingTierResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['PricingTier'] = ResolversParentTypes['PricingTier']> = {
@@ -6995,8 +7038,10 @@ export type Resolvers<ContextType = GraphQLContext> = {
   Opportunity?: OpportunityResolvers<ContextType>;
   OpportunityEvalReport?: OpportunityEvalReportResolvers<ContextType>;
   OpportunityListItem?: OpportunityListItemResolvers<ContextType>;
+  OpportunityRequiredSkill?: OpportunityRequiredSkillResolvers<ContextType>;
   OpportunityScoringMetrics?: OpportunityScoringMetricsResolvers<ContextType>;
   OpportunitySourceStat?: OpportunitySourceStatResolvers<ContextType>;
+  OpportunityStackResult?: OpportunityStackResultResolvers<ContextType>;
   PricingTier?: PricingTierResolvers<ContextType>;
   Product?: ProductResolvers<ContextType>;
   ProductLead?: ProductLeadResolvers<ContextType>;

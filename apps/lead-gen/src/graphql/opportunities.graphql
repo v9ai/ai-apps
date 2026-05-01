@@ -62,6 +62,23 @@ query OpportunitiesPage {
   }
 }
 
+mutation ExtractOpportunityStack($opportunityId: String!) {
+  extractOpportunityStack(opportunityId: $opportunityId) {
+    skills {
+      tag
+      level
+      confidence
+      evidence
+      escoLabel
+    }
+    summary
+    confidence
+    model
+  }
+}
+
+
+
 query CompanyOpportunitiesPage($companyId: Int!) {
   opportunitiesPage(companyId: $companyId) {
     opportunities {

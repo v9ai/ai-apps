@@ -312,7 +312,7 @@ export interface DeepICPResult {
 
 export type ExtractStackLevel = "required" | "nice_to_have" | "optional";
 
-export interface ExtractedSkill {
+export interface ExtractStackSkill {
   tag: string;
   level: ExtractStackLevel;
   confidence: number;
@@ -321,7 +321,7 @@ export interface ExtractedSkill {
 }
 
 export interface ExtractStackResult {
-  skills: ExtractedSkill[];
+  skills: ExtractStackSkill[];
   summary: string;
   confidence: number;
   model: string;
@@ -829,6 +829,28 @@ export interface ProductIntelReportResult {
     tech_signals: string[];
   } | null;
   graph_meta?: Record<string, unknown>;
+}
+
+/**
+ * Deep required-stack extraction from a job description.
+ *
+ * Five-node DeepSeek-V4-Pro thinking graph: segment → mine → canonicalize →
+ * score → synthesize. Output skills are constrained to the canonical
+ * SKILL_TAXONOMY (mirrored to salescue/data/skill_taxonomy.json on the
+ * backend). See backend/leadgen_agent/extract_stack_graph.py.
+ */
+export function extractStack(input: {
+  rawJd: string;
+  title?: string;
+}): Promise<ExtractStackResult> {
+  return runGraph<ExtractStackResult>(
+    "extract_stack",
+    {
+      raw_jd: input.rawJd,
+      title: input.title ?? "",
+    },
+    { timeoutMs: 120_000 },
+  );
 }
 
 /** Pricing strategy graph — benchmark + value-metric (parallel) → design → rationale. */

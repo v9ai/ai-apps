@@ -11,11 +11,19 @@ import {
   blockOpportunityCompany,
   blockD1OpportunityCompany,
   blockLocation,
+  extractOpportunityStackAction,
   hideOpportunity,
   hideD1Opportunity,
   markD1Applied,
 } from "./actions";
 import type { OpportunitiesPageQuery } from "@/__generated__/hooks";
+import type { ExtractStackResult, ExtractStackSkill } from "@/lib/langgraph-client";
+
+const levelBadgeColor: Record<ExtractStackSkill["level"], "green" | "blue" | "gray"> = {
+  required: "green",
+  nice_to_have: "blue",
+  optional: "gray",
+};
 
 type OpportunitiesPagePayload = OpportunitiesPageQuery["opportunitiesPage"];
 type OpportunityRow = OpportunitiesPagePayload["opportunities"][number];
@@ -43,6 +51,25 @@ export function OpportunitiesClient({
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [hidden, setHidden] = useState<Set<string>>(new Set());
+  const [stackResults, setStackResults] = useState<Record<string, ExtractStackResult>>({});
+  const [extracting, setExtracting] = useState<Set<string>>(new Set());
+
+  function handleExtractStack(id: string) {
+    setExtracting((prev) => new Set(prev).add(id));
+    startTransition(async () => {
+      const res = await extractOpportunityStackAction(id);
+      setExtracting((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+      if ("error" in res) {
+        console.error("[extract stack]", res.error);
+        return;
+      }
+      setStackResults((prev) => ({ ...prev, [id]: res.result }));
+    });
+  }
 
   const filtered = useMemo(() => {
     return opportunities.filter((opp) => {
@@ -194,6 +221,7 @@ export function OpportunitiesClient({
           </Table.Header>
           <Table.Body>
             {filtered.map((opp) => {
+              const stack = stackResults[opp.id];
               return (
                 <Table.Row key={opp.id}>
                   <Table.Cell>
@@ -208,6 +236,20 @@ export function OpportunitiesClient({
                           </a>
                         )}
                       </Flex>
+                      {stack && (
+                        <Flex gap="1" wrap="wrap" mt="1" style={{ maxWidth: 360 }}>
+                          {stack.skills.map((s) => (
+                            <Badge
+                              key={s.tag}
+                              color={levelBadgeColor[s.level]}
+                              variant={s.level === "required" ? "solid" : "soft"}
+                              title={s.evidence}
+                            >
+                              {s.tag}
+                            </Badge>
+                          ))}
+                        </Flex>
+                      )}
                     </Flex>
                   </Table.Cell>
                   <Table.Cell>
@@ -257,6 +299,15 @@ export function OpportunitiesClient({
                   </Table.Cell>
                   <Table.Cell>
                     <Flex gap="2" align="center">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleExtractStack(opp.id)}
+                        disabled={extracting.has(opp.id)}
+                        title="Extract required stack from JD via DeepSeek"
+                      >
+                        {extracting.has(opp.id) ? "…" : "Stack"}
+                      </Button>
                       <Button
                         size="sm"
                         variant="ghost"

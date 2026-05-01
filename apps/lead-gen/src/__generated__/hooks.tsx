@@ -1546,6 +1546,7 @@ export type Mutation = {
   enrichAIContactsForCompany: EnrichAiContactsBulkResult;
   enrichContactPapersAndTags: EnrichContactPapersResult;
   enrichOpportunityCandidates: EnrichAiContactsBulkResult;
+  extractOpportunityStack: OpportunityStackResult;
   findCompanyEmails: EnhanceAllContactsResult;
   findContactEmail: FindContactEmailResult;
   findDecisionMaker: FindDecisionMakerResponse;
@@ -1857,6 +1858,11 @@ export type MutationEnrichContactPapersAndTagsArgs = {
 
 
 export type MutationEnrichOpportunityCandidatesArgs = {
+  opportunityId: Scalars['String']['input'];
+};
+
+
+export type MutationExtractOpportunityStackArgs = {
   opportunityId: Scalars['String']['input'];
 };
 
@@ -2249,6 +2255,15 @@ export type OpportunityListItem = {
   url: Maybe<Scalars['String']['output']>;
 };
 
+export type OpportunityRequiredSkill = {
+  __typename?: 'OpportunityRequiredSkill';
+  confidence: Scalars['Float']['output'];
+  escoLabel: Maybe<Scalars['String']['output']>;
+  evidence: Scalars['String']['output'];
+  level: Scalars['String']['output'];
+  tag: Scalars['String']['output'];
+};
+
 export type OpportunityScoringMetrics = {
   __typename?: 'OpportunityScoringMetrics';
   accuracy: Scalars['Float']['output'];
@@ -2267,6 +2282,14 @@ export type OpportunitySourceStat = {
   precision: Scalars['Float']['output'];
   source: Scalars['String']['output'];
   total: Scalars['Int']['output'];
+};
+
+export type OpportunityStackResult = {
+  __typename?: 'OpportunityStackResult';
+  confidence: Scalars['Float']['output'];
+  model: Scalars['String']['output'];
+  skills: Array<OpportunityRequiredSkill>;
+  summary: Scalars['String']['output'];
 };
 
 export type PreviewEmailInput = {
@@ -4714,6 +4737,13 @@ export type OpportunitiesPageQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type OpportunitiesPageQuery = { __typename?: 'Query', opportunitiesPage: { __typename?: 'OpportunitiesPagePayload', opportunities: Array<{ __typename?: 'OpportunityListItem', id: string, title: string, url: string | null, source: string | null, status: string, rewardText: string | null, rewardUsd: number | null, score: number | null, tags: Array<string>, applied: boolean, appliedAt: string | null, applicationStatus: string | null, firstSeen: string | null, createdAt: string, companyName: string | null, companyKey: string | null, contactFirstName: string | null, contactLastName: string | null, contactSlug: string | null, contactPosition: string | null }>, d1Pending: Array<{ __typename?: 'D1OpportunityItem', id: string, title: string, url: string | null, source: string | null, status: string, tags: string | null, location: string | null, salary: string | null, archived: number, createdAt: string, updatedAt: string, companyName: string | null, companyKey: string | null }>, evalReport: { __typename?: 'OpportunityEvalReport', goldenCount: number, excludedCount: number, nullScoreCount: number, timestamp: string, scoring: { __typename?: 'OpportunityScoringMetrics', accuracy: number, precision: number, recall: number, f1: number, aucRoc: number, ndcgAt10: number }, sourceBreakdown: Array<{ __typename?: 'OpportunitySourceStat', source: string, total: number, positive: number, negative: number, precision: number, avgScore: number }> } | null } };
+
+export type ExtractOpportunityStackMutationVariables = Exact<{
+  opportunityId: Scalars['String']['input'];
+}>;
+
+
+export type ExtractOpportunityStackMutation = { __typename?: 'Mutation', extractOpportunityStack: { __typename?: 'OpportunityStackResult', summary: string, confidence: number, model: string, skills: Array<{ __typename?: 'OpportunityRequiredSkill', tag: string, level: string, confidence: number, evidence: string, escoLabel: string | null }> } };
 
 export type CompanyOpportunitiesPageQueryVariables = Exact<{
   companyId: Scalars['Int']['input'];
@@ -9190,6 +9220,48 @@ export type OpportunitiesPageQueryHookResult = ReturnType<typeof useOpportunitie
 export type OpportunitiesPageLazyQueryHookResult = ReturnType<typeof useOpportunitiesPageLazyQuery>;
 export type OpportunitiesPageSuspenseQueryHookResult = ReturnType<typeof useOpportunitiesPageSuspenseQuery>;
 export type OpportunitiesPageQueryResult = Apollo.QueryResult<OpportunitiesPageQuery, OpportunitiesPageQueryVariables>;
+export const ExtractOpportunityStackDocument = gql`
+    mutation ExtractOpportunityStack($opportunityId: String!) {
+  extractOpportunityStack(opportunityId: $opportunityId) {
+    skills {
+      tag
+      level
+      confidence
+      evidence
+      escoLabel
+    }
+    summary
+    confidence
+    model
+  }
+}
+    `;
+export type ExtractOpportunityStackMutationFn = Apollo.MutationFunction<ExtractOpportunityStackMutation, ExtractOpportunityStackMutationVariables>;
+
+/**
+ * __useExtractOpportunityStackMutation__
+ *
+ * To run a mutation, you first call `useExtractOpportunityStackMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useExtractOpportunityStackMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [extractOpportunityStackMutation, { data, loading, error }] = useExtractOpportunityStackMutation({
+ *   variables: {
+ *      opportunityId: // value for 'opportunityId'
+ *   },
+ * });
+ */
+export function useExtractOpportunityStackMutation(baseOptions?: Apollo.MutationHookOptions<ExtractOpportunityStackMutation, ExtractOpportunityStackMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<ExtractOpportunityStackMutation, ExtractOpportunityStackMutationVariables>(ExtractOpportunityStackDocument, options);
+      }
+export type ExtractOpportunityStackMutationHookResult = ReturnType<typeof useExtractOpportunityStackMutation>;
+export type ExtractOpportunityStackMutationResult = Apollo.MutationResult<ExtractOpportunityStackMutation>;
+export type ExtractOpportunityStackMutationOptions = Apollo.BaseMutationOptions<ExtractOpportunityStackMutation, ExtractOpportunityStackMutationVariables>;
 export const CompanyOpportunitiesPageDocument = gql`
     query CompanyOpportunitiesPage($companyId: Int!) {
   opportunitiesPage(companyId: $companyId) {

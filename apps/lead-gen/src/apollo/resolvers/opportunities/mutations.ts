@@ -5,9 +5,11 @@ import {
   classifyOpportunityLLM,
   type OpportunityClassification,
 } from "@/ml/opportunity-classifier";
+import { extractStack, type ExtractStackResult } from "@/lib/langgraph-client";
 import type { GraphQLContext } from "../../context";
 import type {
   MutationCreateOpportunityArgs,
+  MutationExtractOpportunityStackArgs,
   MutationUpdateOpportunityTagsArgs,
   QueryOpportunityByUrlArgs,
 } from "@/__generated__/resolvers-types";
@@ -68,6 +70,55 @@ export const opportunityMutations = {
 
     if (rows.length === 0) throw new Error("Opportunity not found");
     return rows[0];
+  },
+
+  async extractOpportunityStack(
+    _parent: unknown,
+    args: MutationExtractOpportunityStackArgs,
+    context: GraphQLContext,
+  ): Promise<ExtractStackResult> {
+    requireAdmin(context);
+    const [row] = await context.db
+      .select()
+      .from(opportunities)
+      .where(eq(opportunities.id, args.opportunityId))
+      .limit(1);
+    if (!row) throw new Error("Opportunity not found");
+    const rawJd = row.raw_context ?? "";
+    if (!rawJd || rawJd.trim().length < 40) {
+      throw new Error("Opportunity has no raw_context to extract from");
+    }
+
+    const result = await extractStack({ rawJd, title: row.title });
+
+    let mergedMetadata: Record<string, unknown> = {};
+    if (row.metadata) {
+      try {
+        const parsed = JSON.parse(row.metadata);
+        if (parsed && typeof parsed === "object") {
+          mergedMetadata = parsed as Record<string, unknown>;
+        }
+      } catch {
+        mergedMetadata = { _raw: row.metadata };
+      }
+    }
+    mergedMetadata.required_stack = {
+      skills: result.skills,
+      summary: result.summary,
+      confidence: result.confidence,
+      model: result.model,
+      extracted_at: new Date().toISOString(),
+    };
+
+    await context.db
+      .update(opportunities)
+      .set({
+        metadata: JSON.stringify(mergedMetadata),
+        updated_at: new Date().toISOString(),
+      })
+      .where(eq(opportunities.id, args.opportunityId));
+
+    return result;
   },
 
   async createOpportunity(

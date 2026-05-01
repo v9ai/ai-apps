@@ -117,7 +117,23 @@ extend type Query {
   opportunitiesPage(companyId: Int): OpportunitiesPagePayload!
 }
 
+type OpportunityRequiredSkill {
+  tag: String!
+  level: String!
+  confidence: Float!
+  evidence: String!
+  escoLabel: String
+}
+
+type OpportunityStackResult {
+  skills: [OpportunityRequiredSkill!]!
+  summary: String!
+  confidence: Float!
+  model: String!
+}
+
 extend type Mutation {
   createOpportunity(input: CreateOpportunityInput!): Opportunity!
   updateOpportunityTags(id: String!, tags: [String!]!): Opportunity!
+  extractOpportunityStack(opportunityId: String!): OpportunityStackResult!
 }
