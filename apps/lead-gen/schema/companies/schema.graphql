@@ -173,6 +173,12 @@ type Company {
   # Pipeline blocklist
   blocked: Boolean!
 
+  # QA verdict from leadgen_agent.company_qa_graph — false-positive / weak-lead
+  # detection on a tab (e.g. /companies?tab=sales-tech). Null until the graph
+  # has run on the row.
+  qa_verdict: JSON
+  qa_verdict_at: String
+
   # Deep company analysis (Markdown narrative)
   deep_analysis: String
 
