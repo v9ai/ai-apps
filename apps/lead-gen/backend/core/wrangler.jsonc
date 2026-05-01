@@ -33,5 +33,14 @@
   },
   "migrations": [
     { "tag": "v1", "new_sqlite_classes": ["CoreContainer"] }
-  ]
+  ],
+  // Cron triggers fire `scheduled()` in src/index.js, which POSTs to the
+  // container's /cron/tick endpoint (Python). Off-minute slots (:17, :47)
+  // avoid the cron-storm that hits CF on round minutes. UTC.
+  "triggers": {
+    "crons": [
+      "17 6 * * *",   // daily 06:17 UTC — Ashby discover + ingest
+      "47 6 * * 1"    // Mondays 06:47 UTC — full re-ingest of known boards
+    ]
+  }
 }
