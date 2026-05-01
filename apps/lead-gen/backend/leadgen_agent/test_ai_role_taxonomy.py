@@ -63,31 +63,55 @@ def test_negative_titles_are_not_ai_roles(title: str) -> None:
     assert pattern is None
 
 
-def test_ai_role_falls_back_to_description() -> None:
+def test_ai_role_does_not_fall_back_to_description() -> None:
+    # Title-only by design — even a clean AI mention in the description
+    # must not flip the verdict.
     title = "Senior Engineer, Platform"
     desc = "You will own our LLM Engineer track and ship RAG systems to prod."
     ok, pattern = is_ai_role(title, desc)
-    assert ok is True
-    assert pattern == "llm engineer"
-
-
-def test_ai_role_description_scan_is_bounded() -> None:
-    title = "Senior Engineer"
-    # Push the AI signal past the 2k char scan budget.
-    desc = ("filler. " * 300) + " ai engineer "
-    ok, _pattern = is_ai_role(title, desc)
     assert ok is False
+    assert pattern is None
 
 
-def test_ai_role_negative_in_description_suppresses_title_match() -> None:
+def test_ai_pattern_in_description_does_not_match() -> None:
+    # Real false-positive from the langchain run: "Senior Security Engineer"
+    # whose description mentioned AI tooling.
+    title = "Senior Security Engineer"
+    desc = "...help our team build AI-powered security tools..."
+    ok, pattern = is_ai_role(title, desc)
+    assert ok is False
+    assert pattern is None
+
+
+def test_company_tagline_in_description_does_not_match() -> None:
+    # The original failure mode: LangChain pages put "AI applications" in
+    # every description, which lit up "Deployed Engineer" / "Support Engineer".
+    title = "Deployed Engineer"
+    desc = "LangChain is the framework for building AI applications..."
+    ok, pattern = is_ai_role(title, desc)
+    assert ok is False
+    assert pattern is None
+
+
+def test_ai_role_negative_in_description_does_not_suppress_title_match() -> None:
+    # Under title-only rules, description content (including negatives) is
+    # ignored. A clean "AI Engineer" title still wins.
     title = "AI Engineer"
-    desc = "This is a Senior Recruiter role embedded with the AI team."
-    ok, _pattern = is_ai_role(title, desc)
-    assert ok is False
+    desc = "This role partners with our Senior Recruiter on hiring."
+    ok, pattern = is_ai_role(title, desc)
+    assert ok is True
+    assert pattern == "ai engineer"
 
 
 def test_ai_role_handles_none_inputs() -> None:
     ok, pattern = is_ai_role(None, None)
+    assert ok is False
+    assert pattern is None
+
+
+def test_ai_role_handles_none_title_with_description() -> None:
+    # Description must not be consulted even when title is missing.
+    ok, pattern = is_ai_role(None, "We are hiring an AI Engineer.")
     assert ok is False
     assert pattern is None
 
