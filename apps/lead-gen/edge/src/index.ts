@@ -140,6 +140,16 @@ interface IncomingJob {
   salary?: unknown;
   description?: unknown;
   archived?: unknown;
+  postedAt?: unknown;
+  workplaceType?: unknown;
+  employmentType?: unknown;
+  experienceLevel?: unknown;
+  applicantCount?: unknown;
+  externalApplyUrl?: unknown;
+  voyagerUrn?: unknown;
+  state?: unknown;
+  easyApply?: unknown;
+  formattedSalary?: unknown;
 }
 
 interface ValidJob {
@@ -151,6 +161,17 @@ interface ValidJob {
   salary: string | null;
   description: string | null;
   archived: 0 | 1;
+  // Typed Voyager-enrichment columns — promoted out of metadata JSON because
+  // they're filtered/sorted in the leads UI.
+  postedAt: string | null;
+  workplaceType: string | null;
+  employmentType: string | null;
+  experienceLevel: string | null;
+  applicantCount: number | null;
+  externalApplyUrl: string | null;
+  // Lower-traffic fields still useful for analysis — kept out of typed
+  // columns and merged into the existing metadata JSON blob.
+  metadataExtras: Record<string, unknown>;
 }
 
 const ALLOW_HEADERS = "authorization, content-type, x-request-id";
@@ -226,6 +247,15 @@ function asString(v: unknown): string | null {
   return t.length === 0 ? null : t;
 }
 
+function asInt(v: unknown): number | null {
+  if (typeof v !== "number" || !Number.isFinite(v)) return null;
+  return Math.trunc(v);
+}
+
+function asBool(v: unknown): boolean | null {
+  return typeof v === "boolean" ? v : null;
+}
+
 function validateJobs(input: unknown): {
   valid: ValidJob[];
   skippedInvalid: number;
@@ -262,6 +292,21 @@ function validateJobs(input: unknown): {
       continue;
     }
     seen.add(url);
+
+    const formattedSalary = asString(raw?.formattedSalary);
+    const voyagerUrn = asString(raw?.voyagerUrn);
+    const state = asString(raw?.state);
+    const easyApply = asBool(raw?.easyApply);
+
+    // Long-tail fields not promoted to columns — packed into metadata JSON.
+    // Only include keys whose source value was non-null so old metadata
+    // doesn't get clobbered with explicit nulls.
+    const metadataExtras: Record<string, unknown> = {};
+    if (voyagerUrn !== null) metadataExtras.voyagerUrn = voyagerUrn;
+    if (state !== null) metadataExtras.state = state;
+    if (easyApply !== null) metadataExtras.easyApply = easyApply;
+    if (formattedSalary !== null) metadataExtras.formattedSalary = formattedSalary;
+
     valid.push({
       title,
       // company is now optional — opportunities without a company still
@@ -270,9 +315,18 @@ function validateJobs(input: unknown): {
       url,
       companyLinkedinUrl: asString(raw?.companyLinkedinUrl),
       location: asString(raw?.location),
-      salary: asString(raw?.salary),
+      // Voyager's formattedSalary is cleaner than the card's DOM string;
+      // prefer it when present so the typed `salary` column gets the best.
+      salary: formattedSalary ?? asString(raw?.salary),
       description: asString(raw?.description),
       archived: raw?.archived ? 1 : 0,
+      postedAt: asString(raw?.postedAt),
+      workplaceType: asString(raw?.workplaceType),
+      employmentType: asString(raw?.employmentType),
+      experienceLevel: asString(raw?.experienceLevel),
+      applicantCount: asInt(raw?.applicantCount),
+      externalApplyUrl: asString(raw?.externalApplyUrl),
+      metadataExtras,
     });
   }
   return { valid, skippedInvalid, skippedDuplicate, invalidSamples };
@@ -432,8 +486,10 @@ async function handleJobsD1Import(req: Request, env: Env): Promise<Response> {
     env.DB.prepare(
       `INSERT OR IGNORE INTO opportunities
         (id, title, url, source, status, raw_context, metadata, tags,
-         company_id, location, salary, archived)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         company_id, location, salary, archived,
+         posted_at, workplace_type, employment_type, experience_level,
+         applicant_count, external_apply_url)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     ).bind(
       newOpportunityId(),
       j.title,
@@ -441,12 +497,21 @@ async function handleJobsD1Import(req: Request, env: Env): Promise<Response> {
       "linkedin",
       j.archived ? "archived" : "open",
       j.description,
-      JSON.stringify({ scrapedAt: new Date().toISOString() }),
+      JSON.stringify({
+        scrapedAt: new Date().toISOString(),
+        ...j.metadataExtras,
+      }),
       JSON.stringify(["linkedin"]),
       keyByJob[i] ? companyIdMap.get(keyByJob[i] as string) ?? null : null,
       j.location,
       j.salary,
       j.archived,
+      j.postedAt,
+      j.workplaceType,
+      j.employmentType,
+      j.experienceLevel,
+      j.applicantCount,
+      j.externalApplyUrl,
     ),
   );
 

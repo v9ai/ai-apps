@@ -1539,6 +1539,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
               inserted: totalInserted,
               skipped: totalSkipped,
               descriptionsCaptured: totalDescriptions,
+              voyagerEnriched: totalVoyagerEnriched,
+              voyagerFailed: totalVoyagerFailed,
             },
             pageStats,
             errors,
@@ -1589,6 +1591,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           salary?: string;
           description?: string;
           archived?: boolean;
+          postedAt?: string | null;
+          workplaceType?: string | null;
+          employmentType?: string | null;
+          experienceLevel?: string | null;
+          applicantCount?: number | null;
+          externalApplyUrl?: string | null;
+          voyagerUrn?: string | null;
+          state?: string | null;
+          easyApply?: boolean | null;
+          formattedSalary?: string | null;
         }>)
           .filter((j) => j.title && j.url)
           .map((j) => ({
@@ -1602,6 +1614,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             salary: j.salary ?? null,
             description: j.description ?? null,
             archived: !!j.archived,
+            postedAt: j.postedAt ?? null,
+            workplaceType: j.workplaceType ?? null,
+            employmentType: j.employmentType ?? null,
+            experienceLevel: j.experienceLevel ?? null,
+            applicantCount: j.applicantCount ?? null,
+            externalApplyUrl: j.externalApplyUrl ?? null,
+            voyagerUrn: j.voyagerUrn ?? null,
+            state: j.state ?? null,
+            easyApply: j.easyApply ?? null,
+            formattedSalary: j.formattedSalary ?? null,
           }));
 
         await notifyTab({ status: `Saving ${payload.length} to D1...` });

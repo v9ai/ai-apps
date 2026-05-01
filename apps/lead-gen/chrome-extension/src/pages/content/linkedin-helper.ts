@@ -2999,6 +2999,43 @@ async function extractLinkedInJobDetailPage() {
   ];
 }
 
+// Voyager enrichment shape returned by the background `getVoyagerJobDetail`
+// handler. Mirrors the trimmed fields it dispatches; everything is nullable
+// because LinkedIn omits some on closed/expired/archived postings.
+interface VoyagerEnrichment {
+  postedAt: string | null;
+  workplaceType: string | null;
+  employmentType: string | null;
+  experienceLevel: string | null;
+  applicantCount: number | null;
+  externalApplyUrl: string | null;
+  voyagerUrn: string | null;
+  state: string | null;
+  easyApply: boolean | null;
+  formattedSalary: string | null;
+  fullDescription: string | null;
+}
+
+// Bridge: content scripts can't reach the JSESSIONID cookie via chrome.cookies,
+// so we proxy the Voyager call through the background service worker. Returns
+// null on any failure (no throws) so callers fall through to the DOM scrape.
+function fetchVoyagerEnrichment(
+  jobPostingId: string,
+): Promise<VoyagerEnrichment | null> {
+  return new Promise((resolve) => {
+    safeSendMessage(
+      { action: "getVoyagerJobDetail", jobPostingId },
+      (response) => {
+        if (response?.ok && response.enrichment) {
+          resolve(response.enrichment as VoyagerEnrichment);
+        } else {
+          resolve(null);
+        }
+      },
+    );
+  });
+}
+
 // Extract LinkedIn job data
 async function extractLinkedInJobData() {
   const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
@@ -3024,6 +3061,12 @@ async function extractLinkedInJobData() {
   let skippedNoTitle = 0;
   let skippedNoUrl = 0;
   let descriptionsCaptured = 0;
+  let voyagerEnriched = 0;
+  let voyagerFailed = 0;
+  // Per-page circuit breaker: 3 consecutive failures and we stop calling
+  // Voyager for the rest of this page (DOM-fallback only). Resets next page.
+  let voyagerConsecutiveFails = 0;
+  let voyagerDisabled = false;
 
   // Read the description from the right-hand detail pane. LinkedIn renders
   // it under a stable `[data-testid="expandable-text-box"]` selector — the
@@ -3090,6 +3133,8 @@ async function extractLinkedInJobData() {
       continue;
     }
 
+    const jobPostingId = url.match(/\/jobs\/view\/(\d+)/)?.[1] ?? null;
+
     const companyEl = jobCard.querySelector(
       ".artdeco-entity-lockup__subtitle, .job-card-container__primary-description, .artdeco-entity-lockup__caption, .job-card-container__company-name",
     );
@@ -3107,23 +3152,42 @@ async function extractLinkedInJobData() {
       jobCard.textContent?.includes("No longer accepting applications") ||
       jobCard.classList.contains("job-card-container--closed");
 
-    // Click the card to swap the right-pane detail view, then read its
-    // description. If the pane never updates (LinkedIn stall, captcha,
-    // archived job with no body), keep moving with description=null.
-    let description: string | null = null;
-    try {
-      const clickable =
-        jobCard.querySelector<HTMLElement>(
-          'a.job-card-list__title--link, a.job-card-container__link',
-        ) ?? titleAnchor;
-      clickable.click();
-      description = await waitForDetailUpdate(lastDescription);
-      if (description) {
-        lastDescription = description;
-        descriptionsCaptured++;
+    // Voyager-first: fetch authoritative posting detail via the background
+    // bridge. On success we get a richer fullDescription PLUS 10 typed fields
+    // the DOM doesn't expose (posted_at, workplace_type, applicant_count, …).
+    // On failure we fall through to clicking the card and reading the panel.
+    let enrichment: VoyagerEnrichment | null = null;
+    if (jobPostingId && !voyagerDisabled) {
+      enrichment = await fetchVoyagerEnrichment(jobPostingId);
+      if (enrichment) {
+        voyagerEnriched++;
+        voyagerConsecutiveFails = 0;
+      } else {
+        voyagerFailed++;
+        voyagerConsecutiveFails++;
+        if (voyagerConsecutiveFails >= 3) voyagerDisabled = true;
       }
-    } catch (err) {
-      console.debug("[CS] extractLinkedInJobData: click/desc failed", err);
+    }
+
+    let description: string | null = enrichment?.fullDescription ?? null;
+    if (!description) {
+      // Fallback path — click the card to swap the right-pane detail view,
+      // then read its description. If the pane never updates (LinkedIn stall,
+      // captcha, archived job with no body), keep moving with description=null.
+      try {
+        const clickable =
+          jobCard.querySelector<HTMLElement>(
+            'a.job-card-list__title--link, a.job-card-container__link',
+          ) ?? titleAnchor;
+        clickable.click();
+        description = await waitForDetailUpdate(lastDescription);
+      } catch (err) {
+        console.debug("[CS] extractLinkedInJobData: click/desc failed", err);
+      }
+    }
+    if (description) {
+      lastDescription = description;
+      descriptionsCaptured++;
     }
 
     const jobData: any = {
@@ -3134,12 +3198,29 @@ async function extractLinkedInJobData() {
       description,
     };
     if (metadataUls[0]) jobData.location = metadataUls[0].textContent?.trim();
-    if (metadataUls[1]) jobData.salary = metadataUls[1].textContent?.trim();
+    // Voyager's formattedSalary is cleaner than the card's `Base salary` text;
+    // prefer it when present, otherwise fall back to the DOM string.
+    const domSalary = metadataUls[1]?.textContent?.trim() ?? null;
+    jobData.salary = enrichment?.formattedSalary ?? domSalary ?? null;
+
+    if (enrichment) {
+      jobData.postedAt = enrichment.postedAt;
+      jobData.workplaceType = enrichment.workplaceType;
+      jobData.employmentType = enrichment.employmentType;
+      jobData.experienceLevel = enrichment.experienceLevel;
+      jobData.applicantCount = enrichment.applicantCount;
+      jobData.externalApplyUrl = enrichment.externalApplyUrl;
+      jobData.voyagerUrn = enrichment.voyagerUrn;
+      jobData.state = enrichment.state;
+      jobData.easyApply = enrichment.easyApply;
+      jobData.formattedSalary = enrichment.formattedSalary;
+    }
 
     jobs.push(jobData);
 
-    // Throttle to avoid LinkedIn rate-limiting / captcha.
-    await sleep(250);
+    // Voyager-served cards skipped the click; give LinkedIn more breathing
+    // room (500ms ± 150ms jitter). DOM-fallback already paid the click-wait.
+    await sleep(enrichment ? 500 + Math.floor(Math.random() * 150) : 250);
   }
 
   return {
@@ -3150,6 +3231,8 @@ async function extractLinkedInJobData() {
       skippedNoTitle,
       skippedNoUrl,
       descriptionsCaptured,
+      voyagerEnriched,
+      voyagerFailed,
     },
   };
 }
