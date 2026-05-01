@@ -1748,6 +1748,12 @@ type Query {
   recommendedCompanies(limit: Int, minScore: Float): [RecommendedCompany!]!
   """Best contacts to reach within a company"""
   recommendedContacts(companyId: Int!, limit: Int): [RankedContact!]!
+  """
+  Companies hiring remote AI engineers globally, ranked by ICP fit.
+  Filters companies.remote_ai_role_count_30d >= minRemoteAiRoles and
+  joins contacts.recruiter_fit_remote_global = true for prioritization.
+  """
+  recommendedRemoteAiCompanies(limit: Int, minRemoteAiRoles: Int): [RecommendedCompany!]!
   reminders(entityId: Int!, entityType: String!): [Reminder!]!
   replyDrafts(draftType: String, limit: Int, offset: Int, status: String): ReplyDraftsResult!
   resendEmail(resendId: String!): ResendEmailDetail

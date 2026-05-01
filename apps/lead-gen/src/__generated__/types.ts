@@ -2438,6 +2438,12 @@ export type Query = {
   recommendedCompanies: Array<RecommendedCompany>;
   /** Best contacts to reach within a company */
   recommendedContacts: Array<RankedContact>;
+  /**
+   * Companies hiring remote AI engineers globally, ranked by ICP fit.
+   * Filters companies.remote_ai_role_count_30d >= minRemoteAiRoles and
+   * joins contacts.recruiter_fit_remote_global = true for prioritization.
+   */
+  recommendedRemoteAiCompanies: Array<RecommendedCompany>;
   reminders: Array<Reminder>;
   replyDrafts: ReplyDraftsResult;
   resendEmail: Maybe<ResendEmailDetail>;
@@ -2778,6 +2784,12 @@ export type QueryRecommendedCompaniesArgs = {
 export type QueryRecommendedContactsArgs = {
   companyId: Scalars['Int']['input'];
   limit?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryRecommendedRemoteAiCompaniesArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  minRemoteAiRoles?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
