@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import { css } from "styled-system/css";
 import {
   DEVICE_IMG_MAP,
+  PYBRICKS_COLOR_HEX,
+  extractMatrixColors,
   hubColor,
   hubDisplayName,
   ParsedScript,
@@ -387,6 +389,72 @@ export function ExampleLessonView({
           }}
         />
       )}
+
+      {(() => {
+        const matrix = extractMatrixColors(code);
+        const hasMatrixDevice = script.devices.some(
+          (d) => d.deviceType === "ColorLightMatrix",
+        );
+        if (!matrix || !hasMatrixDevice) return null;
+        return (
+          <div className={css({ mb: "6" })}>
+            <h2
+              className={css({
+                fontSize: "sm",
+                fontWeight: "700",
+                fontFamily: "display",
+                color: "ink.muted",
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+                mb: "3",
+              })}
+            >
+              {isRo ? "Previzualizare matrice" : "Matrix preview"}
+            </h2>
+            <div
+              className={css({
+                display: "inline-block",
+                p: "4",
+                rounded: "brick",
+                bg: "#0d1117",
+                border: "1.5px solid",
+                borderColor: "plate.border",
+              })}
+            >
+              <div
+                className={css({
+                  display: "grid",
+                  gridTemplateColumns: "repeat(3, 1fr)",
+                  gap: "2",
+                })}
+              >
+                {matrix.map((c, i) => {
+                  const hex = PYBRICKS_COLOR_HEX[c] ?? "#333";
+                  const isLit = c !== "BLACK" && c !== "NONE";
+                  return (
+                    <div
+                      key={i}
+                      title={`Color.${c}`}
+                      className={css({
+                        w: "12",
+                        h: "12",
+                        rounded: "full",
+                        border: "2px solid rgba(255,255,255,0.15)",
+                      })}
+                      style={{
+                        backgroundColor: hex,
+                        boxShadow: isLit
+                          ? `0 0 18px ${hex}, 0 0 6px ${hex}`
+                          : "none",
+                      }}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       <div className={css({ mb: "6" })}>
         <CodeViewer code={code} filename={script.filename} />

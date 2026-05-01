@@ -6,12 +6,13 @@ from pybricks.tools import wait
 hub = CityHub()
 lights = ColorLightMatrix(Port.B)
 
-# Steagul Sloveniei: 3 dungi orizontale — alb (sus), albastru (mijloc), rosu (jos).
-# Pe matricea 3x3 mapam fiecare dunga la cate un rand de 3 pixeli.
+# Steagul Sloveniei rotit 90° — 3 dungi verticale: alb (stanga),
+# albastru (mijloc), rosu (dreapta). Pe matricea 3x3 fiecare coloana
+# este o dunga.
 SLOVENIA = [
-    Color.WHITE, Color.WHITE, Color.WHITE,
-    Color.BLUE,  Color.BLUE,  Color.BLUE,
-    Color.RED,   Color.RED,   Color.RED,
+    Color.WHITE, Color.BLUE, Color.RED,
+    Color.WHITE, Color.BLUE, Color.RED,
+    Color.WHITE, Color.BLUE, Color.RED,
 ]
 
 lights.on(SLOVENIA)

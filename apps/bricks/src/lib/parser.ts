@@ -260,6 +260,57 @@ export function parseScript(filename: string, code: string): ParsedScript {
   };
 }
 
+// Pybricks Color enum → display hex. Approximates how the LED renders.
+export const PYBRICKS_COLOR_HEX: Record<string, string> = {
+  RED: "#e3000b",
+  ORANGE: "#fe8a18",
+  YELLOW: "#ffd500",
+  GREEN: "#00852b",
+  CYAN: "#00b5e2",
+  BLUE: "#006cb7",
+  MAGENTA: "#c239b3",
+  WHITE: "#ffffff",
+  BLACK: "#000000",
+  NONE: "transparent",
+  GRAY: "#5d5d5d",
+};
+
+// Extract the 9-cell color matrix from `lights.on([...])` / `<var>.on([...])`
+// in a Pybricks script. Resolves named constants (e.g. ALB = Color.BLUE) to
+// their underlying Color value. Returns null if no 9-cell list is found.
+export function extractMatrixColors(code: string): string[] | null {
+  const constMap: Record<string, string> = {};
+  const constPattern = /^\s*([A-Z_][A-Z0-9_]*)\s*=\s*Color\.([A-Z_]+)\s*$/gm;
+  for (const m of code.matchAll(constPattern)) {
+    constMap[m[1]] = m[2].toUpperCase();
+  }
+
+  const onMatch = code.match(/\.on\(\s*\[([\s\S]*?)\]\s*\)/);
+  if (!onMatch) return null;
+
+  const items = onMatch[1]
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  const colors: string[] = [];
+  for (const raw of items) {
+    const colorMatch = raw.match(/Color\.([A-Z_]+)/);
+    if (colorMatch) {
+      colors.push(colorMatch[1].toUpperCase());
+      continue;
+    }
+    const ident = raw.match(/^([A-Z_][A-Z0-9_]*)$/);
+    if (ident && constMap[ident[1]]) {
+      colors.push(constMap[ident[1]]);
+      continue;
+    }
+    return null;
+  }
+
+  return colors.length === 9 ? colors : null;
+}
+
 export function hubDisplayName(hub: HubType | null): string {
   switch (hub) {
     case "EssentialHub":
