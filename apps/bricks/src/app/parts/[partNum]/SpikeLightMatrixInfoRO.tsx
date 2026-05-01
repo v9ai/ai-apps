@@ -174,6 +174,29 @@ lights.on([
     ALB, GLB, ROS,
 ])`}</code>
 
+      <h3 className={sub}>Steagul Sloveniei</h3>
+      <p className={para}>
+        Steagul Sloveniei are 3 <strong>dungi orizontale</strong> (alb, albastru, rosu),
+        deci pe matricea 3×3 fiecare dunga ocupa cate un rand intreg de 3 pixeli:
+      </p>
+
+      <code className={code}>{`from pybricks.pupdevices import ColorLightMatrix
+from pybricks.parameters import Port, Color
+
+lights = ColorLightMatrix(Port.A)
+
+# Steagul Sloveniei (3 dungi orizontale: alb, albastru, rosu)
+lights.on([
+    Color.WHITE, Color.WHITE, Color.WHITE,
+    Color.BLUE,  Color.BLUE,  Color.BLUE,
+    Color.RED,   Color.RED,   Color.RED,
+])`}</code>
+
+      <p className={para}>
+        Script rulabil complet (cu hub <span className={inlineCode}>EssentialHub</span>):{" "}
+        <span className={inlineCode}>scripts/spike-essential-slovenia-flag.py</span>.
+      </p>
+
       <h3 className={sub}>Pixel individual (intensitate)</h3>
       <p className={para}>
         Putem aprinde un singur pixel folosind <span className={inlineCode}>pixel(row, column, color)</span>.
