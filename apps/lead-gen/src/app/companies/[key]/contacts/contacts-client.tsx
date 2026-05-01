@@ -20,7 +20,6 @@ import {
   useDueRemindersQuery,
   useUpdateContactMutation,
 } from "@/__generated__/hooks";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-hooks";
 import { ADMIN_EMAIL } from "@/lib/constants";
@@ -554,7 +553,7 @@ function DeleteContactButton({
 
 export function CompanyContactsClient({
   companyKey,
-  embedded,
+  embedded: _embedded,
 }: {
   companyKey: string;
   embedded?: boolean;
@@ -588,7 +587,11 @@ export function CompanyContactsClient({
     type: "idle" | "running" | "done" | "error";
     message?: string;
   }>({ type: "idle" });
-  const lastPeopleMessageRef = React.useRef(Date.now());
+  const lastPeopleMessageRef = React.useRef<number>(0);
+  React.useEffect(() => {
+    lastPeopleMessageRef.current = Date.now();
+  }, []);
+  const [renderNow] = useState<number>(() => Date.now());
   const { isStreaming, progress, completion, error: schedulerError, scheduleEmails, reset: resetScheduler } = useStreamingEmailScheduler();
 
   const debounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1215,7 +1218,7 @@ export function CompanyContactsClient({
                           )}
                           {contact.lastContactedAt && (
                             <Text as="span" size="1" color="gray" ml="1">
-                              · {Math.floor((Date.now() - new Date(contact.lastContactedAt).getTime()) / 86_400_000)}d ago
+                              · {Math.floor((renderNow - new Date(contact.lastContactedAt).getTime()) / 86_400_000)}d ago
                             </Text>
                           )}
                         </Text>

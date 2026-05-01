@@ -87,6 +87,7 @@ export function EditCampaignDialog({
 
   useEffect(() => {
     if (data?.emailCampaign) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing fetched campaign into form state
       setCampaignName(data.emailCampaign.name);
       if (data.emailCampaign.recipientEmails) {
         setRecipients(data.emailCampaign.recipientEmails);
@@ -115,6 +116,7 @@ export function EditCampaignDialog({
 
   useEffect(() => {
     if (!open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- resetting transient banner state on close
       setError(null);
       setSuccess(null);
     }

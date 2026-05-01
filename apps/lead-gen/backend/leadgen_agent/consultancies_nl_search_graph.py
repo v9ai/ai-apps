@@ -64,7 +64,7 @@ _NL_PROMPT = (
     "Available filter fields and their allowed values:\n"
     '- category: "PRODUCT" | "CONSULTANCY" | "AGENCY" | "STAFFING"\n'
     "- min_ai_tier: 0 (any) | 1 (AI-first+) | 2 (AI-native only)\n"
-    '- industry: "sales_tech" | "martech" | "hr_tech" | "fintech" | "devtools" | "cybersecurity" | "healthcare" | "edtech" | "ecommerce"\n'
+    '- industry: "sales-engagement-platforms" | "martech" | "hr_tech" | "fintech" | "devtools" | "cybersecurity" | "healthcare" | "edtech" | "ecommerce"\n'
     '- funding_stage: "bootstrapped" | "seed" | "series_a" | "series_b" | "series_c_plus" | "public"\n'
     '- employee_range: "1-10" | "11-50" | "51-200" | "201-500" | "500+"\n'
     '- remote_policy: "remote" | "hybrid" | "onsite"\n'

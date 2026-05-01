@@ -61,25 +61,26 @@ export function useCountUp(value: string, options?: UseCountUpOptions) {
   useEffect(() => {
     if (!visible || !target) return;
 
-    // Skip animation for users who prefer reduced motion
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (prefersReducedMotion) {
-      setDisplay(formatNum(target) + suffix);
-      return;
+      const id = requestAnimationFrame(() => setDisplay(formatNum(target) + suffix));
+      return () => cancelAnimationFrame(id);
     }
 
     const startTime = performance.now();
+    let rafId = 0;
 
     function tick(now: number) {
       const elapsed = now - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3); // cubic ease-out
+      const eased = 1 - Math.pow(1 - progress, 3);
       const current = Math.round(eased * target);
       setDisplay(formatNum(current) + suffix);
-      if (progress < 1) requestAnimationFrame(tick);
+      if (progress < 1) rafId = requestAnimationFrame(tick);
     }
 
-    requestAnimationFrame(tick);
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
   }, [visible, target, suffix, duration, formatNum]);
 
   return { ref, display, visible };

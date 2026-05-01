@@ -1,6 +1,6 @@
 # Offline Eval Harness
 
-Answers the question **"is the LLM output quality drifting?"** for the four product-intelligence graphs:
+Answers the question **"is the LLM output quality drifting?"** for the product-intelligence graphs and the email composer:
 
 | Graph | Test | Golden set |
 |---|---|---|
@@ -8,6 +8,7 @@ Answers the question **"is the LLM output quality drifting?"** for the four prod
 | `pricing_graph` | `test_pricing_eval.py` | `golden/pricing.json` |
 | `gtm_graph` | `test_gtm_eval.py` | `golden/gtm.json` |
 | `positioning_graph` (team 4, WIP) | `test_positioning_eval.py` | `golden/positioning.json` |
+| `email_compose_graph` | `test_email_eval.py` | `golden/email.json` |
 
 Without this harness, "the pipeline works" just means "it doesn't crash."
 
@@ -22,12 +23,13 @@ Evals are **gated** so normal `pytest` never triggers them (they cost DeepSeek t
 EVAL=1 DEEPSEEK_API_KEY=... pytest tests/test_pricing_eval.py -s
 EVAL=1 DEEPSEEK_API_KEY=... pytest tests/test_gtm_eval.py      -s
 EVAL=1 DEEPSEEK_API_KEY=... pytest tests/test_positioning_eval.py -s
+EVAL=1 DEEPSEEK_API_KEY=... pytest tests/test_email_eval.py    -s
 ```
 
-Or run all four at once:
+Or run all five at once:
 
 ```bash
-EVAL=1 DEEPSEEK_API_KEY=... pytest tests/test_deep_icp_eval.py tests/test_pricing_eval.py tests/test_gtm_eval.py tests/test_positioning_eval.py -s
+EVAL=1 DEEPSEEK_API_KEY=... pytest tests/test_deep_icp_eval.py tests/test_pricing_eval.py tests/test_gtm_eval.py tests/test_positioning_eval.py tests/test_email_eval.py -s
 ```
 
 The `-s` flag surfaces the per-graph pass-rate header and failure list.
@@ -102,6 +104,29 @@ Each file is a JSON array of entries. Every entry has:
   "expected_narrative_hooks": ["the purpose-built jira alternative", ...]
 }
 ```
+
+### email.json
+
+Different shape — entries are scenarios for the email composer, not products.
+
+```jsonc
+{
+  "id": "ml-engineer-cold-outreach",          // string, stable
+  "scenario_label": "Cold outreach — ...",     // human-readable
+  "input": {                                   // fed verbatim to email_compose
+    "recipient_name": "Mira Chen",
+    "company_name": "Vellum AI",
+    "recipient_context": "Senior ML Engineer ...",
+    "instructions": "Write a concise warm cold email ..."
+    // optional: "linkedin_post_content"
+  },
+  "expected_signals": ["LLM evaluation", "RAG", ...],   // ≥1 must appear in body
+  "expected_cta_kind": "intro_chat",                    // intro_chat / freelance_explore / timeline_question / ...
+  "must_avoid_phrases": ["I hope this finds you well", ...]  // documented; checked deterministically against AI_MARKERS
+}
+```
+
+The email eval runs **two layers** per entry: 6 deterministic checks (subject ≤50, opening ≤3 sentences, no AI markers, `{{name}}` placeholder, signature, word-count) and 4 judge metrics (`signal_injection`, `cta_clarity`, `no_fabrication`, `tone_match`). The deterministic layer is free; the judge layer is one DeepSeek (or Claude) call per metric × entry. No DB stubs needed — `email_compose_graph` has no DB writes.
 
 ---
 

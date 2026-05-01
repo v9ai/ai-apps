@@ -18,10 +18,9 @@
  * Zero external dependencies beyond drizzle-orm.
  */
 
-import { eq, and, gte, lte, desc, sql, count, type SQL } from "drizzle-orm";
+import { eq, and, gte, lte, desc, sql } from "drizzle-orm";
 import type { DbInstance } from "@/db";
 import {
-  companies,
   voyagerJobCounts,
   voyagerSnapshots,
 } from "@/db/schema";
@@ -268,9 +267,9 @@ export class VoyagerAnalytics {
   async getCompanyHiringVelocity(
     limit = 20,
   ): Promise<CompanyVelocity[]> {
-    const thisWeekStart = weeksAgo(1);
-    const lastWeekStart = weeksAgo(2);
-    const fourWeeksAgo = weeksAgo(4);
+    const _thisWeekStart = weeksAgo(1);
+    const _lastWeekStart = weeksAgo(2);
+    const _fourWeeksAgo = weeksAgo(4);
 
     // This week's jobs by company
     const thisWeek = ([] as any[]) /* TODO(d1-analytics): re-implement against /api/posts/d1/analytics dispatcher */ // Fetch extra to filter
@@ -333,8 +332,8 @@ export class VoyagerAnalytics {
     period: "7d" | "30d" | "90d" = "30d",
   ): Promise<GrowthReport> {
     const days = periodToDays(period);
-    const currentFrom = daysAgo(days);
-    const previousFrom = daysAgo(days * 2);
+    const _currentFrom = daysAgo(days);
+    const _previousFrom = daysAgo(days * 2);
 
     // Current period jobs by industry
     const currentByIndustry = ([] as any[]) /* TODO(d1-analytics): re-implement against /api/posts/d1/analytics dispatcher */
@@ -410,8 +409,8 @@ export class VoyagerAnalytics {
     period: "30d" | "90d" | "180d" = "90d",
   ): Promise<SalaryTrend> {
     const days = periodToDays(period);
-    const currentFrom = daysAgo(days);
-    const previousFrom = daysAgo(days * 2);
+    const _currentFrom = daysAgo(days);
+    const _previousFrom = daysAgo(days * 2);
 
     // (analytics stubbed pending d1 dispatcher)
     void query;
@@ -510,8 +509,8 @@ export class VoyagerAnalytics {
     period: "7d" | "30d" = "30d",
   ): Promise<SkillsDemandReport> {
     const days = periodToDays(period);
-    const currentFrom = daysAgo(days);
-    const previousFrom = daysAgo(days * 2);
+    const _currentFrom = daysAgo(days);
+    const _previousFrom = daysAgo(days * 2);
 
     // (analytics stubbed pending d1 dispatcher)
     void query;
@@ -778,8 +777,8 @@ export class VoyagerAnalytics {
     period: "7d" | "30d" = "30d",
   ): Promise<CompetitiveReport> {
     const days = periodToDays(period);
-    const fromDate = daysAgo(days);
-    const prevFrom = daysAgo(days * 2);
+    const _fromDate = daysAgo(days);
+    const _prevFrom = daysAgo(days * 2);
 
     // All job posts with company data for current period
     const currentJobs = ([] as any[]) /* TODO(d1-analytics): re-implement against /api/posts/d1/analytics dispatcher */
@@ -909,9 +908,9 @@ export class VoyagerAnalytics {
     period: "30d" | "90d" = "90d",
   ): Promise<EmergingRolesReport> {
     const days = periodToDays(period);
-    const currentFrom = daysAgo(days);
-    const previousFrom = daysAgo(days * 2);
-    const lookbackFrom = daysAgo(this.config.novelTitleLookbackDays * 2);
+    const _currentFrom = daysAgo(days);
+    const _previousFrom = daysAgo(days * 2);
+    const _lookbackFrom = daysAgo(this.config.novelTitleLookbackDays * 2);
 
     // Current period titles
     const currentPosts = ([] as any[]) /* TODO(d1-analytics): re-implement against /api/posts/d1/analytics dispatcher */
@@ -1035,7 +1034,7 @@ export class VoyagerAnalytics {
   async getGeographicArbitrage(
     minPremiumPercent = 20,
   ): Promise<ArbitrageReport> {
-    const fromDate = daysAgo(30);
+    const _fromDate = daysAgo(30);
 
     const posts = ([] as any[]) /* TODO(d1-analytics): re-implement against /api/posts/d1/analytics dispatcher */
 

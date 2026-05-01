@@ -22,7 +22,7 @@ import {
   type Company,
   type NewIntentSignal,
 } from "@/db/schema";
-import { eq, and, sql, inArray } from "drizzle-orm";
+import { eq, sql, inArray } from "drizzle-orm";
 import { listD1Posts } from "@/lib/posts-d1-client";
 import { SKILL_TAXONOMY } from "@/schema/contracts/skill-taxonomy";
 import type { ExtractedSkill } from "@/ml/post-analyzer";

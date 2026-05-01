@@ -69,6 +69,7 @@ function SettingsPageContent() {
   useEffect(() => {
     if (data?.userSettings) {
       const excluded = data.userSettings.excluded_companies || [];
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing fetched user settings into editable state
       setExcludedCompaniesChips(excluded);
       setInitialExcludedCompanies(excluded);
     }
@@ -131,7 +132,7 @@ function SettingsPageContent() {
       setSaveStatus("idle");
       showToast("Failed to save settings. Please try again.", "error");
     }
-  }, [user?.id, excludedCompaniesChips, updateSettings, refetch]);
+  }, [user, excludedCompaniesChips, updateSettings, refetch]);
 
   const handleCancel = useCallback(() => {
     if (hasUnsavedChanges()) {

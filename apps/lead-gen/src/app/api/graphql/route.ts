@@ -5,7 +5,6 @@ import { Kind, GraphQLError, type DocumentNode, type ValidationContext } from "g
 import { schema } from "@/apollo/schema";
 import { GraphQLContext } from "@/apollo/context";
 import { auth } from "@/lib/auth/server";
-import { db } from "@/db";
 import { withTenantDb, getTenantDb } from "@/db/with-tenant";
 import { createLoaders } from "@/apollo/loaders";
 

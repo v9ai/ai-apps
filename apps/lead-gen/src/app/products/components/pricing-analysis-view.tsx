@@ -814,7 +814,7 @@ function EmptyPricing({ isAdmin }: { isAdmin: boolean }) {
 // ---------- main view ----------
 
 export function PricingAnalysisView({ data }: { data: PricingAnalysis }) {
-  const tiers = data.model?.tiers ?? [];
+  const tiers = React.useMemo(() => data.model?.tiers ?? [], [data.model?.tiers]);
   const addons = data.model?.addons ?? [];
   const risks = data.rationale?.risks ?? [];
 

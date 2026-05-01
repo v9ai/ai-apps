@@ -1,0 +1,127 @@
+[
+  {
+    "id": "ml-engineer-cold-outreach",
+    "scenario_label": "Cold outreach — ML engineer at a Series B AI infra company",
+    "input": {
+      "recipient_name": "Mira Chen",
+      "company_name": "Vellum AI",
+      "recipient_context": "Senior ML Engineer at Vellum. LinkedIn bio: 'Building reliable LLM evaluation tooling. Previously at Scale AI.' Top GitHub repos: vellum-eval (1.2k stars, RAG eval harness), prompt-bench (340 stars). Specialization: LLM evals, RAG. Experience level: senior.",
+      "instructions": "Write a concise warm cold email. Anchor the opening on the recipient's eval/RAG work, not on Vellum the product. Pitch: I've shipped production RAG pipelines + eval harnesses (10+ yrs SWE, 4 yrs LLM). One CTA: 30-min intro chat next week."
+    },
+    "expected_signals": [
+      "LLM evaluation",
+      "RAG",
+      "vellum-eval or prompt-bench (specific repo reference)"
+    ],
+    "expected_cta_kind": "intro_chat",
+    "must_avoid_phrases": [
+      "I hope this finds you well",
+      "Just wanted to reach out",
+      "I came across your"
+    ]
+  },
+  {
+    "id": "job-application-followup",
+    "scenario_label": "Follow-up after job application — no response 2 weeks",
+    "input": {
+      "recipient_name": "James O'Connor",
+      "company_name": "Linear",
+      "recipient_context": "Engineering Manager, Frontend Platform at Linear. Bio: 'Shipping the fastest issue tracker on the web.' Job applied: Senior Frontend Engineer, applied 2026-04-15, status: no response.",
+      "instructions": "Follow-up email. Applied for Senior Frontend Engineer 2 weeks ago, no response. Reaffirm interest, mention Next.js + TypeScript + perf experience overlap with Linear's stack. CTA: ask about timeline."
+    },
+    "expected_signals": [
+      "applied 2 weeks ago / earlier this month",
+      "Next.js or TypeScript or frontend perf",
+      "timeline question"
+    ],
+    "expected_cta_kind": "timeline_question",
+    "must_avoid_phrases": [
+      "I hope you are doing well",
+      "Just wanted to reach out",
+      "I trust this email finds you"
+    ]
+  },
+  {
+    "id": "paper-author-intro",
+    "scenario_label": "Cold outreach — academic researcher (paper author)",
+    "input": {
+      "recipient_name": "Aditi Rao",
+      "company_name": "Stanford NLP",
+      "recipient_context": "PhD candidate at Stanford NLP. First-author on 'Selective Self-Refinement for Reasoning LLMs' (NeurIPS 2025, 142 cites). Specialization: reasoning, self-correction, LLM training.",
+      "instructions": "Reference the Selective Self-Refinement paper specifically (the selective-correction angle, not generic praise). Note: I built a prod RAG pipeline that uses a similar self-critique step. Ask if she'd be open to a 20-min call comparing findings."
+    },
+    "expected_signals": [
+      "Selective Self-Refinement (paper title) or self-correction / self-critique",
+      "RAG pipeline overlap",
+      "20-min call"
+    ],
+    "expected_cta_kind": "intro_chat",
+    "must_avoid_phrases": [
+      "I came across your",
+      "Just wanted to reach out",
+      "I hope this email finds you well"
+    ]
+  },
+  {
+    "id": "devtool-founder-cold",
+    "scenario_label": "Cold outreach — founder of a small devtool company",
+    "input": {
+      "recipient_name": "Theo Browne",
+      "company_name": "Ping.gg",
+      "recipient_context": "Founder/CTO at Ping.gg. Bio: 'Live-stream collaboration tools for creators.' Tech stack: Next.js, tRPC, Vercel. Active OSS contributor (create-t3-app).",
+      "instructions": "Cold email. Anchor opening on Ping.gg's Next.js/tRPC stack overlap with my background. Don't mention create-t3-app generically — reference live-stream collaboration use case. CTA: explore freelance/contract work."
+    },
+    "expected_signals": [
+      "Next.js or tRPC",
+      "live-stream collaboration (specific to Ping.gg)",
+      "freelance / contract"
+    ],
+    "expected_cta_kind": "freelance_explore",
+    "must_avoid_phrases": [
+      "I came across your",
+      "I hope this finds you well"
+    ]
+  },
+  {
+    "id": "github-repo-reference",
+    "scenario_label": "Cold outreach — engineer with notable OSS repo",
+    "input": {
+      "recipient_name": "Jian Wu",
+      "company_name": "Replicate",
+      "recipient_context": "Staff Engineer at Replicate. Top GitHub repo: cog-runtime (8.4k stars — container runtime for ML models). Bio: 'Making ML models easy to ship.' Languages: Go, Python, Rust.",
+      "instructions": "Cold email. Reference cog-runtime by name and mention the Rust + Cloudflare Workers angle of my background as relevant. CTA: 25-min chat about how Replicate handles edge inference."
+    },
+    "expected_signals": [
+      "cog-runtime (repo name) or container runtime",
+      "Rust or Cloudflare Workers",
+      "edge inference"
+    ],
+    "expected_cta_kind": "intro_chat",
+    "must_avoid_phrases": [
+      "I came across your",
+      "I trust this email finds you"
+    ]
+  },
+  {
+    "id": "linkedin-post-comment",
+    "scenario_label": "Outreach triggered by a recent LinkedIn post",
+    "input": {
+      "recipient_name": "Priya Shah",
+      "company_name": "Zed Industries",
+      "recipient_context": "Engineering Lead at Zed Industries. Bio: 'Code editor built in Rust, GPU-accelerated UI.' Languages: Rust, GPUI.",
+      "linkedin_post_content": "We just shipped multi-buffer collaborative editing in Zed. Spent 6 months on conflict-free CRDT replication. The single hardest engineering problem of my career. Open-sourced the protocol spec — link in comments.",
+      "instructions": "Reference the multi-buffer CRDT post specifically (the protocol-spec open-sourcing, not the editor generally). I've shipped real-time collab features in WebSocket apps and have Rust/Wasm experience. CTA: 20-min call to discuss the spec."
+    },
+    "expected_signals": [
+      "CRDT or multi-buffer or collaborative editing",
+      "Rust / WebAssembly background",
+      "20-min call about the spec"
+    ],
+    "expected_cta_kind": "intro_chat",
+    "must_avoid_phrases": [
+      "I came across your post",
+      "Just wanted to reach out",
+      "I hope this finds you well"
+    ]
+  }
+]

@@ -48,7 +48,10 @@ export function DecisionMakersPanel({ companyId, companyKey, isAdmin }: Props) {
     fetchPolicy: "cache-first",
   });
 
-  const contacts = data?.contacts?.contacts ?? [];
+  const contacts = useMemo(
+    () => data?.contacts?.contacts ?? [],
+    [data?.contacts?.contacts],
+  );
 
   const ranked = useMemo(
     () =>

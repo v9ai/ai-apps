@@ -217,6 +217,7 @@ export function ProductLeadsPage({ slug }: { slug: string }) {
   });
 
   return (
+    <>
     <Container size="4" p="6" asChild>
       <main>
       <SubpageBreadcrumb
@@ -542,17 +543,18 @@ export function ProductLeadsPage({ slug }: { slug: string }) {
         )}
       </Flex>
       </main>
-      <DecisionMakersDialog
-        open={previewLead !== null}
-        onOpenChange={handleDialogOpenChange}
-        companyName={previewLead?.companyName ?? ""}
-        productName={product.name}
-        contacts={previewContacts}
-        loading={previewLoading}
-        submitting={submitting}
-        error={previewError}
-        onConfirm={handleConfirmCampaign}
-      />
     </Container>
+    <DecisionMakersDialog
+      open={previewLead !== null}
+      onOpenChange={handleDialogOpenChange}
+      companyName={previewLead?.companyName ?? ""}
+      productName={product.name}
+      contacts={previewContacts}
+      loading={previewLoading}
+      submitting={submitting}
+      error={previewError}
+      onConfirm={handleConfirmCampaign}
+    />
+    </>
   );
 }

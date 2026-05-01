@@ -211,13 +211,11 @@ export const linkedinPostResolvers = {
       }
 
       let upserted = 0;
-      let skipped = 0;
       const CHUNK = 100;
       for (let i = 0; i < d1Inputs.length; i += CHUNK) {
         try {
           const r = await upsertD1Posts(d1Inputs.slice(i, i + CHUNK));
           upserted += r.upserted;
-          skipped += r.skipped;
         } catch (e: any) {
           errors.push(e.message ?? String(e));
         }

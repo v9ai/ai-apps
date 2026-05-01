@@ -1,12 +1,12 @@
-// ── Import All Opportunities floating button ───────────────────────
+// ── Browse Companies floating button (product search) ─────────────
 //
-// Injects a fixed-position button on LinkedIn /jobs/search* pages.
-// Click → background scrapes every page (extractJobsWithPagination)
-// and bulk-inserts each card into Cloudflare D1 via the
-// /api/jobs/d1/import edge-worker route.
+// Injects a fixed-position button on LinkedIn /search/results/products/*
+// pages. Click → background paginates the product results, extracts the
+// parent company of each product card, and bulk-upserts them into Neon
+// via the importCompanies GraphQL mutation.
 //
-// Renders live progress while pagination runs and a final
-// "Imported X / skipped Y" summary.
+// Mirrors import-all-opportunities-button.ts but routes to GraphQL/Neon
+// instead of D1 and targets product-search DOM instead of job cards.
 
 import {
   _observers,
@@ -17,43 +17,39 @@ import {
 } from "./lifecycle";
 import { registerInStack, unregisterFromStack } from "./floating-stack";
 
-const BTN_ATTR = "data-lg-import-all-btn";
-const STACK_PRIORITY = 20;
+const BTN_ATTR = "data-lg-browse-products-btn";
+const STACK_PRIORITY = 21;
 
-let importAllBtn: HTMLButtonElement | null = null;
+let browseBtn: HTMLButtonElement | null = null;
 let lastUrl = "";
 
-function isOnJobsSearchPage(): boolean {
+function isOnProductSearchPage(): boolean {
   if (!window.location.hostname.includes("linkedin.com")) return false;
   const p = window.location.pathname;
   return (
-    p === "/jobs/search/" ||
-    p === "/jobs/search" ||
-    p.startsWith("/jobs/search/") ||
-    p.startsWith("/jobs/view/") ||
-    p.startsWith("/jobs/collections/")
+    p === "/search/results/products/" ||
+    p === "/search/results/products" ||
+    p.startsWith("/search/results/products/")
   );
 }
 
-// ── Button states ──────────────────────────────────────────────────
-
-const COLOR_IDLE = "#2563eb";    // blue
-const COLOR_HOVER = "#1d4ed8";
-const COLOR_BUSY = "#1e3a8a";
+const COLOR_IDLE = "#7c3aed";   // purple — distinguishes from the blue jobs button
+const COLOR_HOVER = "#6d28d9";
+const COLOR_BUSY = "#5b21b6";
 const COLOR_ERROR = "#dc2626";
 const COLOR_DONE = "#16a34a";
 
 function resetIdle(btn: HTMLButtonElement) {
   btn.disabled = false;
-  btn.textContent = "Import all opportunities";
+  btn.textContent = "Browse companies";
   btn.style.backgroundColor = COLOR_IDLE;
 }
 
 function createButton(): HTMLButtonElement {
   const btn = document.createElement("button");
   btn.setAttribute(BTN_ATTR, "true");
-  btn.textContent = "Import all opportunities";
-  btn.title = "Scrape every page of this LinkedIn job-search and save to D1";
+  btn.textContent = "Browse companies";
+  btn.title = "Scrape every page of this LinkedIn product search and save companies to Neon";
   btn.style.cssText = `
     position: fixed;
     right: 24px;
@@ -91,7 +87,7 @@ function createButton(): HTMLButtonElement {
     btn.style.backgroundColor = COLOR_BUSY;
 
     safeSendMessage(
-      { action: "importAllOpportunitiesFromJobsSearch" },
+      { action: "browseProductCompanies" },
       (response) => {
         if (!response?.success) {
           btn.textContent = response?.error || "Failed to start";
@@ -105,18 +101,16 @@ function createButton(): HTMLButtonElement {
   return btn;
 }
 
-// ── Single, module-level progress listener ─────────────────────────
-// Registered once in init() so a leaking listener-per-button is impossible.
 let progressListenerInstalled = false;
 function installProgressListener() {
   if (progressListenerInstalled) return;
   progressListenerInstalled = true;
 
   chrome.runtime.onMessage.addListener((msg) => {
-    if (msg?.action !== "importAllProgress") return;
-    console.log("[CS] importAllProgress", msg);
+    if (msg?.action !== "browseProductCompaniesProgress") return;
+    console.log("[CS] browseProductCompaniesProgress", msg);
 
-    const btn = importAllBtn;
+    const btn = browseBtn;
     if (!btn || !document.body.contains(btn)) return;
 
     if (msg.error) {
@@ -126,16 +120,16 @@ function installProgressListener() {
       return;
     }
     if (msg.done) {
-      const inserted = msg.inserted ?? msg.totals?.inserted ?? 0;
-      const skipped = msg.skipped ?? msg.totals?.skipped ?? 0;
+      const inserted = msg.inserted ?? 0;
+      const skipped = msg.skipped ?? 0;
       const errs = Array.isArray(msg.errors) ? msg.errors.length : 0;
       const pagesScraped = msg.pagesScraped ?? 0;
       const pagesTotal = msg.pagesTotal ?? pagesScraped;
       const pagesFailed = msg.pagesFailed ?? 0;
       const summary =
         errs > 0 || pagesFailed > 0
-          ? `Pages ${pagesScraped}/${pagesTotal} (${pagesFailed} failed) — Inserted ${inserted}, Skipped ${skipped}, Errors ${errs}`
-          : `✓ Pages ${pagesScraped}/${pagesTotal} — Inserted ${inserted}, Skipped ${skipped}`;
+          ? `Pages ${pagesScraped}/${pagesTotal} (${pagesFailed} failed) — Imported ${inserted}, Skipped ${skipped}, Errors ${errs}`
+          : `✓ Pages ${pagesScraped}/${pagesTotal} — Imported ${inserted}, Skipped ${skipped}`;
       btn.textContent = summary.slice(0, 80);
       btn.style.backgroundColor = errs > 0 || pagesFailed > 0 ? COLOR_ERROR : COLOR_DONE;
       btn.disabled = false;
@@ -148,36 +142,34 @@ function installProgressListener() {
   });
 }
 
-// ── Sync / lifecycle ───────────────────────────────────────────────
-
 function removeButton() {
   document.querySelectorAll<HTMLElement>(`[${BTN_ATTR}]`).forEach((el) => {
     unregisterFromStack(el);
     el.remove();
   });
-  importAllBtn = null;
+  browseBtn = null;
 }
 
 function sync() {
   if (!document.body) return;
 
-  if (!isOnJobsSearchPage()) {
-    if (importAllBtn || document.querySelector(`[${BTN_ATTR}]`)) {
+  if (!isOnProductSearchPage()) {
+    if (browseBtn || document.querySelector(`[${BTN_ATTR}]`)) {
       removeButton();
     }
     return;
   }
 
   if (document.querySelector(`[${BTN_ATTR}]`)) {
-    importAllBtn = document.querySelector<HTMLButtonElement>(`[${BTN_ATTR}]`);
+    browseBtn = document.querySelector<HTMLButtonElement>(`[${BTN_ATTR}]`);
     return;
   }
 
   const btn = createButton();
   document.body.appendChild(btn);
-  importAllBtn = btn;
+  browseBtn = btn;
   registerInStack(btn, STACK_PRIORITY);
-  console.log(`[ImportAllOpportunitiesBtn] injected on ${window.location.pathname}`);
+  console.log(`[BrowseProductsCompaniesBtn] injected on ${window.location.pathname}`);
 }
 
 function syncWithRetries() {
@@ -189,8 +181,6 @@ function syncWithRetries() {
     }, delay);
   });
 }
-
-// ── History patch (shared flag — won't double-patch) ───────────────
 
 const HISTORY_PATCH_FLAG = "__lgHistoryPatched";
 function installHistoryPatch() {
@@ -225,8 +215,6 @@ function makeLeadingEdgeObserver() {
     sync();
   });
 }
-
-// ── Module entry ───────────────────────────────────────────────────
 
 function init() {
   if (!window.location.hostname.includes("linkedin.com")) return;

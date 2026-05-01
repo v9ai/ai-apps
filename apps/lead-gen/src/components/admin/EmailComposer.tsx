@@ -154,6 +154,7 @@ export function EmailComposer({
   // Sync prop changes into state when the dialog reopens
   useEffect(() => {
     if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing parent props into editable form on open
       setTo(toProp);
       setName(nameProp);
       setSubject(subjectProp);
@@ -164,6 +165,7 @@ export function EmailComposer({
   // Apply generated content to editable fields when streaming completes
   useEffect(() => {
     if (content) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- applying streamed content to editable fields
       setSubject(content.subject);
       setBody(content.body);
     }

@@ -2,14 +2,10 @@
 
 import { Container, Flex } from "@radix-ui/themes";
 import { AuthDialog } from "@/components/AuthDialog";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 export default function SignUpPage() {
-  const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    setOpen(true);
-  }, []);
+  const [open, setOpen] = useState(true);
 
   return (
     <Container size="1" px="4" py="8">

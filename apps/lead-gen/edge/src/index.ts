@@ -153,7 +153,7 @@ interface ValidJob {
   archived: 0 | 1;
 }
 
-const ALLOW_HEADERS = "authorization, content-type";
+const ALLOW_HEADERS = "authorization, content-type, x-request-id";
 
 function corsHeaders(req: Request): HeadersInit {
   const origin = req.headers.get("origin") ?? "*";
@@ -161,16 +161,18 @@ function corsHeaders(req: Request): HeadersInit {
     "access-control-allow-origin": origin,
     "access-control-allow-methods": "GET, POST, OPTIONS",
     "access-control-allow-headers": ALLOW_HEADERS,
+    "access-control-expose-headers": "x-request-id",
     "access-control-max-age": "86400",
     vary: "origin",
   };
 }
 
-function json(req: Request, body: unknown, status = 200): Response {
+function json(req: Request, body: unknown, status = 200, extraHeaders?: Record<string, string>): Response {
   return new Response(JSON.stringify(body), {
     status,
     headers: {
       ...corsHeaders(req),
+      ...(extraHeaders ?? {}),
       "content-type": "application/json; charset=utf-8",
     },
   });
@@ -202,6 +204,20 @@ function companyKey(name: string, linkedinUrl: string | null): string {
 function newOpportunityId(): string {
   const rand = crypto.randomUUID().replace(/-/g, "").slice(0, 8);
   return `opp_${Date.now()}_${rand}`;
+}
+
+// Mirror of Neon `companies.blocked = true`, populated by
+// scripts/sync-blocklist-d1.ts. Fail-open when the table is missing
+// so an un-migrated environment still imports.
+async function loadBlockedKeys(env: Env): Promise<Set<string>> {
+  try {
+    const res = await env.DB.prepare(
+      `SELECT key FROM blocked_company_keys`,
+    ).all<{ key: string }>();
+    return new Set((res.results ?? []).map((r) => r.key));
+  } catch {
+    return new Set();
+  }
 }
 
 function asString(v: unknown): string | null {
@@ -266,49 +282,86 @@ async function handleJobsD1Import(req: Request, env: Env): Promise<Response> {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: corsHeaders(req) });
   }
+  const requestId = req.headers.get("x-request-id") ?? crypto.randomUUID();
+  const responseHeaders = { "x-request-id": requestId };
+
   if (req.method !== "POST") {
-    return json(req, { error: "Method not allowed" }, 405);
+    return json(req, { error: "Method not allowed", requestId }, 405, responseHeaders);
   }
 
   const auth = req.headers.get("authorization") ?? "";
   const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
   if (!env.JOBS_D1_TOKEN || !token || !constantTimeEq(token, env.JOBS_D1_TOKEN)) {
-    return json(req, { error: "Unauthorized" }, 401);
+    return json(req, { error: "Unauthorized", requestId }, 401, responseHeaders);
   }
 
+  const startedAt = Date.now();
   let body: unknown;
   try {
     body = await req.json();
   } catch {
-    return json(req, { error: "Invalid JSON" }, 400);
+    return json(req, { error: "Invalid JSON", requestId }, 400, responseHeaders);
   }
 
+  const received = Array.isArray((body as { jobs?: unknown[] })?.jobs)
+    ? (body as { jobs: unknown[] }).jobs.length
+    : 0;
   const { valid, skippedInvalid, skippedDuplicate, invalidSamples } = validateJobs(body);
-  console.log(
-    JSON.stringify({
-      msg: "jobs/d1/import received",
-      received: Array.isArray((body as { jobs?: unknown[] })?.jobs)
-        ? (body as { jobs: unknown[] }).jobs.length
-        : 0,
-      valid: valid.length,
-      skippedInvalid,
-      skippedDuplicate,
-      invalidSamples,
-    }),
-  );
-  if (valid.length === 0) {
-    return json(req, {
-      inserted: 0,
-      skipped: skippedInvalid + skippedDuplicate,
-      total: skippedInvalid + skippedDuplicate,
-      detail: { skippedInvalid, skippedDuplicate, skippedExisting: 0, invalidSamples },
-    });
+
+  const blockedKeys = await loadBlockedKeys(env);
+  const kept: ValidJob[] = [];
+  let skippedBlocked = 0;
+  const blockedSamples: Array<{ company: string; key: string }> = [];
+  for (const j of valid) {
+    const k = j.company ? companyKey(j.company, j.companyLinkedinUrl) : null;
+    if (k && blockedKeys.has(k)) {
+      skippedBlocked++;
+      if (blockedSamples.length < 5) blockedSamples.push({ company: j.company, key: k });
+      continue;
+    }
+    kept.push(j);
   }
 
-  // 1. Upsert companies (INSERT OR IGNORE) so each unique company gets a row.
-  //    Jobs whose `company` is empty get keyByJob[i] = null and skip the
-  //    company link entirely (opportunity.company_id stays NULL).
-  const keyByJob: Array<string | null> = valid.map((j) =>
+  if (kept.length === 0) {
+    console.log(
+      JSON.stringify({
+        msg: "jobs/d1/import",
+        requestId,
+        received,
+        validated: valid.length,
+        skippedInvalid,
+        skippedDuplicate,
+        skippedBlocked,
+        opportunitiesInserted: 0,
+        durationMs: Date.now() - startedAt,
+        invalidSample: invalidSamples[0] ?? null,
+        blockedSample: blockedSamples[0] ?? null,
+      }),
+    );
+    return json(
+      req,
+      {
+        requestId,
+        inserted: 0,
+        skipped: skippedInvalid + skippedDuplicate + skippedBlocked,
+        total: skippedInvalid + skippedDuplicate + skippedBlocked,
+        detail: {
+          skippedInvalid,
+          skippedDuplicate,
+          skippedBlocked,
+          skippedExisting: 0,
+          invalidSamples,
+          blockedSamples,
+        },
+      },
+      200,
+      responseHeaders,
+    );
+  }
+
+  // 1. Upsert companies. INSERT OR IGNORE so re-imports don't error;
+  //    company_id is left NULL on jobs without a parsed company.
+  const keyByJob: Array<string | null> = kept.map((j) =>
     j.company ? companyKey(j.company, j.companyLinkedinUrl) : null,
   );
   const uniqueKeys = Array.from(
@@ -316,28 +369,66 @@ async function handleJobsD1Import(req: Request, env: Env): Promise<Response> {
   );
 
   const companyRows = uniqueKeys.map((key) => {
-    const j = valid[keyByJob.indexOf(key)];
+    const j = kept[keyByJob.indexOf(key)];
     return env.DB.prepare(
       `INSERT OR IGNORE INTO companies (key, name, linkedin_url, location)
        VALUES (?, ?, ?, ?)`,
     ).bind(key, j.company, j.companyLinkedinUrl, j.location);
   });
-  if (companyRows.length > 0) await env.DB.batch(companyRows);
+  if (companyRows.length > 0) {
+    try {
+      await env.DB.batch(companyRows);
+    } catch (e) {
+      console.log(
+        JSON.stringify({
+          msg: "jobs/d1/import d1-batch error",
+          requestId,
+          stage: "d1-batch",
+          batchKind: "companies",
+          batchSize: companyRows.length,
+          sampleKey: uniqueKeys[0] ?? null,
+          error: String(e),
+        }),
+      );
+      return json(
+        req,
+        { requestId, stage: "companies", error: String(e) },
+        500,
+        responseHeaders,
+      );
+    }
+  }
 
-  // 2. Resolve company_id per key.
   const placeholders = uniqueKeys.map(() => "?").join(",");
   const companyIdMap = new Map<string, number>();
   if (uniqueKeys.length > 0) {
-    const idRes = await env.DB.prepare(
-      `SELECT id, key FROM companies WHERE key IN (${placeholders})`,
-    )
-      .bind(...uniqueKeys)
-      .all<{ id: number; key: string }>();
-    for (const row of idRes.results ?? []) companyIdMap.set(row.key, row.id);
+    try {
+      const idRes = await env.DB.prepare(
+        `SELECT id, key FROM companies WHERE key IN (${placeholders})`,
+      )
+        .bind(...uniqueKeys)
+        .all<{ id: number; key: string }>();
+      for (const row of idRes.results ?? []) companyIdMap.set(row.key, row.id);
+    } catch (e) {
+      console.log(
+        JSON.stringify({
+          msg: "jobs/d1/import d1-select error",
+          requestId,
+          stage: "d1-select",
+          batchKind: "company-ids",
+          error: String(e),
+        }),
+      );
+      return json(
+        req,
+        { requestId, stage: "company-ids", error: String(e) },
+        500,
+        responseHeaders,
+      );
+    }
   }
 
-  // 3. Insert opportunities (INSERT OR IGNORE on UNIQUE url).
-  const oppStatements = valid.map((j, i) =>
+  const oppStatements = kept.map((j, i) =>
     env.DB.prepare(
       `INSERT OR IGNORE INTO opportunities
         (id, title, url, source, status, raw_context, metadata, tags,
@@ -361,22 +452,75 @@ async function handleJobsD1Import(req: Request, env: Env): Promise<Response> {
 
   let inserted = 0;
   if (oppStatements.length > 0) {
-    const results = await env.DB.batch(oppStatements);
-    for (const r of results) {
-      const meta = (r as { meta?: { changes?: number } }).meta;
-      if (meta?.changes) inserted += meta.changes;
+    try {
+      const results = await env.DB.batch(oppStatements);
+      for (const r of results) {
+        const meta = (r as { meta?: { changes?: number } }).meta;
+        if (meta?.changes) inserted += meta.changes;
+      }
+    } catch (e) {
+      console.log(
+        JSON.stringify({
+          msg: "jobs/d1/import d1-batch error",
+          requestId,
+          stage: "d1-batch",
+          batchKind: "opportunities",
+          batchSize: oppStatements.length,
+          sampleRow: { title: kept[0].title, url: kept[0].url, company: kept[0].company },
+          error: String(e),
+        }),
+      );
+      return json(
+        req,
+        { requestId, stage: "opportunities", error: String(e) },
+        500,
+        responseHeaders,
+      );
     }
   }
 
-  const skippedExisting = valid.length - inserted;
-  const skipped = skippedInvalid + skippedDuplicate + skippedExisting;
+  const skippedExisting = kept.length - inserted;
+  const skipped = skippedInvalid + skippedDuplicate + skippedBlocked + skippedExisting;
+  const durationMs = Date.now() - startedAt;
 
-  return json(req, {
-    inserted,
-    skipped,
-    total: valid.length + skippedInvalid + skippedDuplicate,
-    detail: { skippedInvalid, skippedDuplicate, skippedExisting, invalidSamples },
-  });
+  console.log(
+    JSON.stringify({
+      msg: "jobs/d1/import",
+      requestId,
+      received,
+      validated: valid.length,
+      kept: kept.length,
+      skippedInvalid,
+      skippedDuplicate,
+      skippedBlocked,
+      skippedExisting,
+      opportunitiesInserted: inserted,
+      companiesAttempted: companyRows.length,
+      durationMs,
+      invalidSample: invalidSamples[0] ?? null,
+      blockedSample: blockedSamples[0] ?? null,
+    }),
+  );
+
+  return json(
+    req,
+    {
+      requestId,
+      inserted,
+      skipped,
+      total: kept.length + skippedInvalid + skippedDuplicate + skippedBlocked,
+      detail: {
+        skippedInvalid,
+        skippedDuplicate,
+        skippedBlocked,
+        skippedExisting,
+        invalidSamples,
+        blockedSamples,
+      },
+    },
+    200,
+    responseHeaders,
+  );
 }
 
 // ── D1 read: Next.js server lists D1 opportunities for /opportunities page ──

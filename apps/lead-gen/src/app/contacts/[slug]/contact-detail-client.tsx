@@ -1672,6 +1672,7 @@ export function ContactDetailClient({ contactId, contactSlug }: { contactId?: nu
   const [resendSynced, setResendSynced] = useState(false);
   useEffect(() => {
     if (!resolvedId || !isAdmin || resendSynced) return; // resend sync stays admin-only
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot guard before async import
     setResendSynced(true);
     importResendEmails({ variables: { maxEmails: 50 } }).then(() => {
       refetchEmails();

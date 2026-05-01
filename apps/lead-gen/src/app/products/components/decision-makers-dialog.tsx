@@ -80,6 +80,7 @@ export function DecisionMakersDialog({
     for (const c of sorted) {
       if (isEligible(c)) next.add(c.id);
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset eligible selection when dialog opens
     setSelected(next);
   }, [open, sorted]);
 

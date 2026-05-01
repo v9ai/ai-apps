@@ -6,7 +6,7 @@ import { importJobsToD1, type D1JobInput } from "../../services/jobs-d1-importer
 import { startKeepAlive, stopKeepAlive, waitForTabLoad, clickSeeMore, randomDelay } from "./tab-utils";
 import { browseProfiles, setBrowseCancelled, extractFullProfileData, parseName, parseHeadline } from "./profile-browsing";
 import { traverseAllSearchPages } from "./people-search-traversal";
-import { browseCompanies, setCompanyCancelled } from "./company-browsing";
+import { browseCompanies, setCompanyCancelled, saveCompanyBatch } from "./company-browsing";
 import { browsePeople, importPeopleFromCurrentPage, setPeopleCancelled } from "./people-scraping";
 import { findRelatedCompanies, setFindRelatedCancelled } from "./find-related";
 import { scrapeCompanyFull, setCompanyScraperCancelled } from "./company-scraper";
@@ -40,6 +40,7 @@ if (import.meta.env.DEV) {
 // Listen for messages from content scripts
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "paginationProgress") return false;
+  if (message.action === "productSearchPaginationProgress") return false;
 
   // ── Send Email from LinkedIn Post (via LangGraph pipeline) ──
   if (message.action === "sendEmailFromPost") {
@@ -1208,6 +1209,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     sendResponse({ success: true });
 
     const singlePage = !!(message as { singlePage?: boolean }).singlePage;
+    const startedAt = Date.now();
 
     const notifyTab = async (data: Record<string, unknown>) => {
       try {
@@ -1217,12 +1219,33 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       }
     };
 
-    // Running totals for multi-page mode. Reported in the final `done` msg.
+    type ImportError = {
+      page: number;
+      stage: "http" | "d1" | "network" | "pagination" | "extraction";
+      status?: number;
+      message: string;
+      requestId?: string;
+    };
+    type PageStat = {
+      page: number;
+      cardsSeen: number;
+      extracted: number;
+      valid: number;
+      inserted: number;
+      skipped: number;
+      descriptionsCaptured: number;
+      durationMs: number;
+      requestId?: string;
+    };
+
     let totalInserted = 0;
     let totalSkipped = 0;
-    let totalReceived = 0;
+    let totalValid = 0;
+    let totalExtracted = 0;
+    let totalDescriptions = 0;
     let pagesSaved = 0;
-    let lastSaveError: string | null = null;
+    const errors: ImportError[] = [];
+    const pageStats: PageStat[] = [];
     // Chain saves so per-page POSTs serialize — keeps accumulators race-free
     // and avoids hammering the edge worker.
     let savePromise: Promise<void> = Promise.resolve();
@@ -1249,6 +1272,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         action?: string;
         pageNumber?: number;
         totalPages?: number;
+        attempt?: number;
+        counters?: {
+          cardsSeen?: number;
+          extracted?: number;
+          skippedNoTitle?: number;
+          skippedNoUrl?: number;
+          descriptionsCaptured?: number;
+        };
         jobs?: Array<{
           title?: string;
           company?: string;
@@ -1267,6 +1298,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       const totalPages = m.totalPages ?? 0;
       const pageJobs = m.jobs ?? [];
       const pageCompanies = m.companies ?? [];
+      const counters = m.counters ?? {};
 
       const companyLinkedinByName = new Map<string, string>();
       for (const co of pageCompanies) {
@@ -1288,32 +1320,78 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           archived: !!j.archived,
         }));
 
+      const extracted = counters.extracted ?? pageJobs.length;
+      totalExtracted += extracted;
+      totalValid += payload.length;
+      totalDescriptions += counters.descriptionsCaptured ?? 0;
+
       savePromise = savePromise.then(async () => {
+        const t0 = Date.now();
         if (payload.length === 0) {
           pagesSaved++;
+          pageStats.push({
+            page: pageNumber,
+            cardsSeen: counters.cardsSeen ?? 0,
+            extracted,
+            valid: 0,
+            inserted: 0,
+            skipped: 0,
+            descriptionsCaptured: counters.descriptionsCaptured ?? 0,
+            durationMs: Date.now() - t0,
+          });
           return;
         }
         const result = await importJobsToD1(payload);
-        totalReceived += payload.length;
+        const stat: PageStat = {
+          page: pageNumber,
+          cardsSeen: counters.cardsSeen ?? 0,
+          extracted,
+          valid: payload.length,
+          inserted: result.ok ? result.inserted : 0,
+          skipped: result.ok ? result.skipped : 0,
+          descriptionsCaptured: counters.descriptionsCaptured ?? 0,
+          durationMs: Date.now() - t0,
+          requestId: result.requestId,
+        };
+        pageStats.push(stat);
         if (result.ok) {
           totalInserted += result.inserted;
           totalSkipped += result.skipped;
           pagesSaved++;
+          console.log(
+            `[BG] page ${pageNumber}/${totalPages} ok requestId=${result.requestId} inserted=${result.inserted} skipped=${result.skipped} valid=${payload.length} extracted=${extracted}`,
+          );
           await notifyTab({
             status: `Page ${pageNumber}/${totalPages} — ${totalInserted} imported / ${totalSkipped} skipped`,
             currentPage: pageNumber,
             totalPages,
           });
         } else {
-          lastSaveError = result.error || "Save failed";
+          const stage: ImportError["stage"] =
+            result.status && result.status >= 500 ? "d1"
+              : result.status ? "http"
+              : "network";
+          const err: ImportError = {
+            page: pageNumber,
+            stage,
+            status: result.status,
+            message: result.error || "Save failed",
+            requestId: result.requestId,
+          };
+          errors.push(err);
+          console.warn(
+            `[BG] page ${pageNumber}/${totalPages} FAIL requestId=${result.requestId} stage=${stage} status=${result.status} err=${err.message}`,
+          );
           await notifyTab({
-            status: `Page ${pageNumber} save failed: ${lastSaveError}`,
+            status: `Page ${pageNumber} save failed: ${err.message}`,
             currentPage: pageNumber,
             totalPages,
           });
         }
       }).catch((err) => {
-        lastSaveError = err instanceof Error ? err.message : String(err);
+        const message = err instanceof Error ? err.message : String(err);
+        errors.push({ page: pageNumber, stage: "network", message });
+        console.warn(`[BG] page ${pageNumber} save threw:`, err);
       });
     };
     chrome.runtime.onMessage.addListener(savePageListener);
@@ -1345,22 +1423,57 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
           await savePromise;
 
-          if (totalReceived === 0) {
-            await notifyTab({ error: lastSaveError || "No job cards found across pages" });
-            return;
+          const pageFailures = (r.pageFailures ?? []) as Array<{
+            page: number;
+            reason: string;
+          }>;
+          for (const pf of pageFailures) {
+            errors.push({
+              page: pf.page,
+              stage: pf.reason === "empty-extraction" ? "extraction" : "pagination",
+              message: pf.reason,
+            });
           }
 
           const pagesScraped = r.pagesScraped ?? pagesSaved;
-          await notifyTab({
+          const pagesFailed = pageFailures.length;
+          const finishedAt = Date.now();
+
+          if (totalValid === 0 && errors.length === 0) {
+            await notifyTab({ error: "No job cards found across pages" });
+            return;
+          }
+
+          const donePayload = {
             done: true,
+            pagesScraped,
+            pagesTotal: totalPages,
+            pagesFailed,
             inserted: totalInserted,
             skipped: totalSkipped,
-            total: totalReceived,
-            pagesScraped,
-            status: lastSaveError
-              ? `Imported ${totalInserted} / errors: ${lastSaveError}`
-              : `Imported ${totalInserted} / skipped ${totalSkipped} (${pagesScraped} pages)`,
-          });
+            total: totalValid,
+            totals: {
+              extracted: totalExtracted,
+              valid: totalValid,
+              inserted: totalInserted,
+              skipped: totalSkipped,
+              descriptionsCaptured: totalDescriptions,
+            },
+            pageStats,
+            errors,
+            startedAt,
+            finishedAt,
+            durationMs: finishedAt - startedAt,
+            status:
+              errors.length > 0
+                ? `Pages ${pagesScraped}/${totalPages} (${pagesFailed} failed) — Inserted ${totalInserted}, Skipped ${totalSkipped}, Errors ${errors.length}`
+                : `Imported ${totalInserted} / skipped ${totalSkipped} (${pagesScraped} pages)`,
+          };
+          console.log(
+            `[BG] importAllOpportunities done`,
+            JSON.stringify(donePayload),
+          );
+          await notifyTab(donePayload);
           return;
         }
 
@@ -1414,18 +1527,222 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const result = await importJobsToD1(payload);
 
         if (!result.ok) {
+          errors.push({
+            page: 1,
+            stage: result.status && result.status >= 500 ? "d1" : result.status ? "http" : "network",
+            status: result.status,
+            message: result.error || "D1 import failed",
+            requestId: result.requestId,
+          });
+          console.warn(
+            `[BG] single-page import failed requestId=${result.requestId} status=${result.status} err=${result.error}`,
+          );
           await notifyTab({ error: result.error || "D1 import failed" });
           return;
         }
 
-        await notifyTab({
+        const finishedAt = Date.now();
+        const donePayload = {
           done: true,
+          pagesScraped: scraped.pagesScraped,
+          pagesTotal: scraped.pagesScraped,
+          pagesFailed: 0,
           inserted: result.inserted,
           skipped: result.skipped,
           total: result.total,
-          pagesScraped: scraped.pagesScraped,
+          totals: {
+            extracted: payload.length,
+            valid: payload.length,
+            inserted: result.inserted,
+            skipped: result.skipped,
+            descriptionsCaptured: 0,
+          },
+          pageStats: [
+            {
+              page: 1,
+              cardsSeen: payload.length,
+              extracted: payload.length,
+              valid: payload.length,
+              inserted: result.inserted,
+              skipped: result.skipped,
+              descriptionsCaptured: 0,
+              durationMs: finishedAt - startedAt,
+              requestId: result.requestId,
+            },
+          ],
+          errors,
+          startedAt,
+          finishedAt,
+          durationMs: finishedAt - startedAt,
           status: `Imported ${result.inserted} / skipped ${result.skipped} (${scraped.pagesScraped} pages)`,
+        };
+        console.log(
+          `[BG] importAllOpportunities (single-page) done`,
+          JSON.stringify(donePayload),
+        );
+        await notifyTab(donePayload);
+      } catch (err) {
+        await notifyTab({ error: err instanceof Error ? err.message : String(err) });
+      } finally {
+        chrome.runtime.onMessage.removeListener(progressListener);
+        chrome.runtime.onMessage.removeListener(savePageListener);
+        stopKeepAlive();
+      }
+    })();
+
+    return true;
+  }
+
+  // ── Browse Companies on LinkedIn product-search pages ─────────────
+  // Content script paginates `/search/results/products/*` and fires
+  // `saveCompanyBatchFromProducts` per page. We funnel each batch through
+  // the existing saveCompanyBatch() → importCompanies GraphQL mutation,
+  // which upserts into Neon's companies table.
+  if (message.action === "browseProductCompanies") {
+    const tabId = sender.tab?.id;
+    console.log("[BG] browseProductCompanies from tab", tabId, "url=", sender.tab?.url);
+    if (!tabId) {
+      sendResponse({ success: false, error: "No tab ID" });
+      return true;
+    }
+    sendResponse({ success: true });
+
+    const startedAt = Date.now();
+
+    const notifyTab = async (data: Record<string, unknown>) => {
+      try {
+        await chrome.tabs.sendMessage(tabId, {
+          action: "browseProductCompaniesProgress",
+          ...data,
         });
+      } catch (err) {
+        console.warn(`[BG] browseProductCompanies notifyTab(${tabId}) failed:`, err, data);
+      }
+    };
+
+    let totalImported = 0;
+    let pagesSaved = 0;
+    const errors: Array<{ page: number; message: string }> = [];
+    const seenUrls = new Set<string>();
+    let savePromise: Promise<void> = Promise.resolve();
+
+    const progressListener = (msg: unknown) => {
+      const m = msg as {
+        action?: string;
+        currentPage?: number;
+        totalPages?: number;
+        collected?: number;
+      };
+      if (m?.action === "productSearchPaginationProgress") {
+        notifyTab({
+          status: `Page ${m.currentPage}/${m.totalPages} — ${m.collected ?? 0} collected`,
+          currentPage: m.currentPage,
+          totalPages: m.totalPages,
+        });
+      }
+    };
+    chrome.runtime.onMessage.addListener(progressListener);
+
+    const savePageListener = (msg: unknown) => {
+      const m = msg as {
+        action?: string;
+        pageNumber?: number;
+        totalPages?: number;
+        companies?: Array<{ name?: string; linkedin_url?: string }>;
+      };
+      if (m?.action !== "saveCompanyBatchFromProducts") return;
+
+      const pageNumber = m.pageNumber ?? 0;
+      const totalPages = m.totalPages ?? 0;
+      const pageCompanies = m.companies ?? [];
+
+      const batch = pageCompanies
+        .filter((c) => !!c.name && !!c.linkedin_url)
+        .filter((c) => {
+          if (seenUrls.has(c.linkedin_url!)) return false;
+          seenUrls.add(c.linkedin_url!);
+          return true;
+        })
+        .map((c) => ({ name: c.name!, linkedin_url: c.linkedin_url! }));
+
+      savePromise = savePromise.then(async () => {
+        if (batch.length === 0) {
+          pagesSaved++;
+          return;
+        }
+        try {
+          const imported = await saveCompanyBatch(batch);
+          totalImported += imported;
+          pagesSaved++;
+          await notifyTab({
+            status: `Page ${pageNumber}/${totalPages} — ${totalImported} imported`,
+            currentPage: pageNumber,
+            totalPages,
+          });
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          errors.push({ page: pageNumber, message });
+          console.warn(`[BG] product page ${pageNumber} save failed:`, err);
+          await notifyTab({
+            status: `Page ${pageNumber} save failed: ${message}`,
+            currentPage: pageNumber,
+            totalPages,
+          });
+        }
+      });
+    };
+    chrome.runtime.onMessage.addListener(savePageListener);
+
+    (async () => {
+      startKeepAlive();
+      try {
+        await notifyTab({ status: "Checking pagination..." });
+
+        const r = await chrome.tabs
+          .sendMessage(tabId, { action: "extractCompaniesFromProductsWithPagination" })
+          .catch((err) => ({ success: false, error: err?.message ?? String(err) }));
+
+        if (!r?.success) {
+          await notifyTab({ error: r?.error || "Product scrape failed" });
+          return;
+        }
+
+        await savePromise;
+
+        const totalPages = (r.totalPages as number) ?? 0;
+        const pagesScraped = (r.pagesScraped as number) ?? pagesSaved;
+        const pageFailures = (r.pageFailures ?? []) as Array<{
+          page: number;
+          reason: string;
+        }>;
+        for (const pf of pageFailures) {
+          errors.push({ page: pf.page, message: pf.reason });
+        }
+        const finishedAt = Date.now();
+
+        if (totalImported === 0 && errors.length === 0) {
+          await notifyTab({ error: "No companies found across product pages" });
+          return;
+        }
+
+        const donePayload = {
+          done: true,
+          pagesScraped,
+          pagesTotal: totalPages,
+          pagesFailed: pageFailures.length,
+          inserted: totalImported,
+          skipped: 0,
+          errors,
+          startedAt,
+          finishedAt,
+          durationMs: finishedAt - startedAt,
+          status:
+            errors.length > 0
+              ? `Pages ${pagesScraped}/${totalPages} (${pageFailures.length} failed) — Imported ${totalImported}, Errors ${errors.length}`
+              : `Imported ${totalImported} companies (${pagesScraped} pages)`,
+        };
+        console.log("[BG] browseProductCompanies done", JSON.stringify(donePayload));
+        await notifyTab(donePayload);
       } catch (err) {
         await notifyTab({ error: err instanceof Error ? err.message : String(err) });
       } finally {

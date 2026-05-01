@@ -4,7 +4,6 @@ import {
   createContext,
   useContext,
   useState,
-  useEffect,
   useCallback,
   type ReactNode,
 } from "react";
@@ -21,18 +20,16 @@ const SidebarContext = createContext<SidebarContextValue>({
 
 const STORAGE_KEY = "sidebar-collapsed";
 
-export function SidebarProvider({ children }: { children: ReactNode }) {
-  const [collapsed, setCollapsed] = useState(false);
+function readInitialCollapsed(): boolean {
+  if (typeof window === "undefined") return false;
+  const stored = window.localStorage.getItem(STORAGE_KEY);
+  if (stored === "true") return true;
+  if (stored === null && window.innerWidth <= 1024) return true;
+  return false;
+}
 
-  useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    // Auto-collapse on tablet-width screens (iPad portrait = 768px, landscape = 1024px)
-    if (stored === null && window.innerWidth <= 1024) {
-      setCollapsed(true);
-    } else if (stored === "true") {
-      setCollapsed(true);
-    }
-  }, []);
+export function SidebarProvider({ children }: { children: ReactNode }) {
+  const [collapsed, setCollapsed] = useState<boolean>(readInitialCollapsed);
 
   const toggle = useCallback(() => {
     setCollapsed((prev) => {

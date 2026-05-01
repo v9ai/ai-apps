@@ -33,7 +33,6 @@ import {
   Filter,
   BarChart3,
   Code as CodeIcon,
-  Key,
   AlertTriangle,
   Lock,
   GitBranch,

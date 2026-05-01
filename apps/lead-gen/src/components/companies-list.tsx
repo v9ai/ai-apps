@@ -25,6 +25,7 @@ import {
   TextArea,
   TextField,
   Select,
+  Tabs,
 } from "@radix-ui/themes";
 import { button } from "@/recipes/button";
 import { css } from "styled-system/css";
@@ -41,9 +42,11 @@ export function CompaniesList() {
   const [sortBy, setSortBy] = useState(searchParams.get("sort") ?? "name");
   const [minTier, setMinTier] = useState(searchParams.get("tier") ?? "all");
   const [tagFilter, setTagFilter] = useState(searchParams.get("tag") ?? "");
+  const [activeTab, setActiveTab] = useState(searchParams.get("tab") ?? "all");
 
   useEffect(() => {
     const next = searchParams.get("tag") ?? "";
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing external URL state to local
     setTagFilter((cur) => (cur === next ? cur : next));
   }, [searchParams]);
 
@@ -54,9 +57,10 @@ export function CompaniesList() {
     if (sortBy !== "name") params.set("sort", sortBy);
     if (minTier !== "all") params.set("tier", minTier);
     if (tagFilter) params.set("tag", tagFilter);
+    if (activeTab !== "all") params.set("tab", activeTab);
     const qs = params.toString();
     router.replace(`${pathname}${qs ? `?${qs}` : ""}`, { scroll: false });
-  }, [searchTerm, category, sortBy, minTier, tagFilter, router, pathname]);  
+  }, [searchTerm, category, sortBy, minTier, tagFilter, activeTab, router, pathname]);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const { user } = useAuth();
   const [deleteCompanyMutation] = useDeleteCompanyMutation();
@@ -210,6 +214,9 @@ export function CompaniesList() {
     ...(category !== "ALL" ? { category: category as CompanyCategory } : {}),
     ...(minTier !== "all" ? { min_ai_tier: parseInt(minTier, 10) } : {}),
     ...(tagFilter ? { tags_any: [tagFilter] } : {}),
+    ...(activeTab === "sales-tech"
+      ? { service_taxonomy_any: ["Sales Engagement Platform", "Lead Generation Software"] }
+      : {}),
   };
   const orderBy = (sortBy === "score" ? "SCORE_DESC" : "NAME_ASC") as CompanyOrderBy;
 
@@ -400,6 +407,14 @@ export function CompaniesList() {
           )}
         </Flex>
       </Flex>
+
+      {/* tabs */}
+      <Tabs.Root value={activeTab} onValueChange={setActiveTab}>
+        <Tabs.List mb="3">
+          <Tabs.Trigger value="all">All</Tabs.Trigger>
+          <Tabs.Trigger value="sales-tech">Sales Tech</Tabs.Trigger>
+        </Tabs.List>
+      </Tabs.Root>
 
       {/* search */}
       <Box mb="2">

@@ -2685,6 +2685,150 @@ function extractCompaniesFromFeedPosts(): Array<{ name: string; linkedin_url: st
   return Array.from(companyMap.values());
 }
 
+// Extract parent companies from product cards on /search/results/products/*.
+// LinkedIn's product search lists products grouped under the company that
+// publishes them; we want the company, not the product.
+function extractCompaniesFromProductCards(): Array<{
+  name: string;
+  linkedin_url: string;
+}> {
+  const companyMap = new Map<string, { name: string; linkedin_url: string }>();
+
+  // Primary: the standard /search/results/* card wrapper.
+  const cardRoots = new Set<Element>();
+  document
+    .querySelectorAll(
+      "li.reusable-search__result-container, div.entity-result, li.artdeco-list__item",
+    )
+    .forEach((el) => cardRoots.add(el));
+
+  const collectFromAnchor = (anchor: HTMLAnchorElement) => {
+    let linkedin_url = "";
+    try {
+      const url = new URL(anchor.href, window.location.origin);
+      const match = url.pathname.match(/^\/company\/([^/]+)/);
+      if (!match) return;
+      linkedin_url = `https://www.linkedin.com/company/${match[1]}/`;
+    } catch {
+      return;
+    }
+    const aria = anchor.getAttribute("aria-label") ?? "";
+    const innerSpan = anchor.querySelector("span[aria-hidden='true']");
+    const raw =
+      innerSpan?.textContent?.trim() ||
+      anchor.textContent?.trim() ||
+      aria.replace(/\s*\(opens[^)]*\)/i, "").trim() ||
+      "";
+    const name = raw.split(/\s*·\s*/)[0].trim();
+    if (!name) return;
+    if (!companyMap.has(linkedin_url)) {
+      companyMap.set(linkedin_url, { name, linkedin_url });
+    }
+  };
+
+  cardRoots.forEach((card) => {
+    const anchor = card.querySelector<HTMLAnchorElement>('a[href*="/company/"]');
+    if (anchor) collectFromAnchor(anchor);
+  });
+
+  // Fallback: classnames drift across LinkedIn redesigns. If the primary
+  // selector found nothing, walk every /company/ link inside <main>.
+  if (companyMap.size === 0) {
+    const main = document.querySelector("main") ?? document.body;
+    main
+      .querySelectorAll<HTMLAnchorElement>('a[href*="/company/"]')
+      .forEach((a) => collectFromAnchor(a));
+  }
+
+  return Array.from(companyMap.values());
+}
+
+// Pagination helpers for /search/results/products/* — uses the generic
+// .artdeco-pagination block rather than the jobs-specific selector.
+function getProductSearchPaginationInfo(): {
+  currentPage: number;
+  totalPages: number;
+} | null {
+  const stateEl =
+    document.querySelector(".artdeco-pagination__page-state") ??
+    document.querySelector('[data-test-pagination-page-btn][aria-current="true"]')
+      ?.closest(".artdeco-pagination") ?? null;
+
+  if (stateEl) {
+    const text = stateEl.textContent?.trim() ?? "";
+    const match = text.match(/Page\s+(\d+)\s+of\s+(\d+)/i);
+    if (match) {
+      return {
+        currentPage: parseInt(match[1], 10),
+        totalPages: parseInt(match[2], 10),
+      };
+    }
+  }
+
+  // Fallback: count rendered indicator buttons.
+  const buttons = document.querySelectorAll<HTMLButtonElement>(
+    ".artdeco-pagination__indicator button",
+  );
+  if (buttons.length > 0) {
+    let currentPage = 1;
+    let totalPages = 1;
+    buttons.forEach((b) => {
+      const aria = b.getAttribute("aria-label") ?? "";
+      const m = aria.match(/Page\s+(\d+)/i);
+      if (!m) return;
+      const n = parseInt(m[1], 10);
+      if (n > totalPages) totalPages = n;
+      const li = b.closest("li");
+      if (li?.classList.contains("active") || b.getAttribute("aria-current") === "true") {
+        currentPage = n;
+      }
+    });
+    return { currentPage, totalPages };
+  }
+
+  return null;
+}
+
+async function clickProductSearchPageNumber(
+  pageNumber: number,
+): Promise<{ ok: true } | { ok: false; reason: "no-button" | "timeout" }> {
+  const indicators = document.querySelectorAll<HTMLButtonElement>(
+    ".artdeco-pagination__indicator button",
+  );
+
+  let target: HTMLButtonElement | null = null;
+  for (const btn of Array.from(indicators)) {
+    if (btn.getAttribute("aria-label") === `Page ${pageNumber}`) {
+      target = btn;
+      break;
+    }
+  }
+
+  if (!target) {
+    const next = document.querySelector<HTMLButtonElement>(
+      'button.artdeco-pagination__button--next, button[aria-label="Next"]',
+    );
+    if (!next || next.disabled) return { ok: false, reason: "no-button" };
+    target = next;
+  }
+
+  target.scrollIntoView({ block: "center" });
+  target.click();
+
+  let attempts = 0;
+  const maxAttempts = 15;
+  while (attempts < maxAttempts) {
+    await new Promise((r) => setTimeout(r, 1000));
+    const info = getProductSearchPaginationInfo();
+    if (info && info.currentPage === pageNumber) {
+      await new Promise((r) => setTimeout(r, 1500));
+      return { ok: true };
+    }
+    attempts++;
+  }
+  return { ok: false, reason: "timeout" };
+}
+
 // Function to extract job data including salary
 async function extractJobData() {
   // Detect the page type
@@ -2711,7 +2855,8 @@ async function extractJobData() {
       // Fall through to card scraper if the detail panel isn't present
       // (e.g. search sidebar still mounted with cards).
     }
-    return await extractLinkedInJobData();
+    const result = await extractLinkedInJobData();
+    return result.jobs;
   }
 
   return [];
@@ -2993,10 +3138,16 @@ async function extractLinkedInJobData() {
     await sleep(250);
   }
 
-  console.log(
-    `[CS] extractLinkedInJobData: ${jobs.length} extracted, ${descriptionsCaptured} with description, ${skippedNoTitle} skipped (no title), ${skippedNoUrl} skipped (no url) — total cards seen: ${cardRoots.size}`,
-  );
-  return jobs;
+  return {
+    jobs,
+    counters: {
+      cardsSeen: cardRoots.size,
+      extracted: jobs.length,
+      skippedNoTitle,
+      skippedNoUrl,
+      descriptionsCaptured,
+    },
+  };
 }
 
 // Function to get LinkedIn pagination info
@@ -3017,10 +3168,11 @@ function getLinkedInPaginationInfo() {
   };
 }
 
-// Function to click specific page number on LinkedIn
-async function clickLinkedInPageNumber(pageNumber: number): Promise<boolean> {
+type ClickPageResult =
+  | { ok: true }
+  | { ok: false; reason: "no-button" | "timeout" };
 
-  // Find the button with the specific page number
+async function clickLinkedInPageNumber(pageNumber: number): Promise<ClickPageResult> {
   const pageButtons = document.querySelectorAll(
     ".jobs-search-pagination__indicator button",
   );
@@ -3036,13 +3188,12 @@ async function clickLinkedInPageNumber(pageNumber: number): Promise<boolean> {
   }
 
   if (!targetButton) {
-    // Fallback to Next button
     const nextButton = document.querySelector(
       'button[aria-label="View next page"]',
     ) as HTMLButtonElement;
 
     if (!nextButton || nextButton.disabled) {
-      return false;
+      return { ok: false, reason: "no-button" };
     }
 
     targetButton = nextButton;
@@ -3050,23 +3201,21 @@ async function clickLinkedInPageNumber(pageNumber: number): Promise<boolean> {
 
   targetButton.click();
 
-  // Wait for new jobs to load (check for changes in job cards)
   let attempts = 0;
-  const maxAttempts = 15; // 15 seconds max
+  const maxAttempts = 15;
 
   while (attempts < maxAttempts) {
     await new Promise((resolve) => setTimeout(resolve, 1000));
     const paginationInfo = getLinkedInPaginationInfo();
     if (paginationInfo && paginationInfo.currentPage === pageNumber) {
-      // Wait a bit more for all content to load
       await new Promise((resolve) => setTimeout(resolve, 1500));
-      return true;
+      return { ok: true };
     }
 
     attempts++;
   }
 
-  return true; // Continue anyway
+  return { ok: false, reason: "timeout" };
 }
 
 // Extract generic job board data (Greenhouse, Wellfound, etc.)
@@ -3151,9 +3300,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "extractJobsWithPagination") {
     (async () => {
       try {
-        // LinkedIn pagination handling
         const allJobs: any[] = [];
         const companyMap = new Map<string, { name: string; linkedin_url: string }>();
+        const pageFailures: Array<{
+          page: number;
+          reason: "click-no-button" | "click-timeout" | "empty-extraction";
+        }> = [];
         const paginationInfo = getLinkedInPaginationInfo();
 
         if (!paginationInfo) {
@@ -3167,74 +3319,104 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
         const { currentPage, totalPages } = paginationInfo;
         const startPage = currentPage;
-        let actualPagesScraped = 1; // current page is always scraped
+        let actualPagesScraped = 0;
 
-        // Extract jobs + companies from current page
-        const currentJobs = await extractLinkedInJobData();
+        // Re-extract once on empty result — LinkedIn occasionally renders the
+        // pagination chrome before the cards mount.
+        const extractWithRetry = async (page: number, attempt: number) => {
+          let result = await extractLinkedInJobData();
+          if (result.jobs.length === 0 && totalPages > 1) {
+            console.warn(
+              `[CS] page ${page} attempt ${attempt}: 0 jobs extracted, retrying after 1.5s`,
+            );
+            await new Promise((r) => setTimeout(r, 1500));
+            result = await extractLinkedInJobData();
+          }
+          return result;
+        };
+
+        const flushPage = (
+          pageNumber: number,
+          jobs: any[],
+          companies: ReturnType<typeof extractCompaniesFromJobCards>,
+          counters: Awaited<ReturnType<typeof extractLinkedInJobData>>["counters"],
+          attempt: number,
+        ) => {
+          safeSendMessage({
+            action: "savePageBatch",
+            pageNumber,
+            totalPages,
+            jobs,
+            companies,
+            counters,
+            attempt,
+          });
+          safeSendMessage({
+            action: "paginationProgress",
+            currentPage: pageNumber,
+            totalPages,
+            jobsCollected: allJobs.length,
+          });
+        };
+
+        const startResult = await extractWithRetry(startPage, 1);
         const currentCompanies = extractCompaniesFromJobCards();
-        allJobs.push(...currentJobs);
+        allJobs.push(...startResult.jobs);
         currentCompanies.forEach((c) => {
           const key = c.linkedin_url || c.name.toLowerCase();
           if (!companyMap.has(key)) companyMap.set(key, c);
         });
+        actualPagesScraped++;
+        if (startResult.jobs.length === 0 && totalPages > 1) {
+          pageFailures.push({ page: startPage, reason: "empty-extraction" });
+        }
+        flushPage(
+          startPage,
+          startResult.jobs,
+          currentCompanies,
+          startResult.counters,
+          1,
+        );
 
-        // Flush this page to the background as soon as it's scraped — the
-        // background POSTs to D1 right away so partial progress survives if
-        // the user closes the tab or LinkedIn rate-limits mid-scrape.
-        safeSendMessage({
-          action: "savePageBatch",
-          pageNumber: startPage,
-          totalPages,
-          jobs: currentJobs,
-          companies: currentCompanies,
-        });
-
-        // Send progress update
-        safeSendMessage({
-          action: "paginationProgress",
-          currentPage: startPage,
-          totalPages,
-          jobsCollected: allJobs.length,
-        });
-
-        // Navigate through remaining pages
         for (let page = startPage + 1; page <= totalPages; page++) {
-          const success = await clickLinkedInPageNumber(page);
-
-          if (!success) {
+          let click = await clickLinkedInPageNumber(page);
+          if (!click.ok) {
+            console.warn(
+              `[CS] clickLinkedInPageNumber(${page}) failed: ${click.reason}, retrying once`,
+            );
+            await new Promise((r) => setTimeout(r, 1500));
+            click = await clickLinkedInPageNumber(page);
+          }
+          if (!click.ok) {
+            pageFailures.push({
+              page,
+              reason: click.reason === "no-button" ? "click-no-button" : "click-timeout",
+            });
+            // Pagination is broken — continuing wastes requests on the same DOM.
             break;
           }
 
-          // Wait a bit for content to fully render
           await new Promise((resolve) => setTimeout(resolve, 1000));
 
-          // Extract jobs + companies from new page
-          const pageJobs = await extractLinkedInJobData();
+          const pageResult = await extractWithRetry(page, 1);
           const pageCompanies = extractCompaniesFromJobCards();
-          allJobs.push(...pageJobs);
+          allJobs.push(...pageResult.jobs);
           pageCompanies.forEach((c) => {
             const key = c.linkedin_url || c.name.toLowerCase();
             if (!companyMap.has(key)) companyMap.set(key, c);
           });
 
           actualPagesScraped++;
-
-          // Flush this page to background.
-          safeSendMessage({
-            action: "savePageBatch",
-            pageNumber: page,
-            totalPages,
-            jobs: pageJobs,
-            companies: pageCompanies,
-          });
-
-          // Send progress update
-          safeSendMessage({
-            action: "paginationProgress",
-            currentPage: page,
-            totalPages,
-            jobsCollected: allJobs.length,
-          });
+          if (pageResult.jobs.length === 0) {
+            pageFailures.push({ page, reason: "empty-extraction" });
+          }
+          flushPage(
+            page,
+            pageResult.jobs,
+            pageCompanies,
+            pageResult.counters,
+            1,
+          );
         }
 
         sendResponse({
@@ -3243,6 +3425,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           companies: Array.from(companyMap.values()),
           totalPages,
           pagesScraped: actualPagesScraped,
+          pageFailures,
         });
       } catch (error) {
         sendResponse({
@@ -3251,7 +3434,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         });
       }
     })();
-    return true; // Keep message channel open for async response
+    return true;
   }
 
   if (message.action === "getPaginationInfo") {
@@ -3260,12 +3443,125 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
+  if (message.action === "getProductSearchPaginationInfo") {
+    const paginationInfo = getProductSearchPaginationInfo();
+    sendResponse({ paginationInfo });
+    return true;
+  }
+
+  if (message.action === "extractCompaniesFromProductsWithPagination") {
+    (async () => {
+      try {
+        const seen = new Map<string, { name: string; linkedin_url: string }>();
+        const pageFailures: Array<{
+          page: number;
+          reason: "click-no-button" | "click-timeout" | "empty-extraction";
+        }> = [];
+
+        // Scroll to bottom first — product search lazy-mounts cards.
+        window.scrollTo(0, document.body.scrollHeight);
+        await new Promise((r) => setTimeout(r, 1500));
+
+        const paginationInfo = getProductSearchPaginationInfo();
+        const startPage = paginationInfo?.currentPage ?? 1;
+        const totalPages = paginationInfo?.totalPages ?? 1;
+        let pagesScraped = 0;
+
+        const extractWithRetry = async () => {
+          let companies = extractCompaniesFromProductCards();
+          if (companies.length === 0) {
+            await new Promise((r) => setTimeout(r, 1500));
+            companies = extractCompaniesFromProductCards();
+          }
+          return companies;
+        };
+
+        const flushPage = (
+          pageNumber: number,
+          companies: Array<{ name: string; linkedin_url: string }>,
+        ) => {
+          safeSendMessage({
+            action: "saveCompanyBatchFromProducts",
+            pageNumber,
+            totalPages,
+            companies,
+          });
+          safeSendMessage({
+            action: "productSearchPaginationProgress",
+            currentPage: pageNumber,
+            totalPages,
+            collected: seen.size,
+          });
+        };
+
+        const startCompanies = await extractWithRetry();
+        startCompanies.forEach((c) => {
+          if (!seen.has(c.linkedin_url)) seen.set(c.linkedin_url, c);
+        });
+        pagesScraped++;
+        if (startCompanies.length === 0 && totalPages > 1) {
+          pageFailures.push({ page: startPage, reason: "empty-extraction" });
+        }
+        flushPage(startPage, startCompanies);
+
+        for (let page = startPage + 1; page <= totalPages; page++) {
+          let click = await clickProductSearchPageNumber(page);
+          if (!click.ok) {
+            await new Promise((r) => setTimeout(r, 1500));
+            click = await clickProductSearchPageNumber(page);
+          }
+          if (!click.ok) {
+            pageFailures.push({
+              page,
+              reason: click.reason === "no-button" ? "click-no-button" : "click-timeout",
+            });
+            break;
+          }
+
+          // Scroll to force lazy-load of all cards on this page.
+          window.scrollTo(0, document.body.scrollHeight);
+          await new Promise((r) => setTimeout(r, 1200));
+
+          const pageCompanies = await extractWithRetry();
+          pageCompanies.forEach((c) => {
+            if (!seen.has(c.linkedin_url)) seen.set(c.linkedin_url, c);
+          });
+          pagesScraped++;
+          if (pageCompanies.length === 0) {
+            pageFailures.push({ page, reason: "empty-extraction" });
+          }
+          flushPage(page, pageCompanies);
+        }
+
+        sendResponse({
+          success: true,
+          totalPages,
+          pagesScraped,
+          uniqueCompanies: seen.size,
+          pageFailures,
+        });
+      } catch (error) {
+        sendResponse({
+          success: false,
+          error: error instanceof Error ? error.message : "Unknown error",
+        });
+      }
+    })();
+    return true;
+  }
+
   if (message.action === "goToNextPage") {
     {
       const info = getLinkedInPaginationInfo();
       if (info) {
         clickLinkedInPageNumber(info.currentPage + 1)
-          .then((ok) => sendResponse({ success: ok }))
+          .then((res) =>
+            sendResponse(
+              res.ok
+                ? { success: true }
+                : { success: false, error: res.reason },
+            ),
+          )
           .catch((err: Error) =>
             sendResponse({ success: false, error: err.message }),
           );

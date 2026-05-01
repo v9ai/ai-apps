@@ -19,7 +19,7 @@ import { isAdminEmail } from "@/lib/admin";
 import { PRODUCT_INTEL_VERSION } from "@/lib/intelVersion";
 import {
   getRunStatus,
-  productIntelAssistantId,
+  productIntelAssistantId as _productIntelAssistantId,
   startGraphRun,
 } from "@/lib/langgraph-client";
 import { publishIntelRunUpdate } from "@/lib/gateway-publish";
@@ -47,7 +47,7 @@ function requireAdmin(context: GraphQLContext): void {
 
 type IntelKind = "pricing" | "gtm" | "product_intel" | "icp";
 
-async function kickoff(
+async function _kickoff(
   kind: IntelKind,
   assistantId: string,
   extraInput: Record<string, unknown>,

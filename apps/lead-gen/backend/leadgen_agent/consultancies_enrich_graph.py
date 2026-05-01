@@ -278,7 +278,7 @@ _CLASSIFY_PROMPT = (
     '  "ai_tier": 0 or 1 or 2,\n'
     '  "services": ["list of products/services they offer"],\n'
     '  "tech_stack": ["technologies, frameworks, AI/ML tools mentioned"],\n'
-    '  "industry": "primary industry vertical (e.g. sales_tech, martech, hr_tech)",\n'
+    '  "industry": "primary industry vertical (e.g. sales-engagement-platforms, martech, hr_tech)",\n'
     '  "employee_range": "1-10 or 11-50 or 51-200 or 201-500 or 500+",\n'
     '  "remote_policy": "remote or hybrid or onsite or unknown",\n'
     '  "funding_stage": "bootstrapped or seed or series_a or series_b or series_c_plus or public or unknown",\n'

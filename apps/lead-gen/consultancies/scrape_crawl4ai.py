@@ -75,7 +75,7 @@ Return JSON with these exact keys:
   "ai_tier": 0 or 1 or 2,
   "services": ["list of products/services they offer"],
   "tech_stack": ["technologies, frameworks, AI/ML tools mentioned"],
-  "industry": "primary industry vertical (e.g. sales_tech, martech, hr_tech, fintech, devtools, logistics, optimization)",
+  "industry": "primary industry vertical (e.g. sales-engagement-platforms, martech, hr_tech, fintech, devtools, logistics, optimization)",
   "industries": ["all industry verticals served"],
   "employee_range": "1-10 or 11-50 or 51-200 or 201-500 or 500+",
   "remote_policy": "remote or hybrid or onsite or unknown",
