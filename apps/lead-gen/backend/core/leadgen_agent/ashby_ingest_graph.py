@@ -35,7 +35,6 @@ import httpx
 import psycopg
 from langgraph.graph import END, START, StateGraph
 
-from .ai_role_taxonomy import classify_job
 from .ashby_client import AshbyClient
 
 log = logging.getLogger(__name__)
@@ -52,11 +51,6 @@ class AshbyIngestState(TypedDict, total=False):
     # plumbing between nodes
     jobs: list[dict[str, Any]]
     company_id: int | None
-    # AI-role counters (recomputed every run; see WP3 of zippy-meadow plan)
-    ai_role_count: int
-    remote_ai_role_count: int
-    matched_titles: list[str]
-    counters_updated: bool
     # outputs
     inserted: int
     updated: int
@@ -171,81 +165,7 @@ async def link_company(state: AshbyIngestState) -> dict[str, Any]:
     return {"company_id": company_id}
 
 
-# ── Node 3a: classify_roles ───────────────────────────────────────────────────
-
-
-async def classify_roles(state: AshbyIngestState) -> dict[str, Any]:
-    """Tag each fetched job as AI / remote and aggregate counts.
-
-    Pure CPU work — no DB / network. Counters are *recomputed* per run so
-    they self-correct as roles close. Mirrors `_job_tags()`'s remote
-    priority chain via :func:`ai_role_taxonomy.is_remote`.
-    """
-    if state.get("_error"):
-        return {
-            "ai_role_count": 0,
-            "remote_ai_role_count": 0,
-            "matched_titles": [],
-        }
-    jobs = state.get("jobs") or []
-    matched_titles: list[str] = []
-    ai_count = 0
-    remote_ai_count = 0
-    for job in jobs:
-        result = classify_job(job)
-        if not result.is_ai_role:
-            continue
-        ai_count += 1
-        title = _clean_title(job.get("title") or "")
-        matched_titles.append(title)
-        if result.is_remote:
-            remote_ai_count += 1
-    return {
-        "ai_role_count": ai_count,
-        "remote_ai_role_count": remote_ai_count,
-        "matched_titles": matched_titles,
-    }
-
-
-# ── Node 3b: update_company_counters ──────────────────────────────────────────
-
-
-async def update_company_counters(state: AshbyIngestState) -> dict[str, Any]:
-    """Persist the recomputed AI-role counters onto ``companies``.
-
-    The migration `0083_ai_role_counters.sql` added two NOT NULL DEFAULT 0
-    columns; we issue a single UPDATE so the company row reflects the
-    *current* slug snapshot, not a running total.
-    """
-    if state.get("_error"):
-        return {"counters_updated": False}
-    company_id = state.get("company_id")
-    if not company_id:
-        return {"counters_updated": False}
-    ai_count = int(state.get("ai_role_count") or 0)
-    remote_ai_count = int(state.get("remote_ai_role_count") or 0)
-    try:
-        with psycopg.connect(_dsn(), autocommit=True, connect_timeout=10) as conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    """
-                    UPDATE companies
-                       SET ai_role_count_30d        = %s,
-                           remote_ai_role_count_30d = %s,
-                           updated_at               = now()::text
-                     WHERE id = %s
-                    """,
-                    (ai_count, remote_ai_count, int(company_id)),
-                )
-    except psycopg.Error as exc:
-        log.warning(
-            "update_company_counters failed company_id=%s: %s", company_id, exc
-        )
-        return {"counters_updated": False}
-    return {"counters_updated": True}
-
-
-# ── Node 4: post_to_d1 ────────────────────────────────────────────────────────
+# ── Node 3: post_to_d1 ────────────────────────────────────────────────────────
 
 
 async def post_to_d1(state: AshbyIngestState) -> dict[str, Any]:
