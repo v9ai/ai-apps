@@ -801,31 +801,15 @@ def _persist_sync(
             )
             inserted += 1
 
-            # Merge into companies.deep_analysis
+            # ``companies.deep_analysis`` is a free-form Markdown text column
+            # populated by the company-enrichment graph — don't overwrite it.
+            # Canonical structured store is the per-aspect ``company_facts``
+            # rows above plus the ``salestech.summary`` row. Just refresh the
+            # confidence column so /companies UI sees a recent value.
             cur.execute(
-                "SELECT COALESCE(deep_analysis, '{}'::jsonb) FROM companies WHERE id = %s",
-                (company_id,),
-            )
-            row = cur.fetchone()
-            existing = row[0] if row else {}
-            if isinstance(existing, str):
-                try:
-                    existing = json.loads(existing)
-                except json.JSONDecodeError:
-                    existing = {}
-            if not isinstance(existing, dict):
-                existing = {}
-            existing["salestech"] = {
-                "features": features,
-                "confidence": confidence,
-                "cost_usd": cost_usd,
-                "model_calls": model_calls,
-                "generated_at": now,
-            }
-            cur.execute(
-                "UPDATE companies SET deep_analysis = %s::jsonb, "
-                "ai_classification_confidence = %s, updated_at = %s WHERE id = %s",
-                (json.dumps(existing, ensure_ascii=False), confidence, now, company_id),
+                "UPDATE companies SET ai_classification_confidence = %s, updated_at = %s "
+                "WHERE id = %s",
+                (confidence, now, company_id),
             )
             conn.commit()
     except psycopg.Error as exc:
