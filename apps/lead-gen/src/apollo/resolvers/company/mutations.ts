@@ -668,28 +668,58 @@ export const companyMutations = {
     for (const input of args.companies) {
       try {
         const key = input.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-        const [inserted] = await context.db.insert(companies).values({
-          key,
-          name: input.name,
-          website: input.website ?? null,
-          email: input.email ?? null,
-          linkedin_url: input.linkedin_url ?? null,
-          location: input.location ?? null,
-          size: input.size ?? null,
-          description: input.description ?? null,
-          industry: input.industry ?? null,
-        }).onConflictDoUpdate({
-          target: companies.key,
-          set: {
-            website: sql`COALESCE(${companies.website}, excluded.website)`,
-            linkedin_url: sql`COALESCE(${companies.linkedin_url}, excluded.linkedin_url)`,
-            description: sql`COALESCE(${companies.description}, excluded.description)`,
-            location: sql`COALESCE(${companies.location}, excluded.location)`,
-            industry: sql`COALESCE(${companies.industry}, excluded.industry)`,
-            size: sql`COALESCE(${companies.size}, excluded.size)`,
-            updated_at: sql`now()::text`,
-          },
-        }).returning();
+        const linkedinUrl = input.linkedin_url?.replace(/\/$/, "") ?? null;
+
+        // Pre-check by linkedin_url: catches the case where two different name
+        // spellings produce different `key`s but point at the same company.
+        let inserted: typeof companies.$inferSelect | undefined;
+        if (linkedinUrl) {
+          const [existing] = await context.db
+            .select()
+            .from(companies)
+            .where(eq(companies.linkedin_url, linkedinUrl))
+            .limit(1);
+          if (existing) {
+            const [updated] = await context.db
+              .update(companies)
+              .set({
+                website: sql`COALESCE(${companies.website}, ${input.website ?? null})`,
+                description: sql`COALESCE(${companies.description}, ${input.description ?? null})`,
+                location: sql`COALESCE(${companies.location}, ${input.location ?? null})`,
+                industry: sql`COALESCE(${companies.industry}, ${input.industry ?? null})`,
+                size: sql`COALESCE(${companies.size}, ${input.size ?? null})`,
+                updated_at: sql`now()::text`,
+              })
+              .where(eq(companies.id, existing.id))
+              .returning();
+            inserted = updated;
+          }
+        }
+
+        if (!inserted) {
+          [inserted] = await context.db.insert(companies).values({
+            key,
+            name: input.name,
+            website: input.website ?? null,
+            email: input.email ?? null,
+            linkedin_url: linkedinUrl,
+            location: input.location ?? null,
+            size: input.size ?? null,
+            description: input.description ?? null,
+            industry: input.industry ?? null,
+          }).onConflictDoUpdate({
+            target: companies.key,
+            set: {
+              website: sql`COALESCE(${companies.website}, excluded.website)`,
+              linkedin_url: sql`COALESCE(${companies.linkedin_url}, excluded.linkedin_url)`,
+              description: sql`COALESCE(${companies.description}, excluded.description)`,
+              location: sql`COALESCE(${companies.location}, excluded.location)`,
+              industry: sql`COALESCE(${companies.industry}, excluded.industry)`,
+              size: sql`COALESCE(${companies.size}, excluded.size)`,
+              updated_at: sql`now()::text`,
+            },
+          }).returning();
+        }
         imported++;
 
         // Fire-and-forget: send to SalesCue classifier for staffing detection
