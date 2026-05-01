@@ -1,0 +1,65 @@
+{
+  "iteration": 1,
+  "timestamp": "2026-05-01T05:48:55.509748+00:00",
+  "prompt_version": "compose-v1-2026-04",
+  "judge_model": "deepseek-v4-pro",
+  "aggregate": {
+    "passes": 59,
+    "total": 60,
+    "rate": 0.9833,
+    "gate_met": true,
+    "gate_threshold": 0.8
+  },
+  "deterministic": {
+    "subject_length_ok": {
+      "passed": 6,
+      "total": 6
+    },
+    "opening_compact": {
+      "passed": 6,
+      "total": 6
+    },
+    "no_ai_markers": {
+      "passed": 6,
+      "total": 6
+    },
+    "has_name_placeholder": {
+      "passed": 6,
+      "total": 6
+    },
+    "has_signature": {
+      "passed": 6,
+      "total": 6
+    },
+    "word_count_ok": {
+      "passed": 6,
+      "total": 6
+    }
+  },
+  "judge": {
+    "signal_injection": {
+      "passed": 6,
+      "total": 6
+    },
+    "cta_clarity": {
+      "passed": 5,
+      "total": 6
+    },
+    "no_fabrication": {
+      "passed": 6,
+      "total": 6
+    },
+    "tone_match": {
+      "passed": 6,
+      "total": 6
+    }
+  },
+  "failures": [
+    {
+      "id": "devtool-founder-cold",
+      "metric": "cta_clarity",
+      "reason": "score=0.40 — The closing has multiple vague suggestions ('let's chat', 'quick call or async exploration') instead of exactly one clear freelance_explore CTA."
+    }
+  ],
+  "runtime_errors": []
+}
