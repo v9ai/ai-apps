@@ -16,6 +16,7 @@ import {
 import { browsePeople, importPeopleFromCurrentPage, setPeopleCancelled } from "./people-scraping";
 import { findRelatedCompanies, setFindRelatedCancelled } from "./find-related";
 import { scrapeCompanyFull, setCompanyScraperCancelled } from "./company-scraper";
+import { scrapeCompanyFullBatch, setBatchCancelled, type BatchCompany } from "./company-scraper-batch";
 import { getJobPostingDetail } from "../../services/voyager-jobs";
 import { scrapePeoplePostsFromCompanyPage, setPeoplePostsCancelled } from "./people-posts-scraper";
 import {
@@ -644,6 +645,27 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         scrapeCompanyFull(tabId).finally(stopKeepAlive);
       });
     }
+    return true;
+  }
+
+  // ── Batch Full-Company Scrape (triggered from /companies Browse page) ──
+  if (message.action === "scrapeCompanyFullBatch") {
+    const { companies } = message as { companies: BatchCompany[] };
+    if (!Array.isArray(companies) || companies.length === 0) {
+      sendResponse({ success: false, error: "No companies in batch" });
+      return true;
+    }
+    sendResponse({ success: true, total: companies.length });
+    startKeepAlive();
+    scrapeCompanyFullBatch(companies).finally(stopKeepAlive);
+    return true;
+  }
+
+  // ── Stop Batch Full-Company Scrape ──
+  if (message.action === "stopCompanyFullBatch") {
+    setBatchCancelled(true);
+    setCompanyScraperCancelled(true);
+    sendResponse({ success: true });
     return true;
   }
 

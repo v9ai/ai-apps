@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import {
@@ -29,7 +29,7 @@ import {
 } from "@radix-ui/themes";
 import { button } from "@/recipes/button";
 import { css } from "styled-system/css";
-import { TrashIcon, PlusIcon, MixIcon, UploadIcon } from "@radix-ui/react-icons";
+import { TrashIcon, PlusIcon, MixIcon, UploadIcon, MagicWandIcon } from "@radix-ui/react-icons";
 import { ADMIN_EMAIL } from "@/lib/constants";
 import { SearchInput } from "@/components/ui/SearchInput";
 
@@ -72,6 +72,28 @@ export function CompaniesList() {
 
   // Multi-select state
   const [selectedCompanies, setSelectedCompanies] = useState<Set<number>>(new Set());
+
+  // ── Chrome-extension full-company batch scrape ──
+  type BatchScrapeStatus =
+    | { type: "idle" }
+    | {
+        type: "running";
+        idx: number;
+        total: number;
+        companyName: string;
+        phaseMessage: string;
+      }
+    | {
+        type: "done";
+        total: number;
+        succeeded: number;
+        failed: number;
+        cancelled: boolean;
+        skipped: number;
+      }
+    | { type: "error"; message: string };
+  const [batchScrape, setBatchScrape] = useState<BatchScrapeStatus>({ type: "idle" });
+  const lastBatchMessageRef = useRef<number>(0);
 
   // Add company dialog state
   const [addOpen, setAddOpen] = useState(false);
@@ -231,9 +253,120 @@ export function CompaniesList() {
     notifyOnNetworkStatusChange: true,
   });
 
-  const companies = data?.companies.companies || [];
+  const companies = useMemo(
+    () => data?.companies.companies ?? [],
+    [data?.companies.companies],
+  );
   const totalCount = data?.companies.totalCount || 0;
   const hasMore = companies.length < totalCount;
+
+  // ── Trigger chrome-extension batch full-company scrape ──
+  const startBatchScrape = useCallback(
+    (queue: { companyId: number; name: string; linkedinUrl: string }[], skipped: number) => {
+      if (queue.length === 0) {
+        if (skipped > 0) {
+          setBatchScrape({
+            type: "error",
+            message: `No companies have a LinkedIn URL (${skipped} skipped). Add LinkedIn URLs first.`,
+          });
+        }
+        return;
+      }
+      lastBatchMessageRef.current = Date.now();
+      setBatchScrape({
+        type: "running",
+        idx: 0,
+        total: queue.length,
+        companyName: queue[0].name,
+        phaseMessage: "Sending to extension…",
+      });
+      window.postMessage(
+        {
+          source: "lead-gen-ext",
+          action: "scrapeCompanyFullBatch",
+          companies: queue,
+        },
+        "*",
+      );
+    },
+    [],
+  );
+
+  const handleBulkScrape = useCallback(() => {
+    const selected = companies.filter((c) => selectedCompanies.has(c.id));
+    const queue: { companyId: number; name: string; linkedinUrl: string }[] = [];
+    let skipped = 0;
+    for (const c of selected) {
+      if (c.linkedin_url) {
+        queue.push({ companyId: c.id, name: c.name, linkedinUrl: c.linkedin_url });
+      } else {
+        skipped++;
+      }
+    }
+    startBatchScrape(queue, skipped);
+  }, [companies, selectedCompanies, startBatchScrape]);
+
+  const handleSingleScrape = useCallback(
+    (company: { id: number; name: string; linkedin_url?: string | null }) => {
+      if (!company.linkedin_url) return;
+      startBatchScrape(
+        [{ companyId: company.id, name: company.name, linkedinUrl: company.linkedin_url }],
+        0,
+      );
+    },
+    [startBatchScrape],
+  );
+
+  const handleCancelBatch = useCallback(() => {
+    window.postMessage(
+      { source: "lead-gen-ext", action: "stopCompanyFullBatch" },
+      "*",
+    );
+  }, []);
+
+  // Listen for extension batch progress / completion messages
+  useEffect(() => {
+    const handler = (e: MessageEvent) => {
+      if (e.data?.source !== "lead-gen-bg") return;
+      lastBatchMessageRef.current = Date.now();
+      if (e.data.action === "companyBatchProgress") {
+        setBatchScrape({
+          type: "running",
+          idx: e.data.idx,
+          total: e.data.total,
+          companyName: e.data.companyName,
+          phaseMessage: e.data.phaseMessage,
+        });
+      } else if (e.data.action === "companyBatchComplete") {
+        setBatchScrape({
+          type: "done",
+          total: e.data.total,
+          succeeded: e.data.succeeded,
+          failed: e.data.failed,
+          cancelled: !!e.data.cancelled,
+          skipped: 0,
+        });
+        void refetch();
+      }
+    };
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, [refetch]);
+
+  // Stale-detection: if no extension message arrives for 4 minutes while
+  // running, assume the service worker died and surface an error.
+  useEffect(() => {
+    if (batchScrape.type !== "running") return;
+    const id = setInterval(() => {
+      if (Date.now() - lastBatchMessageRef.current > 240_000) {
+        setBatchScrape({
+          type: "error",
+          message: "Batch scrape timed out — extension may have stopped. Try again.",
+        });
+      }
+    }, 15_000);
+    return () => clearInterval(id);
+  }, [batchScrape.type]);
 
   // Load more companies
   const loadMore = useCallback(async () => {
@@ -521,10 +654,87 @@ export function CompaniesList() {
           )}
           <button
             className={button({ variant: "ghost", size: "sm" })}
+            onClick={handleBulkScrape}
+            disabled={batchScrape.type === "running"}
+            title="Open each selected company's LinkedIn page in a background tab and scrape About + Posts + Jobs + People via the chrome extension."
+          >
+            <MagicWandIcon width={12} height={12} />
+            scrape full ({selectedCompanies.size})
+          </button>
+          <button
+            className={button({ variant: "ghost", size: "sm" })}
             onClick={() => setSelectedCompanies(new Set())}
           >
             clear
           </button>
+        </Flex>
+      )}
+
+      {/* batch-scrape progress strip */}
+      {(batchScrape.type === "running" ||
+        batchScrape.type === "done" ||
+        batchScrape.type === "error") && (
+        <Flex
+          align="center"
+          gap="3"
+          py="2"
+          px="3"
+          mb="2"
+          className={css({
+            bg: batchScrape.type === "error" ? "red.2" : "gray.2",
+            borderRadius: "md",
+            border: "1px solid",
+            borderColor: batchScrape.type === "error" ? "red.6" : "gray.6",
+          })}
+        >
+          {batchScrape.type === "running" && (
+            <>
+              <Spinner size="1" />
+              <Text size="1" weight="bold">
+                Scraping {batchScrape.idx}/{batchScrape.total}
+              </Text>
+              <Text size="1" color="gray">
+                · {batchScrape.companyName} · {batchScrape.phaseMessage}
+              </Text>
+              <Box flexGrow="1" />
+              <button
+                className={button({ variant: "ghost", size: "sm" })}
+                onClick={handleCancelBatch}
+              >
+                cancel
+              </button>
+            </>
+          )}
+          {batchScrape.type === "done" && (
+            <>
+              <Text size="1" weight="bold">
+                {batchScrape.cancelled ? "Cancelled" : "Done"} ·{" "}
+                {batchScrape.succeeded} succeeded
+                {batchScrape.failed > 0 && `, ${batchScrape.failed} failed`}
+              </Text>
+              <Box flexGrow="1" />
+              <button
+                className={button({ variant: "ghost", size: "sm" })}
+                onClick={() => setBatchScrape({ type: "idle" })}
+              >
+                dismiss
+              </button>
+            </>
+          )}
+          {batchScrape.type === "error" && (
+            <>
+              <Text size="1" color="red">
+                {batchScrape.message}
+              </Text>
+              <Box flexGrow="1" />
+              <button
+                className={button({ variant: "ghost", size: "sm" })}
+                onClick={() => setBatchScrape({ type: "idle" })}
+              >
+                dismiss
+              </button>
+            </>
+          )}
         </Flex>
       )}
 
@@ -615,6 +825,22 @@ export function CompaniesList() {
                 <span className={button({ variant: "ghost", size: "sm" })}>
                   website
                 </span>
+              )}
+              {isAdmin && company.linkedin_url && (
+                <IconButton
+                  size="1"
+                  variant="ghost"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleSingleScrape(company);
+                  }}
+                  disabled={batchScrape.type === "running"}
+                  style={{ cursor: "pointer" }}
+                  title="Scrape full company (About + Posts + Jobs + People) via chrome extension"
+                >
+                  <MagicWandIcon width={12} height={12} />
+                </IconButton>
               )}
               {isAdmin && (
                 <IconButton

@@ -5,7 +5,7 @@
 import { extractCompanyData, saveCompanyBatch, resolveNumericIdViaVoyager } from "./company-browsing";
 import { extractPeopleCards, scrollPeoplePage, clickShowMorePeople, detectPeoplePageBlocker, type PersonCard } from "./people-scraping";
 import { randomDelay, waitForTabLoad, isTabAlive, safeTabUpdate, safeSendMessage } from "./tab-utils";
-import { gqlRequest } from "../../services/graphql";
+import { gqlRequest, GRAPHQL_URL } from "../../services/graphql";
 import { summarizePostSignals, type PostSignalSummary } from "../../lib/post-signal-scorer";
 import { searchJobs, getJobPostingDetail, type VoyagerJobCard } from "../../services/voyager-jobs";
 import { discoverHiringContacts } from "../../services/voyager-hiring";
@@ -27,15 +27,48 @@ export function setExternalLog(fn: ((msg: string) => void) | null) {
   externalLog = fn;
 }
 
+// Batch context — set by company-scraper-batch.ts so per-phase progress
+// can reach the web app with idx/total/companyName attached. Untouched in
+// single-company runs (then-null context skips the web-app broadcast).
+export interface BatchProgressContext {
+  idx: number;
+  total: number;
+  companyName: string;
+}
+let batchContext: BatchProgressContext | null = null;
+export function setBatchProgressContext(ctx: BatchProgressContext | null) {
+  batchContext = ctx;
+}
+
 function log(msg: string) {
   console.log(`[CompanyScraper] ${msg}`);
   if (externalLog) externalLog(`[Scraper] ${msg}`);
+}
+
+async function broadcastBatchPhaseToWebApp(message: string) {
+  if (!batchContext) return;
+  try {
+    const appOrigin = new URL(GRAPHQL_URL).origin;
+    const tabs = await chrome.tabs.query({ url: [`${appOrigin}/*`] });
+    for (const tab of tabs) {
+      if (!tab.id) continue;
+      chrome.tabs.sendMessage(tab.id, {
+        source: "lead-gen-bg",
+        action: "companyBatchProgress",
+        idx: batchContext.idx,
+        total: batchContext.total,
+        companyName: batchContext.companyName,
+        phaseMessage: message,
+      }).catch(() => { /* tab may not host content script */ });
+    }
+  } catch { /* ignore */ }
 }
 
 async function reportProgress(tabId: number, message: string) {
   log(message);
   try { chrome.runtime.sendMessage({ action: "companyScrapingProgress", message }); } catch { /* popup closed */ }
   await safeSendMessage(tabId, { action: "companyScrapingProgress", message });
+  await broadcastBatchPhaseToWebApp(message);
 }
 
 function sleep(ms: number): Promise<void> {
