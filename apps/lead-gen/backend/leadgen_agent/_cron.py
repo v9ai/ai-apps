@@ -153,7 +153,7 @@ async def run_ashby_nightly(
     errors: list[str] = []
     for slug in slugs:
         try:
-            result = await ingest.ainvoke({"slug": slug})
+            result = await ingest.ainvoke({"slug": slug}, config=_config())
             ins = int(result.get("inserted") or 0)
             upd = int(result.get("updated") or 0)
             jobs = len(result.get("jobs") or [])
