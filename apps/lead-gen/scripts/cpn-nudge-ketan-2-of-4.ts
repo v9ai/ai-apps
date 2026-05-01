@@ -16,7 +16,7 @@ const CONTACT_ID = 39318;
 const SUBJECT = "Re: Your @vadim.blog email is ready - start the courses";
 const BODY = `Hi Ketan,
 
-Saw your MCP completion land last week — that's 2 of 4 done. You're already registered for both remaining courses (Building with the Claude API and Claude Code in Action), so you're well past the hard part.
+Happy Friday — saw your MCP completion land earlier this week, that's 2 of 4 done. You're already registered for both remaining courses (Building with the Claude API and Claude Code in Action), so you're past the hard part.
 
 11 of us are through all four now. Whenever you wrap the last two, I'll add you to the next batch I send to Karl.
 
