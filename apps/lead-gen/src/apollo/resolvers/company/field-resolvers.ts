@@ -53,6 +53,20 @@ export const CompanyField = {
   blocked(parent: DbCompany) {
     return parent.blocked ?? false;
   },
+  qa_verdict(parent: DbCompany) {
+    // jsonb columns come through pre-parsed from @neondatabase/serverless;
+    // guard against the rare case where the driver hands back a string.
+    const raw = (parent as DbCompany & { qa_verdict?: unknown }).qa_verdict;
+    if (raw == null) return null;
+    if (typeof raw === "string") {
+      return cachedSafeJsonParse<unknown>(parent, "qa_verdict", raw, null);
+    }
+    return raw;
+  },
+  qa_verdict_at(parent: DbCompany) {
+    const v = (parent as DbCompany & { qa_verdict_at?: string | null }).qa_verdict_at;
+    return v ?? null;
+  },
   // Validate and sanitize category enum
   category(parent: DbCompany) {
     const validCategories = ["CONSULTANCY", "UNKNOWN"];
