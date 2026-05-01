@@ -150,6 +150,7 @@ def _build_optional_graphs(checkpointer: Any) -> dict[str, Any]:
         ),
         ("companies_verify", "leadgen_agent.companies_verify_graph", "build_graph"),
         ("company_cleanup", "leadgen_agent.company_cleanup_graph", "build_graph"),
+        ("company_qa", "leadgen_agent.company_qa_graph", "build_graph"),
         ("score_recruiter_fit", "leadgen_agent.score_recruiter_fit_graph", "build_graph"),
         ("classify_recruitment", "leadgen_agent.classify_recruitment_graph", "build_graph"),
         (
