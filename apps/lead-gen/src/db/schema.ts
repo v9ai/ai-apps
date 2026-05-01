@@ -427,6 +427,16 @@ export const blockedLocations = pgTable(
   },
 );
 
+export const ashbySlugs = pgTable("ashby_slugs", {
+  slug: text("slug").primaryKey(),
+  first_seen: timestamp("first_seen", { withTimezone: true }).notNull().defaultNow(),
+  last_seen: timestamp("last_seen", { withTimezone: true }).notNull().defaultNow(),
+  board_jobs_count: integer("board_jobs_count"),
+});
+
+export type AshbySlug = typeof ashbySlugs.$inferSelect;
+export type NewAshbySlug = typeof ashbySlugs.$inferInsert;
+
 // Intent Signals (company-level buying/hiring signals detected by finetuned Qwen)
 export const intentSignals = pgTable(
   "intent_signals",
