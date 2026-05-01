@@ -30,6 +30,8 @@ export interface ICPFeatures {
   contactsCount: number;
   dmContactsCount: number;
   hasJobBoard: number;
+  aiRoleOpen: number;
+  remoteAiRoleOpen: number;
 }
 
 function parseJsonArrayLen(val: string | null | undefined): number {
@@ -80,6 +82,8 @@ export function extractICPFeatures(
     contactsCount,
     dmContactsCount: dmCount,
     hasJobBoard: company.job_board_url ? 1 : 0,
+    aiRoleOpen: (company.ai_role_count_30d ?? 0) > 0 ? 1 : 0,
+    remoteAiRoleOpen: (company.remote_ai_role_count_30d ?? 0) > 0 ? 1 : 0,
   };
 }
 
@@ -113,6 +117,7 @@ function loadWeightsConfig(): ICPWeightsConfig {
         factsCount: 0.01, hasGithub: 0.04, githubAiScore: 0.10,
         hfPresenceScore: 0.08, intentScore: 0.12, contactsCount: 0.03,
         dmContactsCount: 0.08, hasJobBoard: 0.05,
+        aiRoleOpen: 0.30, remoteAiRoleOpen: 0.35,
       },
     };
   }

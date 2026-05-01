@@ -19,6 +19,8 @@
     "intentScore": 0.12,
     "contactsCount": 0.03,
     "dmContactsCount": 0.08,
-    "hasJobBoard": 0.05
+    "hasJobBoard": 0.05,
+    "aiRoleOpen": 0.30,
+    "remoteAiRoleOpen": 0.35
   }
 }

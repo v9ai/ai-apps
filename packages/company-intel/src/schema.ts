@@ -79,6 +79,9 @@ export const companies = pgTable("companies", {
   intent_signals_count: integer("intent_signals_count").notNull().default(0),
   intent_top_signal: text("intent_top_signal"),
 
+  ai_role_count_30d: integer("ai_role_count_30d").notNull().default(0),
+  remote_ai_role_count_30d: integer("remote_ai_role_count_30d").notNull().default(0),
+
   last_seen_crawl_id: text("last_seen_crawl_id"),
   last_seen_capture_timestamp: text("last_seen_capture_timestamp"),
   last_seen_source_url: text("last_seen_source_url"),
