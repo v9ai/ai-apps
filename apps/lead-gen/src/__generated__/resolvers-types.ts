@@ -196,8 +196,6 @@ export type Company = {
   logo_url: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
   opportunities: Array<Opportunity>;
-  qa_verdict: Maybe<Scalars['JSON']['output']>;
-  qa_verdict_at: Maybe<Scalars['String']['output']>;
   /** ML quality gate evaluation */
   qualityGate: QualityGateResult;
   /** ML-computed rank score (0-1) */
@@ -4792,8 +4790,6 @@ export type CompanyResolvers<ContextType = GraphQLContext, ParentType extends Re
   logo_url?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   opportunities?: Resolver<Array<ResolversTypes['Opportunity']>, ParentType, ContextType>;
-  qa_verdict?: Resolver<Maybe<ResolversTypes['JSON']>, ParentType, ContextType>;
-  qa_verdict_at?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   qualityGate?: Resolver<ResolversTypes['QualityGateResult'], ParentType, ContextType>;
   rankScore?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   score?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;

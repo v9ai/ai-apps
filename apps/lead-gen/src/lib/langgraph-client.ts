@@ -143,46 +143,6 @@ async function runGraph<T>(
 
 // ── Types ──────────────────────────────────────────────────
 
-export interface CompanyQaSummary {
-  total: number;
-  false_positive: number;
-  weak: number;
-  clean: number;
-  by_reason: Record<string, number>;
-  tab: string;
-}
-
-export interface CompanyQaResult {
-  summary?: CompanyQaSummary;
-  qa_issues?: string[];
-  _error?: string;
-}
-
-/**
- * Run the company_qa graph against a UI tab (e.g. "sales-tech"). Verifies each
- * matching company on four axes — taxonomy, data quality, category, ICP fit —
- * and persists a verdict to companies.qa_verdict. See
- * `backend/leadgen_agent/company_qa_graph.py`.
- */
-export function runCompanyQa(input: {
-  tab?: string;
-  limit?: number;
-  companyIds?: number[];
-}): Promise<CompanyQaResult> {
-  const limit = Math.max(1, Math.min(Math.floor(input.limit ?? 25), 200));
-  const payload: Record<string, unknown> = {
-    tab: input.tab ?? "sales-tech",
-    limit,
-  };
-  if (input.companyIds && input.companyIds.length > 0) {
-    payload.company_ids = input.companyIds;
-  }
-  return runGraph<CompanyQaResult>("company_qa", payload, {
-    // ~6s per company plus a 30s warmup for cold containers.
-    timeoutMs: Math.min(300_000, 30_000 + limit * 6_000),
-  });
-}
-
 export interface TextToSqlResult {
   sql: string;
   explanation: string;

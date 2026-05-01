@@ -80,8 +80,6 @@ fragment CompanyFields on Company {
   score
   score_reasons
   blocked
-  qa_verdict
-  qa_verdict_at
   deep_analysis
   emailsList
   ai_classification_confidence

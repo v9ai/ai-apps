@@ -58,11 +58,6 @@ export const companies = pgTable("companies", {
 
   blocked: boolean("blocked").notNull().default(false),
 
-  // Verdict from leadgen_agent.company_qa_graph (migration 0081). Surfaces
-  // false-positive / weak-lead detection on a tab (e.g. /companies?tab=sales-tech).
-  qa_verdict: jsonb("qa_verdict").$type<QaVerdict>(),
-  qa_verdict_at: text("qa_verdict_at"),
-
   deep_analysis: text("deep_analysis"),
 
   email: text("email"),
@@ -114,20 +109,6 @@ export const companies = pgTable("companies", {
 
 export type Company = typeof companies.$inferSelect;
 export type NewCompany = typeof companies.$inferInsert;
-
-// Shape persisted by leadgen_agent.company_qa_graph._aggregate_verdict.
-// Mirror in: backend/leadgen_agent/company_qa_graph.py
-export type QaVerdict = {
-  is_false_positive: boolean;
-  is_weak: boolean;
-  reasons: string[];           // e.g. ["wrong_taxonomy:high","weak_data:medium"]
-  confidence: number;          // 0..1
-  model: string;               // deepseek model id used for taxonomy check
-  tab: string;                 // "sales-tech" | other vertical key
-  actual_taxonomy: string[];   // LLM's correction when wrong_taxonomy fired
-  evidence: Record<string, unknown>;
-  verified_at: string;         // ISO8601 UTC
-};
 
 export const companyFacts = pgTable(
   "company_facts",

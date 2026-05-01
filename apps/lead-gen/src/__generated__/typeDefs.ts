@@ -164,8 +164,6 @@ type Company {
   logo_url: String
   name: String!
   opportunities: [Opportunity!]!
-  qa_verdict: JSON
-  qa_verdict_at: String
   """ML quality gate evaluation"""
   qualityGate: QualityGateResult!
   """ML-computed rank score (0-1)"""
