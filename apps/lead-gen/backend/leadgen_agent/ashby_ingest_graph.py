@@ -200,7 +200,7 @@ async def upsert_opportunities(state: AshbyIngestState) -> dict[str, Any]:
                       (id, title, url, source, status, raw_context, metadata,
                        tags, company_id, first_seen, last_seen, created_at, updated_at)
                     VALUES (%s, %s, %s, %s, 'open', %s, %s, %s, %s, %s, %s, %s, %s)
-                    ON CONFLICT (url) DO UPDATE SET
+                    ON CONFLICT (url) WHERE url IS NOT NULL DO UPDATE SET
                       title       = EXCLUDED.title,
                       source      = EXCLUDED.source,
                       raw_context = EXCLUDED.raw_context,
