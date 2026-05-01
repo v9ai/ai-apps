@@ -114,7 +114,7 @@ type OpportunitiesPagePayload {
 extend type Query {
   contactOpportunities(contactId: Int!): [Opportunity!]!
   opportunityByUrl(url: String!): Opportunity
-  opportunitiesPage: OpportunitiesPagePayload!
+  opportunitiesPage(companyId: Int): OpportunitiesPagePayload!
 }
 
 extend type Mutation {

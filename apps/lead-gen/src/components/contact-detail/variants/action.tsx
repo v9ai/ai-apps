@@ -236,8 +236,14 @@ export function ContactDetailAction({ contactId, contactSlug }: Props) {
   } | null>(null);
   const [scraping, setScraping] = useState(false);
 
-  const outboundEmails = emailsData?.contactEmails ?? [];
-  const inboundEmails = emailsData?.contactReceivedEmails ?? [];
+  const outboundEmails = useMemo(
+    () => emailsData?.contactEmails ?? [],
+    [emailsData?.contactEmails],
+  );
+  const inboundEmails = useMemo(
+    () => emailsData?.contactReceivedEmails ?? [],
+    [emailsData?.contactReceivedEmails],
+  );
   const hasOutbound = outboundEmails.length > 0;
   const hasInbound = inboundEmails.length > 0;
 

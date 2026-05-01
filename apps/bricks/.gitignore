@@ -3,6 +3,9 @@
 # User-uploaded video clips (too large for git / Vercel)
 public/clips/
 
+# LEGO building instructions — too large for git, served from R2
+public/building_instructions/*.pdf
+
 # .gitignore
 
 # GGUF model files

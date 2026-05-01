@@ -1,4 +1,5 @@
-import { opportunities as opportunitiesTable } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import { companies, opportunities as opportunitiesTable } from "@/db/schema";
 import { isAdminEmail } from "@/lib/admin";
 import { loadOpportunitiesPageData } from "@/lib/opportunities/load-page-data";
 import { evaluateScoring } from "@/lib/ml/eval-metrics";

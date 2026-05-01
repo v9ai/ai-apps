@@ -1,5 +1,5 @@
 import { uniqBy } from "lodash";
-import { desc, eq, isNull, or } from "drizzle-orm";
+import { and, desc, eq, isNull, or, type SQL } from "drizzle-orm";
 import { db } from "@/db";
 import { blockedLocations, companies, contacts, opportunities } from "@/db/schema";
 import { fetchD1Opportunities, type D1OpportunityRow } from "@/lib/d1-opportunities";
@@ -27,7 +27,13 @@ export type PgOpportunityRow = {
   contact_position: string | null;
 };
 
-export function loadPgOpportunities(): Promise<PgOpportunityRow[]> {
+export function loadPgOpportunities(companyId?: number): Promise<PgOpportunityRow[]> {
+  const blockedFilter = or(isNull(opportunities.company_id), eq(companies.blocked, false));
+  const where: SQL | undefined =
+    companyId != null
+      ? and(eq(opportunities.company_id, companyId), blockedFilter)
+      : blockedFilter;
+
   return db
     .select({
       id: opportunities.id,
@@ -54,7 +60,7 @@ export function loadPgOpportunities(): Promise<PgOpportunityRow[]> {
     .from(opportunities)
     .leftJoin(companies, eq(opportunities.company_id, companies.id))
     .leftJoin(contacts, eq(opportunities.contact_id, contacts.id))
-    .where(or(isNull(opportunities.company_id), eq(companies.blocked, false)))
+    .where(where)
     .orderBy(desc(opportunities.created_at));
 }
 
@@ -105,9 +111,17 @@ export type LoadedPageData = {
   pendingD1: D1OpportunityRow[];
 };
 
-export async function loadOpportunitiesPageData(): Promise<LoadedPageData> {
+export type LoadOpportunitiesPageOptions = {
+  companyId?: number;
+  companyKey?: string | null;
+};
+
+export async function loadOpportunitiesPageData(
+  options: LoadOpportunitiesPageOptions = {},
+): Promise<LoadedPageData> {
+  const { companyId, companyKey } = options;
   const [pgRows, d1Rows, blockedCompanyKeys, blockedLocationPatterns] = await Promise.all([
-    loadPgOpportunities(),
+    loadPgOpportunities(companyId),
     fetchD1Opportunities(),
     loadBlockedCompanyKeys(),
     loadBlockedLocationPatterns(),
@@ -122,7 +136,12 @@ export async function loadOpportunitiesPageData(): Promise<LoadedPageData> {
     const url = normalizeUrl(d.url);
     return !url || !pgUrls.has(url);
   };
-  const pendingD1 = uniqBy(d1Rows, dedupKey).filter(isPendingPromotion).filter(isAllowed);
+
+  const scopedD1 = companyKey
+    ? d1Rows.filter((d) => d.company_key === companyKey)
+    : d1Rows;
+
+  const pendingD1 = uniqBy(scopedD1, dedupKey).filter(isPendingPromotion).filter(isAllowed);
 
   return { pgOpportunities, pendingD1 };
 }

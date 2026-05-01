@@ -1,5 +1,7 @@
 import { css } from "styled-system/css";
 
+const R2_BASE = "https://pub-deeee24180f2416990a1afb44a5c8b6d.r2.dev/building_instructions";
+
 const INSTRUCTIONS = [
   {
     title: "BuWizz Upgraded — Audi RS Q e-tron (42160)",
@@ -51,7 +53,7 @@ export default function BuildingInstructionsPage() {
         })}
       >
         {INSTRUCTIONS.map(({ title, file, source }) => {
-          const href = `/building_instructions/${file}`;
+          const href = `${R2_BASE}/${file}`;
           return (
             <li key={file}>
               <a
