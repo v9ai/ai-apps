@@ -25,7 +25,13 @@ class GraphSpec:
     assistant_id: str  # public id used in /runs/wait, langgraph.json, TS client
     module: str  # dotted import path, e.g. "leadgen_agent.email_compose_graph"
     compiled_attr: str = "graph"  # module-level symbol referenced in langgraph.json
-    builder_attr: str = "build_graph"  # callable(checkpointer) -> CompiledGraph
+    # Callable(checkpointer) -> CompiledGraph. ``None`` means the module only
+    # exposes a pre-compiled ``compiled_attr`` instance (built at import time
+    # with no checkpointer); the FastAPI runtime uses that instance directly
+    # and the graph runs without persistence. Most graphs implement
+    # ``build_graph(checkpointer)``; the ones that don't need durability use
+    # the precompiled form.
+    builder_attr: str | None = "build_graph"
 
 
 # Order is presentation only; runtime resolution is by ``assistant_id``.
@@ -79,7 +85,9 @@ GRAPHS: tuple[GraphSpec, ...] = (
     GraphSpec("classify_ai_intent", "leadgen_agent.classify_ai_intent_graph"),
     GraphSpec("score_recruiter_fit", "leadgen_agent.score_recruiter_fit_graph"),
     # ── Discovery / scraping ────────────────────────────────────────────
-    GraphSpec("deep_scrape", "leadgen_agent.deep_scrape_graph"),
+    # Precompiled at import time (module exposes ``graph`` but no
+    # ``build_graph``); checkpointer not wired.
+    GraphSpec("deep_scrape", "leadgen_agent.deep_scrape_graph", builder_attr=None),
     GraphSpec("company_discovery", "leadgen_agent.company_discovery_graph"),
     GraphSpec("company_enrichment", "leadgen_agent.company_enrichment_graph"),
     GraphSpec("company_problems", "leadgen_agent.company_problems_graph"),
@@ -91,19 +99,43 @@ GRAPHS: tuple[GraphSpec, ...] = (
     GraphSpec("pipeline", "leadgen_agent.pipeline_graph"),
     GraphSpec("sales_tech_outreach", "leadgen_agent.sales_tech_outreach_graph"),
     # ── Consultancies vertical ─────────────────────────────────────────
-    GraphSpec("consultancies_discovery", "leadgen_agent.consultancies_discovery_graph"),
+    # All seven modules are batch/utility graphs precompiled at import time;
+    # they don't use AsyncPostgresSaver.
+    GraphSpec(
+        "consultancies_discovery",
+        "leadgen_agent.consultancies_discovery_graph",
+        builder_attr=None,
+    ),
     GraphSpec(
         "consultancies_brave_discovery",
         "leadgen_agent.consultancies_brave_discovery_graph",
+        builder_attr=None,
     ),
-    GraphSpec("consultancies_enrich", "leadgen_agent.consultancies_enrich_graph"),
-    GraphSpec("consultancies_features", "leadgen_agent.consultancies_features_graph"),
+    GraphSpec(
+        "consultancies_enrich",
+        "leadgen_agent.consultancies_enrich_graph",
+        builder_attr=None,
+    ),
+    GraphSpec(
+        "consultancies_features",
+        "leadgen_agent.consultancies_features_graph",
+        builder_attr=None,
+    ),
     GraphSpec(
         "consultancies_forecasting",
         "leadgen_agent.consultancies_forecasting_graph",
+        builder_attr=None,
     ),
-    GraphSpec("consultancies_learning", "leadgen_agent.consultancies_learning_graph"),
-    GraphSpec("consultancies_nl_search", "leadgen_agent.consultancies_nl_search_graph"),
+    GraphSpec(
+        "consultancies_learning",
+        "leadgen_agent.consultancies_learning_graph",
+        builder_attr=None,
+    ),
+    GraphSpec(
+        "consultancies_nl_search",
+        "leadgen_agent.consultancies_nl_search_graph",
+        builder_attr=None,
+    ),
     # ── Company QA / cleanup ────────────────────────────────────────────
     GraphSpec("companies_verify", "leadgen_agent.companies_verify_graph"),
     GraphSpec("company_cleanup", "leadgen_agent.company_cleanup_graph"),
