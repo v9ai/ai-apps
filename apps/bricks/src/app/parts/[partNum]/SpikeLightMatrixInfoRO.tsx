@@ -194,7 +194,19 @@ lights.on([
 
       <p className={para}>
         Script rulabil complet (cu hub <span className={inlineCode}>EssentialHub</span>):{" "}
-        <span className={inlineCode}>scripts/spike-essential-slovenia-flag.py</span>.
+        <a
+          href="/scripts/spike-essential-slovenia-flag"
+          className={css({
+            color: "lego.blue",
+            fontWeight: "700",
+            textDecoration: "underline",
+            fontFamily: "mono",
+            fontSize: "xs",
+          })}
+        >
+          spike-essential-slovenia-flag.py
+        </a>
+        .
       </p>
 
       <h3 className={sub}>Pixel individual (intensitate)</h3>
