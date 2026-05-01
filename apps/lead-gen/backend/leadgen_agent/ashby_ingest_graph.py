@@ -346,7 +346,14 @@ async def emit_intent_signal(state: AshbyIngestState) -> dict[str, Any]:
         f"Source: api.ashbyhq.com posting-api ({slug})",
         f"Synced at {now.isoformat()}",
     ])
-    metadata = json.dumps({"slug": slug, "job_count": job_count, "titles": titles})
+    metadata = json.dumps({
+        "slug": slug,
+        "job_count": job_count,
+        "titles": titles,
+        "matched_titles": state.get("matched_titles") or [],
+        "ai_role_count_30d": int(state.get("ai_role_count") or 0),
+        "remote_ai_role_count_30d": int(state.get("remote_ai_role_count") or 0),
+    })
 
     signal_id: int | None = None
     try:
@@ -394,11 +401,15 @@ def build_graph(checkpointer: Any = None) -> Any:
     g = StateGraph(AshbyIngestState)
     g.add_node("fetch", fetch)
     g.add_node("link_company", link_company)
+    g.add_node("classify_roles", classify_roles)
+    g.add_node("update_company_counters", update_company_counters)
     g.add_node("post_to_d1", post_to_d1)
     g.add_node("emit_intent_signal", emit_intent_signal)
     g.add_edge(START, "fetch")
     g.add_edge("fetch", "link_company")
-    g.add_edge("link_company", "post_to_d1")
+    g.add_edge("link_company", "classify_roles")
+    g.add_edge("classify_roles", "update_company_counters")
+    g.add_edge("update_company_counters", "post_to_d1")
     g.add_edge("post_to_d1", "emit_intent_signal")
     g.add_edge("emit_intent_signal", END)
     return g.compile(checkpointer=checkpointer)
