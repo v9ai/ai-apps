@@ -2,11 +2,24 @@ import { css } from "styled-system/css";
 
 const R2_BASE = "https://pub-deeee24180f2416990a1afb44a5c8b6d.r2.dev/building_instructions";
 
-const INSTRUCTIONS = [
+interface Instruction {
+  title: string;
+  file: string;
+  source: string;
+  directHref?: string; // when set, link straight here instead of R2
+}
+
+const INSTRUCTIONS: Instruction[] = [
   {
     title: "BuWizz Upgraded — Audi RS Q e-tron (42160)",
     file: "BuWizz_upgraded_42160_Audi_RS_Q_e-tron.pdf",
     source: "https://buwizz.com/building_instructions/BuWizz_upgraded_42160_Audi_RS_Q_e-tron.pdf",
+  },
+  {
+    title: "LEGO Official — Set 6499548",
+    file: "6499548.pdf",
+    source: "https://www.lego.com/cdn/product-assets/product.bi.core.pdf/6499548.pdf",
+    directHref: "https://www.lego.com/cdn/product-assets/product.bi.core.pdf/6499548.pdf",
   },
 ];
 
@@ -52,8 +65,8 @@ export default function BuildingInstructionsPage() {
           p: 0,
         })}
       >
-        {INSTRUCTIONS.map(({ title, file, source }) => {
-          const href = `${R2_BASE}/${file}`;
+        {INSTRUCTIONS.map(({ title, file, source, directHref }) => {
+          const href = directHref ?? `${R2_BASE}/${file}`;
           return (
             <li key={file}>
               <a
