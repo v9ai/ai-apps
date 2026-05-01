@@ -30,7 +30,7 @@ hooks-status:
 
 # ── App ────────────────────────────────────────────────────────
 
-.PHONY: dev backend-dev backend-dev-ml backend-dev-research backend-dev-full deep-scrape build lint codegen deploy db-generate db-migrate db-studio icp-embed-serve
+.PHONY: dev backend-dev backend-dev-ml backend-dev-research backend-dev-full deep-scrape build lint codegen deploy db-generate db-migrate db-studio icp-embed-serve gen-langgraph-json check-langgraph-json
 
 dev:
 	pnpm dev
@@ -41,6 +41,17 @@ dev:
 # at the deployed CF endpoints with ML_URL / RESEARCH_URL env vars.
 backend-dev:
 	pnpm backend-dev
+
+# Regenerate backend/core/langgraph.json from the Python registry.
+# Source of truth: backend/leadgen_agent/registry.py.
+gen-langgraph-json:
+	cd backend && uv run python -m scripts.gen_langgraph_json
+
+# CI guard: fail if langgraph.json is stale or any registered graph fails to
+# resolve (typo, missing module, missing symbol). Run before pushing changes
+# to backend/leadgen_agent/registry.py or the graph modules it points at.
+check-langgraph-json:
+	cd backend && uv run python -m scripts.gen_langgraph_json --check
 
 # ml container's langgraph dev on :8003 — torch + transformers required.
 # Prerequisite: `cd backend && uv sync --extra ml` to install the ml deps.

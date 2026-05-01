@@ -272,11 +272,24 @@ async def discover_urls(state: SalesTechFeatureState) -> dict[str, Any]:
     if state.get("_error"):
         return {}
     website = state["website"].rstrip("/") + "/"
-    candidates: set[str] = set()
 
-    # 1. Heuristic paths
+    # Track each candidate's source so we can prefer evidence-of-existence
+    # (sitemap, link-harvest) over speculative heuristic guesses. Many real
+    # sites 404 our heuristic paths because they organize content under
+    # `/product/integrations`, `/resources/customers`, etc.
+    SRC_SITEMAP = 0
+    SRC_LINK = 1
+    SRC_HEURISTIC = 2
+    sources: dict[str, int] = {}
+
+    def _add(url: str, src: int) -> None:
+        prev = sources.get(url)
+        if prev is None or src < prev:
+            sources[url] = src
+
+    # 1. Heuristic paths (lowest priority — guesses)
     for path in _HEURISTIC_PATHS:
-        candidates.add(urljoin(website, path) if path else website)
+        _add(urljoin(website, path) if path else website, SRC_HEURISTIC)
 
     # 2. sitemap.xml (and sitemap_index.xml)
     sitemap_urls = (urljoin(website, "/sitemap.xml"), urljoin(website, "/sitemap_index.xml"))
@@ -295,7 +308,7 @@ async def discover_urls(state: SalesTechFeatureState) -> dict[str, Any]:
                     text = (loc.text or "").strip()
                     nu = _normalize_url(website, text) if text else None
                     if nu:
-                        candidates.add(nu)
+                        _add(nu, SRC_SITEMAP)
                 # sitemap-index files reference more sitemaps
                 for sm in soup.find_all("sitemap"):
                     nested = (sm.find("loc").text or "").strip() if sm.find("loc") else ""
@@ -308,7 +321,7 @@ async def discover_urls(state: SalesTechFeatureState) -> dict[str, Any]:
                                     t2 = (loc2.text or "").strip()
                                     nu = _normalize_url(website, t2)
                                     if nu:
-                                        candidates.add(nu)
+                                        _add(nu, SRC_SITEMAP)
                         except httpx.HTTPError:
                             continue
             except httpx.HTTPError:
@@ -326,21 +339,25 @@ async def discover_urls(state: SalesTechFeatureState) -> dict[str, Any]:
                         continue
                     nu = _normalize_url(website, href)
                     if nu:
-                        candidates.add(nu)
+                        _add(nu, SRC_LINK)
         except httpx.HTTPError:
             pass
 
-    # Prioritize same-host pages with high-signal path tokens
-    def _prio(u: str) -> tuple[int, int, str]:
-        path = urlparse(u).path.lower()
-        rank = 0 if any(kw in path for kw in (
-            "pricing", "plan", "integration", "customer", "case",
-            "security", "trust", "api", "doc", "feature", "platform", "product",
-        )) else 1
-        depth = path.count("/")
-        return (rank, depth, u)
+    # Sort by (source_tier, keyword_match, depth, url). Sitemap-known URLs
+    # come first (they exist on the host), then anchor-harvested URLs (the
+    # site links to them prominently), and only then speculative heuristics.
+    _SIGNAL_KW = (
+        "pricing", "plan", "integration", "customer", "case",
+        "security", "trust", "platform", "product", "solution",
+    )
 
-    ranked = sorted(candidates, key=_prio)[: _MAX_FETCH_PAGES * 2]
+    def _prio(u: str) -> tuple[int, int, int, str]:
+        path = urlparse(u).path.lower()
+        kw_rank = 0 if any(kw in path for kw in _SIGNAL_KW) else 1
+        depth = path.count("/")
+        return (sources.get(u, SRC_HEURISTIC), kw_rank, depth, u)
+
+    ranked = sorted(sources.keys(), key=_prio)[: _MAX_FETCH_PAGES * 2]
     return {"candidate_urls": ranked}
 
 

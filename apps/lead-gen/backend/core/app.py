@@ -39,6 +39,7 @@ Run locally:
 from __future__ import annotations
 
 import asyncio
+import importlib
 import json
 import logging
 import os
@@ -53,48 +54,9 @@ from fastapi.responses import JSONResponse
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from pydantic import BaseModel
 
-from leadgen_agent.admin_chat_graph import build_graph as build_admin_chat
 from leadgen_agent.auth import make_bearer_token_middleware
 from leadgen_agent.observability import make_request_id_middleware
-from leadgen_agent.classify_paper_graph import build_graph as build_classify_paper
-from leadgen_agent.company_discovery_graph import (
-    build_graph as build_company_discovery,
-)
-from leadgen_agent.company_enrichment_graph import (
-    build_graph as build_company_enrichment,
-)
-from leadgen_agent.competitors_team_graph import (
-    build_graph as build_competitors_team,
-)
-from leadgen_agent.contact_discovery_graph import (
-    build_graph as build_contact_discovery,
-)
-from leadgen_agent.contact_enrich_graph import build_graph as build_contact_enrich
-from leadgen_agent.contact_enrich_paper_author_graph import (
-    build_batch_graph as build_contact_enrich_paper_authors_batch,
-    build_graph as build_contact_enrich_paper_author,
-)
-from leadgen_agent.contact_enrich_sales_graph import (
-    build_graph as build_contact_enrich_sales,
-)
-from leadgen_agent.deep_icp_graph import build_graph as build_deep_icp
-from leadgen_agent.email_compose_graph import build_graph as build_email_compose
-from leadgen_agent.find_decision_maker_graph import (
-    build_graph as build_find_decision_maker,
-)
-from leadgen_agent.email_opportunity_graph import (
-    build_graph as build_email_opportunity,
-)
-from leadgen_agent.email_outreach_graph import build_graph as build_email_outreach
-from leadgen_agent.email_reply_graph import build_graph as build_email_reply
-from leadgen_agent.gtm_graph import build_graph as build_gtm
-from leadgen_agent.icp_team_graph import build_graph as build_icp_team
-from leadgen_agent.lead_gen_team_graph import build_graph as build_lead_gen_team
-from leadgen_agent.positioning_graph import build_graph as build_positioning
-from leadgen_agent.pricing_graph import build_graph as build_pricing
-from leadgen_agent.product_intel_graph import build_graph as build_product_intel
-from leadgen_agent.score_contact_graph import build_graph as build_score_contact
-from leadgen_agent.text_to_sql_graph import build_graph as build_text_to_sql
+from leadgen_agent.registry import GRAPHS, GraphSpec
 
 from core.linkedin_api import ensure_linkedin_tables, router as linkedin_router
 from core.remote_graphs import aclose_all_adapters, build_all_remote_adapters
@@ -120,72 +82,38 @@ BearerTokenMiddleware = make_bearer_token_middleware(
 )
 
 
-def _build_optional_graphs(checkpointer: Any) -> dict[str, Any]:
-    """Compile graphs that were only added after the 3-container split.
+def _compile_one(spec: GraphSpec, checkpointer: Any) -> Any:
+    """Compile a single graph from its registry spec.
 
-    These modules land in this container but the imports are done lazily
-    inside this helper so a missing-symbol error surfaces as a clear log
-    line at boot instead of an ImportError during uvicorn startup — the
-    bootstrap logic for the companies_verify / company_cleanup / pipeline /
-    vertical_discovery / consultancies_discovery modules is in motion and
-    signatures may drift.
+    A spec with ``builder_attr=None`` references a graph that was compiled
+    once at module import time (no checkpointer wired). For everything else
+    the registered builder is called with the live ``AsyncPostgresSaver`` so
+    state survives container restarts.
+    """
+    mod = importlib.import_module(spec.module)
+    if spec.builder_attr is None:
+        return getattr(mod, spec.compiled_attr)
+    return getattr(mod, spec.builder_attr)(checkpointer)
+
+
+def _compile_all(checkpointer: Any) -> tuple[dict[str, Any], list[str]]:
+    """Compile every registered graph; collect per-graph failures.
+
+    Returns ``(graphs, failures)``. The container must stay alive on per-
+    graph errors so unrelated endpoints keep serving — failures surface
+    via ``app.state.graph_compile_failures`` and ``/__debug/state``.
     """
     out: dict[str, Any] = {}
-    optional_specs = [
-        ("analyze_product_v2", "leadgen_agent.product_intel_v2_graph", "build_graph"),
-        ("freshness", "leadgen_agent.freshness_graph", "build_graph"),
-        ("deep_scrape", "leadgen_agent.deep_scrape_graph", "build_graph"),
-        ("deep_competitor", "leadgen_agent.deep_competitor_graph", "build_graph"),
-        ("vertical_discovery", "leadgen_agent.vertical_discovery_graph", "build_graph"),
-        ("pipeline", "leadgen_agent.pipeline_graph", "build_graph"),
-        (
-            "sales_tech_outreach",
-            "leadgen_agent.sales_tech_outreach_graph",
-            "build_graph",
-        ),
-        (
-            "consultancies_discovery",
-            "leadgen_agent.consultancies_discovery_graph",
-            "build_graph",
-        ),
-        ("companies_verify", "leadgen_agent.companies_verify_graph", "build_graph"),
-        ("company_cleanup", "leadgen_agent.company_cleanup_graph", "build_graph"),
-        ("company_qa", "leadgen_agent.company_qa_graph", "build_graph"),
-        ("score_recruiter_fit", "leadgen_agent.score_recruiter_fit_graph", "build_graph"),
-        ("classify_recruitment", "leadgen_agent.classify_recruitment_graph", "build_graph"),
-        (
-            "classify_recruitment_bulk",
-            "leadgen_agent.classify_recruitment_bulk_graph",
-            "build_graph",
-        ),
-        (
-            "apply_recruitment_verdicts",
-            "leadgen_agent.apply_recruitment_verdicts_graph",
-            "build_graph",
-        ),
-        ("classify_ai_intent", "leadgen_agent.classify_ai_intent_graph", "build_graph"),
-        (
-            "sales_tech_feature_graph",
-            "leadgen_agent.sales_tech_feature_graph",
-            "build_graph",
-        ),
-        ("extract_stack", "leadgen_agent.extract_stack_graph", "build_graph"),
-        ("ashby_ingest", "leadgen_agent.ashby_ingest_graph", "build_graph"),
-        ("ashby_discovery", "leadgen_agent.ashby_discovery_graph", "build_graph"),
-    ]
-    for assistant_id, module_path, attr in optional_specs:
+    failures: list[str] = []
+    for spec in GRAPHS:
         try:
-            mod = __import__(module_path, fromlist=[attr])
-            builder = getattr(mod, attr)
-            out[assistant_id] = builder(checkpointer)
+            out[spec.assistant_id] = _compile_one(spec, checkpointer)
         except Exception as exc:  # noqa: BLE001
-            log.warning(
-                "optional graph %s not compiled (%s: %s); endpoint will 404",
-                assistant_id,
-                type(exc).__name__,
-                exc,
+            failures.append(
+                f"{spec.assistant_id} ({type(exc).__name__}: {exc})"
             )
-    return out
+            log.exception("graph compile failed: %s", spec.assistant_id)
+    return out, failures
 
 
 @asynccontextmanager
@@ -272,39 +200,19 @@ async def lifespan(app: FastAPI):
             # Idempotent: creates the checkpointer tables on first run, no-ops after.
             await checkpointer.setup()
             _boot("checkpointer_setup_ok")
-            graphs: dict[str, Any] = {
-                "admin_chat": build_admin_chat(checkpointer),
-                "classify_paper": build_classify_paper(checkpointer),
-                "company_discovery": build_company_discovery(checkpointer),
-                "company_enrichment": build_company_enrichment(checkpointer),
-                "competitors_team": build_competitors_team(checkpointer),
-                "contact_discovery": build_contact_discovery(checkpointer),
-                "contact_enrich": build_contact_enrich(checkpointer),
-                "contact_enrich_sales": build_contact_enrich_sales(checkpointer),
-                "contact_enrich_paper_author": build_contact_enrich_paper_author(
-                    checkpointer
-                ),
-                "contact_enrich_paper_authors_batch": build_contact_enrich_paper_authors_batch(
-                    checkpointer
-                ),
-                "deep_icp": build_deep_icp(checkpointer),
-                "email_compose": build_email_compose(checkpointer),
-                "email_opportunity": build_email_opportunity(checkpointer),
-                "email_outreach": build_email_outreach(checkpointer),
-                "email_reply": build_email_reply(checkpointer),
-                "find_decision_maker": build_find_decision_maker(checkpointer),
-                "gtm": build_gtm(checkpointer),
-                "icp_team": build_icp_team(checkpointer),
-                "lead_gen_team": build_lead_gen_team(checkpointer),
-                "positioning": build_positioning(checkpointer),
-                "pricing": build_pricing(checkpointer),
-                "product_intel": build_product_intel(checkpointer),
-                "score_contact": build_score_contact(checkpointer),
-                "text_to_sql": build_text_to_sql(checkpointer),
-            }
-            graphs.update(_build_optional_graphs(checkpointer))
+            graphs, compile_failures = _compile_all(checkpointer)
             app.state.graphs = graphs
-            _boot(f"graphs_compiled count={len(graphs)}")
+            app.state.graph_compile_failures = compile_failures
+            _boot(
+                f"graphs_compiled count={len(graphs)} "
+                f"failed={len(compile_failures)}"
+            )
+            if compile_failures:
+                log.warning(
+                    "%d graphs failed to compile: %s",
+                    len(compile_failures),
+                    compile_failures,
+                )
 
             # Build RemoteGraph adapters once at startup so a missing ML_URL /
             # RESEARCH_URL env var fails fast instead of at the first call.
@@ -423,14 +331,7 @@ app.add_middleware(make_request_id_middleware())
 # the AsyncPostgresSaver + graph compilation finishes.
 app.state.graphs = {}
 app.state.remote_adapters = {}
-
-# Pre-populate ``app.state`` with empty defaults so any handler that imports
-# the module before lifespan completes (e.g. a CF Container readiness probe
-# arriving while uvicorn is still binding) sees a typed-empty dict instead of
-# raising ``AttributeError``. ``lifespan`` will replace these atomically once
-# the AsyncPostgresSaver + graph compilation finishes.
-app.state.graphs = {}
-app.state.remote_adapters = {}
+app.state.graph_compile_failures = []
 
 # Mount the 13 Chrome-extension routes under /linkedin/*. They share the
 # container's Neon pool; auth is handled at the perimeter.
@@ -513,6 +414,7 @@ async def debug_state() -> dict[str, Any]:
     return {
         "has_graphs_attr": hasattr(app.state, "graphs"),
         "graph_keys": sorted(graphs_attr.keys()) if isinstance(graphs_attr, dict) else [],
+        "graph_compile_failures": getattr(app.state, "graph_compile_failures", []),
         "lifespan_error": getattr(app.state, "lifespan_error", None),
         "checkpointer_alive": getattr(app.state, "checkpointer_alive", None),
         "boot_log": getattr(app.state, "boot_log", []),
