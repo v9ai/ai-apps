@@ -18,6 +18,7 @@ const NAV_ITEMS = [
   { label: "Favorites", href: "/favorites" },
   { label: "Videos", href: "/videos" },
   { label: "Firmware", href: "/firmware" },
+  { label: "Building Instructions", href: "/building-instructions" },
   { label: "How It Works", href: "/how-it-works" },
   { label: "Settings", href: "/settings" },
 ];

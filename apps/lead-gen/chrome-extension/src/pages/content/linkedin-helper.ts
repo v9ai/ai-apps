@@ -2743,74 +2743,76 @@ function extractCompaniesFromProductCards(): Array<{
   return Array.from(companyMap.values());
 }
 
-// Pagination helpers for /search/results/products/* — uses the generic
-// .artdeco-pagination block rather than the jobs-specific selector.
+// Pagination helpers for /search/results/products/* — LinkedIn's product
+// search uses obfuscated classnames but stable testids:
+//   ul[data-testid="pagination-controls-list"]
+//   button[aria-label="Page N"] aria-current="true|false"
+//   button[data-testid="pagination-controls-next-button-visible"|"-hidden"]
+// There is no "Page X of Y" text, and only ~10 page buttons render at a time
+// (the window slides as you advance), so totalPages is approximate.
 function getProductSearchPaginationInfo(): {
   currentPage: number;
-  totalPages: number;
+  maxVisiblePage: number;
+  hasNext: boolean;
 } | null {
-  const stateEl =
-    document.querySelector(".artdeco-pagination__page-state") ??
-    document.querySelector('[data-test-pagination-page-btn][aria-current="true"]')
-      ?.closest(".artdeco-pagination") ?? null;
+  const list =
+    document.querySelector('ul[data-testid="pagination-controls-list"]') ??
+    document.querySelector(".artdeco-pagination__indicator")?.closest("ul") ??
+    null;
+  if (!list) return null;
 
-  if (stateEl) {
-    const text = stateEl.textContent?.trim() ?? "";
-    const match = text.match(/Page\s+(\d+)\s+of\s+(\d+)/i);
-    if (match) {
-      return {
-        currentPage: parseInt(match[1], 10),
-        totalPages: parseInt(match[2], 10),
-      };
-    }
-  }
-
-  // Fallback: count rendered indicator buttons.
-  const buttons = document.querySelectorAll<HTMLButtonElement>(
-    ".artdeco-pagination__indicator button",
+  const buttons = list.querySelectorAll<HTMLButtonElement>(
+    'button[aria-label^="Page "]',
   );
-  if (buttons.length > 0) {
-    let currentPage = 1;
-    let totalPages = 1;
-    buttons.forEach((b) => {
-      const aria = b.getAttribute("aria-label") ?? "";
-      const m = aria.match(/Page\s+(\d+)/i);
-      if (!m) return;
-      const n = parseInt(m[1], 10);
-      if (n > totalPages) totalPages = n;
-      const li = b.closest("li");
-      if (li?.classList.contains("active") || b.getAttribute("aria-current") === "true") {
-        currentPage = n;
-      }
-    });
-    return { currentPage, totalPages };
-  }
+  if (buttons.length === 0) return null;
 
-  return null;
+  let currentPage = 1;
+  let maxVisiblePage = 1;
+  buttons.forEach((b) => {
+    const m = b.getAttribute("aria-label")?.match(/Page\s+(\d+)/i);
+    if (!m) return;
+    const n = parseInt(m[1], 10);
+    if (n > maxVisiblePage) maxVisiblePage = n;
+    if (b.getAttribute("aria-current") === "true") currentPage = n;
+  });
+
+  const nextVisible = document.querySelector<HTMLButtonElement>(
+    'button[data-testid="pagination-controls-next-button-visible"]',
+  );
+  const hasNext =
+    !!nextVisible && !nextVisible.disabled;
+
+  return { currentPage, maxVisiblePage, hasNext };
 }
 
-async function clickProductSearchPageNumber(
-  pageNumber: number,
+// Click the visible "next" button (preferred — works regardless of how many
+// page numbers are currently rendered). Falls back to a numbered page button
+// if the next-button isn't found, then to the legacy artdeco selectors.
+async function clickProductSearchNext(
+  expectedNextPage: number,
 ): Promise<{ ok: true } | { ok: false; reason: "no-button" | "timeout" }> {
-  const indicators = document.querySelectorAll<HTMLButtonElement>(
-    ".artdeco-pagination__indicator button",
-  );
+  let target =
+    document.querySelector<HTMLButtonElement>(
+      'button[data-testid="pagination-controls-next-button-visible"]',
+    ) ?? null;
 
-  let target: HTMLButtonElement | null = null;
-  for (const btn of Array.from(indicators)) {
-    if (btn.getAttribute("aria-label") === `Page ${pageNumber}`) {
-      target = btn;
-      break;
-    }
+  if (!target) {
+    const list = document.querySelector(
+      'ul[data-testid="pagination-controls-list"]',
+    );
+    target =
+      list?.querySelector<HTMLButtonElement>(
+        `button[aria-label="Page ${expectedNextPage}"]`,
+      ) ?? null;
   }
 
   if (!target) {
-    const next = document.querySelector<HTMLButtonElement>(
+    target = document.querySelector<HTMLButtonElement>(
       'button.artdeco-pagination__button--next, button[aria-label="Next"]',
     );
-    if (!next || next.disabled) return { ok: false, reason: "no-button" };
-    target = next;
   }
+
+  if (!target || target.disabled) return { ok: false, reason: "no-button" };
 
   target.scrollIntoView({ block: "center" });
   target.click();
@@ -2820,8 +2822,8 @@ async function clickProductSearchPageNumber(
   while (attempts < maxAttempts) {
     await new Promise((r) => setTimeout(r, 1000));
     const info = getProductSearchPaginationInfo();
-    if (info && info.currentPage === pageNumber) {
-      await new Promise((r) => setTimeout(r, 1500));
+    if (info && info.currentPage === expectedNextPage) {
+      await new Promise((r) => setTimeout(r, 1200));
       return { ok: true };
     }
     attempts++;
@@ -3444,7 +3446,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.action === "getProductSearchPaginationInfo") {
-    const paginationInfo = getProductSearchPaginationInfo();
+    const info = getProductSearchPaginationInfo();
+    const paginationInfo = info
+      ? {
+          currentPage: info.currentPage,
+          totalPages: info.maxVisiblePage,
+          hasNext: info.hasNext,
+        }
+      : null;
     sendResponse({ paginationInfo });
     return true;
   }
@@ -3458,16 +3467,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           reason: "click-no-button" | "click-timeout" | "empty-extraction";
         }> = [];
 
-        // Scroll to bottom first — product search lazy-mounts cards.
-        window.scrollTo(0, document.body.scrollHeight);
-        await new Promise((r) => setTimeout(r, 1500));
-
-        const paginationInfo = getProductSearchPaginationInfo();
-        const startPage = paginationInfo?.currentPage ?? 1;
-        const totalPages = paginationInfo?.totalPages ?? 1;
-        let pagesScraped = 0;
+        const SAFETY_CAP = 200;
 
         const extractWithRetry = async () => {
+          // Scroll to bottom — product search lazy-mounts cards on view.
+          window.scrollTo(0, document.body.scrollHeight);
+          await new Promise((r) => setTimeout(r, 1200));
           let companies = extractCompaniesFromProductCards();
           if (companies.length === 0) {
             await new Promise((r) => setTimeout(r, 1500));
@@ -3478,49 +3483,61 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
         const flushPage = (
           pageNumber: number,
+          maxKnownPage: number,
           companies: Array<{ name: string; linkedin_url: string }>,
         ) => {
           safeSendMessage({
             action: "saveCompanyBatchFromProducts",
             pageNumber,
-            totalPages,
+            totalPages: maxKnownPage,
             companies,
           });
           safeSendMessage({
             action: "productSearchPaginationProgress",
             currentPage: pageNumber,
-            totalPages,
+            totalPages: maxKnownPage,
             collected: seen.size,
           });
         };
 
-        const startCompanies = await extractWithRetry();
-        startCompanies.forEach((c) => {
+        let pagesScraped = 0;
+        let info = getProductSearchPaginationInfo();
+        let currentPage = info?.currentPage ?? 1;
+        let maxKnownPage = info?.maxVisiblePage ?? currentPage;
+
+        // First page (whatever the user starts on).
+        const firstCompanies = await extractWithRetry();
+        firstCompanies.forEach((c) => {
           if (!seen.has(c.linkedin_url)) seen.set(c.linkedin_url, c);
         });
         pagesScraped++;
-        if (startCompanies.length === 0 && totalPages > 1) {
-          pageFailures.push({ page: startPage, reason: "empty-extraction" });
+        if (firstCompanies.length === 0) {
+          pageFailures.push({ page: currentPage, reason: "empty-extraction" });
         }
-        flushPage(startPage, startCompanies);
+        flushPage(currentPage, maxKnownPage, firstCompanies);
 
-        for (let page = startPage + 1; page <= totalPages; page++) {
-          let click = await clickProductSearchPageNumber(page);
+        // Walk forward via the next button until it's hidden/disabled.
+        while (pagesScraped < SAFETY_CAP) {
+          info = getProductSearchPaginationInfo();
+          if (!info || !info.hasNext) break;
+
+          const expectedNext = info.currentPage + 1;
+          let click = await clickProductSearchNext(expectedNext);
           if (!click.ok) {
             await new Promise((r) => setTimeout(r, 1500));
-            click = await clickProductSearchPageNumber(page);
+            click = await clickProductSearchNext(expectedNext);
           }
           if (!click.ok) {
             pageFailures.push({
-              page,
-              reason: click.reason === "no-button" ? "click-no-button" : "click-timeout",
+              page: expectedNext,
+              reason:
+                click.reason === "no-button" ? "click-no-button" : "click-timeout",
             });
             break;
           }
 
-          // Scroll to force lazy-load of all cards on this page.
-          window.scrollTo(0, document.body.scrollHeight);
-          await new Promise((r) => setTimeout(r, 1200));
+          currentPage = expectedNext;
+          if (currentPage > maxKnownPage) maxKnownPage = currentPage;
 
           const pageCompanies = await extractWithRetry();
           pageCompanies.forEach((c) => {
@@ -3528,14 +3545,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           });
           pagesScraped++;
           if (pageCompanies.length === 0) {
-            pageFailures.push({ page, reason: "empty-extraction" });
+            pageFailures.push({ page: currentPage, reason: "empty-extraction" });
           }
-          flushPage(page, pageCompanies);
+
+          // Refresh maxKnownPage from the freshly-rendered indicator window.
+          const after = getProductSearchPaginationInfo();
+          if (after && after.maxVisiblePage > maxKnownPage) {
+            maxKnownPage = after.maxVisiblePage;
+          }
+
+          flushPage(currentPage, maxKnownPage, pageCompanies);
         }
 
         sendResponse({
           success: true,
-          totalPages,
+          totalPages: maxKnownPage,
           pagesScraped,
           uniqueCompanies: seen.size,
           pageFailures,
