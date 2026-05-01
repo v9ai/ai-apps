@@ -398,6 +398,37 @@ async def runs_wait(req: RunRequest) -> dict[str, Any]:
     return await graph.ainvoke(req.input, config=config)
 
 
+# ── Cron tick ─────────────────────────────────────────────────────────────
+#
+# CF Worker cron triggers (`triggers.crons` in `wrangler.jsonc`) fire on the
+# Worker's `scheduled()` handler — they cannot fire directly on the Container.
+# `src/index.js` does the bare-minimum wake-up POST here; all job logic
+# lives in `leadgen_agent/_cron.py`.
+
+class CronTickRequest(BaseModel):
+    job: str
+    full_refresh: bool = False
+    cron: str | None = None  # original cron expression — diagnostic only
+
+
+@app.post("/cron/tick")
+async def cron_tick(req: CronTickRequest) -> JSONResponse:
+    """Run the named scheduled job in-process and return its summary.
+
+    Authenticated via the standard ``LANGGRAPH_AUTH_TOKEN`` middleware —
+    the Worker forwards the same bearer it uses for ``/runs/wait``.
+    """
+    graphs = getattr(app.state, "graphs", None) or {}
+    if req.job == "ashby-nightly":
+        from leadgen_agent._cron import run_ashby_nightly  # noqa: PLC0415
+
+        summary = await run_ashby_nightly(
+            graphs, full_refresh=req.full_refresh
+        )
+        return JSONResponse(summary, status_code=200 if summary.get("ok") else 500)
+    raise HTTPException(status_code=404, detail=f"Unknown cron job: {req.job}")
+
+
 # ── temporary diagnostic endpoints ────────────────────────────────────────
 # These are intentionally unauthenticated (added to ``_PUBLIC_PATHS`` and to
 # the dispatcher's ``PUBLIC_CORE_PREFIXES``) so an operator can hit them

@@ -47,8 +47,38 @@ export class CoreContainer extends Container {
   }
 }
 
+// Cron triggers fire here — see `triggers.crons` in wrangler.jsonc. The handler
+// exists ONLY to wake the container and POST to its Python /cron/tick endpoint.
+// All job logic lives in apps/lead-gen/backend/leadgen_agent/_cron.py.
+async function fireCronTick(env, cronExpr) {
+  // Monday 06:47 UTC → weekly full refresh; everything else → daily nightly.
+  const fullRefresh = cronExpr === "47 6 * * 1";
+  const body = JSON.stringify({
+    job: "ashby-nightly",
+    full_refresh: fullRefresh,
+    cron: cronExpr,
+  });
+  const req = new Request("http://internal/cron/tick", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "Authorization": `Bearer ${env.LANGGRAPH_AUTH_TOKEN}`,
+    },
+    body,
+  });
+  const resp = await getContainer(env.CONTAINER).fetch(req);
+  // Surface a single-line summary in `wrangler tail` so an operator can
+  // confirm the cron fired without scraping container logs.
+  console.log(
+    `cron tick fired cron=${JSON.stringify(cronExpr)} full_refresh=${fullRefresh} status=${resp.status}`,
+  );
+}
+
 export default {
   async fetch(request, env) {
     return getContainer(env.CONTAINER).fetch(request);
+  },
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(fireCronTick(env, event.cron));
   },
 };

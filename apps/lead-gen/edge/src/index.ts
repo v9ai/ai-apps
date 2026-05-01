@@ -602,6 +602,37 @@ async function handleJobsD1Import(req: Request, env: Env): Promise<Response> {
   );
 }
 
+// ── D1 read: distinct Ashby slugs already ingested into D1 opportunities ──
+//
+// GET /api/jobs/d1/known-ashby-slugs
+//   headers: Authorization: Bearer <JOBS_D1_TOKEN>
+//   reply:   { slugs: string[] }
+//
+// Used by the Ashby discovery driver to compute `new_slugs` (slugs not yet
+// in D1) so the sequential ingest fan-out can skip boards we've already
+// imported.
+
+async function handleKnownAshbySlugs(req: Request, env: Env): Promise<Response> {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: corsHeaders(req) });
+  }
+  if (req.method !== "GET") {
+    return json(req, { error: "Method not allowed" }, 405);
+  }
+  const auth = req.headers.get("authorization") ?? "";
+  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+  if (!env.JOBS_D1_TOKEN || !token || !constantTimeEq(token, env.JOBS_D1_TOKEN)) {
+    return json(req, { error: "Unauthorized" }, 401);
+  }
+  const res = await env.DB.prepare(
+    `SELECT DISTINCT substr(source, length('ashby:') + 1) AS slug
+       FROM opportunities
+      WHERE source LIKE 'ashby:%'`,
+  ).all<{ slug: string }>();
+  const slugs = (res.results ?? []).map((r) => r.slug).filter(Boolean);
+  return json(req, { slugs });
+}
+
 // ── D1 read: Next.js server lists D1 opportunities for /opportunities page ──
 //
 // GET /api/jobs/d1/opportunities?limit=500
@@ -1382,6 +1413,9 @@ export default {
 
     if (url.pathname === "/api/jobs/d1/import") {
       return handleJobsD1Import(req, env);
+    }
+    if (url.pathname === "/api/jobs/d1/known-ashby-slugs") {
+      return handleKnownAshbySlugs(req, env);
     }
     if (url.pathname === "/api/jobs/d1/opportunities") {
       return handleJobsD1List(req, env);
