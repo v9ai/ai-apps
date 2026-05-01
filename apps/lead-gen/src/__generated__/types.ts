@@ -193,6 +193,8 @@ export type Company = {
   logo_url: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
   opportunities: Array<Opportunity>;
+  qa_verdict: Maybe<Scalars['JSON']['output']>;
+  qa_verdict_at: Maybe<Scalars['String']['output']>;
   /** ML quality gate evaluation */
   qualityGate: QualityGateResult;
   /** ML-computed rank score (0-1) */
