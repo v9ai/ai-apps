@@ -33,9 +33,9 @@ log = logging.getLogger(__name__)
 
 _BRAVE_API_URL = "https://api.search.brave.com/res/v1/web/search"
 _BRAVE_TIMEOUT_S = 20.0
-_RATE_LIMIT_DELAY_S = 1.0
-_DEFAULT_COUNT = 20  # Brave max per page
-_DEFAULT_MAX_PAGES = 5
+_RATE_LIMIT_DELAY_S = 1.2  # Brave free tier ≈ 1 req/s; pad to avoid 429s
+_DEFAULT_COUNT = 20  # Brave max per page (1–20)
+_DEFAULT_MAX_PAGES = 5  # Brave caps offset at 9 (max 10 pages × 20 = 200/q)
 _USER_AGENT = "Mozilla/5.0 (compatible; LeadgenAshbyDiscovery/0.1)"
 
 _DEFAULT_KEYWORDS: tuple[str, ...] = (
@@ -104,6 +104,8 @@ def _extract_slug(url: str) -> str | None:
 async def _brave_search(
     client: httpx.AsyncClient, api_key: str, query: str, count: int, offset: int
 ) -> list[dict[str, Any]]:
+    """Brave Web Search. ``offset`` is a **page index** (0–9), not a result
+    count — passing 20 returns 422. ``count`` is the page size (1–20)."""
     resp = await client.get(
         _BRAVE_API_URL,
         headers={
@@ -111,7 +113,7 @@ async def _brave_search(
             "Accept": "application/json",
             "User-Agent": _USER_AGENT,
         },
-        params={"q": query, "count": min(count, 20), "offset": offset},
+        params={"q": query, "count": min(count, 20), "offset": min(max(offset, 0), 9)},
         timeout=_BRAVE_TIMEOUT_S,
     )
     resp.raise_for_status()
@@ -149,10 +151,24 @@ async def discover(state: AshbyDiscoveryState) -> dict[str, Any]:
 
     async with httpx.AsyncClient() as client:
         for query in queries:
-            for page in range(max_pages):
-                offset = page * count
+            consecutive_429s = 0
+            for page in range(min(max_pages, 10)):
                 try:
-                    hits = await _brave_search(client, api_key, query, count, offset)
+                    hits = await _brave_search(client, api_key, query, count, page)
+                    consecutive_429s = 0
+                except httpx.HTTPStatusError as exc:
+                    if exc.response.status_code == 429:
+                        consecutive_429s += 1
+                        wait = _RATE_LIMIT_DELAY_S * (2 ** consecutive_429s)
+                        log.warning("Brave 429 q=%r page=%d backing off %.1fs",
+                                    query, page, wait)
+                        if consecutive_429s >= 3:
+                            break
+                        await asyncio.sleep(wait)
+                        continue
+                    log.warning("Brave HTTP %d q=%r page=%d",
+                                exc.response.status_code, query, page)
+                    break
                 except (httpx.HTTPError, ValueError) as exc:
                     log.warning("Brave error q=%r page=%d: %s", query, page, exc)
                     break
@@ -170,8 +186,8 @@ async def discover(state: AshbyDiscoveryState) -> dict[str, Any]:
                     added += 1
                 log.info("Brave q=%r page=%d hits=%d new_slugs=%d",
                          query, page, len(hits), added)
-                # If a page added zero slugs we've likely hit aggregator pages —
-                # bail out of pagination for this keyword to save quota.
+                # Pages past the first that add zero slugs are aggregator
+                # noise — bail to save quota.
                 if added == 0 and page > 0:
                     break
                 await asyncio.sleep(_RATE_LIMIT_DELAY_S)
