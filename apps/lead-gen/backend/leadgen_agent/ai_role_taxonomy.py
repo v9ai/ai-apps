@@ -108,27 +108,26 @@ def _first_ai_match(text: str) -> str | None:
 
 def is_ai_role(
     title: str | None,
-    description: str | None = None,
+    description: str | None = None,  # accepted for backward compat; ignored
 ) -> tuple[bool, str | None]:
-    """Return ``(is_ai_role, matched_pattern)``.
+    """Return ``(is_ai_role, matched_pattern)`` based on the title only.
 
-    The title is the primary signal; description is only consulted when the
-    title alone is silent. A negative term anywhere in either field
-    suppresses the match.
+    Title-only by design: descriptions reliably contain company-tagline
+    boilerplate ("we build AI applications") that produces false positives.
+    Even AI-first companies label their AI roles in the title.
+
+    The ``description`` argument is accepted to keep the call signature
+    stable for existing callers, but is intentionally **not** consulted.
     """
+    del description  # explicitly unused — see docstring
     title_lc = _norm(title)
-    desc_lc = _norm(description)[:_DESC_SCAN_CHARS]
 
-    if _has_negative(title_lc) or _has_negative(desc_lc):
+    if _has_negative(title_lc):
         return False, None
 
     title_match = _first_ai_match(title_lc)
     if title_match is not None:
         return True, title_match
-
-    desc_match = _first_ai_match(desc_lc)
-    if desc_match is not None:
-        return True, desc_match
 
     return False, None
 
