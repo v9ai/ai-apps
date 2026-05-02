@@ -2719,7 +2719,7 @@ function extractCompaniesFromProductCards(): Array<ProductCardRow> {
   cards.forEach((card) => {
     const aria = card.getAttribute("aria-label") ?? "";
     const name = aria.replace(/^View page\s+/, "").trim();
-    if (!name) return;
+    if (!name || name.length > 120) return;
 
     const wrapper = card.closest<HTMLAnchorElement>("a[href]");
     const href = wrapper?.getAttribute("href") ?? "";
@@ -2786,7 +2786,7 @@ function extractCompaniesFromProductCards(): Array<ProductCardRow> {
             aria.replace(/\s*\(opens[^)]*\)/i, "").trim() ||
             "";
           const name = raw.split(/\s*·\s*/)[0].trim();
-          if (!name) return;
+          if (!name || name.length > 120) return;
           emit({ name, linkedin_url });
         } catch {
           // skip
