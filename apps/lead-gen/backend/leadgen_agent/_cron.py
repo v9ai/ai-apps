@@ -201,3 +201,60 @@ async def run_ashby_nightly(
         summary["elapsed_s"],
     )
     return summary
+
+
+async def run_country_classify_nightly(
+    graphs: dict[str, Any],
+) -> dict[str, Any]:
+    """Backfill ``companies.country`` from ``location`` text via LangGraph.
+
+    Scope: rows where ``country IS NULL AND location <> ''`` and the service
+    taxonomy includes a sales-tech entry (Sales Engagement Platform / Lead
+    Generation Software / CRM Software). The sales-tech tab applies a
+    ``country_in: US+EU+UK+EEA`` predicate, so any row missing ``country``
+    drops out of that tab — this cron mops them up.
+
+    Sequential semantics: the bulk graph fans out internally under an
+    ``asyncio.Semaphore``; we only call ``ainvoke`` once here so the
+    ``feedback_leadgen_langgraph_fanout`` constraint (single-worker queue
+    poisoning) doesn't apply.
+    """
+    started = time.monotonic()
+    bulk = graphs.get("country_classify_bulk")
+    if bulk is None:
+        return {
+            "ok": False,
+            "error": "country_classify_bulk graph not compiled",
+            "available": sorted(graphs.keys()),
+        }
+
+    try:
+        result = await bulk.ainvoke(
+            {
+                "concurrency": 8,
+                "apply": True,
+                "only_sales_tech": True,
+            },
+            config=_config(),
+        )
+    except Exception as exc:  # noqa: BLE001
+        log.exception("country-classify-nightly: bulk graph failed")
+        return {
+            "ok": False,
+            "error": f"{type(exc).__name__}: {exc}",
+            "elapsed_s": round(time.monotonic() - started, 1),
+        }
+
+    summary = {
+        "ok": True,
+        "job": "country-classify-nightly",
+        "count": int(result.get("count") or 0),
+        "classified": int(result.get("classified_count") or 0),
+        "applied": int(result.get("applied") or 0),
+        "elapsed_s": round(time.monotonic() - started, 1),
+    }
+    log.info(
+        "country-classify-nightly done count=%d classified=%d applied=%d elapsed=%.1fs",
+        summary["count"], summary["classified"], summary["applied"], summary["elapsed_s"],
+    )
+    return summary

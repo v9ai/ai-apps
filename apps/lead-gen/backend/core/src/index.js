@@ -61,10 +61,17 @@ export class CoreContainer extends Container {
 // exists ONLY to wake the container and POST to its Python /cron/tick endpoint.
 // All job logic lives in apps/lead-gen/backend/leadgen_agent/_cron.py.
 async function fireCronTick(env, cronExpr) {
-  // Monday 06:47 UTC → weekly full refresh; everything else → daily nightly.
-  const fullRefresh = cronExpr === "47 6 * * 1";
+  // Cron expression → job mapping. Keep the worker dumb: mapping lives here,
+  // all logic lives in apps/lead-gen/backend/leadgen_agent/_cron.py.
+  let job = "ashby-nightly";
+  let fullRefresh = false;
+  if (cronExpr === "47 6 * * 1") {
+    fullRefresh = true; // weekly Ashby full re-ingest
+  } else if (cronExpr === "23 */6 * * *") {
+    job = "country-classify-nightly"; // every 6 hours
+  }
   const body = JSON.stringify({
-    job: "ashby-nightly",
+    job,
     full_refresh: fullRefresh,
     cron: cronExpr,
   });

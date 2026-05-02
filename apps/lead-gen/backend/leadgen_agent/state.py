@@ -232,6 +232,27 @@ class ClassifyRecruitmentBulkState(TypedDict, total=False):
     applied: int
 
 
+class ClassifyCountryState(TypedDict, total=False):
+    # input
+    location: str
+    # output
+    country: str | None  # ISO 3166-1 alpha-2 (e.g. "US", "DE") or None when unknown
+    confidence: float    # 0.0 – 1.0
+    reasons: list[str]   # <= 2 short bullets
+
+
+class ClassifyCountryBulkState(TypedDict, total=False):
+    # input
+    limit: int | None
+    concurrency: int
+    apply: bool             # write country back to companies; default False
+    only_sales_tech: bool   # restrict to SEP/LGS/CRM rows; default True
+    # output
+    count: int
+    classified_count: int
+    applied: int
+
+
 class ApplyRecruitmentVerdictsState(TypedDict, total=False):
     # input — exactly one of csv_path / verdicts must be set.
     # csv_path is the local-dev path (CF Container fs is ephemeral, so callers

@@ -14,7 +14,6 @@ export interface CompanyData {
   location: string;
   linkedinUrl: string;
   linkedinNumericId?: string;
-  country?: string;
 }
 
 export interface ICPResult {

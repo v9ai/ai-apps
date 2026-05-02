@@ -84,6 +84,11 @@ GRAPHS: tuple[GraphSpec, ...] = (
     ),
     GraphSpec("classify_ai_intent", "leadgen_agent.classify_ai_intent_graph"),
     GraphSpec("score_recruiter_fit", "leadgen_agent.score_recruiter_fit_graph"),
+    GraphSpec("country_classify", "leadgen_agent.country_classify_graph"),
+    GraphSpec(
+        "country_classify_bulk",
+        "leadgen_agent.country_classify_bulk_graph",
+    ),
     # ── Discovery / scraping ────────────────────────────────────────────
     # Precompiled at import time (module exposes ``graph`` but no
     # ``build_graph``); checkpointer not wired.

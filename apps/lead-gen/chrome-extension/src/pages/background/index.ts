@@ -1955,7 +1955,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 description: descriptionParts.join("\n") || undefined,
                 location: data.location || undefined,
                 industry: data.industry || undefined,
-                country: data.country || undefined,
                 ...(serviceTaxonomy.length > 0
                   ? { service_taxonomy: serviceTaxonomy }
                   : {}),

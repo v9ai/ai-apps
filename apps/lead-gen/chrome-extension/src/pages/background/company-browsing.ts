@@ -1,7 +1,6 @@
 // ── Company Browsing Engine ──────────────────────────────────────────
 
 import { type CompanyData, isICPTarget } from "../../lib/icp-filter";
-import { parseCountryCode } from "../../lib/country-codes";
 import { gqlRequest } from "../../services/graphql";
 import { randomDelay, waitForTabLoad, clickSeeMore, safeTabUpdate } from "./tab-utils";
 
@@ -166,14 +165,7 @@ export function extractCompanyData(tabId: number): Promise<CompanyData | null> {
         };
       },
     })
-    .then((results) => {
-      const data = results?.[0]?.result ?? null;
-      if (!data) return null;
-      // Derive country code from the LinkedIn HQ string. Done extension-side
-      // (not in the injected MAIN-world function) so the parser stays in our
-      // bundle and not the page's JS context.
-      return { ...data, country: parseCountryCode(data.location) };
-    })
+    .then((results) => results?.[0]?.result ?? null)
     .catch(() => null);
 }
 
@@ -644,7 +636,6 @@ export type CompanyImportBatchInput = {
   industry?: string;
   size?: string;
   service_taxonomy?: string[];
-  country?: string;
 };
 
 export async function saveCompanyBatch(
@@ -793,7 +784,6 @@ export async function browseCompanies(tabId: number) {
           .join("\n") || undefined,
         location: data.location || undefined,
         industry: data.industry || undefined,
-        country: data.country || undefined,
       });
 
       console.log(

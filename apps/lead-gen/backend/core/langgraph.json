@@ -31,6 +31,8 @@
     "apply_recruitment_verdicts": "leadgen_agent.apply_recruitment_verdicts_graph:graph",
     "classify_ai_intent": "leadgen_agent.classify_ai_intent_graph:graph",
     "score_recruiter_fit": "leadgen_agent.score_recruiter_fit_graph:graph",
+    "country_classify": "leadgen_agent.country_classify_graph:graph",
+    "country_classify_bulk": "leadgen_agent.country_classify_bulk_graph:graph",
     "deep_scrape": "leadgen_agent.deep_scrape_graph:graph",
     "company_discovery": "leadgen_agent.company_discovery_graph:graph",
     "company_enrichment": "leadgen_agent.company_enrichment_graph:graph",

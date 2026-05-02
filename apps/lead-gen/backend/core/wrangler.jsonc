@@ -40,7 +40,8 @@
   "triggers": {
     "crons": [
       "17 6 * * *",   // daily 06:17 UTC — Ashby discover + ingest
-      "47 6 * * 1"    // Mondays 06:47 UTC — full re-ingest of known boards
+      "47 6 * * 1",   // Mondays 06:47 UTC — full re-ingest of known boards
+      "23 */6 * * *"  // every 6 hours :23 — country-classify mop-up
     ]
   }
 }
