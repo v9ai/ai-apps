@@ -258,3 +258,51 @@ async def run_country_classify_nightly(
         summary["count"], summary["classified"], summary["applied"], summary["elapsed_s"],
     )
     return summary
+
+
+async def run_remote_classify(
+    graphs: dict[str, Any],
+) -> dict[str, Any]:
+    """Classify D1 opportunities as remote / fully remote.
+
+    Calls the ``remote_classify`` graph with ``limit=2000`` (max) to scan
+    every open, unarchived D1 opportunity. Pure rule-based — no LLM calls.
+    Result is logged; the graph does not write back to D1.
+    """
+    started = time.monotonic()
+    graph = graphs.get("remote_classify")
+    if graph is None:
+        return {
+            "ok": False,
+            "error": "remote_classify graph not compiled",
+            "available": sorted(graphs.keys()),
+        }
+
+    try:
+        result = await graph.ainvoke({"limit": 2000}, config=_config())
+    except Exception as exc:  # noqa: BLE001
+        log.exception("remote-classify: graph failed")
+        return {
+            "ok": False,
+            "error": f"{type(exc).__name__}: {exc}",
+            "elapsed_s": round(time.monotonic() - started, 1),
+        }
+
+    meta = result.get("graph_meta") or {}
+    summary = {
+        "ok": True,
+        "job": "remote-classify",
+        "total": int(result.get("total") or 0),
+        "any_remote": int(result.get("any_remote") or 0),
+        "fully_remote": int(result.get("fully_remote") or 0),
+        "ai_any_remote": int(result.get("ai_any_remote") or 0),
+        "ai_fully_remote": int(result.get("ai_fully_remote") or 0),
+        "summary": meta.get("summary"),
+        "elapsed_s": round(time.monotonic() - started, 1),
+    }
+    log.info(
+        "remote-classify done total=%d any_remote=%d fully_remote=%d ai_fully=%d elapsed=%.1fs",
+        summary["total"], summary["any_remote"], summary["fully_remote"],
+        summary["ai_fully_remote"], summary["elapsed_s"],
+    )
+    return summary

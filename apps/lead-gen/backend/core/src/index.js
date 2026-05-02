@@ -69,6 +69,8 @@ async function fireCronTick(env, cronExpr) {
     fullRefresh = true; // weekly Ashby full re-ingest
   } else if (cronExpr === "23 */6 * * *") {
     job = "country-classify-nightly"; // every 6 hours
+  } else if (cronExpr === "37 */4 * * *") {
+    job = "remote-classify"; // every 4 hours
   }
   const body = JSON.stringify({
     job,

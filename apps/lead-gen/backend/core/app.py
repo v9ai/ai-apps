@@ -431,6 +431,11 @@ async def cron_tick(req: CronTickRequest) -> JSONResponse:
 
         summary = await run_country_classify_nightly(graphs)
         return JSONResponse(summary, status_code=200 if summary.get("ok") else 500)
+    if req.job == "remote-classify":
+        from leadgen_agent._cron import run_remote_classify  # noqa: PLC0415
+
+        summary = await run_remote_classify(graphs)
+        return JSONResponse(summary, status_code=200 if summary.get("ok") else 500)
     raise HTTPException(status_code=404, detail=f"Unknown cron job: {req.job}")
 
 
