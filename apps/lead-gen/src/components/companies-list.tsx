@@ -31,7 +31,6 @@ import { button } from "@/recipes/button";
 import { css } from "styled-system/css";
 import { TrashIcon, PlusIcon, MixIcon, UploadIcon, MagicWandIcon } from "@radix-ui/react-icons";
 import { ADMIN_EMAIL } from "@/lib/constants";
-import { US_EU_EEA_CODES } from "@/lib/country-codes";
 import { SearchInput } from "@/components/ui/SearchInput";
 
 export function CompaniesList() {
@@ -244,7 +243,6 @@ export function CompaniesList() {
             "Lead Generation Software",
             "CRM Software",
           ],
-          country_in: [...US_EU_EEA_CODES],
         }
       : {}),
   };
