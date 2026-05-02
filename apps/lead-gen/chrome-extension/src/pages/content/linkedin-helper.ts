@@ -2692,6 +2692,7 @@ export type ProductCardRow = {
   name: string;
   linkedin_url?: string;  // set when wrapper anchor is /company/<slug>
   product_url?: string;   // set when wrapper anchor is /products/<slug>
+  company_name?: string;  // extracted from "By: <Company>" text on product cards
 };
 
 function extractCompaniesFromProductCards(): Array<ProductCardRow> {
@@ -2742,9 +2743,24 @@ function extractCompaniesFromProductCards(): Array<ProductCardRow> {
 
     const productMatch = pathname.match(/^\/products\/([^/]+)/);
     if (productMatch) {
+      // Also extract the "By: <Company>" name from the product card
+      let company_name: string | undefined;
+      const cardContainer = card.closest('[componentkey]');
+      if (cardContainer) {
+        const byTexts = cardContainer.querySelectorAll<HTMLElement>('p');
+        for (const p of Array.from(byTexts)) {
+          const txt = p.textContent?.trim() ?? '';
+          const byMatch = txt.match(/^By:\s+(.+)/);
+          if (byMatch) {
+            company_name = byMatch[1].trim();
+            break;
+          }
+        }
+      }
       emit({
         name,
         product_url: `https://www.linkedin.com/products/${productMatch[1]}/`,
+        company_name,
       });
     }
   });

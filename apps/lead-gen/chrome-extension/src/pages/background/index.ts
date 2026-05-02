@@ -1798,6 +1798,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           name?: string;
           linkedin_url?: string;
           product_url?: string;
+          company_name?: string;
         }>;
       };
       if (m?.action !== "saveCompanyBatchFromProducts") return;
@@ -1817,14 +1818,25 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       }
 
       const batch = pageCardRows
-        .filter((c) => !!c.name && !!c.linkedin_url)
+        .filter((c) => !!c.name)
+        .filter((c) => {
+          if (c.linkedin_url) return true;
+          // Product cards without a linkedin_url: skip if we've already seen
+          // this product URL, or if there's no company name to save by.
+          if (c.product_url) {
+            if (seenProductUrls.has(c.product_url)) return false;
+            seenProductUrls.set(c.product_url, c.name);
+            return !!c.company_name; // keep if we have a company name
+          }
+          return false;
+        })
         .filter((c) => {
           if (seenUrls.has(c.linkedin_url!)) return false;
-          seenUrls.add(c.linkedin_url!);
+          if (c.linkedin_url) seenUrls.add(c.linkedin_url!);
           return true;
         })
         .map((c) => ({
-          name: c.name!,
+          name: c.company_name ?? c.name!,
           linkedin_url: c.linkedin_url!,
           ...(serviceTaxonomy.length > 0 ? { service_taxonomy: serviceTaxonomy } : {}),
         }));
