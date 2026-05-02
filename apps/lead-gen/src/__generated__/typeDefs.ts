@@ -135,6 +135,7 @@ type Company {
   blocked: Boolean!
   category: CompanyCategory!
   contacts: [Contact!]!
+  country: String
   created_at: String!
   """ML data quality assessment"""
   dataQuality: DataQualityScore!
@@ -237,6 +238,7 @@ input CompanyFactInput {
 
 input CompanyFilterInput {
   category: CompanyCategory
+  country_in: [String!]
   min_ai_tier: Int
   min_score: Float
   service_taxonomy_any: [String!]
@@ -245,6 +247,7 @@ input CompanyFilterInput {
 }
 
 input CompanyImportInput {
+  country: String
   description: String
   email: String
   industry: String
@@ -669,6 +672,7 @@ input CreateCompanyInput {
   ai_classification_reason: String
   ai_tier: Int
   category: CompanyCategory
+  country: String
   description: String
   email: String
   emails: [String!]
@@ -2600,6 +2604,7 @@ input UpdateCompanyInput {
   ai_classification_reason: String
   ai_tier: Int
   category: CompanyCategory
+  country: String
   description: String
   email: String
   emails: [String!]

@@ -65,6 +65,9 @@ const fetchCompaniesList = withEdgeCache(
           sql`(CASE WHEN ${companies.tags} LIKE '[%' THEN ${companies.tags}::jsonb ?| array[${sql.join(values, sql.raw(","))}] ELSE FALSE END)`,
         );
       }
+      if (args.filter.country_in && args.filter.country_in.length > 0) {
+        conditions.push(inArray(companies.country, args.filter.country_in));
+      }
     }
 
     const limit = args.limit ?? 50;

@@ -28,6 +28,7 @@ export const companies = pgTable("companies", {
   industry: text("industry"),
   size: text("size"),
   location: text("location"),
+  country: text("country"),
 
   canonical_domain: text("canonical_domain"),
   category: text("category", {
@@ -108,6 +109,7 @@ export const companies = pgTable("companies", {
 }, (table) => ({
   createdAtIdx: index("idx_companies_created_at").on(table.created_at),
   updatedAtIdx: index("idx_companies_updated_at").on(table.updated_at),
+  countryIdx: index("idx_companies_country").on(table.country),
 }));
 
 export type Company = typeof companies.$inferSelect;

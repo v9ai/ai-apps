@@ -167,6 +167,7 @@ export type Company = {
   blocked: Scalars['Boolean']['output'];
   category: CompanyCategory;
   contacts: Array<Contact>;
+  country: Maybe<Scalars['String']['output']>;
   created_at: Scalars['String']['output'];
   /** ML data quality assessment */
   dataQuality: DataQualityScore;
@@ -288,6 +289,7 @@ export type CompanyFactInput = {
 
 export type CompanyFilterInput = {
   category?: InputMaybe<CompanyCategory>;
+  country_in?: InputMaybe<Array<Scalars['String']['input']>>;
   min_ai_tier?: InputMaybe<Scalars['Int']['input']>;
   min_score?: InputMaybe<Scalars['Float']['input']>;
   service_taxonomy_any?: InputMaybe<Array<Scalars['String']['input']>>;
@@ -296,6 +298,7 @@ export type CompanyFilterInput = {
 };
 
 export type CompanyImportInput = {
+  country?: InputMaybe<Scalars['String']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   email?: InputMaybe<Scalars['String']['input']>;
   industry?: InputMaybe<Scalars['String']['input']>;
@@ -741,6 +744,7 @@ export type CreateCompanyInput = {
   ai_classification_reason?: InputMaybe<Scalars['String']['input']>;
   ai_tier?: InputMaybe<Scalars['Int']['input']>;
   category?: InputMaybe<CompanyCategory>;
+  country?: InputMaybe<Scalars['String']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   email?: InputMaybe<Scalars['String']['input']>;
   emails?: InputMaybe<Array<Scalars['String']['input']>>;
@@ -3831,6 +3835,7 @@ export type UpdateCompanyInput = {
   ai_classification_reason?: InputMaybe<Scalars['String']['input']>;
   ai_tier?: InputMaybe<Scalars['Int']['input']>;
   category?: InputMaybe<CompanyCategory>;
+  country?: InputMaybe<Scalars['String']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   email?: InputMaybe<Scalars['String']['input']>;
   emails?: InputMaybe<Array<Scalars['String']['input']>>;

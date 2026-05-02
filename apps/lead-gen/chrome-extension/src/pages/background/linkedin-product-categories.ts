@@ -11,6 +11,7 @@
 export const LINKEDIN_PRODUCT_CATEGORY_TO_TAXONOMY: Record<string, string[]> = {
   "1270": ["Sales Engagement Platform"],
   "1181": ["Lead Generation Software"],
+  "1017": ["CRM Software"],
 };
 
 export function parseProductCategoriesFromUrl(rawUrl: string | undefined): string[] {

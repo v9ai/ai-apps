@@ -31,6 +31,7 @@ import { button } from "@/recipes/button";
 import { css } from "styled-system/css";
 import { TrashIcon, PlusIcon, MixIcon, UploadIcon, MagicWandIcon } from "@radix-ui/react-icons";
 import { ADMIN_EMAIL } from "@/lib/constants";
+import { US_EU_EEA_CODES } from "@/lib/country-codes";
 import { SearchInput } from "@/components/ui/SearchInput";
 
 export function CompaniesList() {
@@ -237,7 +238,14 @@ export function CompaniesList() {
     ...(minTier !== "all" ? { min_ai_tier: parseInt(minTier, 10) } : {}),
     ...(tagFilter ? { tags_any: [tagFilter] } : {}),
     ...(activeTab === "sales-tech"
-      ? { service_taxonomy_any: ["Sales Engagement Platform", "Lead Generation Software"] }
+      ? {
+          service_taxonomy_any: [
+            "Sales Engagement Platform",
+            "Lead Generation Software",
+            "CRM Software",
+          ],
+          country_in: [...US_EU_EEA_CODES],
+        }
       : {}),
   };
   const orderBy = (sortBy === "score" ? "SCORE_DESC" : "NAME_ASC") as CompanyOrderBy;

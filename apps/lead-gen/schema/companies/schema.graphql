@@ -145,6 +145,7 @@ type Company {
   industry: String
   size: String
   location: String
+  country: String
   linkedin_url: String
   job_board_url: String
   email: String
@@ -206,6 +207,7 @@ input CreateCompanyInput {
   industry: String
   size: String
   location: String
+  country: String
   category: CompanyCategory
   tags: [String!]
   services: [String!]
@@ -228,6 +230,7 @@ input UpdateCompanyInput {
   industry: String
   size: String
   location: String
+  country: String
   linkedin_url: String
   job_board_url: String
   category: CompanyCategory
@@ -282,6 +285,7 @@ input CompanyFilterInput {
   service_taxonomy_any: [String!]
   tags_any: [String!]
   min_ai_tier: Int
+  country_in: [String!]
 }
 
 type DeleteCompanyResponse {
@@ -377,6 +381,7 @@ input CompanyImportInput {
   email: String
   linkedin_url: String
   location: String
+  country: String
   size: String
   description: String
   industry: String

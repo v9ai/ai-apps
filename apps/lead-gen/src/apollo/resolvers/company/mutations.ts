@@ -705,6 +705,9 @@ export const companyMutations = {
                 location: sql`COALESCE(${companies.location}, ${input.location ?? null})`,
                 industry: sql`COALESCE(${companies.industry}, ${input.industry ?? null})`,
                 size: sql`COALESCE(${companies.size}, ${input.size ?? null})`,
+                ...(input.country
+                  ? { country: sql`COALESCE(${companies.country}, ${input.country})` }
+                  : {}),
                 ...(incomingTaxonomy.length > 0
                   ? { service_taxonomy: mergeTaxonomySql(incomingTaxonomy) }
                   : {}),
@@ -724,6 +727,7 @@ export const companyMutations = {
             email: input.email ?? null,
             linkedin_url: linkedinUrl,
             location: input.location ?? null,
+            country: input.country ?? null,
             size: input.size ?? null,
             description: input.description ?? null,
             industry: input.industry ?? null,
@@ -738,6 +742,7 @@ export const companyMutations = {
               location: sql`COALESCE(${companies.location}, excluded.location)`,
               industry: sql`COALESCE(${companies.industry}, excluded.industry)`,
               size: sql`COALESCE(${companies.size}, excluded.size)`,
+              ...(input.country ? { country: sql`COALESCE(${companies.country}, excluded.country)` } : {}),
               ...(incomingTaxonomy.length > 0
                 ? { service_taxonomy: mergeTaxonomySql(incomingTaxonomy) }
                 : {}),
