@@ -1767,6 +1767,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     let pagesSaved = 0;
     const errors: Array<{ page: number; message: string }> = [];
     const seenUrls = new Set<string>();
+    // Map<product_url, productName>: rows whose card wraps /products/<slug>/
+    // instead of /company/<slug>/. Resolved to host companies in Phase 2.
+    const seenProductUrls = new Map<string, string>();
     let savePromise: Promise<void> = Promise.resolve();
 
     const progressListener = (msg: unknown) => {
@@ -1791,15 +1794,29 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         action?: string;
         pageNumber?: number;
         totalPages?: number;
-        companies?: Array<{ name?: string; linkedin_url?: string }>;
+        companies?: Array<{
+          name?: string;
+          linkedin_url?: string;
+          product_url?: string;
+        }>;
       };
       if (m?.action !== "saveCompanyBatchFromProducts") return;
 
       const pageNumber = m.pageNumber ?? 0;
       const totalPages = m.totalPages ?? 0;
-      const pageCompanies = m.companies ?? [];
+      const pageCardRows = m.companies ?? [];
 
-      const batch = pageCompanies
+      // Defer product-rooted cards to Phase 2 — Phase 1 lite-import only
+      // accepts rows we can address by /company/<slug>. Product-rooted rows
+      // get resolved to their host company in the deep-scrape phase below.
+      for (const row of pageCardRows) {
+        if (!row.name) continue;
+        if (row.product_url && !seenProductUrls.has(row.product_url)) {
+          seenProductUrls.set(row.product_url, row.name);
+        }
+      }
+
+      const batch = pageCardRows
         .filter((c) => !!c.name && !!c.linkedin_url)
         .filter((c) => {
           if (seenUrls.has(c.linkedin_url!)) return false;
@@ -1866,9 +1883,107 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           errors.push({ page: pf.page, message: pf.reason });
         }
 
-        if (totalImported === 0 && errors.length === 0) {
+        if (
+          totalImported === 0 &&
+          errors.length === 0 &&
+          seenProductUrls.size === 0
+        ) {
           await notifyTab({ error: "No companies found across product pages" });
           return;
+        }
+
+        // ── Phase 1.5: resolve product cards to host companies ────────
+        // Cards whose wrapper points at /products/<slug>/ instead of
+        // /company/<slug>/ (the dominant case on the new product-search
+        // DOM) need one extra navigation to find the host company. Each
+        // product page surfaces it as a[aria-label^="View company "] in
+        // its "By: <Company>" line.
+        if (seenProductUrls.size > 0) {
+          const productList = Array.from(seenProductUrls.keys());
+          await notifyTab({
+            status: `Resolving 0/${productList.length} products to companies…`,
+            currentPage: pagesScraped,
+            totalPages,
+          });
+          let resolved = 0;
+          let resolveFailures = 0;
+          const RESOLVE_FAIL_THRESHOLD = 5;
+          for (const productUrl of productList) {
+            if (resolveFailures >= RESOLVE_FAIL_THRESHOLD) {
+              console.warn(
+                `[BG] product-resolve aborted after ${RESOLVE_FAIL_THRESHOLD} consecutive failures`,
+              );
+              errors.push({
+                page: 0,
+                message: `product-resolve aborted: ${RESOLVE_FAIL_THRESHOLD} consecutive failures`,
+              });
+              break;
+            }
+            let resolveTabId: number | null = null;
+            try {
+              const tab = await chrome.tabs.create({
+                url: productUrl,
+                active: false,
+              });
+              resolveTabId = tab.id ?? null;
+              if (!resolveTabId) throw new Error("Failed to open product tab");
+              await waitForTabLoad(resolveTabId, 20000);
+              await randomDelay(1500);
+              const scriptResult = await chrome.scripting.executeScript({
+                target: { tabId: resolveTabId },
+                world: "MAIN",
+                func: () => {
+                  const aria = document.querySelector<HTMLAnchorElement>(
+                    'a[aria-label^="View company"]',
+                  );
+                  if (aria?.href) return aria.href;
+                  const generic = document.querySelector<HTMLAnchorElement>(
+                    'a[href*="/company/"]',
+                  );
+                  return generic?.href ?? "";
+                },
+              });
+              const href: string = scriptResult?.[0]?.result ?? "";
+              let canonical = "";
+              if (href) {
+                try {
+                  const u = new URL(href, "https://www.linkedin.com");
+                  const m = u.pathname.match(/^\/company\/([^/]+)/);
+                  if (m) {
+                    canonical = `https://www.linkedin.com/company/${m[1]}/`;
+                  }
+                } catch {
+                  /* fall through */
+                }
+              }
+              if (canonical) {
+                seenUrls.add(canonical);
+                resolveFailures = 0;
+              } else {
+                resolveFailures++;
+              }
+            } catch (err) {
+              const message = err instanceof Error ? err.message : String(err);
+              errors.push({
+                page: 0,
+                message: `resolve ${productUrl}: ${message}`,
+              });
+              resolveFailures++;
+            } finally {
+              if (resolveTabId !== null) {
+                await chrome.tabs.remove(resolveTabId).catch(() => {});
+              }
+            }
+            resolved++;
+            if (resolved % 5 === 0 || resolved === productList.length) {
+              await notifyTab({
+                status: `Resolving ${resolved}/${productList.length} products… ${seenUrls.size} companies queued`,
+                currentPage: pagesScraped,
+                totalPages,
+              });
+            }
+            await randomDelay(800);
+          }
         }
 
         // ── Phase 2: deep scrape each company ─────────────────────────

@@ -2688,59 +2688,97 @@ function extractCompaniesFromFeedPosts(): Array<{ name: string; linkedin_url: st
 // Extract parent companies from product cards on /search/results/products/*.
 // LinkedIn's product search lists products grouped under the company that
 // publishes them; we want the company, not the product.
-function extractCompaniesFromProductCards(): Array<{
+export type ProductCardRow = {
   name: string;
-  linkedin_url: string;
-}> {
-  const companyMap = new Map<string, { name: string; linkedin_url: string }>();
+  linkedin_url?: string;  // set when wrapper anchor is /company/<slug>
+  product_url?: string;   // set when wrapper anchor is /products/<slug>
+};
 
-  // Primary: the standard /search/results/* card wrapper.
-  const cardRoots = new Set<Element>();
-  document
-    .querySelectorAll(
-      "li.reusable-search__result-container, div.entity-result, li.artdeco-list__item",
-    )
-    .forEach((el) => cardRoots.add(el));
+function extractCompaniesFromProductCards(): Array<ProductCardRow> {
+  // Dedup by whichever URL we found — a row is uniquely identified by its
+  // company URL OR its product URL.
+  const byKey = new Map<string, ProductCardRow>();
 
-  const collectFromAnchor = (anchor: HTMLAnchorElement) => {
-    let linkedin_url = "";
+  const emit = (row: ProductCardRow) => {
+    const key = row.linkedin_url ?? row.product_url ?? "";
+    if (!key) return;
+    if (!byKey.has(key)) byKey.set(key, row);
+  };
+
+  // ── Primary: stable signals from the new product-search DOM ──
+  // Each card is a wrapper <a componentkey="..." href="...">
+  //   <div role="listitem" aria-label="View page <Name>">...</div>
+  // </a>
+  // The wrapper href is either /company/<slug>/ (host-direct) or
+  // /products/<slug>/ (the dominant case; resolved to a company in Phase 2).
+  const cards = document.querySelectorAll<HTMLElement>(
+    'div[role="listitem"][aria-label^="View page "]',
+  );
+
+  cards.forEach((card) => {
+    const aria = card.getAttribute("aria-label") ?? "";
+    const name = aria.replace(/^View page\s+/, "").trim();
+    if (!name) return;
+
+    const wrapper = card.closest<HTMLAnchorElement>("a[href]");
+    const href = wrapper?.getAttribute("href") ?? "";
+    if (!href) return;
+
+    let pathname = "";
     try {
-      const url = new URL(anchor.href, window.location.origin);
-      const match = url.pathname.match(/^\/company\/([^/]+)/);
-      if (!match) return;
-      linkedin_url = `https://www.linkedin.com/company/${match[1]}/`;
+      pathname = new URL(href, window.location.origin).pathname;
     } catch {
       return;
     }
-    const aria = anchor.getAttribute("aria-label") ?? "";
-    const innerSpan = anchor.querySelector("span[aria-hidden='true']");
-    const raw =
-      innerSpan?.textContent?.trim() ||
-      anchor.textContent?.trim() ||
-      aria.replace(/\s*\(opens[^)]*\)/i, "").trim() ||
-      "";
-    const name = raw.split(/\s*·\s*/)[0].trim();
-    if (!name) return;
-    if (!companyMap.has(linkedin_url)) {
-      companyMap.set(linkedin_url, { name, linkedin_url });
-    }
-  };
 
-  cardRoots.forEach((card) => {
-    const anchor = card.querySelector<HTMLAnchorElement>('a[href*="/company/"]');
-    if (anchor) collectFromAnchor(anchor);
+    const companyMatch = pathname.match(/^\/company\/([^/]+)/);
+    if (companyMatch) {
+      emit({
+        name,
+        linkedin_url: `https://www.linkedin.com/company/${companyMatch[1]}/`,
+      });
+      return;
+    }
+
+    const productMatch = pathname.match(/^\/products\/([^/]+)/);
+    if (productMatch) {
+      emit({
+        name,
+        product_url: `https://www.linkedin.com/products/${productMatch[1]}/`,
+      });
+    }
   });
 
-  // Fallback: classnames drift across LinkedIn redesigns. If the primary
-  // selector found nothing, walk every /company/ link inside <main>.
-  if (companyMap.size === 0) {
+  // ── Fallback: legacy DOM (classnames pre-rotation) ──
+  // Only runs if the new selector found nothing — defense-in-depth for any
+  // page variant LinkedIn might still serve. Captures /company/ links only;
+  // legacy DOM didn't surface /products/ at this layer.
+  if (byKey.size === 0) {
     const main = document.querySelector("main") ?? document.body;
     main
       .querySelectorAll<HTMLAnchorElement>('a[href*="/company/"]')
-      .forEach((a) => collectFromAnchor(a));
+      .forEach((anchor) => {
+        try {
+          const url = new URL(anchor.href, window.location.origin);
+          const m = url.pathname.match(/^\/company\/([^/]+)/);
+          if (!m) return;
+          const linkedin_url = `https://www.linkedin.com/company/${m[1]}/`;
+          const aria = anchor.getAttribute("aria-label") ?? "";
+          const raw =
+            anchor.querySelector("span[aria-hidden='true']")?.textContent?.trim() ||
+            anchor.textContent?.trim() ||
+            aria.replace(/\s*\(opens[^)]*\)/i, "").trim() ||
+            "";
+          const name = raw.split(/\s*·\s*/)[0].trim();
+          if (!name) return;
+          emit({ name, linkedin_url });
+        } catch {
+          // skip
+        }
+      });
   }
 
-  return Array.from(companyMap.values());
+  return Array.from(byKey.values());
 }
 
 // Pagination helpers for /search/results/products/* — LinkedIn's product
@@ -3546,7 +3584,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "extractCompaniesFromProductsWithPagination") {
     (async () => {
       try {
-        const seen = new Map<string, { name: string; linkedin_url: string }>();
+        const seen = new Map<string, ProductCardRow>();
         const pageFailures: Array<{
           page: number;
           reason: "click-no-button" | "click-timeout" | "empty-extraction";
@@ -3569,7 +3607,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const flushPage = (
           pageNumber: number,
           maxKnownPage: number,
-          companies: Array<{ name: string; linkedin_url: string }>,
+          companies: Array<ProductCardRow>,
         ) => {
           safeSendMessage({
             action: "saveCompanyBatchFromProducts",
@@ -3593,7 +3631,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         // First page (whatever the user starts on).
         const firstCompanies = await extractWithRetry();
         firstCompanies.forEach((c) => {
-          if (!seen.has(c.linkedin_url)) seen.set(c.linkedin_url, c);
+          const key = c.linkedin_url ?? c.product_url;
+          if (key && !seen.has(key)) seen.set(key, c);
         });
         pagesScraped++;
         if (firstCompanies.length === 0) {
@@ -3626,7 +3665,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
           const pageCompanies = await extractWithRetry();
           pageCompanies.forEach((c) => {
-            if (!seen.has(c.linkedin_url)) seen.set(c.linkedin_url, c);
+            const key = c.linkedin_url ?? c.product_url;
+          if (key && !seen.has(key)) seen.set(key, c);
           });
           pagesScraped++;
           if (pageCompanies.length === 0) {
