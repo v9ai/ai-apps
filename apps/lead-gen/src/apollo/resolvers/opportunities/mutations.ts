@@ -128,6 +128,13 @@ export const opportunityMutations = {
   ) {
     requireAdmin(context);
     const input = args.input;
+
+    // Ashby opportunities are canonical in D1 — reject any attempt to
+    // create them in Neon (the PG opportunities table).
+    if (input.source?.startsWith("ashby")) {
+      throw new Error("Ashby opportunities must go to D1, not Neon PG. Use the edge worker import path.");
+    }
+
     const now = new Date().toISOString();
 
     // Parse any caller-provided metadata so the classifier can enrich without clobbering it.

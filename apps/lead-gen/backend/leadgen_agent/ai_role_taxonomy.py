@@ -80,7 +80,10 @@ _FULLY_REMOTE_RE = re.compile(r"\b(fully\s+remote|100\s*%\s*remote)\b", re.IGNOR
 
 _REMOTE_WORKPLACE_TYPES: frozenset[str] = frozenset({"remote", "fully remote"})
 
-# Description scan budget for the **remote** detector. Bounded because Ashby
+# Only "fully remote" workplace type counts as truly global remote.
+_FULLY_REMOTE_WORKPLACE_TYPES: frozenset[str] = frozenset({"fully remote"})
+
+# Description scan budget
 # ``descriptionPlain`` can be many KB and the "fully remote" / "100% remote"
 # signal lives in the first paragraph.
 #
@@ -176,6 +179,70 @@ def is_remote(job: dict[str, Any]) -> bool:
     return False
 
 
+def is_fully_remote(job: dict[str, Any]) -> bool:
+    """Check if a job is truly global remote (no region restrictions).
+
+    Stricter than :func:`is_remote` — rejects roles like
+    "Remote (US + Canada Only)" or "Remote - United States".
+
+    1. ``workplaceType`` = "fully remote" → global.
+    2. Location contains ``worldwide`` / ``anywhere`` / ``global`` → global.
+    3. Location contains ``remote`` but does NOT match a region-restriction
+       pattern (country name, "X Only", etc.) → global.
+    4. Title/description contains ``fully remote`` / ``100% remote`` → global.
+
+    ``isRemote=true`` alone is NOT sufficient — LinkedIn marks US-remote
+    roles with that flag.
+    """
+    # 1. Explicit "fully remote" workplace type → global
+    workplace = _norm(job.get("workplaceType"))
+    if workplace in _FULLY_REMOTE_WORKPLACE_TYPES:
+        return True
+
+    location = job.get("location") or ""
+    location_lc = location.lower()
+
+    # 2. Explicit global keywords → global
+    if re.search(r"\b(worldwide|anywhere|global)\b", location_lc):
+        return True
+
+    # 3. "Remote" in location — check if it's bare remote or has a place name.
+    #    "San Francisco Bay Area (Remote)" → restricted (place name present).
+    #    "remote" / "Remote" (bare) → global.
+    #    "Remote, Worldwide" → global (only global keywords remain).
+    if _REMOTE_LOC_RE.search(location):
+        # Veto if it has a hybrid/on-site qualifier
+        if _HYBRID_VETO_RE.search(location):
+            return False
+        # Remove "remote" and punctuation, then check what's left.
+        # If only worldwide/anywhere/global keywords remain (or nothing), it's global.
+        remainder = re.sub(
+            r"\bremote\b|[,()\[\]\-–—/]",
+            " ",
+            location,
+            flags=re.IGNORECASE,
+        )
+        remainder = re.sub(r"\s+", " ", remainder).strip()
+        if not remainder:
+            return True  # "remote" alone → global
+        # Check if remainder contains only global keywords
+        if re.match(
+            r"^(worldwide|anywhere|global|fully\s+remote|100%\s*remote)(\s+(worldwide|anywhere|global|fully\s+remote|100%\s*remote))*$",
+            remainder,
+            re.IGNORECASE,
+        ):
+            return True  # "Remote, Worldwide" → global
+        return False  # "Brazil (Remote)" → restricted
+
+    # 4. Title/description "fully remote" / "100% remote" → global
+    title = job.get("title") or ""
+    desc = (job.get("descriptionPlain") or "")[:_DESC_SCAN_CHARS]
+    if _FULLY_REMOTE_RE.search(title) or _FULLY_REMOTE_RE.search(desc):
+        return True
+
+    return False
+
+
 def classify_role(
     title: str | None,
     description: str | None = None,
@@ -226,4 +293,5 @@ __all__ = [
     "classify_role",
     "is_ai_role",
     "is_remote",
+    "is_fully_remote",
 ]

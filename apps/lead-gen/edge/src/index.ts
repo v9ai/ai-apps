@@ -651,6 +651,8 @@ interface D1OpportunityListRow {
   archived: number;
   created_at: string;
   updated_at: string;
+  workplace_type: string | null;
+  employment_type: string | null;
   company_name: string | null;
   company_key: string | null;
 }
@@ -678,6 +680,7 @@ async function handleJobsD1List(req: Request, env: Env): Promise<Response> {
   const res = await env.DB.prepare(
     `SELECT o.id, o.title, o.url, o.source, o.status, o.tags,
             o.location, o.salary, o.archived, o.created_at, o.updated_at,
+            o.workplace_type, o.employment_type,
             c.name AS company_name, c.key AS company_key
        FROM opportunities o
        LEFT JOIN companies c ON c.id = o.company_id

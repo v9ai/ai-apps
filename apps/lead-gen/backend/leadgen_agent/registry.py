@@ -153,6 +153,7 @@ GRAPHS: tuple[GraphSpec, ...] = (
     # ── Ashby (ATS ingest) ──────────────────────────────────────────────
     GraphSpec("ashby_ingest", "leadgen_agent.ashby_ingest_graph"),
     GraphSpec("ashby_discovery", "leadgen_agent.ashby_discovery_graph"),
+    GraphSpec("remote_classify", "leadgen_agent.remote_classify_graph"),
 )
 
 
