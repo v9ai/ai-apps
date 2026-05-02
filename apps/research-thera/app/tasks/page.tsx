@@ -14,6 +14,7 @@ import { TaskList } from "./components/TaskList";
 import { StatusTabs } from "./components/StatusTabs";
 import { SettingsModal } from "./components/SettingsModal";
 import { StreakCounter } from "./components/StreakCounter";
+import { AddTaskButton } from "./components/AddTaskButton";
 import type { Task } from "./components/types";
 
 const VALID_STATUSES = ["inbox", "active", "completed"] as const;
@@ -69,15 +70,18 @@ function TasksPageInner() {
             />
           )}
         </Flex>
-        {prefs && (
-          <SettingsModal
-            chronotype={prefs.chronotype}
-            chunkSize={prefs.chunkSize}
-            gamificationEnabled={prefs.gamificationEnabled}
-            bufferPercentage={prefs.bufferPercentage}
-            priorityWeights={prefs.priorityWeights}
-          />
-        )}
+        <Flex align="center" gap="2">
+          <AddTaskButton defaultStatus={status} size="2" />
+          {prefs && (
+            <SettingsModal
+              chronotype={prefs.chronotype}
+              chunkSize={prefs.chunkSize}
+              gamificationEnabled={prefs.gamificationEnabled}
+              bufferPercentage={prefs.bufferPercentage}
+              priorityWeights={prefs.priorityWeights}
+            />
+          )}
+        </Flex>
       </Flex>
 
       <StatusTabs counts={counts} />
