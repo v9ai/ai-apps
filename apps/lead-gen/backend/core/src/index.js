@@ -73,6 +73,8 @@ async function fireCronTick(env, cronExpr) {
     job = "remote-classify"; // every 4 hours
   } else if (cronExpr === "57 6 * * 7") {
     job = "enrich-sales-tech"; // weekly Sunday — sales-tech feature extraction
+  } else if (cronExpr === "13 5 * * *") {
+    job = "checkpoint-prune"; // daily — TRUNCATE langgraph checkpoint tables
   }
   const body = JSON.stringify({
     job,

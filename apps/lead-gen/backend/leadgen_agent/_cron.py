@@ -360,3 +360,65 @@ async def run_enrich_sales_tech(
         "errors": summary.get("errors") or [],
         "elapsed_s": round(time.monotonic() - started, 1),
     }
+
+
+async def run_checkpoint_prune(
+    graphs: dict[str, Any],  # noqa: ARG001 — kept for dispatcher uniformity
+) -> dict[str, Any]:
+    """Truncate the langgraph checkpoint tables to bound DB growth.
+
+    ``/runs/wait`` is a one-shot RPC — the chrome extension and Next.js
+    client never resume threads, so AsyncPostgresSaver checkpoints are
+    write-only garbage after each response returns. Without periodic
+    prune, ``checkpoint_writes`` + ``checkpoint_blobs`` grow unbounded
+    (~411 MB / 33,000 rows observed on 2026-05-03) and the project hits
+    the Neon storage cap, after which every ``/runs/wait`` 500s with
+    ``psycopg.errors.DiskFull``.
+
+    Runs daily at 05:13 UTC — comfortably between the other cron lanes
+    (06:17 ashby, :23 country, :37 remote, 06:57 sales-tech), and during
+    a low-traffic window so the (vanishingly small) chance of nuking an
+    in-flight run's state is acceptable. With our usage the worst case
+    is one extra 500 on a graph that happened to be writing a checkpoint
+    at exactly that second.
+    """
+    started = time.monotonic()
+    db_url = (
+        os.environ.get("NEON_DATABASE_URL")
+        or os.environ.get("DATABASE_URL")
+        or ""
+    ).strip()
+    if not db_url:
+        return {"ok": False, "error": "NEON_DATABASE_URL / DATABASE_URL not set"}
+
+    try:
+        from psycopg import AsyncConnection  # noqa: PLC0415
+
+        async with await AsyncConnection.connect(db_url, autocommit=True) as conn:
+            await conn.execute(
+                "TRUNCATE checkpoint_writes, checkpoint_blobs, checkpoints"
+            )
+            cur = await conn.execute(
+                "SELECT pg_size_pretty(pg_database_size(current_database()))"
+            )
+            row = await cur.fetchone()
+            db_size_after = row[0] if row else None
+    except Exception as exc:  # noqa: BLE001
+        log.exception("checkpoint-prune: TRUNCATE failed")
+        return {
+            "ok": False,
+            "error": f"{type(exc).__name__}: {exc}",
+            "elapsed_s": round(time.monotonic() - started, 1),
+        }
+
+    summary = {
+        "ok": True,
+        "job": "checkpoint-prune",
+        "db_size_after": db_size_after,
+        "elapsed_s": round(time.monotonic() - started, 1),
+    }
+    log.info(
+        "checkpoint-prune done db_size_after=%s elapsed=%.1fs",
+        db_size_after, summary["elapsed_s"],
+    )
+    return summary
