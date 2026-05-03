@@ -187,19 +187,21 @@
       {
         "id": "1",
         "name": "Agentic Lead Gen",
-        "description": "Autonomous B2B lead generation platform with a 5-agent agentic pipeline (Discovery Scout → Enrichment Specialist → Contact Hunter + QA Auditor → Outreach Composer), GraphQL API backed by Neon PostgreSQL, LLM-powered company enrichment, multilingual JobBERT-v3 embeddings via HuggingFace Inference API, MLX local scoring at 4,618 embeddings/sec, and LangSmith observability.",
+        "description": "Autonomous B2B lead generation platform with a 5-stage agentic pipeline (Discovery → Enrichment → Contact Hunter + QA Auditor → Outreach Composer), type-safe GraphQL API on Neon Postgres, 51 LangGraph graphs running on Cloudflare Workers Containers with AsyncPostgresSaver checkpointing, Candle/Metal BGE-M3 embeddings on the local hot path (zero outbound calls), and a 7-rule strategy enforcer that gates every prompt/model change.",
         "githubUrl": "https://github.com/v9ai/agentic-lead-gen",
         "websiteUrl": "https://agenticleadgen.xyz/",
         "highlights": [
-          "5-agent pipeline: Discovery → Enrichment → Contact Hunter + QA Auditor (parallel) → Outreach Composer with plan-approval gate.",
-          "Type-safe GraphQL API (Apollo Server 5, DataLoader N+1 prevention, Drizzle ORM + Neon PostgreSQL, TypeScript codegen).",
-          "LLM enrichment: tier classification, tech stack detection, ATS discovery via multi-model routing.",
-          "3 competing-hypotheses agents — cross-reading findings — producing GO/NO-GO verdicts.",
-          "MLX scoring at 4,618 embeddings/sec on M1; eval enforcer with LangSmith tracing.",
-          "TechWolf/JobBERT-v3 multilingual embeddings (768-dim, EN/ES/DE/ZH) via HuggingFace Inference API for semantic job matching; BGE-small INT8 for company search.",
-          "Hand-tuned ML scoring: 12-feature contact ranker, 18-feature ICP scorer, Aho-Corasick company classifier — all with INT8 quantization and LUT sigmoid.",
-          "Eval-driven strategy enforcer validates every prompt/model change against 80% accuracy bar.",
-          "LoRA fine-tuned Qwen3-1.7B-4bit (rank-8, cosine LR, DPO on synthetic data) deployed to HuggingFace Hub (v9ai/outreach-email-qwen3-1.7b-4bit-lora) for personalized outreach email generation; sgai-qwen3-1.7b for schema-constrained HTML→JSON company extraction on dual MLX servers."
+          "5-stage pipeline: Discovery → Enrichment → Contact Hunter + QA Auditor (parallel) → Outreach Composer with plan-approval gate.",
+          "Type-safe GraphQL API: Apollo Server 5, 23 resolver modules, 18 DataLoaders with a 2 ms batch scheduler, Drizzle ORM + Neon Postgres, isAdminEmail inline guards per mutation.",
+          "51 LangGraph graphs declared in backend/leadgen_agent/registry.py (5 core: email_compose, email_reply, email_outreach, admin_chat, text_to_sql; 46 specialized) — same Python under `langgraph dev` (in-memory) and Cloudflare Workers Containers (FastAPI + Uvicorn + AsyncPostgresSaver on Neon's pooled URL).",
+          "DeepSeek cheap-first routing: v4-flash for summary nodes; v4-pro reasoner with thinking-mode + reasoning_effort=high for value-metric / pricing / GTM-pillar nodes — per-node cost telemetry aggregates into product_intel_runs.total_cost_usd.",
+          "Candle/Metal BGE-M3 (1024-dim) embeddings in crates/icp-embed, stored as pgvector with HNSW vector_cosine_ops; products.icp_embedding × companies.profile_embedding top-K via a single SQL JOIN.",
+          "Contact-tier LoRA: Qwen2.5-1.5B-Instruct + v9ai/contact-score-qwen-1.5b-lora, Q4_K_M GGUF served via llama-cpp-python on a free HF Space (lora-serve), gated by an authority_score ≥ 0.5 prefilter that cuts Space compute by ~10×.",
+          "Aho-Corasick company classifier (O(n+m+z) single linear pass over a pattern dictionary) replaces O(n × k) String.includes scans and removes an LLM call from the hot path; DeepSeek v4-flash with response_format json_object as fallback.",
+          "Hand-tuned ML hot path: 12-feature gradient-boosted stump ensemble (engagement-predictor.ts, sub-ms inference); Hawkes self-exciting lead temperature with O(n) recursive form via 1024-entry exp-decay LUT; Thompson-sampling send-time optimizer over 168 (day-of-week × hour) Beta posteriors with hand-rolled Marsaglia-Tsang/Box-Muller samplers; Kaplan-Meier survival curves for follow-up cadence.",
+          "Bidirectional email model: contact_emails (outbound, Resend SDK 6.9, In-Reply-To + References for thread integrity) + received_emails (inbound, manual HMAC-SHA256-verified Svix webhook, no SDK), bridged by matched_outbound_id + in_reply_to_received_id; 7 webhook event types; CPN forwarding alias on a single vadim.blog MX catch-all — zero per-contact DNS.",
+          "6-channel GitHub recruitment crawler (15-pass bio search, stargazers, contributors, org members, follower graph, seed domains) in Rust crates/gh; 50+ fields hydrated per candidate via one GraphQL batch query; 9-component rising-score composite (density, novelty, breadth, activity, skill, engagement, obscurity, recency, quality) — zero cloud LLM calls per candidate.",
+          "7-rule strategy enforcer (eval-first ≥80%, grounding-first BLOCKING on un-schemaed LLM calls, taxonomy validation, multi-model routing, spec-driven codegen, observability, HITL approvals); stop_hook.py scores every Claude Code session on 4 dimensions via claude-haiku-4-5 and auto-queues low-scoring runs into improvement_agent.py."
         ]
       },
       {
