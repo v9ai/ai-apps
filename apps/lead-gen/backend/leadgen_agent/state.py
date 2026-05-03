@@ -887,3 +887,28 @@ class GhAiReposState(TypedDict, total=False):
     _error: str
     agent_timings: Annotated[dict[str, float], _merge_dict]
     graph_meta: Annotated[dict[str, Any], _merge_graph_meta]
+
+
+class GhLeadResearchState(TypedDict, total=False):
+    """State for the per-repo deep-research pass on gh_ai_repos hot leads.
+
+    Linear pipeline with one fan-out: load_repo → (fetch_pages ‖ web_search)
+    → synthesize → persist. Operates on a single repo per run, keyed by
+    full_name. Reads gh_repos+gh_orgs from D1, persists to gh_lead_research.
+    """
+
+    # input
+    full_name: str                         # e.g. "pixeltable/pixeltable"
+    # working
+    repo: dict[str, Any]                   # joined gh_repos + gh_orgs row
+    homepages: list[str]                   # ordered candidate roots (repo.homepage, org.blog, peeled apexes)
+    pages: dict[str, dict[str, Any]]       # {homepage|pricing|careers|about: {url,status,excerpt}}
+    web_results: list[dict[str, Any]]      # Brave hits {title,url,description}
+    brief: dict[str, Any]                  # LeadResearchBrief.model_dump()
+    # output
+    research_id: int                       # D1 gh_lead_research.id
+    summary: dict[str, Any]
+    # plumbing
+    _error: str
+    agent_timings: Annotated[dict[str, float], _merge_dict]
+    graph_meta: Annotated[dict[str, Any], _merge_graph_meta]

@@ -160,6 +160,8 @@ GRAPHS: tuple[GraphSpec, ...] = (
     GraphSpec("enrich_sales_tech", "leadgen_agent.enrich_sales_tech_graph"),
     # ── GitHub AI Python repo lead discovery ─────────────────────────────
     GraphSpec("gh_ai_repos", "leadgen_agent.gh_ai_repos_graph"),
+    # ── Per-repo deep research on gh_ai_repos hot leads ─────────────────
+    GraphSpec("gh_lead_research", "leadgen_agent.gh_lead_research_graph"),
 )
 
 

@@ -9,7 +9,7 @@ import {
   Card,
   Flex,
   Separator,
-  IconButton,
+  Button,
   Link as RadixLink,
 } from "@radix-ui/themes";
 import { ArrowLeftIcon } from "@radix-ui/react-icons";
@@ -161,14 +161,24 @@ const SLUG = (s: string) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 
-function loadImg(src: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error(`Failed to load ${src}`));
-    img.src = src;
-  });
+// Fetch the bytes via fetch() (separate cache slot from <img>), then decode
+// from a same-origin Blob URL — guarantees the canvas is never tainted, even
+// if the rendered <img> happened to use a non-CORS cached entry.
+async function loadImg(src: string): Promise<HTMLImageElement> {
+  const res = await fetch(src, { mode: "cors", credentials: "omit" });
+  if (!res.ok) throw new Error(`Fetch failed (${res.status}) pentru ${src}`);
+  const blob = await res.blob();
+  const objectUrl = URL.createObjectURL(blob);
+  try {
+    return await new Promise<HTMLImageElement>((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error(`Decodare eșuată pentru ${src}`));
+      img.src = objectUrl;
+    });
+  } finally {
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 5000);
+  }
 }
 
 // Wraps text into lines that fit `maxWidth`. Returns the lines.
