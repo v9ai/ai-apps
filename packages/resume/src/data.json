@@ -185,24 +185,6 @@
     "achievements": "",
     "aiProjects": [
       {
-        "id": "0",
-        "name": "ResearchThera.com",
-        "description": "Therapeutic + clinical-intelligence platform for families. LlamaIndex-powered healthcare RAG ingests lab PDFs into 8 pgvector tables with 7 derived clinical ratios and a 5-stage local-only clinical chat pipeline; a 7-node LangGraph research generator surfaces evidence-based therapeutic content across 7 academic sources. 6 AI agents (3 Python LangGraph + 1 Python LlamaIndex + 2 AI SDK) over a GraphQL API.",
-        "githubUrl": "https://github.com/v9ai/research-thera",
-        "websiteUrl": "https://researchthera.com",
-        "highlights": [
-          "Healthcare RAG: PDFs → LlamaParse → 3-tier BloodTestNodeParser (HTML / Romanian FormKeysValues / free-text) → FastEmbed bge-large-en-v1.5 (1024-dim ONNX) → blood_test + N blood_marker + health_state nodes.",
-          "7 clinical ratios/upload, JSONB on health_state, authored thresholds: TG/HDL (McLaughlin), TC/HDL (Castelli), HDL/LDL (Millán), NLR (Fest), De Ritis AST/ALT, BUN/Creatinine (Hosten), TyG (Simental-Mendía).",
-          "5-stage LlamaIndex chat (no LangGraph): triage → re_triage (<0.7, ≤2) → route → ContextChatEngine (Similarity + ClinicalRelevance + CompactAndRefine) → guard. 9 intents, CompositeRetriever fan-out, k-scaling (≥0.8 / ≥0.6 1.5× / else 2×).",
-          "8 pgvector tables (blood_test, blood_marker FTS+vector, health_state, condition, medication, symptom, appointment, allergy) each with a BaseRetriever; search_marker_trend for longitudinal.",
-          "Medication deep research LangGraph → 6 pharmacology tables (pharmacology, indications, dosing, adverse_events, interactions, correlations) → /medications/[slug].",
-          "Deep issue analysis LangGraph: thematic clusters, timeline + family-system insights, root-cause, research-mapped priorities.",
-          "AI SDK (generateObject + Zod): storyTeller (3-part CYOA) + therapeutic (CBT/ACT/DBT/MBSR/LEGO) → R2.",
-          "7-node therapy research LangGraph (loadContext → normalizeGoal → planQuery → search → enrichAbstracts → extractAll → persist): 7 sources → DeepSeek + 0.72 gate → top 20 as 1024-dim pgvector.",
-          "~70-table Drizzle/Postgres schema: therapeutic core (goals, issues, habits, journals, claims) + 32 healthcare tables including 8 pgvector embedding tables."
-        ]
-      },
-      {
         "id": "1",
         "name": "Agentic Lead Gen",
         "description": "Autonomous B2B lead generation platform with a 5-agent agentic pipeline (Discovery Scout → Enrichment Specialist → Contact Hunter + QA Auditor → Outreach Composer), GraphQL API backed by Neon PostgreSQL, LLM-powered company enrichment, multilingual JobBERT-v3 embeddings via HuggingFace Inference API, MLX local scoring at 4,618 embeddings/sec, and LangSmith observability.",
@@ -218,6 +200,24 @@
           "Hand-tuned ML scoring: 12-feature contact ranker, 18-feature ICP scorer, Aho-Corasick company classifier — all with INT8 quantization and LUT sigmoid.",
           "Eval-driven strategy enforcer validates every prompt/model change against 80% accuracy bar.",
           "LoRA fine-tuned Qwen3-1.7B-4bit (rank-8, cosine LR, DPO on synthetic data) deployed to HuggingFace Hub (v9ai/outreach-email-qwen3-1.7b-4bit-lora) for personalized outreach email generation; sgai-qwen3-1.7b for schema-constrained HTML→JSON company extraction on dual MLX servers."
+        ]
+      },
+      {
+        "id": "0",
+        "name": "ResearchThera.com",
+        "description": "Therapeutic + clinical-intelligence platform for families. LlamaIndex-powered healthcare RAG ingests lab PDFs into 8 pgvector tables with 7 derived clinical ratios and a 5-stage local-only clinical chat pipeline; a 7-node LangGraph research generator surfaces evidence-based therapeutic content across 7 academic sources. 6 AI agents (3 Python LangGraph + 1 Python LlamaIndex + 2 AI SDK) over a GraphQL API.",
+        "githubUrl": "https://github.com/v9ai/research-thera",
+        "websiteUrl": "https://researchthera.com",
+        "highlights": [
+          "Healthcare RAG: PDFs → LlamaParse → 3-tier BloodTestNodeParser (HTML / Romanian FormKeysValues / free-text) → FastEmbed bge-large-en-v1.5 (1024-dim ONNX) → blood_test + N blood_marker + health_state nodes.",
+          "7 clinical ratios/upload, JSONB on health_state, authored thresholds: TG/HDL (McLaughlin), TC/HDL (Castelli), HDL/LDL (Millán), NLR (Fest), De Ritis AST/ALT, BUN/Creatinine (Hosten), TyG (Simental-Mendía).",
+          "5-stage LlamaIndex chat (no LangGraph): triage → re_triage (<0.7, ≤2) → route → ContextChatEngine (Similarity + ClinicalRelevance + CompactAndRefine) → guard. 9 intents, CompositeRetriever fan-out, k-scaling (≥0.8 / ≥0.6 1.5× / else 2×).",
+          "8 pgvector tables (blood_test, blood_marker FTS+vector, health_state, condition, medication, symptom, appointment, allergy) each with a BaseRetriever; search_marker_trend for longitudinal.",
+          "Medication deep research LangGraph → 6 pharmacology tables (pharmacology, indications, dosing, adverse_events, interactions, correlations) → /medications/[slug].",
+          "Deep issue analysis LangGraph: thematic clusters, timeline + family-system insights, root-cause, research-mapped priorities.",
+          "AI SDK (generateObject + Zod): storyTeller (3-part CYOA) + therapeutic (CBT/ACT/DBT/MBSR/LEGO) → R2.",
+          "7-node therapy research LangGraph (loadContext → normalizeGoal → planQuery → search → enrichAbstracts → extractAll → persist): 7 sources → DeepSeek + 0.72 gate → top 20 as 1024-dim pgvector.",
+          "~70-table Drizzle/Postgres schema: therapeutic core (goals, issues, habits, journals, claims) + 32 healthcare tables including 8 pgvector embedding tables."
         ]
       },
       {
