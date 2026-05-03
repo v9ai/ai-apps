@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   Container,
   Heading,
@@ -10,6 +10,7 @@ import {
   Flex,
   Separator,
   Button,
+  Dialog,
   Link as RadixLink,
 } from "@radix-ui/themes";
 import { ArrowLeftIcon } from "@radix-ui/react-icons";
@@ -231,8 +232,8 @@ function triggerDownload(canvas: HTMLCanvasElement, filename: string) {
   );
 }
 
-// Composes a single A4-portrait JPG: image on top, white panel with title + caption below.
-async function downloadCardAsJpg(item: ImgItem) {
+// Composes a single A4-portrait canvas: image on top, white panel with title + caption below.
+async function composeCardCanvas(item: ImgItem): Promise<HTMLCanvasElement> {
   const img = await loadImg(item.src);
 
   // A4 @ ~150dpi → 1240×1754
@@ -256,7 +257,7 @@ async function downloadCardAsJpg(item: ImgItem) {
   ctx.fillRect(0, 0, W, IMG_AREA_H);
 
   // Letterbox-fit the photo
-  const fit = item.fit ?? "contain";
+  const fit = item.fit ?? "cover";
   const sw = img.naturalWidth;
   const sh = img.naturalHeight;
   let dw: number, dh: number, dx: number, dy: number;
@@ -304,16 +305,16 @@ async function downloadCardAsJpg(item: ImgItem) {
   const captionLines = wrapLines(ctx, item.caption, W - 2 * PAD);
   drawLines(ctx, captionLines, PAD, y, 46);
 
-  // Footer
-  ctx.fillStyle = "#94a3b8";
-  ctx.font = "italic 22px -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif";
-  ctx.fillText("Ziua Europei 2026 · Slovenia", PAD, H - 50);
+  return canvas;
+}
 
+async function downloadCardAsJpg(item: ImgItem) {
+  const canvas = await composeCardCanvas(item);
   triggerDownload(canvas, `slovenia-${SLUG(item.title)}.jpg`);
 }
 
-// Composes the "Cuvinte de bază" phrases card as a single JPG (no photo, just typography).
-async function downloadPhrasesAsJpg() {
+// Composes the "Cuvinte de bază" phrases canvas: just typography, no photo.
+function composePhrasesCanvas(): HTMLCanvasElement {
   const W = 1240;
   const H = 1754;
   const PAD = 90;
@@ -323,7 +324,6 @@ async function downloadPhrasesAsJpg() {
   canvas.height = H;
   const ctx = canvas.getContext("2d")!;
 
-  // Background — soft gradient strip on the left for visual interest
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, W, H);
 
@@ -365,11 +365,11 @@ async function downloadPhrasesAsJpg() {
     y += 80;
   }
 
-  // Footer
-  ctx.fillStyle = "#94a3b8";
-  ctx.font = "italic 22px -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif";
-  ctx.fillText("Ziua Europei 2026 · Slovenia", PAD, H - 60);
+  return canvas;
+}
 
+async function downloadPhrasesAsJpg() {
+  const canvas = composePhrasesCanvas();
   triggerDownload(canvas, "slovenia-cuvinte-de-baza.jpg");
 }
 
@@ -406,6 +406,127 @@ function GalleryImage({ item }: { item: ImgItem }) {
   );
 }
 
+function PreviewDialog({
+  trigger,
+  compose,
+  filename,
+  title,
+}: {
+  trigger: React.ReactNode;
+  compose: () => Promise<HTMLCanvasElement>;
+  filename: string;
+  title: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const urlRef = useRef<string | null>(null);
+
+  const cleanup = () => {
+    if (urlRef.current) {
+      URL.revokeObjectURL(urlRef.current);
+      urlRef.current = null;
+    }
+    setPreviewUrl(null);
+    canvasRef.current = null;
+    setErr(null);
+  };
+
+  const handleOpenChange = async (next: boolean) => {
+    setOpen(next);
+    if (!next) {
+      cleanup();
+      return;
+    }
+    setBusy(true);
+    setErr(null);
+    try {
+      const canvas = await compose();
+      canvasRef.current = canvas;
+      const blob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob(resolve, "image/jpeg", 0.92),
+      );
+      if (!blob) throw new Error("Generare eșuată");
+      const url = URL.createObjectURL(blob);
+      urlRef.current = url;
+      setPreviewUrl(url);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Generare eșuată");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onDownload = () => {
+    if (!canvasRef.current) return;
+    triggerDownload(canvasRef.current, filename);
+  };
+
+  return (
+    <Dialog.Root open={open} onOpenChange={handleOpenChange}>
+      <Dialog.Trigger>{trigger}</Dialog.Trigger>
+      <Dialog.Content maxWidth="900px">
+        <Dialog.Title>Previzualizare — {title}</Dialog.Title>
+        <Dialog.Description size="2" color="gray" mb="3">
+          Format JPG, A4 portrait (1240×1754 px). Apăsați „Descarcă JPG” pentru a salva fișierul.
+        </Dialog.Description>
+
+        <Box
+          style={{
+            width: "100%",
+            minHeight: 240,
+            maxHeight: "70vh",
+            overflow: "auto",
+            background: "#f3f3f3",
+            borderRadius: "var(--radius-3)",
+            padding: 12,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {busy && (
+            <Text size="2" color="gray">
+              Se generează previzualizarea…
+            </Text>
+          )}
+          {err && (
+            <Text size="2" color="red">
+              {err}
+            </Text>
+          )}
+          {previewUrl && (
+            <img
+              src={previewUrl}
+              alt={`Previzualizare ${title}`}
+              style={{
+                width: "100%",
+                height: "auto",
+                display: "block",
+                borderRadius: "var(--radius-2)",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+              }}
+            />
+          )}
+        </Box>
+
+        <Flex gap="3" justify="end" mt="4">
+          <Dialog.Close>
+            <Button variant="soft" color="gray">
+              Închide
+            </Button>
+          </Dialog.Close>
+          <Button onClick={onDownload} disabled={!previewUrl} color="teal">
+            <DownloadIcon size={14} /> Descarcă JPG
+          </Button>
+        </Flex>
+      </Dialog.Content>
+    </Dialog.Root>
+  );
+}
+
 function DownloadIcon({ size = 14 }: { size?: number }) {
   return (
     <svg
@@ -427,21 +548,6 @@ function DownloadIcon({ size = 14 }: { size?: number }) {
 }
 
 function GalleryCard({ item }: { item: ImgItem }) {
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
-
-  const onDownload = async () => {
-    setBusy(true);
-    setErr(null);
-    try {
-      await downloadCardAsJpg(item);
-    } catch (e) {
-      setErr(e instanceof Error ? e.message : "Descărcare eșuată");
-    } finally {
-      setBusy(false);
-    }
-  };
-
   return (
     <Card>
       <Flex direction="column" gap="2">
@@ -452,41 +558,23 @@ function GalleryCard({ item }: { item: ImgItem }) {
         <Text size="2" color="gray" as="p">
           {item.caption}
         </Text>
-        <Button
-          variant="soft"
-          color="teal"
-          onClick={onDownload}
-          disabled={busy}
-          mt="1"
-        >
-          <DownloadIcon size={14} />
-          {busy ? "Se generează…" : "Descarcă JPG (imagine + text)"}
-        </Button>
-        {err && (
-          <Text size="1" color="red">
-            {err}
-          </Text>
-        )}
+        <PreviewDialog
+          title={item.title}
+          filename={`slovenia-${SLUG(item.title)}.jpg`}
+          compose={() => composeCardCanvas(item)}
+          trigger={
+            <Button variant="soft" color="teal" mt="1">
+              <DownloadIcon size={14} />
+              Previzualizare & descărcare JPG
+            </Button>
+          }
+        />
       </Flex>
     </Card>
   );
 }
 
 function PhrasesCard() {
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
-  const onDownload = async () => {
-    setBusy(true);
-    setErr(null);
-    try {
-      await downloadPhrasesAsJpg();
-    } catch (e) {
-      setErr(e instanceof Error ? e.message : "Descărcare eșuată");
-    } finally {
-      setBusy(false);
-    }
-  };
-
   return (
     <Card>
       <Heading size="4" mb="2">
@@ -512,15 +600,17 @@ function PhrasesCard() {
           </Flex>
         ))}
       </Flex>
-      <Button variant="soft" color="teal" onClick={onDownload} disabled={busy}>
-        <DownloadIcon size={14} />
-        {busy ? "Se generează…" : "Descarcă JPG"}
-      </Button>
-      {err && (
-        <Text size="1" color="red" mt="1" as="div">
-          {err}
-        </Text>
-      )}
+      <PreviewDialog
+        title="Cuvinte de bază"
+        filename="slovenia-cuvinte-de-baza.jpg"
+        compose={async () => composePhrasesCanvas()}
+        trigger={
+          <Button variant="soft" color="teal">
+            <DownloadIcon size={14} />
+            Previzualizare & descărcare JPG
+          </Button>
+        }
+      />
     </Card>
   );
 }
