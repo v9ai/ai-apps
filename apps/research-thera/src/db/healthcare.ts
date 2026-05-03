@@ -1135,6 +1135,25 @@ export type CognitiveCheckIn = {
   recordedAt: string;
 };
 
+export type ResearchPaperRow = {
+  id: string;
+  doi: string | null;
+  source: string;
+  sourceId: string;
+  title: string;
+  authors: string[];
+  year: number | null;
+  abstract: string | null;
+  tldr: string | null;
+  url: string | null;
+  pdfUrl: string | null;
+  citationCount: number | null;
+  fieldsOfStudy: string[] | null;
+  venue: string | null;
+  rerankScore: number | null;
+  createdAt: string;
+};
+
 function toProtocol(r: Record<string, unknown>): Protocol {
   return {
     id: r.id as string,
