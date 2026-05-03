@@ -21,11 +21,14 @@ class Paper:
     citation_count: Optional[int] = None
     url: Optional[str] = None
     pdf_url: Optional[str] = None
-    source: Optional[str] = None  # "openalex", "crossref", "semantic_scholar"
+    source: Optional[str] = None  # "openalex", "crossref", "semantic_scholar", "arxiv", "pubmed", "europe_pmc", "biorxiv"
     source_id: Optional[str] = None
     fields_of_study: Optional[list[str]] = None
     published_date: Optional[str] = None
     venue: Optional[str] = None
+    tldr: Optional[str] = None
+    arxiv_id: Optional[str] = None
+    pubmed_id: Optional[str] = None
 
     def to_dict(self) -> dict:
         """Convert to the legacy 7-field dict format for backwards compat."""

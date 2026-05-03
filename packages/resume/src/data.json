@@ -202,16 +202,16 @@
       {
         "id": "0",
         "name": "ResearchThera.com",
-        "description": "Therapeutic-intelligence platform for families: a clinical chat that screens first for drug-induced symptoms, flags Singulair washout cases, and orchestrates 23 LangGraph workflows across medication safety and academic retrieval.",
+        "description": "Therapeutic-intelligence platform for families: clinical chat screens first for drug-induced symptoms, flags Singulair washout cases, and orchestrates 23 LangGraph workflows across medication safety and academic retrieval.",
         "githubUrl": "https://github.com/v9ai/research-thera",
         "websiteUrl": "https://researchthera.com",
         "highlights": [
-          "Clinical chat runs a 5-stage LlamaIndex pipeline with reranker and safety auditor, routing 9 intents via a confidence-scaled retriever.",
-          "Computes 7 peer-reviewed cardio-metabolic ratios from lab panels (TG/HDL, TC/HDL, HDL/LDL, NLR, De Ritis, BUN/Creatinine, TyG) for risk flagging.",
-          "Romanian 3-tier lab-PDF parser feeds hybrid full-text and vector search across 8 pgvector indices for grounded retrieval.",
-          "Pharmacology and therapy-research graphs query medication sources (DailyMed, openFDA, RxNav) and academic sources (OpenAlex, Crossref, Semantic Scholar), then cross-encoder rerank.",
-          "Psych-screening uses a critique-refine loop that rewrites any axis scoring below 7 out of 10 before persisting.",
-          "Apollo Server 5 fronts 217 GraphQL resolvers; one Vercel-AI agent generates choose-your-own-adventure stories, another delivers schema-validated CBT, ACT, and DBT guidance."
+          "The 5-stage LlamaIndex chat pipeline reranks, audits safety, and routes 9 intents by confidence.",
+          "Computes 7 peer-reviewed cardio-metabolic ratios from lab panels and surfaces them as risk flags.",
+          "A Romanian 3-tier lab-PDF parser feeds hybrid full-text and vector search across 8 pgvector indices.",
+          "Pharmacology and therapy graphs query DailyMed, openFDA, RxNav, OpenAlex, Crossref, and Semantic Scholar, then cross-encoder rerank.",
+          "Iatrogenic-first psych screening runs a critique-refine loop that rewrites axes scoring below 7/10.",
+          "Apollo Server 5 backs 217 GraphQL resolvers and two Vercel-AI agents: CYOA stories and CBT/ACT/DBT guidance."
         ]
       }
     ]
