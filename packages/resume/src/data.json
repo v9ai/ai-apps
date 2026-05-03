@@ -187,16 +187,16 @@
       {
         "id": "1",
         "name": "Agentic Lead Gen",
-        "description": "Autonomous B2B lead-gen platform that finds, qualifies, and emails prospects through a 5-stage agentic pipeline of 67 LangGraph graphs running on Cloudflare Workers Containers and checkpointed to Neon Postgres.",
+        "description": "Autonomous B2B platform that finds, qualifies, and emails prospects through a 5-stage agentic pipeline on Cloudflare Workers Containers checkpointed to Neon Postgres.",
         "githubUrl": "https://github.com/v9ai/agentic-lead-gen",
         "websiteUrl": "https://agenticleadgen.xyz/",
         "highlights": [
-          "Runs 67 LangGraph graphs (58 core, 7 research, 2 ML) on Cloudflare Workers Containers, checkpointed to Neon Postgres.",
-          "Apollo Server 5 with Drizzle ORM on Neon and 18 DataLoaders; a DeepSeek router picks v4-flash first, escalating to v4-pro.",
-          "Scores prospect engagement in sub-millisecond time on the hot path using a 12-feature gradient-boosted stump ensemble.",
-          "Tags companies with a single-pass Aho-Corasick classifier that pattern-matches the taxonomy and retires an LLM call.",
-          "A Qwen2.5-1.5B LoRA on a free Hugging Face Space scores contact tiers, gated above authority 0.5 to cut compute roughly 10x.",
-          "Closes the loop on email: Resend handles outbound threading via In-Reply-To, HMAC-SHA256 verifies inbound webhooks, and a catch-all MX alias captures every reply."
+          "Runs 67 LangGraph graphs split 58 core, 7 research, 2 ML across the agentic pipeline.",
+          "Apollo Server 5 with Drizzle and 18 DataLoaders fronts a DeepSeek router escalating v4-flash to v4-pro.",
+          "Scores engagement sub-millisecond on the hot path with a 12-feature gradient-boosted stump ensemble.",
+          "A single-pass Aho-Corasick classifier matches the company taxonomy and retires an LLM call.",
+          "A Qwen2.5-1.5B LoRA on Hugging Face scores contact tiers above authority 0.5, cutting compute 10x.",
+          "Resend threads outbound via In-Reply-To, HMAC-SHA256 verifies inbound webhooks, and a catch-all MX alias captures replies."
         ]
       },
       {
