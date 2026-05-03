@@ -37,6 +37,7 @@
     "find_decision_maker": "leadgen_agent.find_decision_maker_graph:graph",
     "score_contact": "leadgen_agent.score_contact_graph:graph",
     "vertical_discovery": "leadgen_agent.vertical_discovery_graph:graph",
+    "gh_ai_repos": "leadgen_agent.gh_ai_repos_graph:graph",
     "pipeline": "leadgen_agent.pipeline_graph:graph",
     "consultancies_discovery": "leadgen_agent.consultancies_discovery_graph:graph",
     "consultancies_brave_discovery": "leadgen_agent.consultancies_brave_discovery_graph:graph",
