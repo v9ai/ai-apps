@@ -78,9 +78,14 @@ const s = StyleSheet.create({
   techLabel: { fontFamily: "Helvetica-Bold" },
 
   /* Projects */
-  projectTitle: { fontSize: 10, fontFamily: "Helvetica-Bold" },
+  projectEntry: { marginBottom: 8 },
+  projectTitle: { fontSize: 10, fontFamily: "Helvetica-Bold", marginBottom: 1 },
   projectLink: { color: C.accent, textDecoration: "none" },
-  projectDesc: { fontSize: 8.5, color: C.secondary, marginBottom: 1 },
+  projectDesc: { fontSize: 8.5, color: C.secondary, marginBottom: 3, lineHeight: 1.5 },
+  projectBulletList: { paddingLeft: 2 },
+  projectBulletRow: { flexDirection: "row", marginBottom: 1.5 },
+  projectBulletGlyph: { fontSize: 8.5, lineHeight: 1.5, width: 9, color: C.secondary },
+  projectBulletText: { flex: 1, fontSize: 8.5, lineHeight: 1.5 },
 
   /* Volunteer / Open Source */
   volRole: { fontSize: 9, color: C.secondary, marginBottom: 1 },
@@ -189,7 +194,7 @@ function ResumeDocument({ data }: { data: typeof resumeData }) {
           <>
             <Text style={[s.sectionTitle, { fontSize: 10 }]}>AI Projects</Text>
             {activities.aiProjects.map((proj) => (
-              <View key={proj.id} style={s.entry} wrap={false}>
+              <View key={proj.id} style={s.projectEntry} wrap={false}>
                 {proj.websiteUrl ? (
                   <Link src={proj.websiteUrl} style={[s.projectTitle, s.projectLink]}>
                     {proj.name}
@@ -198,9 +203,12 @@ function ResumeDocument({ data }: { data: typeof resumeData }) {
                   <Text style={s.projectTitle}>{proj.name}</Text>
                 )}
                 <Text style={s.projectDesc}>{proj.description}</Text>
-                <View style={s.bulletList}>
+                <View style={s.projectBulletList}>
                   {proj.highlights.map((h, i) => (
-                    <Text key={i} style={s.bullet}>{"•  "}{h}</Text>
+                    <View key={i} style={s.projectBulletRow}>
+                      <Text style={s.projectBulletGlyph}>•</Text>
+                      <Text style={s.projectBulletText}>{h}</Text>
+                    </View>
                   ))}
                 </View>
               </View>

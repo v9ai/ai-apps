@@ -26,6 +26,7 @@ import asyncio
 import json
 import logging
 import os
+import re
 import time
 from typing import Any, Literal
 
@@ -63,6 +64,24 @@ _BRAVE_COUNT = 5
 # Top-N GitHub contributors hydrated with /users/{login}. Founders of small
 # orgs almost always show up in this list with a populated name/blog/twitter.
 _TOP_CONTRIBUTORS = 5
+
+# Downstream ICP-disqualifier checks. Run on the synthesized brief +
+# contributor bios + Brave hits. Cheap regex over fields we already have.
+_PEDIGREE_BIO_RE = re.compile(
+    r"\b("
+    r"apache\s+(parquet|impala|spark|kafka|airflow|arrow|iceberg|hudi|flink|cassandra|hbase)|"
+    r"founder\s+of\s+apache|"
+    r"(former|ex-)\s*(google|apple|meta|microsoft|nvidia|amazon|openai|anthropic|databricks|snowflake)|"
+    r"(deepmind|fair|google\s+brain|brain\s+team)|"
+    r"yc\s+[sw]\d{2}\b|"
+    r"sutter\s+hill|sequoia|a16z|founders\s+fund"
+    r")",
+    re.IGNORECASE,
+)
+_PARTNERSHIP_KEYWORDS: tuple[str, ...] = (
+    "partnership", "integration with", "collaboration with",
+    "powered by", "in partnership with", "joins forces",
+)
 
 EvidenceConfidence = Literal["low", "medium", "high"]
 
@@ -605,6 +624,42 @@ async def synthesize(state: GhLeadResearchState) -> dict:
     }
 
 
+def _evaluate_icp(
+    brief: dict[str, Any],
+    contributors: list[dict[str, Any]],
+    web_results: list[dict[str, Any]],
+) -> str | None:
+    """Return a short disqualifier reason or None.
+
+    Three layered checks on what the deep pass already gathered:
+    - LLM extracted a recent_fundraise → disqualified (funded orgs have
+      sophisticated vendor selection)
+    - Top-3 contributor bios mention famous-OSS-project / FAANG / known VC
+      → too pedigreed
+    - >=2 partnership/integration mentions in Brave hits → already in
+      visible BD/PR motion
+    """
+    fundraise = (brief.get("recent_fundraise") or "").strip()
+    if fundraise:
+        return f"funded: {fundraise[:160]}"
+
+    for c in contributors[:3]:
+        bio = ((c.get("bio") or "") + " " + (c.get("company") or "")).strip()
+        if bio and _PEDIGREE_BIO_RE.search(bio):
+            who = c.get("name") or c.get("login") or "unknown"
+            return f"pedigree: {who} — {bio[:140]}"
+
+    partnership_hits = 0
+    for h in web_results:
+        haystack = ((h.get("title") or "") + " " + (h.get("description") or "")).lower()
+        if any(kw in haystack for kw in _PARTNERSHIP_KEYWORDS):
+            partnership_hits += 1
+    if partnership_hits >= 2:
+        return f"pr_motion: {partnership_hits} partnership/integration mentions in Brave hits"
+
+    return None
+
+
 async def persist(state: GhLeadResearchState) -> dict:
     """Upsert the research row keyed by repo_id."""
     if state.get("_error"):
@@ -614,11 +669,14 @@ async def persist(state: GhLeadResearchState) -> dict:
     repo = state.get("repo") or {}
     pages = state.get("pages") or {}
     web_results = state.get("web_results") or []
+    contributors = state.get("contributors") or []
     brief = state.get("brief") or {}
 
     repo_id = repo.get("repo_id")
     if not repo_id:
         return {"_error": "persist: repo.repo_id missing"}
+
+    icp_disqualifier = _evaluate_icp(brief, contributors, web_results)
 
     def _page(key: str, field: str) -> Any:
         return (pages.get(key) or {}).get(field)
@@ -634,8 +692,9 @@ async def persist(state: GhLeadResearchState) -> dict:
             " web_search_results_json, contributors_json, "
             " recent_fundraise, recent_launch, "
             " team_size_signal, icp_fit_summary, pitch_one_liner, "
-            " decision_makers_json, evidence_urls_json, llm_confidence, researched_at) "
-            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, CURRENT_TIMESTAMP) "
+            " decision_makers_json, evidence_urls_json, llm_confidence, "
+            " icp_disqualifier, researched_at) "
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, CURRENT_TIMESTAMP) "
             "ON CONFLICT(repo_id) DO UPDATE SET "
             "  org_id = excluded.org_id, "
             "  homepage_url = excluded.homepage_url, "
@@ -659,6 +718,7 @@ async def persist(state: GhLeadResearchState) -> dict:
             "  decision_makers_json = excluded.decision_makers_json, "
             "  evidence_urls_json = excluded.evidence_urls_json, "
             "  llm_confidence = excluded.llm_confidence, "
+            "  icp_disqualifier = excluded.icp_disqualifier, "
             "  researched_at = CURRENT_TIMESTAMP "
             "RETURNING id, repo_id",
             [
@@ -676,7 +736,7 @@ async def persist(state: GhLeadResearchState) -> dict:
                 _page("about", "status"),
                 _page("about", "excerpt"),
                 json.dumps(web_results) if web_results else None,
-                json.dumps(state.get("contributors") or []) if state.get("contributors") else None,
+                json.dumps(contributors) if contributors else None,
                 brief.get("recent_fundraise") or None,
                 brief.get("recent_launch") or None,
                 brief.get("team_size_signal") or None,
@@ -685,6 +745,7 @@ async def persist(state: GhLeadResearchState) -> dict:
                 json.dumps(brief.get("decision_makers") or []) if brief.get("decision_makers") else None,
                 json.dumps(brief.get("evidence_urls") or []) if brief.get("evidence_urls") else None,
                 float(brief.get("confidence") or 0.0),
+                icp_disqualifier,
             ],
         )
     except D1Error as e:
@@ -708,6 +769,7 @@ async def persist(state: GhLeadResearchState) -> dict:
         "research_id": research_id,
         "pages_ok": sum(1 for p in pages.values() if (p or {}).get("status") == 200),
         "web_hits": len(web_results),
+        "icp_disqualifier": icp_disqualifier,
         "brief": brief,
         "graph_meta": meta,
     }

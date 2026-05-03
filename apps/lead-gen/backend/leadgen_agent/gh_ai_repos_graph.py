@@ -151,6 +151,39 @@ _AWESOME_NAME_RE = re.compile(
     re.IGNORECASE,
 )
 
+# Cheap upstream ICP-disqualifier regexes. Run on the README excerpt before
+# spending LLM tokens. Match → drop the repo with _skip_reason="icp_disq:*".
+# Cheap signals only — the deep gh_lead_research pass adds evidence-grounded
+# disqualification (raised_fundraise field, contributor bios, partnership count).
+_FUNDING_README_RE = re.compile(
+    r"\b("
+    r"raised\s+\$?\d|"                          # "raised $5M"
+    r"\$\s?\d+(\.\d+)?\s?[mMkK]\s|"            # "$5.5M ", "$3 M"
+    r"\$\s?\d+(\.\d+)?\s?[mMkK]illion|"        # "$5 million"
+    r"seed\s+round|series\s+[a-d]\b|pre-seed\b|"
+    r"backed\s+by|"
+    r"y\s*combinator|techstars|sequoia|"
+    r"funded\s+by|"
+    r"investors?:|"
+    r"venture[- ]backed"
+    r")",
+    re.IGNORECASE,
+)
+
+# Famous OSS projects + research labs whose maintainers are too senior to
+# pitch to. Maintained by hand; cheaper + safer than detecting "ex-Google" in
+# arbitrary bios upstream. Heavier pedigree detection happens downstream
+# from contributor /users/{login} bios.
+_PEDIGREE_README_RE = re.compile(
+    r"\b("
+    r"apache\s+(parquet|impala|spark|kafka|airflow|arrow|iceberg|hudi|flink|cassandra|hbase)|"
+    r"(former|ex-)\s*(google|apple|meta|microsoft|nvidia|amazon|openai|anthropic|databricks|snowflake)|"
+    r"(deepmind|fair|google\s+brain|brain\s+team)\s+alum|"
+    r"yc\s+[sw]\d{2}\b"                       # YC batch tag (W22, S24, etc.)
+    r")",
+    re.IGNORECASE,
+)
+
 _SLUG_RE = re.compile(r"[^a-z0-9]+")
 
 PERSONAL_PROJECT_HINTS: tuple[str, ...] = (
@@ -891,6 +924,7 @@ async def score_heuristic(state: GhAiReposState) -> dict:
     scored: list[dict[str, Any]] = []
     dropped_floor = 0
     dropped_too_big = 0
+    dropped_icp_disq = 0
     skipped_fresh = 0
     for r in repos:
         existing = existing_keys.get(f"gh:{r['full_name']}") or {}
@@ -907,6 +941,18 @@ async def score_heuristic(state: GhAiReposState) -> dict:
         ):
             dropped_too_big += 1
             continue
+
+        # ICP cheap upstream filter — funded / pedigreed projects don't need
+        # us. Regex match on README excerpt; the deep pass catches whatever
+        # slips past with evidence-grounded checks.
+        readme = r.get("readme_excerpt") or ""
+        if readme:
+            if _FUNDING_README_RE.search(readme):
+                dropped_icp_disq += 1
+                continue
+            if _PEDIGREE_README_RE.search(readme):
+                dropped_icp_disq += 1
+                continue
 
         sell_score, reasons = _score_repo(
             r,
@@ -946,6 +992,7 @@ async def score_heuristic(state: GhAiReposState) -> dict:
                     "kept": len(scored),
                     "dropped_below_floor": dropped_floor,
                     "dropped_too_big_org": dropped_too_big,
+                    "dropped_icp_disqualified": dropped_icp_disq,
                     "skipped_fresh": skipped_fresh,
                     "floor": floor,
                     "max_org_members": max_org_members,
