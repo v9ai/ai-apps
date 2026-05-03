@@ -795,7 +795,7 @@ def _ensure_skill_embeds(self) -> torch.Tensor:
   },
   {
     heading: "Admin Agent — LangGraph Bridge",
-    content: "adminAssistantAgent is a thin TypeScript wrapper that calls adminChat() in src/lib/langgraph-client.ts and coerces all errors into a discriminated union ({ text } | { text: null, error }) so callers never see raw exceptions. adminChat funnels through runGraph(), which POSTs to LANGGRAPH_URL/runs/wait with assistant_id 'admin_chat' and an optional bearer token. Why: the LLM orchestration runtime (Python LangGraph) and the serving runtime (Next.js) stay decoupled — the same client signature works against langgraph dev locally or a tunneled HF Space.",
+    content: "adminAssistantAgent is a thin TypeScript wrapper that calls adminChat() in src/lib/langgraph-client.ts and coerces all errors into a discriminated union ({ text } | { text: null, error }) so callers never see raw exceptions. adminChat funnels through runGraph(), which POSTs to LANGGRAPH_URL/runs/wait with assistant_id 'admin_chat' and an optional bearer token. Why: the LLM orchestration runtime (Python LangGraph) and the serving runtime (Next.js) stay decoupled — the same client signature works against langgraph dev locally or the production Cloudflare Worker (lead-gen-langgraph.eeeew.workers.dev).",
     codeBlock: `// src/agents/admin-assistant.ts:10
 export const adminAssistantAgent = {
   async generate(

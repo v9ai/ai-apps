@@ -361,8 +361,8 @@ const nodeDetails: Record<string, NodeDetail> = {
   },
   // Stage 5: Outreach Pipeline
   "compose-linkedin": {
-    description: "Two-phase email composition: Phase 1 runs parallel context retrieval (company deep_analysis from DB + live LinkedIn profile signals) then calls DeepSeek-V3 at temperature 0.7 to generate a draft with explicit instructions to include one specific technical observation about the company. Phase 2 passes the draft to a refine prompt that strips AI-marker phrases ('I hope this finds you well', 'I wanted to reach out'), enforces a max 3-sentence opening, and tightens the subject line to under 50 characters.",
-    tech: [{ name: "DeepSeek-V3" }, { name: "two-pass draft+refine pipeline" }, { name: "temperature 0.7 (draft) / 0.3 (refine)" }, { name: "Vercel AI SDK generateText" }, { name: "ComposeFromLinkedIn component" }],
+    description: "Two-phase email composition: Phase 1 runs parallel context retrieval (company deep_analysis from DB + live LinkedIn profile signals) then calls DeepSeek v4-pro at temperature 0.7 to generate a draft with explicit instructions to include one specific technical observation about the company. Phase 2 passes the draft to a refine prompt that strips AI-marker phrases ('I hope this finds you well', 'I wanted to reach out'), enforces a max 3-sentence opening, and tightens the subject line to under 50 characters.",
+    tech: [{ name: "DeepSeek v4-pro" }, { name: "two-pass draft+refine pipeline" }, { name: "temperature 0.7 (draft) / 0.3 (refine)" }, { name: "Vercel AI SDK generateText" }, { name: "ComposeFromLinkedIn component" }],
     dataIn: "Contact LinkedIn URL + company deep_analysis + ICP score",
     dataOut: "Subject line + plain-text body + HTML body (spam-score checked)",
     insight: "The refine pass targets a specific failure mode: at temperature 0.7 the draft pass produces natural-sounding content but reliably includes 2–3 formulaic opener phrases — a targeted removal prompt outperforms lowering temperature, which would also reduce the technical specificity of the body.",

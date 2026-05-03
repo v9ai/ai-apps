@@ -208,7 +208,7 @@ export default function SloveniaEventPage() {
       </Card>
 
       {/* Link to full guide */}
-      <Card mb="5" asChild style={{ borderColor: "var(--teal-7)", cursor: "pointer" }}>
+      <Card mb="3" asChild style={{ borderColor: "var(--teal-7)", cursor: "pointer" }}>
         <NextLink href={`/coursework/${slug}/slovenia/ideas`}>
           <Flex align="center" gap="3">
             <Box style={{ fontSize: 32 }}>📘</Box>
@@ -219,6 +219,27 @@ export default function SloveniaEventPage() {
               </Flex>
               <Text size="2" color="gray" as="p" mt="1">
                 13 secțiuni cu idei pentru stand: concept, ștampilă, afiș, decor 3D, degustare, muzică, costume, activități interactive, script prezentare, logistică, checklist ziua Z.
+              </Text>
+            </Box>
+            <Text size="2" color="teal" weight="medium">
+              Deschide →
+            </Text>
+          </Flex>
+        </NextLink>
+      </Card>
+
+      {/* Link to image gallery */}
+      <Card mb="5" asChild style={{ borderColor: "var(--teal-7)", cursor: "pointer" }}>
+        <NextLink href={`/coursework/${slug}/slovenia/images`}>
+          <Flex align="center" gap="3">
+            <Box style={{ fontSize: 32 }}>🖼️</Box>
+            <Box style={{ flex: 1 }}>
+              <Flex align="center" gap="2">
+                <StarIcon color="var(--teal-9)" />
+                <Heading size="4">Galerie imagini</Heading>
+              </Flex>
+              <Text size="2" color="gray" as="p" mt="1">
+                Steag, simboluri (dragon, Triglav, Bled, licitar, albine, Lipițani, proteu) și limba slovenă — referințe vizuale de înaltă calitate.
               </Text>
             </Box>
             <Text size="2" color="teal" weight="medium">
