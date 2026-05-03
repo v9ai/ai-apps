@@ -340,14 +340,6 @@ async function composeCardCanvas(item: ImgItem): Promise<HTMLCanvasElement> {
     ctx.drawImage(img, dx, dy, dw, dh);
   }
 
-  // Divider line under photo
-  ctx.strokeStyle = "#d4d4d4";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(CONTENT_X, CONTENT_Y + IMG_AREA_H);
-  ctx.lineTo(CONTENT_X + CONTENT_W, CONTENT_Y + IMG_AREA_H);
-  ctx.stroke();
-
   // Title
   ctx.fillStyle = "#0f172a";
   ctx.textBaseline = "top";
