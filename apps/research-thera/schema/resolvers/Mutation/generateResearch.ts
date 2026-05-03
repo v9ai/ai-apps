@@ -419,6 +419,7 @@ export const generateResearch: NonNullable<MutationResolvers['generateResearch']
           plannedQueries: plannedQueries ?? undefined,
         },
       },
+      undefined,
       userEmail,
     );
     await db.setGenerationJobLangGraphIds(jobId, threadId, runId);

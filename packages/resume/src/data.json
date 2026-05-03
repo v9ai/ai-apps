@@ -87,7 +87,7 @@
       "position": "Senior Full Stack Engineer",
       "url": "",
       "startDate": "March 2022",
-      "endDate": "December 2025",
+      "endDate": "January 2026",
       "highlights": [],
       "summary": "<ul><li>Architected micro-frontend portal using Go microservices with gRPC and OpenAPI, integrating shared React components across multiple teams.</li><li>Led API migration from REST to GraphQL, implementing Apollo Server in Go and Apollo Client in React, reducing over-fetching and improving performance.</li><li>Drove frontend architecture and technical leadership across teams, establishing design patterns and enforcing quality through PR reviews.</li><li>Migrated monorepo from npm to PNPM with Turborepo caching, reducing CI/CD build times.</li><li>Integration testing strategy with Jest and React Testing Library, automated in CI/CD.</li><li><strong>Tech stack:</strong> Go, Echo, gRPC, GraphQL, Apollo Server, OpenAPI, React, TypeScript, Apollo Client, React Query, Ant Design, Turborepo, PNPM, MongoDB, Jest, React Testing Library</li></ul>",
       "years": "3 yrs 10 mos"
@@ -220,20 +220,6 @@
           "AI SDK (generateObject + Zod): storyTeller (3-part CYOA) + therapeutic (CBT/ACT/DBT/MBSR/LEGO) → R2.",
           "7-node therapy research LangGraph (loadContext → normalizeGoal → planQuery → search → enrichAbstracts → extractAll → persist): 7 sources → DeepSeek + 0.72 gate → top 20 as 1024-dim pgvector.",
           "~70-table Drizzle/Postgres schema: therapeutic core (goals, issues, habits, journals, claims) + 32 healthcare tables including 8 pgvector embedding tables."
-        ]
-      },
-      {
-        "id": "2",
-        "name": "Knowledge",
-        "description": "Knowledge graph with pgvector cosine similarity search, Bayesian mastery tracing per user per concept, automated quality evals with DeepEval RAG triad, LangGraph multi-agent fan-out/fan-in editorial pipeline.",
-        "githubUrl": "https://github.com/v9ai/knowledge",
-        "websiteUrl": "https://agentic-knowledge.vercel.app/",
-        "highlights": [
-          "Knowledge graph with 6 relationship types, pgvector cosine similarity at 1024 dimensions.",
-          "Per-user Bayesian knowledge tracing (p_mastery, p_transit, p_slip, p_guess per concept), novice → expert classification.",
-          "DeepEval: Coherence, Factual Grounding, Completeness at 0.7 threshold; RAG triad evaluation.",
-          "LangGraph 6-agent fan-out/fan-in editorial pipeline with multi-round revision loops, DeepSeek R1 + OpenAI.",
-          "5 FastAPI LangGraph graphs (article, app_prep, chat, course_review, memorize) + Udemy → DeepSeek course review."
         ]
       }
     ]
