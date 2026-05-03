@@ -119,7 +119,7 @@ function PlantPlanContent() {
   const headline = plan ? extractHeadline(plan.planMarkdown) : null;
 
   return (
-    <Box p={{ initial: "3", md: "5" }} style={{ maxWidth: 980, margin: "0 auto" }}>
+    <Box p={{ initial: "3", md: "5" }} style={{ width: "100%" }}>
       <Flex direction="column" gap="4">
         <Flex align="center" gap="2">
           <NextLink href={memberPath}>
