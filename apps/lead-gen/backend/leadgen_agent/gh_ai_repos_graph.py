@@ -127,6 +127,15 @@ COMMERCIAL_INTENTS: tuple[str, ...] = (
     "research_demo",
     "awareness",
 )
+# Where the project is on the OSS → paying-customers journey. Distinct from
+# commercial_intent (intent vs. observed current state). Drives outreach
+# timing — pitch oss_only differently than has_paying_users.
+MONETIZATION_STAGES: tuple[str, ...] = (
+    "oss_only",          # no monetization signals on README/site
+    "experimenting",     # waitlist, "early access", "interested in commercial use"
+    "has_pricing",       # /pricing page or README states tier prices, sign-up exists
+    "has_paying_users",  # customer logos, testimonials, "trusted by", case studies
+)
 
 # Repos owned by these accounts are excluded — too big to pitch, awareness/cookbook
 # repos, or known to be inert "list of X" aggregators.
@@ -159,6 +168,9 @@ BuyerPersona = Literal[
     "founder_cto", "ml_team_lead", "platform_eng", "devrel",
     "indie_dev", "research_lab",
 ]
+MonetizationStage = Literal[
+    "oss_only", "experimenting", "has_pricing", "has_paying_users"
+]
 
 
 class RepoSellBrief(BaseModel):
@@ -173,6 +185,7 @@ class RepoSellBrief(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     commercial_intent: CommercialIntent
+    monetization_stage: MonetizationStage = "oss_only"
     pain_points: list[str] = Field(default_factory=list, max_length=4)
     buyer_persona: BuyerPersona
     pitch_angle: str = Field(default="", max_length=600)
@@ -956,6 +969,9 @@ _CLASSIFY_SYSTEM = (
     '  "commercial_intent": one of '
     + json.dumps(list(COMMERCIAL_INTENTS))
     + ",\n"
+    '  "monetization_stage": one of '
+    + json.dumps(list(MONETIZATION_STAGES))
+    + ",\n"
     '  "pain_points": list of up to 4 strings, each from '
     + json.dumps(list(PAIN_POINTS))
     + ",\n"
@@ -974,6 +990,12 @@ _CLASSIFY_SYSTEM = (
     "Rules:\n"
     "- Pain points MUST be drawn from the canonical list above; reject "
     "anything else.\n"
+    "- monetization_stage signals (use the README excerpt + homepage):\n"
+    '    * "oss_only"          — no commercial mentions, license + install only\n'
+    '    * "experimenting"     — waitlist, "early access", "beta", "interested in commercial use, contact us", roadmap mentions paid tier\n'
+    '    * "has_pricing"       — README links a /pricing page, lists tier names ($X/mo, Free/Pro/Enterprise), or has a "Sign up" / "Get API key" flow\n'
+    '    * "has_paying_users"  — customer logos, testimonials, "trusted by X", named case studies, "$Xm in revenue", live SaaS link with usage proof\n'
+    "  Default to oss_only when uncertain (don't reach for has_paying_users without explicit evidence).\n"
     "- If the repo is a personal toy / research demo / awareness piece, set "
     'commercial_intent to "research_demo" or "awareness" and llm_score ≤ 0.3.\n'
     "- If you can't tell, set confidence < 0.4 — do not guess."
@@ -1297,8 +1319,9 @@ async def persist(state: GhAiReposState) -> dict:
                             " license_spdx, archived, fork, has_readme, contributors_count, "
                             " heuristic_score, llm_score, llm_confidence, final_score, "
                             " score_reasons, buyer_persona, commercial_intent, pain_points, "
-                            " pitch_angle, why_now, brief_json, last_seen_at) "
-                            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, CURRENT_TIMESTAMP) "
+                            " pitch_angle, why_now, brief_json, monetization_stage, "
+                            " last_seen_at) "
+                            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, CURRENT_TIMESTAMP) "
                             "ON CONFLICT(full_name) DO UPDATE SET "
                             "  org_id = excluded.org_id, "
                             "  html_url = excluded.html_url, "
@@ -1330,6 +1353,7 @@ async def persist(state: GhAiReposState) -> dict:
                             "  pitch_angle = excluded.pitch_angle, "
                             "  why_now = excluded.why_now, "
                             "  brief_json = excluded.brief_json, "
+                            "  monetization_stage = excluded.monetization_stage, "
                             "  last_seen_at = CURRENT_TIMESTAMP "
                             "RETURNING id, full_name"
                         ),
@@ -1365,6 +1389,7 @@ async def persist(state: GhAiReposState) -> dict:
                             brief.get("pitch_angle"),
                             brief.get("why_now"),
                             json.dumps(brief) if brief else None,
+                            brief.get("monetization_stage"),
                         ],
                     })
 
