@@ -196,7 +196,8 @@
           "Scores engagement sub-millisecond on the hot path with a 12-feature gradient-boosted stump ensemble.",
           "A single-pass Aho-Corasick classifier matches the company taxonomy and retires an LLM call.",
           "A Qwen2.5-1.5B LoRA on Hugging Face scores contact tiers above authority 0.5, cutting compute 10x.",
-          "Resend threads outbound via In-Reply-To, HMAC-SHA256 verifies inbound webhooks, and a catch-all MX alias captures replies."
+          "Resend threads outbound via In-Reply-To, HMAC-SHA256 verifies inbound webhooks, and a catch-all MX alias captures replies.",
+          "An 8-rule strategy enforcer blocks merges on eval thresholds, un-grounded LLM calls, taxonomy drift, and HITL gaps."
         ]
       },
       {
@@ -209,7 +210,8 @@
           "The 5-stage LlamaIndex chat pipeline reranks, audits safety, and routes 9 intents by confidence.",
           "Computes 7 peer-reviewed cardio-metabolic ratios from lab panels and surfaces them as risk flags.",
           "A Romanian 3-tier lab-PDF parser feeds hybrid full-text and vector search across 8 pgvector indices.",
-          "Pharmacology and therapy graphs query DailyMed, openFDA, RxNav, OpenAlex, Crossref, and Semantic Scholar, then cross-encoder rerank.",
+          "Medication deep-research graph queries DailyMed, openFDA, and RxNav, then upserts six pharmacology tables behind a 30-day cache.",
+          "Therapy-research graph queries OpenAlex, Crossref, and Semantic Scholar, cross-encoder reranks ~2,350 candidates, and gates persistence on blended relevance.",
           "Iatrogenic-first psych screening runs a critique-refine loop that rewrites axes scoring below 7/10.",
           "Apollo Server 5 backs 217 GraphQL resolvers and two Vercel-AI agents: CYOA stories and CBT/ACT/DBT guidance."
         ]
