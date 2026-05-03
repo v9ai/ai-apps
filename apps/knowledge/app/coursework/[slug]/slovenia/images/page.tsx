@@ -14,90 +14,91 @@ import { ArrowLeftIcon } from "@radix-ui/react-icons";
 import NextLink from "next/link";
 import { useParams } from "next/navigation";
 
-const wm = (filename: string, width = 800) =>
-  `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(filename)}?width=${width}`;
+const wm = (filename: string, width = 800) => {
+  if (!/\.(jpe?g|png)$/i.test(filename)) {
+    throw new Error(`Only JPG/PNG sources allowed, got: ${filename}`);
+  }
+  return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(filename)}?width=${width}`;
+};
 
 type ImgItem = {
-  file: string;
+  src: string;
   title: string;
   caption: string;
-  width?: number;
   fit?: "cover" | "contain";
   bg?: string;
 };
 
 const FLAG_IMAGES: ImgItem[] = [
   {
-    file: "Flag_of_Slovenia.svg",
+    src: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/Flag_of_Slovenia.svg/1200px-Flag_of_Slovenia.svg.png",
     title: "Steagul Sloveniei",
     caption:
       "Trei dungi orizontale: alb, albastru, roșu. Pe partea stângă-sus apare stema cu Triglav, două linii ondulate (râurile/marea) și 3 stele aurii.",
     fit: "contain",
     bg: "#ffffff",
-    width: 1200,
   },
   {
-    file: "Coat_of_arms_of_Slovenia.svg",
+    src: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/Coat_of_arms_of_Slovenia.svg/800px-Coat_of_arms_of_Slovenia.svg.png",
     title: "Stema Sloveniei",
     caption:
       "Vârful Triglav (alb) pe fond albastru, două linii ondulate (Marea Adriatică / râurile) și 3 stele aurii (preluate de la conții de Celje).",
     fit: "contain",
     bg: "#ffffff",
-    width: 800,
   },
 ];
 
 const SYMBOLS: ImgItem[] = [
   {
-    file: "Dragon_on_Dragon_Bridge_(cropped).jpg",
+    src: wm("Dragon_on_Dragon_Bridge_(cropped).jpg"),
     title: "Dragonul Ljubljanei",
     caption:
       "Statuile de pe Podul Dragonilor (Zmajski most). Dragonul este simbolul orașului Ljubljana — apare pe stemă și pe steagul orașului.",
   },
   {
-    file: "Triglav.jpg",
+    src: wm("Triglav.jpg"),
     title: "Muntele Triglav (2.864 m)",
     caption:
       "Cel mai înalt munte din Slovenia, cu 3 vârfuri caracteristice. Apare pe stemă, pe bancnote, pe moneda de 50 cenți și pe tricoul echipei naționale de fotbal.",
   },
   {
-    file: "Bled_island.jpg",
+    src: wm("Bled_island.jpg"),
     title: "Lacul Bled",
     caption:
       "Insula cu bisericuța (Cerkev Marijinega vnebovzetja) în mijlocul lacului — cea mai fotografiată imagine a Sloveniei.",
   },
   {
-    file: "Höhlenburg_Predjama_in_Slovenien.jpg",
+    src: wm("Höhlenburg_Predjama_in_Slovenien.jpg"),
     title: "Castelul Predjama",
     caption:
       "Castel construit într-o peșteră, sub o stâncă de 123 m. Cel mai mare castel-peșteră din lume (Cartea Recordurilor).",
   },
   {
-    file: "Licitars2.jpg",
+    src: wm("Licitars2.jpg"),
     title: "Licitarsko srce",
     caption:
       "Inima roșie din turtă dulce decorată — simbol tradițional sloven și croat, oferită ca semn de prietenie sau dragoste.",
   },
   {
-    file: "Apis_mellifera_carnica_worker_hive_entrance_3.jpg",
+    src: wm("Apis_mellifera_carnica_worker_hive_entrance_3.jpg"),
     title: "Albina carniolică",
     caption:
       "Apis mellifera carnica — rasa autohtonă de albine. Slovenia a propus, în 2018, instituirea Zilei Mondiale a Albinelor (20 mai).",
   },
   {
-    file: "Lipica.jpg",
+    src: wm("Lipica.jpg"),
     title: "Calul Lipițan",
     caption:
       "Rasă cabalină originară din Lipica (Slovenia), crescută din 1580. Caii albi sunt celebri pentru spectacolele Școlii Spaniole de Călărie din Viena.",
   },
   {
-    file: "Proteus_anguinus_Postojnska_Jama_Slovenija.jpg",
+    src: wm("Proteus_anguinus_Postojnska_Jama_Slovenija.jpg"),
     title: "Proteul (olm) — „pestișorul-dragon”",
     caption:
       "Proteus anguinus — amfibian orb care trăiește exclusiv în peșterile carstice (ex. Postojna). Trăiește peste 100 de ani și poate sta nemâncat 10 ani.",
   },
   {
-    file: "Divje_Babe_flute_(Late_Pleistocene_flute).jpg",
+    src: wm("Divje_Babe_flute_(Late_Pleistocene_flute).jpg"),
     title: "Flautul de la Divje Babe",
     caption:
       "Os de urs cu găuri, vechi de ~60.000 de ani — considerat cel mai vechi instrument muzical din lume. Descoperit într-o peșteră din vestul Sloveniei.",
@@ -131,7 +132,7 @@ function GalleryImage({ item }: { item: ImgItem }) {
       }}
     >
       <img
-        src={wm(item.file, item.width ?? 800)}
+        src={item.src}
         alt={item.title}
         loading="lazy"
         style={{
@@ -200,7 +201,7 @@ export default function SloveniaImagesPage() {
         }}
       >
         {FLAG_IMAGES.map((item) => (
-          <GalleryCard key={item.file} item={item} />
+          <GalleryCard key={item.src} item={item} />
         ))}
       </Box>
 
@@ -223,7 +224,7 @@ export default function SloveniaImagesPage() {
         }}
       >
         {SYMBOLS.map((item) => (
-          <GalleryCard key={item.file} item={item} />
+          <GalleryCard key={item.src} item={item} />
         ))}
       </Box>
 
@@ -251,7 +252,7 @@ export default function SloveniaImagesPage() {
       >
         <GalleryCard
           item={{
-            file: "Freising_manuscript.jpg",
+            src: wm("Freising_manuscript.jpg"),
             title: "Manuscrisele de la Freising (sec. X–XI)",
             caption:
               "Cel mai vechi text scris în limba slovenă (și unul dintre cele mai vechi texte slave cu litere latine). Păstrat în biblioteca din München.",
@@ -289,8 +290,7 @@ export default function SloveniaImagesPage() {
       {/* Credit */}
       <Text size="1" color="gray" as="p">
         Imagini: Wikimedia Commons (licență Creative Commons / domeniu public).
-        Sursele sunt servite direct de pe upload.wikimedia.org prin URL-uri
-        canonice <code>Special:FilePath</code>.
+        Format JPG / PNG, servite de pe upload.wikimedia.org.
       </Text>
     </Container>
   );
