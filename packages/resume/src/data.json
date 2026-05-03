@@ -187,13 +187,12 @@
       {
         "id": "1",
         "name": "Agentic Lead Gen",
-        "description": "Deterministic Rust/TypeScript ML displaces LLM calls on the hot path of an autonomous B2B lead-gen platform — a 5-stage agentic pipeline driving 67 LangGraph graphs on Cloudflare Workers Containers, checkpointed to Neon.",
+        "description": "Autonomous B2B lead-gen platform: a 5-stage agentic pipeline driving 67 LangGraph graphs on Cloudflare Workers Containers, checkpointed to Neon.",
         "githubUrl": "https://github.com/v9ai/agentic-lead-gen",
         "websiteUrl": "https://agenticleadgen.xyz/",
         "highlights": [
           "67 LangGraph graphs (58 core, 7 research, 2 ML) on Cloudflare Workers Containers.",
           "Apollo Server 5 + Drizzle/Neon with 18 DataLoaders; DeepSeek cheap-first router across TS+Python hubs.",
-          "Hand-rolled stats: Hawkes lead-temperature (O(n²) to O(n)), Thompson send-time sampler, Kaplan-Meier follow-up gating.",
           "12-feature gradient-boosted stumps score engagement sub-millisecond on the hot path.",
           "Aho-Corasick single-pass classifier retires an LLM call from company tagging.",
           "Qwen2.5-1.5B contact-tier LoRA on HF Space; gates at authority score >= 0.5, ~10x compute cut.",
