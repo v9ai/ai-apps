@@ -1136,114 +1136,224 @@ async def persist(state: GhAiReposState) -> dict:
     if persist_companies and final:
         try:
             blocked = {b.domain for b in blocklist.list_all()}
-        except (psycopg.Error, RuntimeError):
+        except Exception:
+            # blocklist still lives in Neon; D1 side-channel must not fail
+            # if the blocklist round-trip errors.
             blocked = set()
 
-        try:
-            with psycopg.connect(_dsn(), autocommit=True, connect_timeout=10) as conn:
-                with conn.cursor() as cur:
-                    for r in final:
-                        if r["final_score"] < 0.25:
-                            continue
-                        if r.get("_skip_reason") == "fresh":
-                            skipped_fresh += 1
-                            continue
-                        owner_login = r.get("owner_login") or r["owner"]
-                        owner_type = (r.get("owner_type") or "").lower()
-                        if owner_type != "organization":
-                            continue
+        existing_keys = state.get("existing_keys") or {}
+        org_metadata = state.get("org_metadata") or {}
 
-                        # Belt-and-braces: re-check freshness by tag in case
-                        # dedupe_vs_db saw nothing but a sibling row was
-                        # written mid-run.
-                        existing = state.get("existing_keys", {}).get(
-                            f"gh:{r['full_name']}"
-                        ) or {}
-                        last_seen = existing.get("last_seen_days_ago")
-                        if isinstance(last_seen, int) and last_seen < freshness_days:
-                            skipped_fresh += 1
-                            continue
+        # First pass: filter eligible rows. Same gates as before — score
+        # threshold, org-only, freshness, blocklist — except canonical domain
+        # is now only used for the blocklist check (not as a primary key).
+        eligible: list[tuple[dict[str, Any], str]] = []  # (repo, owner_login)
+        for r in final:
+            if r["final_score"] < 0.25:
+                continue
+            if r.get("_skip_reason") == "fresh":
+                skipped_fresh += 1
+                continue
+            owner_login = r.get("owner_login") or r["owner"]
+            if (r.get("owner_type") or "").lower() != "organization":
+                continue
+            existing = existing_keys.get(f"gh:{r['full_name']}") or {}
+            last_seen = existing.get("last_seen_days_ago")
+            if isinstance(last_seen, int) and last_seen < freshness_days:
+                skipped_fresh += 1
+                continue
+            homepage = r.get("homepage") or ""
+            canonical = blocklist.canonicalize_domain(homepage)
+            if not canonical or "." not in canonical:
+                canonical = f"{owner_login.lower()}.github.io"
+            if canonical in blocked:
+                skipped_blocked += 1
+                continue
+            eligible.append((r, owner_login))
 
-                        homepage = r.get("homepage") or ""
-                        canonical = blocklist.canonicalize_domain(homepage)
-                        if not canonical or "." not in canonical:
-                            canonical = f"{owner_login.lower()}.github.io"
-                        if canonical in blocked:
-                            skipped_blocked += 1
-                            continue
+        if eligible:
+            try:
+                client = D1Client()
 
-                        key = _slugify(canonical)[:200]
-                        tags = [
-                            "gh-ai-repo-lead",
-                            "discovery-candidate",
-                            f"gh:{r['full_name']}",
-                        ]
-                        if r.get("matched_topic"):
-                            tags.append(f"topic:{r['matched_topic']}")
-                        brief = r.get("brief") or {}
-                        if brief.get("buyer_persona"):
-                            tags.append(f"persona:{brief['buyer_persona']}")
-                        if brief.get("commercial_intent"):
-                            tags.append(f"intent:{brief['commercial_intent']}")
-                        for pp in (brief.get("pain_points") or [])[:3]:
-                            tags.append(f"pain:{pp}")
+                # Batch 1: upsert orgs. One row per unique owner_login,
+                # filled from org_metadata (the enrich_orgs node's output).
+                seen_logins: set[str] = set()
+                org_stmts: list[dict[str, Any]] = []
+                for _r, login in eligible:
+                    if login in seen_logins:
+                        continue
+                    seen_logins.add(login)
+                    org = org_metadata.get(login) or {}
+                    org_stmts.append({
+                        "sql": (
+                            "INSERT INTO gh_orgs "
+                            "(github_login, name, blog, twitter_username, email, "
+                            " location, public_members, public_repos, ai_repo_count, "
+                            " total_org_stars, flagship_repo, last_seen_at) "
+                            "VALUES (?,?,?,?,?,?,?,?,?,?,?, CURRENT_TIMESTAMP) "
+                            "ON CONFLICT(github_login) DO UPDATE SET "
+                            "  name = COALESCE(excluded.name, gh_orgs.name), "
+                            "  blog = COALESCE(excluded.blog, gh_orgs.blog), "
+                            "  twitter_username = COALESCE(excluded.twitter_username, gh_orgs.twitter_username), "
+                            "  email = COALESCE(excluded.email, gh_orgs.email), "
+                            "  location = COALESCE(excluded.location, gh_orgs.location), "
+                            "  public_members = COALESCE(excluded.public_members, gh_orgs.public_members), "
+                            "  public_repos = COALESCE(excluded.public_repos, gh_orgs.public_repos), "
+                            "  ai_repo_count = COALESCE(excluded.ai_repo_count, gh_orgs.ai_repo_count), "
+                            "  total_org_stars = COALESCE(excluded.total_org_stars, gh_orgs.total_org_stars), "
+                            "  flagship_repo = COALESCE(excluded.flagship_repo, gh_orgs.flagship_repo), "
+                            "  last_seen_at = CURRENT_TIMESTAMP "
+                            "RETURNING id, github_login"
+                        ),
+                        "params": [
+                            login,
+                            org.get("name"),
+                            org.get("blog"),
+                            org.get("twitter_username"),
+                            org.get("email"),
+                            org.get("location"),
+                            org.get("public_members"),
+                            org.get("public_repos"),
+                            org.get("ai_repo_count"),
+                            org.get("total_org_stars"),
+                            org.get("flagship_repo"),
+                        ],
+                    })
 
-                        # score_reasons[0] is the pitch_angle (when available)
-                        # so dashboards surface a paste-ready one-liner.
-                        reasons: list[str] = []
-                        if brief.get("pitch_angle"):
-                            reasons.append(brief["pitch_angle"])
-                        if brief.get("why_now"):
-                            reasons.append(f"Why now: {brief['why_now']}")
-                        reasons.extend((r.get("score_reasons") or [])[:3])
-                        if not reasons:
-                            reasons.append(
-                                f"GH repo {r['full_name']} — {r['stars']:,}★, "
-                                f"{r.get('contributors_count', 0)} contributors."
-                            )
+                org_results = await client.batch(org_stmts)
+                org_id_by_login: dict[str, int] = {}
+                for rows in org_results:
+                    for row in rows:
+                        rid = row.get("id")
+                        login = row.get("github_login")
+                        if rid is not None and login:
+                            org_id_by_login[str(login)] = int(rid)
 
-                        cur.execute(
-                            """
-                            INSERT INTO companies
-                              (tenant_id, key, name, canonical_domain, website,
-                               category, ai_tier, tags, score, score_reasons,
-                               created_at, updated_at)
-                            VALUES
-                              (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                               now()::text, now()::text)
-                            ON CONFLICT (key) DO NOTHING
-                            RETURNING id, (xmax = 0) AS inserted
-                            """,
-                            (
-                                "vadim",
-                                key,
-                                owner_login,
-                                canonical,
-                                homepage or f"https://github.com/{owner_login}",
-                                "AI",
-                                3,
-                                json.dumps(tags),
-                                r["final_score"],
-                                json.dumps(reasons),
-                            ),
+                # Batch 2: upsert repos with their resolved org_id.
+                repo_stmts: list[dict[str, Any]] = []
+                for r, login in eligible:
+                    org_id = org_id_by_login.get(login)
+                    brief = r.get("brief") or {}
+
+                    reasons: list[str] = []
+                    if brief.get("pitch_angle"):
+                        reasons.append(brief["pitch_angle"])
+                    if brief.get("why_now"):
+                        reasons.append(f"Why now: {brief['why_now']}")
+                    reasons.extend((r.get("score_reasons") or [])[:3])
+                    if not reasons:
+                        reasons.append(
+                            f"GH repo {r['full_name']} — {r['stars']:,}★, "
+                            f"{r.get('contributors_count', 0)} contributors."
                         )
-                        row = cur.fetchone()
-                        if row is None:
-                            cur.execute(
-                                "SELECT id FROM companies WHERE key = %s",
-                                (key,),
-                            )
-                            existing_row = cur.fetchone()
-                            if existing_row:
-                                existing_ids.append(int(existing_row[0]))
-                            continue
-                        company_id, was_inserted = int(row[0]), bool(row[1])
-                        if was_inserted:
-                            inserted_ids.append(company_id)
-                        else:
-                            existing_ids.append(company_id)
-        except psycopg.Error as e:
-            return {"_error": f"persist: {e}"}
+
+                    pain_points = brief.get("pain_points") or []
+                    pain_points_json = json.dumps(
+                        pain_points[:5] if isinstance(pain_points, list) else []
+                    )
+
+                    repo_stmts.append({
+                        "sql": (
+                            "INSERT INTO gh_repos "
+                            "(full_name, org_id, html_url, owner_login, owner_type, "
+                            " description, topics_json, matched_topic, stars, forks, "
+                            " watchers, language, default_branch, pushed_at, homepage, "
+                            " license_spdx, archived, fork, has_readme, contributors_count, "
+                            " heuristic_score, llm_score, llm_confidence, final_score, "
+                            " score_reasons, buyer_persona, commercial_intent, pain_points, "
+                            " pitch_angle, why_now, brief_json, last_seen_at) "
+                            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, CURRENT_TIMESTAMP) "
+                            "ON CONFLICT(full_name) DO UPDATE SET "
+                            "  org_id = excluded.org_id, "
+                            "  html_url = excluded.html_url, "
+                            "  owner_login = excluded.owner_login, "
+                            "  owner_type = excluded.owner_type, "
+                            "  description = excluded.description, "
+                            "  topics_json = excluded.topics_json, "
+                            "  matched_topic = excluded.matched_topic, "
+                            "  stars = excluded.stars, "
+                            "  forks = excluded.forks, "
+                            "  watchers = excluded.watchers, "
+                            "  language = excluded.language, "
+                            "  default_branch = excluded.default_branch, "
+                            "  pushed_at = excluded.pushed_at, "
+                            "  homepage = excluded.homepage, "
+                            "  license_spdx = excluded.license_spdx, "
+                            "  archived = excluded.archived, "
+                            "  fork = excluded.fork, "
+                            "  has_readme = excluded.has_readme, "
+                            "  contributors_count = excluded.contributors_count, "
+                            "  heuristic_score = excluded.heuristic_score, "
+                            "  llm_score = excluded.llm_score, "
+                            "  llm_confidence = excluded.llm_confidence, "
+                            "  final_score = excluded.final_score, "
+                            "  score_reasons = excluded.score_reasons, "
+                            "  buyer_persona = excluded.buyer_persona, "
+                            "  commercial_intent = excluded.commercial_intent, "
+                            "  pain_points = excluded.pain_points, "
+                            "  pitch_angle = excluded.pitch_angle, "
+                            "  why_now = excluded.why_now, "
+                            "  brief_json = excluded.brief_json, "
+                            "  last_seen_at = CURRENT_TIMESTAMP "
+                            "RETURNING id, full_name"
+                        ),
+                        "params": [
+                            r["full_name"],
+                            org_id,
+                            r.get("html_url"),
+                            login,
+                            r.get("owner_type"),
+                            r.get("description"),
+                            json.dumps(r.get("topics") or []),
+                            r.get("matched_topic"),
+                            int(r.get("stars") or 0),
+                            r.get("forks"),
+                            r.get("watchers"),
+                            r.get("language"),
+                            r.get("default_branch"),
+                            r.get("pushed_at"),
+                            r.get("homepage"),
+                            (r.get("license") or {}).get("spdx_id") if isinstance(r.get("license"), dict) else r.get("license"),
+                            1 if r.get("archived") else 0,
+                            1 if r.get("fork") else 0,
+                            1 if r.get("has_readme") else 0,
+                            r.get("contributors_count"),
+                            r.get("sell_score"),
+                            brief.get("llm_score"),
+                            brief.get("confidence"),
+                            r["final_score"],
+                            json.dumps(reasons),
+                            brief.get("buyer_persona"),
+                            brief.get("commercial_intent"),
+                            pain_points_json,
+                            brief.get("pitch_angle"),
+                            brief.get("why_now"),
+                            json.dumps(brief) if brief else None,
+                        ],
+                    })
+
+                repo_results = await client.batch(repo_stmts)
+                repo_id_by_full: dict[str, int] = {}
+                for rows in repo_results:
+                    for row in rows:
+                        fn = row.get("full_name")
+                        rid = row.get("id")
+                        if fn and rid is not None:
+                            repo_id_by_full[str(fn)] = int(rid)
+
+                # Categorize via existing_keys: a row already in dedupe →
+                # update; otherwise → insert. This matches the old xmax trick.
+                for r, _login in eligible:
+                    fn = r["full_name"]
+                    rid = repo_id_by_full.get(fn)
+                    if rid is None:
+                        continue
+                    if f"gh:{fn}" in existing_keys:
+                        existing_ids.append(rid)
+                    else:
+                        inserted_ids.append(rid)
+            except D1Error as e:
+                return {"_error": f"persist (D1): {e}"}
 
     def _slim(r: dict[str, Any]) -> dict[str, Any]:
         return {
@@ -1313,9 +1423,9 @@ async def persist(state: GhAiReposState) -> dict:
         "top_repos": slim[:20],
         "all_repos": slim,
         "org_metadata": state.get("org_metadata") or {},
-        "persisted_companies": persist_companies,
-        "inserted_company_ids": inserted_ids,
-        "existing_company_ids": existing_ids,
+        "persisted_to_d1": persist_companies,
+        "inserted_repo_ids": inserted_ids,
+        "existing_repo_ids": existing_ids,
         "skipped_blocked": skipped_blocked,
         "skipped_fresh": skipped_fresh,
         "graph_meta": meta,
@@ -1323,7 +1433,8 @@ async def persist(state: GhAiReposState) -> dict:
 
     return {
         "final_repos": final,
-        "inserted_company_ids": inserted_ids,
+        "inserted_repo_ids": inserted_ids,
+        "existing_repo_ids": existing_ids,
         "summary": summary,
         "agent_timings": {"persist": round(time.perf_counter() - t0, 3)},
     }
