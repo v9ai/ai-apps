@@ -779,6 +779,8 @@ function JournalEntryContent() {
         subjectType={DeepAnalysisSubjectType.JournalEntry}
         subjectId={entry.id}
         subjectLabel={entry.entryDate}
+        canRun={(entry.content?.trim().length ?? 0) >= 30}
+        cannotRunReason="Add entry content first (min 30 chars)."
       />
 
       {/* Discussion Guide */}

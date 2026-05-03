@@ -1697,3 +1697,59 @@ export const userPreferences = pgTable("user_preferences", {
   bufferPercentage: integer("buffer_percentage").notNull().default(25),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+// ── Research Papers (papers_research LangGraph graph)
+
+export const researchPapers = pgTable(
+  "research_papers",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    doi: text("doi").unique(),
+    source: text("source").notNull(),
+    sourceId: text("source_id").notNull(),
+    title: text("title").notNull(),
+    authors: jsonb("authors").notNull().default([]),
+    year: integer("year"),
+    abstract: text("abstract"),
+    tldr: text("tldr"),
+    url: text("url"),
+    pdfUrl: text("pdf_url"),
+    citationCount: integer("citation_count"),
+    fieldsOfStudy: jsonb("fields_of_study"),
+    venue: text("venue"),
+    rerankScore: real("rerank_score"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("research_papers_source_uniq").on(table.source, table.sourceId),
+  ],
+);
+
+export const researchPaperLinks = pgTable(
+  "research_paper_links",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    paperId: uuid("paper_id")
+      .notNull()
+      .references(() => researchPapers.id, { onDelete: "cascade" }),
+    ownerKind: text("owner_kind").notNull(),
+    ownerId: text("owner_id").notNull(),
+    rerankScore: real("rerank_score"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("research_paper_links_uniq").on(
+      table.paperId,
+      table.ownerKind,
+      table.ownerId,
+    ),
+    index("idx_research_paper_links_owner").on(table.ownerKind, table.ownerId),
+  ],
+);

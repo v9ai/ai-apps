@@ -32,6 +32,12 @@ type Props = {
   trigger?: { type: DeepAnalysisTriggerType; id: number } | null;
   description?: string;
   onAnalysisCreated?: () => void;
+  /** When false, the "Run Deep Analysis" button is disabled with a tooltip.
+   *  Use to block runs against subjects with no body / mood / tags — the
+   *  backend rejects these too, but we want to surface it before the call. */
+  canRun?: boolean;
+  /** Tooltip shown when canRun is false. */
+  cannotRunReason?: string;
 };
 
 export function DeepAnalysisPanel({
@@ -41,6 +47,8 @@ export function DeepAnalysisPanel({
   trigger = null,
   description,
   onAnalysisCreated,
+  canRun = true,
+  cannotRunReason,
 }: Props) {
   const [jobId, setJobId] = useState<string | null>(null);
   const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
@@ -166,7 +174,11 @@ export function DeepAnalysisPanel({
                 {deleting ? "Deleting..." : "Delete"}
               </Button>
             )}
-            <Button onClick={handleGenerate} disabled={generating || isRunning}>
+            <Button
+              onClick={handleGenerate}
+              disabled={generating || isRunning || !canRun}
+              title={!canRun ? cannotRunReason : undefined}
+            >
               {(generating || isRunning) && <Spinner />}
               {generating || isRunning ? "Analyzing..." : latest ? "Regenerate" : "Run Deep Analysis"}
             </Button>
