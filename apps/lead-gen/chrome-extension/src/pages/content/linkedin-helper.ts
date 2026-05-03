@@ -3053,6 +3053,38 @@ async function extractLinkedInJobDetailPage() {
   ];
 }
 
+// Cross-page Voyager circuit breaker. Once `disabled` flips true, callers
+// skip Voyager for the rest of the run and fall back to DOM-clicking. The
+// pagination loop owns one instance and passes it into every page extract,
+// so a LinkedIn rate-limit on page 4 doesn't burn 3 wasted fails per page
+// for the rest of the import.
+type VoyagerBreaker = { consecutiveFails: number; disabled: boolean };
+
+// Tiny worker-pool: runs `fn` over `items` with at most `concurrency` in
+// flight, preserves input order in the returned results array. Used to
+// parallelise per-card Voyager prefetch without relying on the heavier
+// pagination-manager utility.
+async function runWithConcurrency<T, R>(
+  items: T[],
+  concurrency: number,
+  fn: (item: T) => Promise<R>,
+): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let nextIdx = 0;
+  const workers = Array.from(
+    { length: Math.min(concurrency, items.length) },
+    async () => {
+      while (true) {
+        const i = nextIdx++;
+        if (i >= items.length) return;
+        results[i] = await fn(items[i]);
+      }
+    },
+  );
+  await Promise.all(workers);
+  return results;
+}
+
 // Voyager enrichment shape returned by the background `getVoyagerJobDetail`
 // handler. Mirrors the trimmed fields it dispatches; everything is nullable
 // because LinkedIn omits some on closed/expired/archived postings.
@@ -3091,7 +3123,9 @@ function fetchVoyagerEnrichment(
 }
 
 // Extract LinkedIn job data
-async function extractLinkedInJobData() {
+async function extractLinkedInJobData(
+  breaker: VoyagerBreaker = { consecutiveFails: 0, disabled: false },
+) {
   const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
   // LinkedIn rotates class names; pin to stable hooks (`data-job-id` /
@@ -3117,10 +3151,6 @@ async function extractLinkedInJobData() {
   let descriptionsCaptured = 0;
   let voyagerEnriched = 0;
   let voyagerFailed = 0;
-  // Per-page circuit breaker: 3 consecutive failures and we stop calling
-  // Voyager for the rest of this page (DOM-fallback only). Resets next page.
-  let voyagerConsecutiveFails = 0;
-  let voyagerDisabled = false;
 
   // Read the description from the right-hand detail pane. LinkedIn renders
   // it under a stable `[data-testid="expandable-text-box"]` selector — the
@@ -3152,6 +3182,53 @@ async function extractLinkedInJobData() {
   };
 
   let lastDescription: string | null = readDetailDescription();
+
+  // Voyager prefetch — fire all enrichments in parallel (concurrency=3)
+  // before walking cards. Replaces a serial chain of 25 round-trips per page
+  // (≈8–15s of pure latency) with one bounded-parallel batch. The breaker
+  // is cross-page (passed in), so a Voyager outage trips once and stays
+  // tripped for the rest of the run.
+  const enrichmentMap = new Map<string, VoyagerEnrichment | null>();
+  if (!breaker.disabled) {
+    const idsToFetch: string[] = [];
+    const seen = new Set<string>();
+    for (const root of cardRoots) {
+      const a = root.querySelector<HTMLAnchorElement>(
+        'a.job-card-list__title--link, a.job-card-container__link, a[href*="/jobs/view/"]',
+      );
+      if (!a) continue;
+      let path = "";
+      try {
+        path = new URL(a.href, window.location.origin).pathname;
+      } catch {
+        // ignore — id stays unset, card falls through to DOM-only path
+      }
+      const id = path.match(/\/jobs\/view\/(\d+)/)?.[1];
+      if (id && !seen.has(id)) {
+        seen.add(id);
+        idsToFetch.push(id);
+      }
+    }
+    if (idsToFetch.length > 0) {
+      const results = await runWithConcurrency(
+        idsToFetch,
+        3,
+        fetchVoyagerEnrichment,
+      );
+      for (let i = 0; i < idsToFetch.length; i++) {
+        const e = results[i];
+        enrichmentMap.set(idsToFetch[i], e);
+        if (e) {
+          voyagerEnriched++;
+          breaker.consecutiveFails = 0;
+        } else {
+          voyagerFailed++;
+          breaker.consecutiveFails++;
+          if (breaker.consecutiveFails >= 3) breaker.disabled = true;
+        }
+      }
+    }
+  }
 
   for (const jobCard of cardRoots) {
     const titleAnchor = jobCard.querySelector<HTMLAnchorElement>(
@@ -3206,22 +3283,13 @@ async function extractLinkedInJobData() {
       jobCard.textContent?.includes("No longer accepting applications") ||
       jobCard.classList.contains("job-card-container--closed");
 
-    // Voyager-first: fetch authoritative posting detail via the background
-    // bridge. On success we get a richer fullDescription PLUS 10 typed fields
-    // the DOM doesn't expose (posted_at, workplace_type, applicant_count, …).
-    // On failure we fall through to clicking the card and reading the panel.
-    let enrichment: VoyagerEnrichment | null = null;
-    if (jobPostingId && !voyagerDisabled) {
-      enrichment = await fetchVoyagerEnrichment(jobPostingId);
-      if (enrichment) {
-        voyagerEnriched++;
-        voyagerConsecutiveFails = 0;
-      } else {
-        voyagerFailed++;
-        voyagerConsecutiveFails++;
-        if (voyagerConsecutiveFails >= 3) voyagerDisabled = true;
-      }
-    }
+    // Voyager-first: enrichment was prefetched in parallel above. Map miss
+    // means either no jobPostingId on this card, the breaker was tripped, or
+    // the per-id fetch failed — in any case we fall through to clicking the
+    // card and reading the right-pane description.
+    const enrichment: VoyagerEnrichment | null = jobPostingId
+      ? enrichmentMap.get(jobPostingId) ?? null
+      : null;
 
     let description: string | null = enrichment?.fullDescription ?? null;
     if (!description) {
@@ -3272,9 +3340,11 @@ async function extractLinkedInJobData() {
 
     jobs.push(jobData);
 
-    // Voyager-served cards skipped the click; give LinkedIn more breathing
-    // room (500ms ± 150ms jitter). DOM-fallback already paid the click-wait.
-    await sleep(enrichment ? 500 + Math.floor(Math.random() * 150) : 250);
+    // Voyager-served cards already paid their throttle in the parallel
+    // prefetch (Voyager rate-limit budget enforced upstream). Keep a token
+    // sleep so the SW message bus doesn't queue-flood. DOM-fallback path
+    // still pays 250ms between consecutive clicks.
+    await sleep(enrichment ? 50 : 250);
   }
 
   return {
@@ -3462,18 +3532,29 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const startPage = currentPage;
         let actualPagesScraped = 0;
 
+        // One breaker for the whole run — survives across pages so a Voyager
+        // outage at page 4 stops Voyager calls on pages 5+ instead of burning
+        // 3 fresh failures per page.
+        const voyagerBreaker: VoyagerBreaker = {
+          consecutiveFails: 0,
+          disabled: false,
+        };
+
         // Re-extract once on empty result — LinkedIn occasionally renders the
-        // pagination chrome before the cards mount.
-        const extractWithRetry = async (page: number, attempt: number) => {
-          let result = await extractLinkedInJobData();
+        // pagination chrome before the cards mount. Returns the actual attempt
+        // count so flushPage can report retry telemetry instead of always `1`.
+        const extractWithRetry = async (page: number) => {
+          let attempt = 1;
+          let result = await extractLinkedInJobData(voyagerBreaker);
           if (result.jobs.length === 0 && totalPages > 1) {
             console.warn(
-              `[CS] page ${page} attempt ${attempt}: 0 jobs extracted, retrying after 1.5s`,
+              `[CS] page ${page} attempt 1: 0 jobs extracted, retrying after 1.5s`,
             );
             await new Promise((r) => setTimeout(r, 1500));
-            result = await extractLinkedInJobData();
+            attempt = 2;
+            result = await extractLinkedInJobData(voyagerBreaker);
           }
-          return result;
+          return { ...result, attempt };
         };
 
         const flushPage = (
@@ -3500,7 +3581,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           });
         };
 
-        const startResult = await extractWithRetry(startPage, 1);
+        const startResult = await extractWithRetry(startPage);
         const currentCompanies = extractCompaniesFromJobCards();
         allJobs.push(...startResult.jobs);
         currentCompanies.forEach((c) => {
@@ -3516,7 +3597,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           startResult.jobs,
           currentCompanies,
           startResult.counters,
-          1,
+          startResult.attempt,
         );
 
         for (let page = startPage + 1; page <= totalPages; page++) {
@@ -3539,7 +3620,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
           await new Promise((resolve) => setTimeout(resolve, 1000));
 
-          const pageResult = await extractWithRetry(page, 1);
+          const pageResult = await extractWithRetry(page);
           const pageCompanies = extractCompaniesFromJobCards();
           allJobs.push(...pageResult.jobs);
           pageCompanies.forEach((c) => {
@@ -3556,7 +3637,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             pageResult.jobs,
             pageCompanies,
             pageResult.counters,
-            1,
+            pageResult.attempt,
           );
         }
 

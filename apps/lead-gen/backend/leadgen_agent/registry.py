@@ -154,6 +154,10 @@ GRAPHS: tuple[GraphSpec, ...] = (
     GraphSpec("ashby_ingest", "leadgen_agent.ashby_ingest_graph"),
     GraphSpec("ashby_discovery", "leadgen_agent.ashby_discovery_graph"),
     GraphSpec("remote_classify", "leadgen_agent.remote_classify_graph"),
+    # ── Country from website ──────────────────────────────────────────────
+    GraphSpec("classify_country_web", "leadgen_agent.classify_country_web_graph"),
+    # ── Bulk enrichment ──────────────────────────────────────────────────
+    GraphSpec("enrich_sales_tech", "leadgen_agent.enrich_sales_tech_graph"),
 )
 
 

@@ -57,7 +57,9 @@
     "extract_stack": "leadgen_agent.extract_stack_graph:graph",
     "ashby_ingest": "leadgen_agent.ashby_ingest_graph:graph",
     "ashby_discovery": "leadgen_agent.ashby_discovery_graph:graph",
-    "remote_classify": "leadgen_agent.remote_classify_graph:graph"
+    "remote_classify": "leadgen_agent.remote_classify_graph:graph",
+    "classify_country_web": "leadgen_agent.classify_country_web_graph:graph",
+    "enrich_sales_tech": "leadgen_agent.enrich_sales_tech_graph:graph"
   },
   "http": {
     "app": "leadgen_agent.custom_app:app"

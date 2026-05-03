@@ -24,6 +24,12 @@ import {
   taxonomyForCategoryIds,
 } from "./linkedin-product-categories";
 
+// Re-entrancy guard for the bulk job-search import. Set when an import run
+// claims the orchestration handler; cleared in its `finally`. Two interleaved
+// runs would corrupt the shared `savePromise` chain and the global progress /
+// save listeners, so we reject the second message with a clear error.
+let importAllInFlight: { tabId: number; startedAt: number } | null = null;
+
 // ── Dev hot-reload via WebSocket ──────────────────────────────────────
 if (import.meta.env.DEV) {
   const connect = () => {
@@ -1283,10 +1289,23 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       sendResponse({ success: false, error: "No tab ID" });
       return true;
     }
+    // Re-entrancy guard: the button is disabled client-side, but the SW
+    // message channel doesn't enforce that across reloads / two tabs / a
+    // DevTools-fired message. Two interleaved runs would corrupt the shared
+    // savePromise chain and the global progress/save listeners.
+    if (importAllInFlight) {
+      const ageSec = Math.round((Date.now() - importAllInFlight.startedAt) / 1000);
+      sendResponse({
+        success: false,
+        error: `Import already running on tab ${importAllInFlight.tabId} (started ${ageSec}s ago)`,
+      });
+      return true;
+    }
     sendResponse({ success: true });
 
     const singlePage = !!(message as { singlePage?: boolean }).singlePage;
     const startedAt = Date.now();
+    importAllInFlight = { tabId, startedAt };
 
     const notifyTab = async (data: Record<string, unknown>) => {
       try {
@@ -1712,6 +1731,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         chrome.runtime.onMessage.removeListener(progressListener);
         chrome.runtime.onMessage.removeListener(savePageListener);
         stopKeepAlive();
+        importAllInFlight = null;
       }
     })();
 

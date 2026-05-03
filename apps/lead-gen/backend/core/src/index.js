@@ -71,6 +71,8 @@ async function fireCronTick(env, cronExpr) {
     job = "country-classify-nightly"; // every 6 hours
   } else if (cronExpr === "37 */4 * * *") {
     job = "remote-classify"; // every 4 hours
+  } else if (cronExpr === "57 6 * * 7") {
+    job = "enrich-sales-tech"; // weekly Sunday — sales-tech feature extraction
   }
   const body = JSON.stringify({
     job,

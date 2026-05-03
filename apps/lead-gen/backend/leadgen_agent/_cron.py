@@ -4,7 +4,7 @@ The CF Worker cron trigger (``triggers.crons`` in ``backend/core/wrangler.jsonc`
 fires the Worker's ``scheduled()`` handler, which does nothing but POST a
 single wake-up request at this endpoint. All logic lives here in Python.
 
-Two jobs:
+Three recurring jobs plus one weekly heavy-lift:
 
 - ``ashby-nightly`` — daily at 06:17 UTC. Discovers new Ashby slugs via
   Brave Search (focus: AI-engineer keywords), then ingests each one
@@ -13,6 +13,14 @@ Two jobs:
   Skips discovery and re-ingests every slug already in ``ashby_slugs``.
   Catches new postings on boards that don't surface in Brave for AI-engineer
   queries.
+- ``country-classify-nightly`` — every 6h at :23. Backfills
+  ``companies.country`` for sales-tech companies with NULL country.
+- ``remote-classify`` — every 4h at :37. Classifies D1 opportunities as
+  remote/fully remote (rule-based, no LLM).
+- ``enrich-sales-tech`` — weekly Sundays at 06:57 UTC. Fans out
+  ``sales_tech_feature_graph`` across all sales-tech companies with websites.
+  Heavy job (HTTP fetches + LLM calls per company) — runs weekly to keep
+  feature profiles fresh.
 
 Sequential ingest is non-negotiable per ``feedback_leadgen_langgraph_fanout``:
 parallel calls against ``langgraph dev``-style single-worker runtimes poison
@@ -306,3 +314,49 @@ async def run_remote_classify(
         summary["ai_fully_remote"], summary["elapsed_s"],
     )
     return summary
+
+
+async def run_enrich_sales_tech(
+    graphs: dict[str, Any],
+) -> dict[str, Any]:
+    """Extract sales-tech feature profiles for every company with a website.
+
+    Fans out ``sales_tech_feature_graph`` across all companies matching the
+    sales-tech taxonomy filter (Sales Engagement Platform, Lead Generation
+    Software, CRM Software) that have a ``website`` set. Skips companies that
+    already have ``salestech`` features in ``deep_analysis`` (idempotent).
+
+    This is a heavy job — each company takes 90-180s (HTTP fetches + 10 LLM
+    calls). Runs weekly to keep profiles fresh without burning budget.
+    """
+    started = time.monotonic()
+    graph = graphs.get("enrich_sales_tech")
+    if graph is None:
+        return {
+            "ok": False,
+            "error": "enrich_sales_tech graph not compiled",
+            "available": sorted(graphs.keys()),
+        }
+
+    try:
+        result = await graph.ainvoke({
+            "concurrency": 2,
+            "dry_run": False,
+            "force": False,
+        }, config=_config())
+    except Exception as exc:  # noqa: BLE001
+        log.exception("enrich-sales-tech: graph failed")
+        return {
+            "ok": False,
+            "error": f"{type(exc).__name__}: {exc}",
+            "elapsed_s": round(time.monotonic() - started, 1),
+        }
+
+    summary = result.get("summary") or {}
+    return {
+        "ok": True,
+        "job": "enrich-sales-tech",
+        **{k: v for k, v in summary.items() if k != "errors"},
+        "errors": summary.get("errors") or [],
+        "elapsed_s": round(time.monotonic() - started, 1),
+    }
