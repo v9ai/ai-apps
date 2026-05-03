@@ -589,7 +589,12 @@ function JournalEntryContent() {
               )}
               <Button
                 onClick={handleGenerateAnalysis}
-                disabled={generatingAnalysis}
+                disabled={generatingAnalysis || (entry?.content?.trim().length ?? 0) < 30}
+                title={
+                  (entry?.content?.trim().length ?? 0) < 30
+                    ? "Add entry content first (min 30 chars)."
+                    : undefined
+                }
               >
                 {generatingAnalysis && <Spinner />}
                 {generatingAnalysis ? "Analyzing..." : analysis ? "Regenerate" : "Run Deep Analysis"}

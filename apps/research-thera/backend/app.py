@@ -332,6 +332,19 @@ async def runs_wait(req: RunRequest) -> dict[str, Any]:
         raise HTTPException(
             status_code=504, detail="Graph run exceeded 600s timeout"
         ) from exc
+    except HTTPException:
+        raise
+    except Exception as exc:
+        # Same correlation-id pattern as `/threads/{tid}/runs` — full traceback
+        # to stderr (captured by `wrangler tail`), opaque id to the client.
+        correlation_id = uuid.uuid4().hex[:8]
+        log.exception(
+            "graph %s /runs/wait failed [cid=%s]", req.assistant_id, correlation_id
+        )
+        raise HTTPException(
+            status_code=500,
+            detail=f"graph execution failed: {correlation_id}",
+        ) from exc
 
 
 # ---------------------------------------------------------------------------

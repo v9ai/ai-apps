@@ -23,6 +23,8 @@ def normalize(item: dict) -> Paper:
     authors = [a["name"] for a in item.get("authors", []) if a.get("name")]
     ext_ids = item.get("externalIds") or {}
     oa_pdf = item.get("openAccessPdf") or {}
+    tldr_obj = item.get("tldr") or {}
+    tldr_text = tldr_obj.get("text") if isinstance(tldr_obj, dict) else None
 
     return Paper(
         title=item.get("title", ""),
@@ -37,6 +39,9 @@ def normalize(item: dict) -> Paper:
         source_id=item.get("paperId"),
         fields_of_study=item.get("fieldsOfStudy"),
         venue=item.get("venue") or None,
+        tldr=tldr_text,
+        arxiv_id=ext_ids.get("ArXiv"),
+        pubmed_id=ext_ids.get("PubMed"),
     )
 
 

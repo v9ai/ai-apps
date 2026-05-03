@@ -9,6 +9,7 @@ are defined exactly once.
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 import sys
@@ -189,30 +190,41 @@ async def analyze(state: dict) -> dict:
         return {}
     try:
         prompt = state.get("_prompt", "")
-        async with DeepSeekClient(DeepSeekConfig(timeout=300.0)) as client:
+        async with DeepSeekClient(DeepSeekConfig(timeout=240.0)) as client:
             messages = [ChatMessage(role="user", content=prompt)]
-            resp = await client.chat(
-                messages,
-                model="deepseek-chat",
-                temperature=0.3,
-                max_tokens=8192,
-                response_format={"type": "json_object"},
-            )
-            if resp.choices[0].finish_reason == "length":
-                messages = [
-                    ChatMessage(role="system", content=CONCISE_SYSTEM),
-                    ChatMessage(role="user", content=prompt),
-                ]
-                resp = await client.chat(
+            resp = await asyncio.wait_for(
+                client.chat(
                     messages,
                     model="deepseek-chat",
-                    temperature=0.2,
+                    temperature=0.3,
                     max_tokens=8192,
                     response_format={"type": "json_object"},
+                ),
+                timeout=240,
+            )
+            if resp.choices[0].finish_reason == "length":
+                # Retry budget is tight; cap output and trim prompt so the second
+                # call doesn't double the wall-clock and trip the worker timeout.
+                trimmed = prompt[-6000:] if len(prompt) > 6000 else prompt
+                messages = [
+                    ChatMessage(role="system", content=CONCISE_SYSTEM),
+                    ChatMessage(role="user", content=trimmed),
+                ]
+                resp = await asyncio.wait_for(
+                    client.chat(
+                        messages,
+                        model="deepseek-chat",
+                        temperature=0.2,
+                        max_tokens=4096,
+                        response_format={"type": "json_object"},
+                    ),
+                    timeout=120,
                 )
         content = resp.choices[0].message.content
         result = DeepAnalysisOutput.model_validate_json(content)
         return {"analysis": result.model_dump_json()}
+    except asyncio.TimeoutError:
+        return {"error": "analyze timeout — DeepSeek > 240s; try again or shorten the input"}
     except Exception as exc:
         return {"error": f"analyze failed: {exc}"}
 

@@ -466,6 +466,21 @@ async def _collect_for_journal_entry(
         j_content,
     ) = entry
 
+    # Refuse near-empty entries: with no body, mood, or tags, the LLM either
+    # hallucinates or returns truncated JSON that fails Pydantic validation.
+    body_len = len((j_content or "").strip())
+    has_signal = body_len >= 30 or bool(j_mood) or (j_tags and j_tags != "[]")
+    if not has_signal:
+        msg_en = (
+            "Journal entry is empty — add content (or mood/tags) before "
+            "requesting deep analysis."
+        )
+        msg_ro = (
+            "Notița este goală — adaugă conținut (sau dispoziție/etichete) "
+            "înainte de a cere analiza aprofundată."
+        )
+        return {"error": msg_ro if language == "ro" else msg_en}
+
     # Nearby entries (± 30 days, same family member if any)
     nearby: list = []
     if j_fm_id:
