@@ -187,21 +187,19 @@
       {
         "id": "1",
         "name": "Agentic Lead Gen",
-        "description": "Autonomous B2B lead-gen platform where deterministic Rust/TypeScript ML displaces LLM calls on the hot path. A 5-stage agentic pipeline (Discovery → Enrichment → Contact Hunter ∥ QA Auditor → Outreach with plan-approval gate) drives 67 LangGraph graphs across three Cloudflare Workers Containers backends with AsyncPostgresSaver checkpoints on Neon, fronted by Apollo Server 5 + Drizzle.",
+        "description": "Deterministic Rust/TypeScript ML displaces LLM calls on the hot path of an autonomous B2B lead-gen platform. A 5-stage agentic pipeline (Discovery → Enrichment → Contact Hunter ∥ QA Auditor → Outreach) drives 67 LangGraph graphs on Cloudflare Workers Containers, checkpointed to Neon.",
         "githubUrl": "https://github.com/v9ai/agentic-lead-gen",
         "websiteUrl": "https://agenticleadgen.xyz/",
         "highlights": [
-          "Apollo Server 5 + Drizzle over Neon: 20+ resolvers, 18 DataLoaders, a 2 ms setTimeout scheduler that 5-10× batch fattens list pages, admin-guarded mutations.",
-          "67 LangGraph graphs (58 core + 7 research + 2 ML) ship the same Python in dev and on Cloudflare Workers Containers, threading state through Neon via AsyncPostgresSaver.",
-          "Routes DeepSeek cheap-first across one TS and one Python hub: v4-flash for summaries, v4-pro reasoner with reasoning_effort=high for ICP, pricing, GTM, and email composition.",
-          "Hawkes self-exciting lead temperature drops nightly recompute from O(n²) to O(n) via a recursive carried-sum, swapping per-event Math.exp for a 1024-entry Float32Array LUT and emitting heating / cooling / hot / cold trend labels.",
-          "Send-time optimizer maintains 168 Beta posteriors (DOW × hour) packed in one Float64Array, draws via hand-rolled Marsaglia-Tsang gamma + Box-Muller, and reuses a 168-byte business-hour mask + 24×27 timezone table so 10 k recipients share one sample sweep.",
-          "Scores engagement sub-millisecond with a 12-feature gradient-boosted decision-stump ensemble — 2048-entry sigmoid LUT, ~20 quantile splits per feature — paired with a Kaplan-Meier product-limit estimator that picks the next follow-up day in [2, 14] once incremental hazard beats the annoyance penalty.",
-          "Classifies companies in a single O(n + m + z) Aho-Corasick pass with BFS-built failure links, retiring an O(n × k) substring scan and an LLM call from the hot path.",
-          "Candle/Metal embed-server (BGE-small-en-v1.5, 384-dim) sits behind a Float32Array arena pool with a WASM transformers fallback for serverless — zero outbound embedding calls, persisted to pgvector HNSW.",
-          "Contact-tier LoRA (Qwen2.5-1.5B-Instruct, Q4_K_M GGUF, llama-cpp on a free HuggingFace Space) gates behind authority_score ≥ 0.5, cutting compute ~10× by only scoring qualified contacts.",
-          "Bidirectional email layer threads Resend outbound via In-Reply-To + References, HMAC-SHA256-verifies inbound webhooks inline with constant-time compare and a 300 s replay window, and onboards new contacts on a single MX catch-all alias — zero DNS per recipient.",
-          "8-rule strategy enforcer runs static checks on every change — eval ≥ 80 %, BLOCKING grounding on un-schema'd LLM calls, taxonomy validation, cost-aware routing, codegen, observability, HITL gates, and evidence on every persisted AI decision."
+          "67 LangGraph graphs (58 core + 7 research + 2 ML) ship one Python codebase to dev and Cloudflare Workers Containers via AsyncPostgresSaver.",
+          "Apollo Server 5 + Drizzle over Neon with 18 DataLoaders; DeepSeek v4-flash/v4-pro cheap-first router across TS and Python hubs.",
+          "Hawkes self-exciting lead temperature: nightly recompute dropped O(n²) → O(n), emits heating/cooling/hot/cold trend labels.",
+          "Send-time Thompson sampler over 168 Beta posteriors (DOW × hour); 10k recipients share one sample sweep.",
+          "12-feature gradient-boosted stumps score engagement sub-millisecond; Kaplan-Meier gates next follow-up in [2,14] once hazard beats annoyance.",
+          "Aho-Corasick single-pass classifier retires an LLM call and O(n×k) substring scan from the company-tagging hot path.",
+          "Candle/Metal embed-server (BGE-small-en-v1.5, 384-dim) persists to pgvector HNSW; zero outbound embedding calls.",
+          "Qwen2.5-1.5B contact-tier LoRA (Q4_K_M GGUF, llama-cpp on free HF Space) gates at authority_score ≥ 0.5, cutting compute ~10×.",
+          "Bidirectional email: Resend In-Reply-To threading, HMAC-SHA256 webhooks with constant-time compare, MX catch-all alias — zero per-contact DNS."
         ]
       },
       {

@@ -232,68 +232,15 @@ function triggerDownload(canvas: HTMLCanvasElement, filename: string) {
   );
 }
 
-// Draws a closed cloud-like (scalloped) outline around the rectangle (x, y, w, h).
-// The bumps face outward, so the rectangle is fully inside the cloud silhouette.
-// Renders as a dashed gray "cut here" line.
-function drawCloudBorder(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-) {
-  const targetLobe = 60; // approximate lobe width
-  const lobesH = Math.max(4, Math.round(w / targetLobe));
-  const lobesV = Math.max(4, Math.round(h / targetLobe));
-  const stepX = w / lobesH;
-  const stepY = h / lobesV;
-  const rx = stepX / 2;
-  const ry = stepY / 2;
-
-  ctx.save();
-  ctx.beginPath();
-  ctx.moveTo(x, y);
-
-  // Top edge (left → right), bumps facing up
-  for (let i = 0; i < lobesH; i++) {
-    const cx = x + rx + i * stepX;
-    ctx.arc(cx, y, rx, Math.PI, 0, true);
-  }
-  // Right edge (top → bottom), bumps facing right
-  for (let i = 0; i < lobesV; i++) {
-    const cy = y + ry + i * stepY;
-    ctx.arc(x + w, cy, ry, -Math.PI / 2, Math.PI / 2, false);
-  }
-  // Bottom edge (right → left), bumps facing down
-  for (let i = lobesH - 1; i >= 0; i--) {
-    const cx = x + rx + i * stepX;
-    ctx.arc(cx, y + h, rx, 0, Math.PI, false);
-  }
-  // Left edge (bottom → top), bumps facing left
-  for (let i = lobesV - 1; i >= 0; i--) {
-    const cy = y + ry + i * stepY;
-    ctx.arc(x, cy, ry, Math.PI / 2, -Math.PI / 2, false);
-  }
-
-  ctx.closePath();
-  ctx.setLineDash([12, 8]);
-  ctx.lineWidth = 2.5;
-  ctx.strokeStyle = "#94a3b8";
-  ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.restore();
-}
-
-// Composes a single A4-portrait canvas: image + title + caption inside a
-// dashed cloud-shaped cut-out border (so kids can scissor it out of the page).
+// Composes a single A4-portrait canvas: image + title + caption.
 async function composeCardCanvas(item: ImgItem): Promise<HTMLCanvasElement> {
   const img = await loadImg(item.src);
 
   // A4 @ ~150dpi → 1240×1754
   const W = 1240;
   const H = 1754;
-  const FRAME = 90; // distance from canvas edge to the cloud-border path
-  const INNER_PAD = 35; // padding from cloud border to content
+  const FRAME = 90; // outer white frame around the content area
+  const INNER_PAD = 35; // padding inside the frame
   const CONTENT_X = FRAME + INNER_PAD;
   const CONTENT_Y = FRAME + INNER_PAD;
   const CONTENT_W = W - 2 * (FRAME + INNER_PAD);
@@ -355,16 +302,9 @@ async function composeCardCanvas(item: ImgItem): Promise<HTMLCanvasElement> {
   const captionLines = wrapLines(ctx, item.caption, CONTENT_W);
   drawLines(ctx, captionLines, CONTENT_X, y, 46);
 
-  // Cloud-shaped cut border, drawn LAST so it sits on top of all content
-  drawCloudBorder(ctx, FRAME, FRAME, W - 2 * FRAME, H - 2 * FRAME);
-
-  // Tiny "✂ decupați" hint above the top-left corner of the border
-  ctx.fillStyle = "#94a3b8";
-  ctx.font = "italic 22px -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif";
-  ctx.fillText("✂  decupați pe linia punctată", FRAME, FRAME - 50);
-
-  // Suppress unused-var warning for CONTENT_H
+  // Suppress unused-var warnings for layout constants kept for clarity
   void CONTENT_H;
+  void FRAME;
 
   return canvas;
 }
@@ -375,7 +315,7 @@ async function downloadCardAsJpg(item: ImgItem) {
 }
 
 // Composes the "Cuvinte de bază" phrases canvas: just typography, no photo,
-// with the same dashed cloud-shaped cut-out border as the photo cards.
+// matching the photo-card layout.
 function composePhrasesCanvas(): HTMLCanvasElement {
   const W = 1240;
   const H = 1754;
@@ -432,13 +372,7 @@ function composePhrasesCanvas(): HTMLCanvasElement {
     y += 80;
   }
 
-  // Cloud-shaped cut border on top of content
-  drawCloudBorder(ctx, FRAME, FRAME, W - 2 * FRAME, H - 2 * FRAME);
-
-  // Cut hint
-  ctx.fillStyle = "#94a3b8";
-  ctx.font = "italic 22px -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif";
-  ctx.fillText("✂  decupați pe linia punctată", FRAME, FRAME - 50);
+  void FRAME;
 
   return canvas;
 }
