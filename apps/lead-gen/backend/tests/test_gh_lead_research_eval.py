@@ -300,20 +300,41 @@ def _make_deepeval_judge():
     return DeepSeekJudge()
 
 
+def _pick_claim_to_judge(brief: dict[str, Any]) -> tuple[str, str] | None:
+    """Pick the highest-stakes claim with content + evidence to judge.
+
+    Order of preference (fail-loud claims first):
+      1. ``recent_fundraise`` — if hallucinated, our cold email "congratulates"
+         on a non-existent round. Outreach-fatal.
+      2. ``pitch_one_liner`` — what actually ships to the prospect's inbox.
+      3. ``pedigree_signal`` — drives disqualification; if invented, we'd
+         reject legit leads.
+
+    Returns ``(field_name, content)`` or ``None`` if all are empty.
+    """
+    for field in ("recent_fundraise", "pitch_one_liner", "pedigree_signal"):
+        v = (brief.get(field) or "").strip()
+        if v:
+            return field, v
+    return None
+
+
 @deepeval_required
-def test_pixeltable_recent_fundraise_is_faithful_to_evidence(
+def test_pixeltable_brief_is_faithful_to_evidence(
     pixeltable_live_state: dict[str, Any],
 ) -> None:
-    """Worst failure mode for outreach: hallucinating a fundraise.
+    """Worst failure mode for outreach: hallucinating a fact in the cold-
+    email-ready text.
 
-    Run faithfulness against the deployed brief: the LLM-extracted
-    ``recent_fundraise`` must be grounded in the ``evidence_urls`` the
-    synthesize node cited. If pixeltable's brief claims a Series B that
-    was never reported, this fails.
+    Picks the most outreach-critical non-empty claim (fundraise > pitch >
+    pedigree) and asserts it's grounded in the ``evidence_urls`` the
+    synthesize node cited. Always exercises the judge if the brief has any
+    content — falls back to pitch_one_liner / pedigree_signal when fundraise
+    is missing (LLM variance), so the test doesn't silently skip.
 
     Reuses ``pixeltable_live_state`` fixture so we don't make a second
-    back-to-back call to the dispatcher (which was flaking on the second
-    request — the CF Container DO would close the stream mid-response).
+    back-to-back dispatcher call (the CF Container DO was closing the
+    stream mid-response on consecutive requests).
     """
     from deepeval import evaluate
     from deepeval.metrics import FaithfulnessMetric
@@ -321,47 +342,51 @@ def test_pixeltable_recent_fundraise_is_faithful_to_evidence(
 
     summary = pixeltable_live_state.get("summary") or {}
     brief = summary.get("brief") or {}
-    fundraise = (brief.get("recent_fundraise") or "").strip()
 
-    if not fundraise:
-        pytest.skip(
-            "no fundraise extracted on this run — faithfulness undefined "
-            "(disqualifier may have fired on pedigree/PR axis instead)"
-        )
+    pick = _pick_claim_to_judge(brief)
+    assert pick is not None, (
+        "brief has empty fundraise + pitch_one_liner + pedigree_signal — "
+        "the synthesize node produced nothing useful. brief={!r}".format(brief)
+    )
+    field, claim = pick
 
-    # Reconstruct the evidence the synthesize node saw. We don't have
-    # web_search_results_json on the wire summary, so reuse the evidence_urls
-    # the LLM cited — these are the URLs it claims grounded its answer.
     evidence_urls = brief.get("evidence_urls") or []
-    if not evidence_urls:
-        pytest.skip("no evidence_urls cited — cannot judge faithfulness")
+    assert evidence_urls, (
+        f"brief.{field} is non-empty but evidence_urls is empty — "
+        "the LLM made an unsourced claim. This is itself a faithfulness regression."
+    )
 
     judge = _make_deepeval_judge()
     metric = FaithfulnessMetric(threshold=0.7, model=judge, async_mode=False)
 
+    questions = {
+        "recent_fundraise": "What recent fundraise did this company complete?",
+        "pitch_one_liner": "What is the most concrete fact about this company we should reference in a cold email?",
+        "pedigree_signal": "What founder pedigree signals does this company exhibit?",
+    }
     test_case = LLMTestCase(
-        input="What recent fundraise did this company complete?",
-        actual_output=fundraise,
+        input=questions[field],
+        actual_output=claim,
         retrieval_context=[f"Evidence URL: {u}" for u in evidence_urls[:8]],
     )
 
     result = evaluate(test_cases=[test_case], metrics=[metric])
 
-    # deepeval.evaluate returns an EvaluationResult; the per-test-case
-    # success is what we gate on.
     cases = getattr(result, "test_results", None) or []
-    if not cases:
-        pytest.fail(f"deepeval returned no test_results: {result!r}")
+    assert cases, f"deepeval returned no test_results: {result!r}"
     case0 = cases[0]
-    metric_results = getattr(case0, "metrics_data", None) or getattr(case0, "metrics_metadata", []) or []
-    if not metric_results:
-        pytest.fail(f"deepeval returned no metric data: {case0!r}")
+    metric_results = (
+        getattr(case0, "metrics_data", None)
+        or getattr(case0, "metrics_metadata", [])
+        or []
+    )
+    assert metric_results, f"deepeval returned no metric data: {case0!r}"
     md = metric_results[0]
     score = getattr(md, "score", None)
     success = getattr(md, "success", None)
     reason = getattr(md, "reason", "") or ""
 
     assert success is True, (
-        f"FaithfulnessMetric failed (score={score}). "
-        f"fundraise={fundraise!r} — judge said: {reason}"
+        f"FaithfulnessMetric on brief.{field} failed (score={score}). "
+        f"claim={claim!r} — judge said: {reason}"
     )
