@@ -563,6 +563,7 @@ type Mutation {
   deleteSupplement(id: ID!): DeleteSupplementResult!
   recordCognitiveBaseline(protocolId: ID!, input: CognitiveScoresInput!): CognitiveBaseline!
   recordCognitiveCheckIn(protocolId: ID!, input: CognitiveCheckInInput!): CognitiveCheckIn!
+  generateProtocolResearch(slug: String!): GenerateResearchResult!
 
   # Healthcare — Chat (proxies to merged Python /chat at :2024)
   sendHealthcareChatMessage(input: HealthcareChatInput!): HealthcareChatResponse!
@@ -2863,6 +2864,26 @@ type ProtocolDetail {
   supplements: [ProtocolSupplement!]!
   baseline: CognitiveBaseline
   checkIns: [CognitiveCheckIn!]!
+  citations: [ResearchPaper!]!
+}
+
+type ResearchPaper {
+  id: ID!
+  doi: String
+  source: String!
+  sourceId: String!
+  title: String!
+  authors: [String!]!
+  year: Int
+  abstract: String
+  tldr: String
+  url: String
+  pdfUrl: String
+  citationCount: Int
+  fieldsOfStudy: [String!]
+  venue: String
+  rerankScore: Float
+  createdAt: String!
 }
 
 type ProtocolSupplement {
