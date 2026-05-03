@@ -269,6 +269,229 @@ def _dedupe_repos(repos: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return out
 
 
+# ── GitHub GraphQL helpers ───────────────────────────────────────────────────
+#
+# This graph is GraphQL-only — every GitHub interaction goes through
+# ``client.graphql()``. One round-trip per repo (and per org) replaces 5+
+# REST hops, gets us strictly fewer rate-limit hits, and lets the query shape
+# the data we care about (commit velocity, release notes, sponsors flag) in a
+# single response.
+#
+# These helpers are private to this module; ``GhClient`` is reused only as a
+# transport. If they grow up they belong in ``gh_patterns_graph.GhClient``.
+
+
+_REPO_BUNDLE_GQL = """
+fragment Maintainer on Actor {
+  __typename
+  ... on User {
+    login name email company location websiteUrl twitterUsername
+    isHireable bio
+    followers { totalCount }
+  }
+  ... on Bot { login }
+}
+
+query RepoBundle(
+  $owner: String!,
+  $name: String!,
+  $since4w: GitTimestamp!,
+  $since1y: GitTimestamp!
+) {
+  repository(owner: $owner, name: $name) {
+    nameWithOwner
+    description homepageUrl url
+    stargazerCount forkCount
+    issues(states: OPEN) { totalCount }
+    pushedAt createdAt updatedAt
+    isArchived isDisabled isFork
+    primaryLanguage { name }
+    licenseInfo { spdxId }
+    repositoryTopics(first: 20) { nodes { topic { name } } }
+    languages(first: 8, orderBy: {field: SIZE, direction: DESC}) {
+      totalSize
+      edges { size node { name } }
+    }
+    mentionableUsers(first: 1) { totalCount }
+    object(expression: "HEAD:README.md") {
+      ... on Blob { text isBinary }
+    }
+    defaultBranchRef {
+      name
+      target {
+        ... on Commit {
+          history4w: history(since: $since4w) { totalCount }
+          history1y: history(since: $since1y) { totalCount }
+          recent: history(first: 30) {
+            nodes { committedDate author { user { ...Maintainer } } }
+          }
+        }
+      }
+    }
+    releases(first: 30, orderBy: {field: CREATED_AT, direction: DESC}) {
+      nodes { tagName name createdAt publishedAt description }
+    }
+    owner {
+      __typename
+      login
+      ... on Organization { name }
+    }
+  }
+}
+"""
+
+
+_ORG_BUNDLE_GQL = """
+query OrgBundle($login: String!) {
+  organization(login: $login) {
+    login name websiteUrl twitterUsername email location
+    description createdAt
+    membersWithRole(first: 1) { totalCount }
+    repositories(
+      first: 15,
+      privacy: PUBLIC,
+      isFork: false,
+      orderBy: {field: PUSHED_AT, direction: DESC}
+    ) {
+      nodes {
+        nameWithOwner stargazerCount description
+        repositoryTopics(first: 10) { nodes { topic { name } } }
+      }
+    }
+    hasSponsorsListing
+    sponsorshipsAsMaintainer { totalCount }
+  }
+}
+"""
+
+
+_SEARCH_REPOS_GQL = """
+query SearchRepos($query: String!, $first: Int!) {
+  search(query: $query, type: REPOSITORY, first: $first) {
+    repositoryCount
+    nodes {
+      ... on Repository {
+        nameWithOwner description url homepageUrl
+        stargazerCount forkCount
+        issues(states: OPEN) { totalCount }
+        pushedAt createdAt
+        isArchived isDisabled
+        primaryLanguage { name }
+        licenseInfo { spdxId }
+        repositoryTopics(first: 10) { nodes { topic { name } } }
+        owner { __typename login }
+      }
+    }
+  }
+}
+"""
+
+
+def _topic_names(topics_node: dict[str, Any] | None) -> list[str]:
+    """Unpack ``repositoryTopics{nodes{topic{name}}}`` into a flat string list."""
+    if not topics_node:
+        return []
+    nodes = topics_node.get("nodes") or []
+    return [
+        ((n or {}).get("topic") or {}).get("name") or ""
+        for n in nodes
+        if (n or {}).get("topic") and (n["topic"].get("name"))
+    ]
+
+
+def _gql_repo_to_search_item(node: dict[str, Any], matched_topic: str) -> dict[str, Any] | None:
+    """Convert a GraphQL Repository node into the same dict shape the
+    REST ``/search/repositories`` endpoint returned, so downstream code
+    (filter_active, score_heuristic, etc.) is unchanged."""
+    if not node or not node.get("nameWithOwner"):
+        return None
+    full = node["nameWithOwner"]
+    owner_node = node.get("owner") or {}
+    return {
+        "full_name": full,
+        "name": full.split("/", 1)[1] if "/" in full else full,
+        "description": node.get("description"),
+        "html_url": node.get("url") or f"https://github.com/{full}",
+        "homepage": node.get("homepageUrl"),
+        "stargazers_count": int(node.get("stargazerCount") or 0),
+        "forks_count": int(node.get("forkCount") or 0),
+        "open_issues_count": int(((node.get("issues") or {}).get("totalCount")) or 0),
+        "watchers_count": int(node.get("stargazerCount") or 0),  # GraphQL deprecated separate watcher count
+        "topics": _topic_names(node.get("repositoryTopics")),
+        "language": ((node.get("primaryLanguage") or {}).get("name") or "").strip() or None,
+        "license": {"spdx_id": ((node.get("licenseInfo") or {}).get("spdxId") or "").strip() or None},
+        "default_branch": None,  # filled in by enrich_repo
+        "pushed_at": node.get("pushedAt"),
+        "created_at": node.get("createdAt"),
+        "archived": bool(node.get("isArchived") or False),
+        "disabled": bool(node.get("isDisabled") or False),
+        "owner": {
+            "login": owner_node.get("login"),
+            "type": "Organization" if owner_node.get("__typename") == "Organization" else "User",
+        },
+        "_matched_topic": matched_topic,
+    }
+
+
+async def _gql_search_repos(
+    client: GhClient,
+    *,
+    topic: str,
+    language: str,
+    min_stars: int,
+    first: int,
+) -> list[dict[str, Any]]:
+    """GraphQL replacement for ``client.search_repos``.
+
+    GitHub's GraphQL ``search`` accepts the same query syntax as REST
+    ``/search/repositories`` but returns richer node shape in one round-trip.
+    Capped at 100 results per query (GitHub's GraphQL limit).
+    """
+    qstr = f"topic:{topic} language:{language} stars:>={min_stars} sort:updated"
+    try:
+        data = await client.graphql(_SEARCH_REPOS_GQL, {"query": qstr, "first": min(first, 100)})
+    except Exception as e:  # noqa: BLE001
+        log.debug("gql_search_repos topic=%s failed: %s", topic, e)
+        return []
+    nodes = ((data or {}).get("search") or {}).get("nodes") or []
+    out: list[dict[str, Any]] = []
+    for n in nodes:
+        item = _gql_repo_to_search_item(n, matched_topic=topic)
+        if item:
+            out.append(item)
+    return out
+
+
+def _aggregate_recent_authors(
+    history_nodes: list[dict[str, Any]] | None,
+) -> tuple[int, list[dict[str, Any]]]:
+    """Return ``(unique_recent_authors, top_3_users)`` from the GraphQL
+    ``defaultBranchRef.target.recent`` history nodes. Drops bot accounts and
+    nodes with no User author. Top-3 are ordered by commit count desc.
+    """
+    if not history_nodes:
+        return 0, []
+    counts: dict[str, int] = {}
+    user_by_login: dict[str, dict[str, Any]] = {}
+    for n in history_nodes:
+        user = ((n or {}).get("author") or {}).get("user") or {}
+        login = (user.get("login") or "").strip()
+        if not login:
+            continue
+        # Skip bots — GraphQL Bot type has __typename=Bot; we tagged them in
+        # the fragment so the union resolves.
+        if user.get("__typename") == "Bot" or login.lower().endswith("[bot]"):
+            continue
+        counts[login] = counts.get(login, 0) + 1
+        user_by_login.setdefault(login, user)
+    if not counts:
+        return 0, []
+    ranked = sorted(counts.items(), key=lambda kv: kv[1], reverse=True)
+    top_logins = [login for login, _ in ranked[:3]]
+    top_users = [user_by_login[login] for login in top_logins]
+    return len(counts), top_users
+
+
 # ── Nodes ────────────────────────────────────────────────────────────────────
 
 
@@ -289,8 +512,12 @@ async def search(state: GhAiReposState) -> dict:
     try:
         results = await asyncio.gather(
             *[
-                client.search_repos(
-                    t, language="python", min_stars=min_stars, per_page=per_topic_limit
+                _gql_search_repos(
+                    client,
+                    topic=t,
+                    language="python",
+                    min_stars=min_stars,
+                    first=per_topic_limit,
                 )
                 for t in topics
             ],
@@ -306,11 +533,10 @@ async def search(state: GhAiReposState) -> dict:
             log.debug("search topic=%s failed: %s", topic, res)
             per_topic_counts[topic] = 0
             continue
-        items = (res or {}).get("items") or []
+        items = res or []
         per_topic_counts[topic] = len(items)
-        for it in items:
-            it["_matched_topic"] = topic
-            collected.append(it)
+        # _gql_search_repos already stamps `_matched_topic` per item.
+        collected.extend(items)
 
     deduped = _dedupe_repos(collected)
 
@@ -474,62 +700,110 @@ async def enrich_repo(state: GhAiReposState) -> dict:
     except RuntimeError as e:
         return {"_error": f"enrich_repo: {e}"}
 
+    now = datetime.now(timezone.utc)
+    since4w = (now - timedelta(weeks=4)).isoformat(timespec="seconds")
+    since1y = (now - timedelta(days=365)).isoformat(timespec="seconds")
+
     async def hydrate(r: dict[str, Any]) -> dict[str, Any] | None:
         full = r.get("full_name") or ""
         if "/" not in full:
             return None
         owner, name = full.split("/", 1)
 
-        readme, languages, contribs, commit_weeks, releases = await asyncio.gather(
-            client.get_file_content(owner, name, "README.md"),
-            client.repo_languages(owner, name),
-            client.repo_contributors(owner, name),
-            client.repo_commit_activity(owner, name),
-            client.repo_releases(owner, name),
-            return_exceptions=True,
-        )
-        readme_text = readme if isinstance(readme, str) else ""
-        languages = languages if isinstance(languages, dict) else {}
-        contribs = contribs if isinstance(contribs, list) else []
+        try:
+            data = await client.graphql(
+                _REPO_BUNDLE_GQL,
+                {"owner": owner, "name": name, "since4w": since4w, "since1y": since1y},
+            )
+        except Exception as e:  # noqa: BLE001
+            log.debug("enrich_repo %s GraphQL failed: %s", full, e)
+            return None
+        repo_node = (data or {}).get("repository") or {}
+        if not repo_node:
+            return None
 
+        # README — GraphQL gives us the body as `object.text`. Skip binary
+        # blobs (rare for README.md).
+        readme_obj = repo_node.get("object") or {}
+        readme_text = (readme_obj.get("text") or "") if not readme_obj.get("isBinary") else ""
         if require_readme and not readme_text:
             return None
 
+        # Languages: edges → {name: bytes}
+        lang_edges = (repo_node.get("languages") or {}).get("edges") or []
+        languages = {
+            ((e.get("node") or {}).get("name") or "unknown"): int(e.get("size") or 0)
+            for e in lang_edges
+        }
         py_bytes = int(languages.get("Python") or 0)
         total_bytes = sum(int(v or 0) for v in languages.values()) or 1
         python_share = py_bytes / total_bytes
 
-        commits_4w, commits_1y = _summarize_commit_activity(commit_weeks)
+        # Commit velocity — GraphQL exposes both windows in one query.
+        default_branch = repo_node.get("defaultBranchRef") or {}
+        target = default_branch.get("target") or {}
+        commits_4w = int(((target.get("history4w") or {}).get("totalCount")) or 0)
+        commits_1y = int(((target.get("history1y") or {}).get("totalCount")) or 0)
+        # Recent commit authors → contributor proxy + maintainer seed list.
+        recent_history = (target.get("recent") or {}).get("nodes") or []
+        recent_authors_count, top_authors = _aggregate_recent_authors(recent_history)
+
+        # Mentionable users — total count of accounts visible on the repo.
+        # Used as the durable contributor_count for scoring; recent_authors
+        # is the active subset.
+        mentionable_total = int(
+            ((repo_node.get("mentionableUsers") or {}).get("totalCount")) or 0
+        )
+
+        # Releases — GraphQL returns nodes already ordered DESC by created.
+        rel_nodes = (repo_node.get("releases") or {}).get("nodes") or []
+        # Adapt to the shape `_summarize_releases` expects.
+        releases_for_summary = [
+            {
+                "published_at": (n.get("publishedAt") or n.get("createdAt")),
+                "tag_name": n.get("tagName") or n.get("name"),
+                "body": n.get("description") or "",
+            }
+            for n in rel_nodes
+        ]
         (
             releases_90d,
             days_between_releases,
             latest_release_at,
             latest_release_tag,
             latest_release_notes,
-        ) = _summarize_releases(releases)
+        ) = _summarize_releases(releases_for_summary)
+
+        owner_node = repo_node.get("owner") or {}
+        owner_type = (
+            "Organization" if owner_node.get("__typename") == "Organization" else "User"
+        )
+        owner_login = (owner_node.get("login") or owner).strip() or owner
 
         return {
             "full_name": full,
             "owner": owner,
             "name": name,
-            "html_url": r.get("html_url") or f"https://github.com/{full}",
-            "description": (r.get("description") or "")[:500],
-            "stars": int(r.get("stargazers_count") or 0),
-            "forks": int(r.get("forks_count") or 0),
-            "open_issues": int(r.get("open_issues_count") or 0),
-            "watchers": int(r.get("watchers_count") or 0),
-            "topics": r.get("topics") or [],
+            "html_url": repo_node.get("url") or f"https://github.com/{full}",
+            "description": (repo_node.get("description") or "")[:500],
+            "stars": int(repo_node.get("stargazerCount") or 0),
+            "forks": int(repo_node.get("forkCount") or 0),
+            "open_issues": int(((repo_node.get("issues") or {}).get("totalCount")) or 0),
+            "watchers": int(repo_node.get("stargazerCount") or 0),
+            "topics": _topic_names(repo_node.get("repositoryTopics")),
             "matched_topic": r.get("_matched_topic"),
-            "license": ((r.get("license") or {}).get("spdx_id") or "").strip() or None,
-            "default_branch": r.get("default_branch"),
-            "pushed_at": r.get("pushed_at"),
-            "created_at": r.get("created_at"),
-            "owner_type": ((r.get("owner") or {}).get("type") or "").strip() or None,
-            "owner_login": ((r.get("owner") or {}).get("login") or "").strip() or owner,
-            "homepage": (r.get("homepage") or "").strip() or None,
+            "license": ((repo_node.get("licenseInfo") or {}).get("spdxId") or "").strip() or None,
+            "default_branch": default_branch.get("name"),
+            "pushed_at": repo_node.get("pushedAt"),
+            "created_at": repo_node.get("createdAt"),
+            "owner_type": owner_type,
+            "owner_login": owner_login,
+            "homepage": (repo_node.get("homepageUrl") or "").strip() or None,
             "languages": languages,
             "python_share": round(python_share, 3),
-            "contributors_count": len(contribs),
+            "contributors_count": mentionable_total,
+            "recent_authors_count": recent_authors_count,
+            "_top_authors": top_authors,  # consumed by enrich_maintainers
             "commits_4w": commits_4w,
             "commits_1y": commits_1y,
             "releases_90d": releases_90d,
@@ -608,78 +882,61 @@ async def enrich_orgs(state: GhAiReposState) -> dict:
     except RuntimeError as e:
         return {"_error": f"enrich_orgs: {e}"}
 
-    async def fetch_sponsors_enabled(login: str) -> bool | None:
-        """One GraphQL call to detect if the org has GitHub Sponsors set up.
-
-        ``hasSponsorsListing`` is True when the org has a published Sponsors
-        page — a strong commercial-intent signal. None on failure (preserves
-        the "unknown" tier vs explicit False).
-        """
-        esc = login.replace("\\", "\\\\").replace('"', '\\"')
-        query = (
-            'query { organization(login: "' + esc + '") '
-            "{ hasSponsorsListing sponsorsListing { isPublic } } }"
-        )
-        try:
-            data = await client.graphql(query)
-        except Exception as e:  # noqa: BLE001
-            log.debug("sponsors check %s failed: %s", login, e)
-            return None
-        org = (data or {}).get("organization") or {}
-        if "hasSponsorsListing" not in org:
-            return None
-        return bool(org.get("hasSponsorsListing"))
-
     async def hydrate(login: str) -> tuple[str, dict[str, Any] | None]:
+        """Single GraphQL round-trip per org — gets metadata, members count,
+        recent repos, and sponsors flags in one query."""
         try:
-            org_payload, recent_repos, sponsors_enabled = await asyncio.gather(
-                client.org(login),
-                client.org_repos(login, per_page=15),
-                fetch_sponsors_enabled(login),
-                return_exceptions=True,
-            )
+            data = await client.graphql(_ORG_BUNDLE_GQL, {"login": login})
         except Exception as e:  # noqa: BLE001
-            log.debug("enrich_orgs %s failed: %s", login, e)
+            log.debug("enrich_orgs %s GraphQL failed: %s", login, e)
             return login, None
-        if not isinstance(org_payload, dict):
+        org_node = (data or {}).get("organization") or {}
+        if not org_node or not org_node.get("login"):
             return login, None
-        recent_repos = recent_repos if isinstance(recent_repos, list) else []
-        sponsors_enabled = sponsors_enabled if isinstance(sponsors_enabled, bool) else None
 
+        recent_repos = (org_node.get("repositories") or {}).get("nodes") or []
         ai_repo_count = 0
         total_org_stars = 0
         flagship_repo: dict[str, Any] | None = None
         for rr in recent_repos:
             if not isinstance(rr, dict):
                 continue
-            stars = int(rr.get("stargazers_count") or 0)
+            stars = int(rr.get("stargazerCount") or 0)
             total_org_stars += stars
-            topics = set(rr.get("topics") or [])
+            topics = set(_topic_names(rr.get("repositoryTopics")))
             if topics & AI_RELEVANT_TOPICS:
                 ai_repo_count += 1
             if flagship_repo is None or stars > int(flagship_repo.get("stars") or 0):
                 flagship_repo = {
-                    "name": rr.get("full_name") or rr.get("name"),
+                    "name": rr.get("nameWithOwner"),
                     "stars": stars,
                     "description": (rr.get("description") or "")[:200],
                 }
 
+        sponsors_enabled = bool(org_node.get("hasSponsorsListing")) if "hasSponsorsListing" in org_node else None
+        sponsors_count = int(((org_node.get("sponsorshipsAsMaintainer") or {}).get("totalCount")) or 0)
+        public_members = int(((org_node.get("membersWithRole") or {}).get("totalCount")) or 0)
+
         return login, {
-            "login": login,
-            "name": org_payload.get("name"),
-            "blog": (org_payload.get("blog") or "").strip() or None,
-            "twitter_username": (org_payload.get("twitter_username") or "").strip() or None,
-            "email": (org_payload.get("email") or "").strip() or None,
-            "location": (org_payload.get("location") or "").strip() or None,
-            "description": (org_payload.get("description") or "")[:400] or None,
-            "public_members": int(org_payload.get("public_members") or 0),
-            "public_repos": int(org_payload.get("public_repos") or 0),
-            "followers": int(org_payload.get("followers") or 0),
-            "created_at": org_payload.get("created_at"),
+            "login": org_node.get("login") or login,
+            "name": org_node.get("name"),
+            # GraphQL exposes website as `websiteUrl`, not `blog`. Map for
+            # downstream compat.
+            "blog": (org_node.get("websiteUrl") or "").strip() or None,
+            "twitter_username": (org_node.get("twitterUsername") or "").strip() or None,
+            "email": (org_node.get("email") or "").strip() or None,
+            "location": (org_node.get("location") or "").strip() or None,
+            "description": (org_node.get("description") or "")[:400] or None,
+            "public_members": public_members,
+            "public_repos": len(recent_repos),
+            # `followers` isn't on GraphQL Organization. Drop the field.
+            "followers": 0,
+            "created_at": org_node.get("createdAt"),
             "ai_repo_count": ai_repo_count,
             "total_org_stars": total_org_stars,
             "flagship_repo": flagship_repo,
             "sponsors_enabled": sponsors_enabled,
+            "sponsorships_count": sponsors_count,
         }
 
     try:
@@ -1142,19 +1399,42 @@ async def score_heuristic(state: GhAiReposState) -> dict:
     }
 
 
+def _project_maintainer(u: dict[str, Any]) -> dict[str, Any] | None:
+    """Project a GraphQL User node (already inlined via the Maintainer
+    fragment in ``_REPO_BUNDLE_GQL``) into the slim shape downstream code
+    consumes. Drops noreply emails and bots.
+    """
+    if not u or u.get("__typename") == "Bot":
+        return None
+    login = (u.get("login") or "").strip()
+    if not login or login.lower().endswith("[bot]"):
+        return None
+    email = (u.get("email") or "").strip()
+    if "noreply" in email or email.endswith("@users.noreply.github.com"):
+        email = ""
+    return {
+        "login": login,
+        "name": (u.get("name") or "").strip() or None,
+        "company": (u.get("company") or "").strip() or None,
+        "location": (u.get("location") or "").strip() or None,
+        "email": email or None,
+        "website": (u.get("websiteUrl") or "").strip() or None,
+        "twitter": (u.get("twitterUsername") or "").strip() or None,
+        "followers": int(((u.get("followers") or {}).get("totalCount")) or 0),
+        "is_hireable": bool(u.get("isHireable") or False),
+        "bio": (u.get("bio") or "")[:200] or None,
+        "url": f"https://github.com/{login}",
+    }
+
+
 async def enrich_maintainers(state: GhAiReposState) -> dict:
-    """Pull top-3 maintainer profiles for the top heuristic-N repos.
+    """Project top-3 maintainer profiles for the top heuristic-N repos.
 
-    Two REST + one batched GraphQL roundtrip per repo:
-      1. ``repo_contributors`` (already in enrich_repo, but we need the sorted
-         list here — fetch again rather than thread it through state).
-      2. ``get_users_graphql`` over the top 3 contributor logins → full
-         profile (name, email, company, websiteUrl, twitterUsername,
-         followers, hireable status, location).
-
-    Result: each scored_repo gets a ``maintainers: list[dict]`` field with
-    publicly-listed contact data. We never scrape — only what GitHub exposes.
-    Drops emails that look auto-generated (noreply, dependabot).
+    No new network calls — the per-repo GraphQL bundle in ``enrich_repo``
+    already inlined the top recent-commit authors via the ``Maintainer``
+    fragment. Here we just project the cached User nodes (filtered + slim)
+    into a per-repo map. Cheaper than the previous REST + batched-GraphQL
+    path and consistent with the "GH GraphQL only" rule.
     """
     if state.get("_error"):
         return {}
@@ -1164,8 +1444,6 @@ async def enrich_maintainers(state: GhAiReposState) -> dict:
     if not scored:
         return {"maintainers": {}}
 
-    # Only enrich the top heuristic-N (default same as classify_top_n) so we
-    # don't burn GraphQL quota on repos the LLM will never see.
     top_n = max(1, int(state.get("classify_top_n") or DEFAULT_CLASSIFY_TOP_N))
     candidates = [r for r in scored if not r.get("_skip_reason")][:top_n]
     if not candidates:
@@ -1174,75 +1452,23 @@ async def enrich_maintainers(state: GhAiReposState) -> dict:
             "agent_timings": {"enrich_maintainers": round(time.perf_counter() - t0, 3)},
         }
 
-    try:
-        client = GhClient.from_env()
-    except RuntimeError as e:
-        return {"_error": f"enrich_maintainers: {e}"}
-
-    sem = asyncio.Semaphore(6)
     by_repo: dict[str, list[dict[str, Any]]] = {}
-
-    async def fetch_for_repo(r: dict[str, Any]) -> None:
-        full = r.get("full_name") or ""
-        if "/" not in full:
-            return
-        owner, name = full.split("/", 1)
-        async with sem:
-            contribs = await client.repo_contributors(owner, name)
-        if not contribs:
-            return
-        # GitHub sorts contributors by # commits descending. Skip bot-shaped
-        # accounts and the org/owner itself (we already have org metadata).
-        logins: list[str] = []
-        for c in contribs:
-            login = ((c or {}).get("login") or "").strip()
-            if not login or login.lower() == owner.lower():
-                continue
-            if login.lower().endswith("[bot]") or "[bot]" in login.lower():
-                continue
-            logins.append(login)
-            if len(logins) >= 3:
-                break
-        if not logins:
-            return
-
-        async with sem:
-            try:
-                users = await client.get_users_graphql(logins)
-            except Exception as e:  # noqa: BLE001
-                log.debug("enrich_maintainers %s GraphQL failed: %s", full, e)
-                users = []
-
+    for r in candidates:
+        owner = (r.get("owner_login") or r.get("owner") or "").lower()
+        cached_authors = r.get("_top_authors") or []
         cleaned: list[dict[str, Any]] = []
-        for u in users:
-            email = (u.get("email") or "").strip()
-            # Drop noreply.github.com and other auto addresses.
-            if "noreply" in email or email.endswith("@users.noreply.github.com"):
-                email = ""
-            cleaned.append({
-                "login": u.get("login"),
-                "name": (u.get("name") or "").strip() or None,
-                "company": (u.get("company") or "").strip() or None,
-                "location": (u.get("location") or "").strip() or None,
-                "email": email or None,
-                "website": (u.get("website_url") or u.get("websiteUrl") or "").strip() or None,
-                "twitter": (u.get("twitter_username") or u.get("twitterUsername") or "").strip() or None,
-                "followers": int(
-                    (u.get("followers") or {}).get("totalCount", u.get("followers") or 0)
-                    if isinstance(u.get("followers"), dict)
-                    else (u.get("followers") or 0)
-                ),
-                "is_hireable": bool(u.get("is_hireable") or u.get("isHireable") or False),
-                "bio": (u.get("bio") or "")[:200] or None,
-                "url": u.get("url") or f"https://github.com/{u.get('login')}",
-            })
+        for u in cached_authors:
+            login_l = ((u or {}).get("login") or "").lower()
+            # Skip the org/owner login itself — we already have org metadata.
+            if login_l == owner:
+                continue
+            proj = _project_maintainer(u)
+            if proj:
+                cleaned.append(proj)
+            if len(cleaned) >= 3:
+                break
         if cleaned:
-            by_repo[full] = cleaned
-
-    try:
-        await asyncio.gather(*[fetch_for_repo(r) for r in candidates])
-    finally:
-        await client.aclose()
+            by_repo[r["full_name"]] = cleaned
 
     return {
         "maintainers": by_repo,
@@ -1253,6 +1479,8 @@ async def enrich_maintainers(state: GhAiReposState) -> dict:
                     "input": len(candidates),
                     "kept": len(by_repo),
                     "total_contacts": sum(len(v) for v in by_repo.values()),
+                    # Zero network calls — projection only.
+                    "network_calls": 0,
                 }
             }
         },

@@ -18,11 +18,15 @@ from leadgen_agent.gh_ai_repos_graph import (
     PAIN_POINTS,
     PRODUCT_CATEGORIES,
     RepoSellBrief,
+    _aggregate_recent_authors,
+    _gql_repo_to_search_item,
+    _project_maintainer,
     _render_markdown_brief,
     _scan_product_surface,
     _score_repo,
     _summarize_commit_activity,
     _summarize_releases,
+    _topic_names,
 )
 
 
@@ -575,6 +579,126 @@ def test_markdown_brief_uses_release_tag_for_why_now_when_llm_silent() -> None:
         "score_reasons": ["x"],
     })
     assert "Just shipped v2.1.0" in md
+
+
+# --------------------------------------------------------------------------- #
+# GraphQL helpers — node-shape parsing + projection
+# --------------------------------------------------------------------------- #
+
+
+def test_topic_names_unpacks_graphql_shape() -> None:
+    node = {
+        "nodes": [
+            {"topic": {"name": "langgraph"}},
+            {"topic": {"name": "rag"}},
+            {"topic": {"name": ""}},  # empty name — dropped
+            {},                        # missing topic — dropped
+        ],
+    }
+    assert _topic_names(node) == ["langgraph", "rag"]
+    assert _topic_names(None) == []
+    assert _topic_names({"nodes": []}) == []
+
+
+def test_gql_repo_to_search_item_matches_rest_shape() -> None:
+    # GraphQL Repository node shape (subset of what _SEARCH_REPOS_GQL returns).
+    node = {
+        "nameWithOwner": "acme/agent",
+        "description": "A LangGraph agent for X.",
+        "url": "https://github.com/acme/agent",
+        "homepageUrl": "https://acme.ai",
+        "stargazerCount": 4200,
+        "forkCount": 110,
+        "issues": {"totalCount": 25},
+        "pushedAt": "2026-04-01T00:00:00Z",
+        "createdAt": "2024-01-01T00:00:00Z",
+        "isArchived": False,
+        "isDisabled": False,
+        "primaryLanguage": {"name": "Python"},
+        "licenseInfo": {"spdxId": "MIT"},
+        "repositoryTopics": {"nodes": [{"topic": {"name": "langgraph"}}, {"topic": {"name": "agents"}}]},
+        "owner": {"__typename": "Organization", "login": "acme"},
+    }
+    item = _gql_repo_to_search_item(node, matched_topic="langgraph")
+    assert item is not None
+    assert item["full_name"] == "acme/agent"
+    assert item["stargazers_count"] == 4200
+    assert item["forks_count"] == 110
+    assert item["open_issues_count"] == 25
+    assert item["language"] == "Python"
+    assert item["license"] == {"spdx_id": "MIT"}
+    assert item["topics"] == ["langgraph", "agents"]
+    assert item["owner"]["login"] == "acme"
+    assert item["owner"]["type"] == "Organization"
+    assert item["_matched_topic"] == "langgraph"
+
+
+def test_gql_repo_to_search_item_user_owner() -> None:
+    item = _gql_repo_to_search_item(
+        {"nameWithOwner": "alice/toy", "owner": {"__typename": "User", "login": "alice"}},
+        matched_topic="rag",
+    )
+    assert item is not None
+    assert item["owner"]["type"] == "User"
+
+
+def test_gql_repo_to_search_item_returns_none_for_missing_node() -> None:
+    assert _gql_repo_to_search_item({}, matched_topic="x") is None
+    assert _gql_repo_to_search_item({"description": "no name"}, matched_topic="x") is None
+
+
+def test_aggregate_recent_authors_counts_unique_and_ranks_top_3() -> None:
+    history = [
+        # alice commits 4×, bob 2×, carol 1×, plus bot + missing-author noise.
+        {"author": {"user": {"login": "alice", "__typename": "User"}}},
+        {"author": {"user": {"login": "alice", "__typename": "User"}}},
+        {"author": {"user": {"login": "bob", "__typename": "User"}}},
+        {"author": {"user": {"login": "alice", "__typename": "User"}}},
+        {"author": {"user": {"login": "bob", "__typename": "User"}}},
+        {"author": {"user": {"login": "carol", "__typename": "User"}}},
+        {"author": {"user": {"login": "alice", "__typename": "User"}}},
+        {"author": {"user": {"login": "depbot", "__typename": "Bot"}}},  # dropped
+        {"author": {"user": {"login": "renovate[bot]", "__typename": "User"}}},  # dropped
+        {"author": {"user": None}},  # dropped
+        {"author": None},  # dropped
+    ]
+    n_unique, top = _aggregate_recent_authors(history)
+    assert n_unique == 3
+    logins = [u["login"] for u in top]
+    assert logins == ["alice", "bob", "carol"]
+
+
+def test_aggregate_recent_authors_handles_empty() -> None:
+    assert _aggregate_recent_authors(None) == (0, [])
+    assert _aggregate_recent_authors([]) == (0, [])
+
+
+def test_project_maintainer_filters_noreply_and_bots() -> None:
+    # Bot author → dropped.
+    assert _project_maintainer({"__typename": "Bot", "login": "depbot"}) is None
+    # [bot] suffix → dropped.
+    assert _project_maintainer({"login": "x[bot]", "__typename": "User"}) is None
+    # noreply email blanked.
+    user = {
+        "login": "alice",
+        "name": "Alice",
+        "company": "Acme",
+        "email": "1234+alice@users.noreply.github.com",
+        "websiteUrl": "https://alice.dev",
+        "twitterUsername": "alicedev",
+        "isHireable": True,
+        "bio": "AI engineer",
+        "followers": {"totalCount": 42},
+    }
+    proj = _project_maintainer(user)
+    assert proj is not None
+    assert proj["login"] == "alice"
+    assert proj["email"] is None  # noreply stripped
+    assert proj["website"] == "https://alice.dev"
+    assert proj["twitter"] == "alicedev"
+    assert proj["is_hireable"] is True
+    assert proj["followers"] == 42
+    assert proj["url"] == "https://github.com/alice"
 
 
 def test_markdown_brief_falls_back_when_no_llm_brief() -> None:
