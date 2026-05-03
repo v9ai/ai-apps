@@ -876,7 +876,8 @@ class GhAiReposState(TypedDict, total=False):
     final_repos: list[dict[str, Any]]    # after persist — blended score + brief, sorted desc
     # output
     summary: dict[str, Any]
-    inserted_company_ids: list[int]
+    inserted_repo_ids: list[int]   # D1 gh_repos.id of newly-inserted rows
+    existing_repo_ids: list[int]   # D1 gh_repos.id of rows that were updated
     # plumbing
     _error: str
     agent_timings: Annotated[dict[str, float], _merge_dict]

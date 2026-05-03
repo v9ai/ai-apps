@@ -14,9 +14,14 @@ Run knobs (all optional, set on the input state):
 * ``active_within_days``   — default 30 (push date must be within this).
 * ``per_topic_limit``      — default 25 results per topic before dedupe.
 * ``max_repos``            — overall cap after dedupe (default 60).
-* ``persist_companies``    — when True, upserts owning orgs into ``companies``
-                             with ``tags=['gh-ai-repo-lead','discovery-candidate']``.
-                             Default False (state-only run).
+* ``persist_companies``    — when True, upserts orgs + repos into the D1
+                             side-channel store (``gh_orgs`` / ``gh_repos``
+                             tables in the ``lead-gen-jobs`` D1 database).
+                             Intentionally NOT mirrored to Neon ``companies``
+                             so downstream pipelines (email_outreach,
+                             contact_discovery, /products/[slug]/leads) stay
+                             isolated from these leads. Default False
+                             (state-only run).
 * ``require_readme``       — when True, drops repos with no fetchable README.
 
 Reuses :class:`leadgen_agent.gh_patterns_graph.GhClient` so this graph piggybacks
@@ -34,12 +39,11 @@ import time
 from datetime import datetime, timedelta, timezone
 from typing import Any, Literal
 
-import psycopg
 from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
 from . import blocklist
-from .deep_icp_graph import _dsn
+from ._d1 import D1Client, D1Error
 from .gh_patterns_graph import AI_RELEVANT_TOPICS, GhClient
 from .llm import (
     ainvoke_json_with_telemetry,
@@ -642,12 +646,11 @@ async def enrich_orgs(state: GhAiReposState) -> dict:
 
 
 async def dedupe_vs_db(state: GhAiReposState) -> dict:
-    """Look up which repos are already in ``companies`` so the scorer can
+    """Look up which repos are already in D1 ``gh_repos`` so the scorer can
     suppress recently-seen leads (within ``freshness_days``).
 
-    Mirrors company_discovery_graph.dedupe — single round-trip, jsonb tag
-    membership filter. Stores results keyed by the ``gh:<full_name>`` tag so
-    matching is exact regardless of canonical_domain volatility.
+    Single HTTP round-trip to the Cloudflare D1 REST API. Results are keyed
+    by ``gh:<full_name>`` to match the lookup the scorer/persist nodes use.
     """
     if state.get("_error"):
         return {}
@@ -658,44 +661,38 @@ async def dedupe_vs_db(state: GhAiReposState) -> dict:
         return {"existing_keys": {}}
 
     full_names = [r["full_name"] for r in repos if r.get("full_name")]
-    gh_tags = [f"gh:{fn}" for fn in full_names]
+    if not full_names:
+        return {"existing_keys": {}}
 
     existing: dict[str, dict[str, Any]] = {}
     try:
-        with psycopg.connect(_dsn(), autocommit=True, connect_timeout=10) as conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    """
-                    SELECT id, canonical_domain, tags, updated_at
-                    FROM companies
-                    WHERE tags::jsonb ?| %s
-                    """,
-                    (gh_tags,),
-                )
-                for row in cur.fetchall():
-                    company_id, canonical, tags_raw, updated_at = row
-                    try:
-                        tags = json.loads(tags_raw) if isinstance(tags_raw, str) else (tags_raw or [])
-                    except (json.JSONDecodeError, TypeError):
-                        tags = []
-                    last_seen = _parse_iso(str(updated_at)) if updated_at else None
-                    age_days: int | None = None
-                    if last_seen is not None:
-                        # updated_at is text per migrations; parse loosely. If
-                        # missing tz, treat as UTC.
-                        if last_seen.tzinfo is None:
-                            last_seen = last_seen.replace(tzinfo=timezone.utc)
-                        age_days = (datetime.now(timezone.utc) - last_seen).days
-                    for tag in tags:
-                        if isinstance(tag, str) and tag.startswith("gh:"):
-                            existing[tag] = {
-                                "company_id": int(company_id),
-                                "canonical_domain": canonical,
-                                "last_seen_days_ago": age_days,
-                            }
-    except psycopg.Error as e:
-        # DB miss must not kill the run — fall back to empty dedupe set.
-        log.warning("dedupe_vs_db: %s", e)
+        client = D1Client()
+        placeholders = ",".join("?" for _ in full_names)
+        rows = await client.query(
+            f"SELECT id, full_name, last_seen_at FROM gh_repos "
+            f"WHERE full_name IN ({placeholders})",
+            full_names,
+        )
+        now = datetime.now(timezone.utc)
+        for row in rows:
+            full_name = row.get("full_name")
+            if not full_name:
+                continue
+            age_days: int | None = None
+            last_seen_raw = row.get("last_seen_at")
+            if last_seen_raw:
+                last_seen = _parse_iso(str(last_seen_raw))
+                if last_seen is not None:
+                    if last_seen.tzinfo is None:
+                        last_seen = last_seen.replace(tzinfo=timezone.utc)
+                    age_days = (now - last_seen).days
+            existing[f"gh:{full_name}"] = {
+                "repo_id": int(row.get("id") or 0),
+                "last_seen_days_ago": age_days,
+            }
+    except D1Error as e:
+        # D1 miss must not kill the run — fall back to empty dedupe set.
+        log.warning("dedupe_vs_db (D1): %s", e)
         existing = {}
 
     return {
@@ -889,7 +886,7 @@ async def score_heuristic(state: GhAiReposState) -> dict:
             "sell_score": sell_score,
             "score_reasons": reasons,
             "org": org,
-            "existing_company_id": existing.get("company_id"),
+            "existing_repo_id": existing.get("repo_id"),
             "_skip_reason": skip_reason,
         })
 
@@ -1273,7 +1270,7 @@ async def persist(state: GhAiReposState) -> dict:
             "final_score": r.get("final_score"),
             "score_reasons": r.get("score_reasons"),
             "skip_reason": r.get("_skip_reason"),
-            "existing_company_id": r.get("existing_company_id"),
+            "existing_repo_id": r.get("existing_repo_id"),
             "org": (
                 {
                     k: r["org"].get(k)

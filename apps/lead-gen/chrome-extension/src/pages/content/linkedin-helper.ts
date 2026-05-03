@@ -3402,18 +3402,26 @@ async function clickLinkedInPageNumber(pageNumber: number): Promise<ClickPageRes
     const nextButton = document.querySelector(
       'button[aria-label="View next page"]',
     ) as HTMLButtonElement;
-
-    if (!nextButton || nextButton.disabled) {
-      return { ok: false, reason: "no-button" };
+    if (nextButton && !nextButton.disabled) {
+      targetButton = nextButton;
     }
-
-    targetButton = nextButton;
   }
 
-  targetButton.click();
+  if (targetButton) {
+    targetButton.click();
+  } else {
+    // LinkedIn renders a windowed slice of page buttons (current ± 2). When
+    // the next-page button is hidden/disabled past the visible window, drive
+    // navigation via the URL — LinkedIn re-renders results client-side from
+    // the `start` query param.
+    const url = new URL(window.location.href);
+    url.searchParams.set("start", String((pageNumber - 1) * 25));
+    window.history.pushState({}, "", url.toString());
+    window.dispatchEvent(new PopStateEvent("popstate"));
+  }
 
   let attempts = 0;
-  const maxAttempts = 15;
+  const maxAttempts = 25;
 
   while (attempts < maxAttempts) {
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -3426,7 +3434,7 @@ async function clickLinkedInPageNumber(pageNumber: number): Promise<ClickPageRes
     attempts++;
   }
 
-  return { ok: false, reason: "timeout" };
+  return { ok: false, reason: targetButton ? "timeout" : "no-button" };
 }
 
 // Extract generic job board data (Greenhouse, Wellfound, etc.)
@@ -3600,6 +3608,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           startResult.attempt,
         );
 
+        let consecutiveClickFailures = 0;
+        const MAX_CONSECUTIVE_CLICK_FAILURES = 3;
+
         for (let page = startPage + 1; page <= totalPages; page++) {
           let click = await clickLinkedInPageNumber(page);
           if (!click.ok) {
@@ -3609,14 +3620,24 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             await new Promise((r) => setTimeout(r, 1500));
             click = await clickLinkedInPageNumber(page);
           }
+          console.log(
+            `[CS] page ${page} click: result=${click.ok ? "ok" : click.reason} ` +
+              `consecutiveFailures=${click.ok ? 0 : consecutiveClickFailures + 1} ` +
+              `totalPagesAnnounced=${totalPages}`,
+          );
           if (!click.ok) {
             pageFailures.push({
               page,
               reason: click.reason === "no-button" ? "click-no-button" : "click-timeout",
             });
-            // Pagination is broken — continuing wastes requests on the same DOM.
-            break;
+            consecutiveClickFailures++;
+            // Genuine end-of-results: 3 consecutive failures means pagination
+            // is dead, not a transient glitch. Single-page glitches fall
+            // through to the next iteration.
+            if (consecutiveClickFailures >= MAX_CONSECUTIVE_CLICK_FAILURES) break;
+            continue;
           }
+          consecutiveClickFailures = 0;
 
           await new Promise((resolve) => setTimeout(resolve, 1000));
 
