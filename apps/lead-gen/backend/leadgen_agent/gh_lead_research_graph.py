@@ -97,7 +97,13 @@ EvidenceConfidence = Literal["low", "medium", "high"]
 class DecisionMaker(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
-    name: str = Field(min_length=1, max_length=120)
+    # ``name`` had ``min_length=1`` originally; the LLM occasionally emits an
+    # entry with an empty name when it found a title/linkedin but couldn't
+    # confirm a person. The Pydantic ValidationError on a single bad entry
+    # was nuking the entire LeadResearchBrief — the brief defaulted empty
+    # and the persist node lost everything. Allow empty name; the parent
+    # filters anonymous entries via the validator below.
+    name: str = Field(default="", max_length=120)
     title: str = Field(default="", max_length=120)
     linkedin: str = Field(default="", max_length=240)
     twitter: str = Field(default="", max_length=120)
@@ -122,6 +128,27 @@ class LeadResearchBrief(BaseModel):
     decision_makers: list[DecisionMaker] = Field(default_factory=list, max_length=5)
     evidence_urls: list[str] = Field(default_factory=list, max_length=10)
     confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+
+    @field_validator("decision_makers", mode="before")
+    @classmethod
+    def _drop_anonymous_dms(cls, v: object) -> list[Any]:
+        """Drop entries with empty/missing name OR no contact channel.
+
+        Be permissive: keep anything that's at least minimally usable. The
+        prior strict ``min_length=1`` validation killed the whole brief when
+        the LLM emitted a single placeholder entry like ``{"name":"","title":"CEO"}``.
+        """
+        if not isinstance(v, list):
+            return []
+        out: list[Any] = []
+        for item in v:
+            if not isinstance(item, dict):
+                continue
+            name = (item.get("name") or "").strip()
+            if not name:
+                continue
+            out.append(item)
+        return out
 
     @field_validator("confidence", mode="before")
     @classmethod
