@@ -1,12 +1,21 @@
 """Classify D1 pending opportunities as remote and fully remote.
 
-Reads open, unarchived opportunities from the edge-worker D1 list endpoint,
-runs the pure rule-based remote detectors from :mod:`ai_role_taxonomy`, and
-returns a summary report with both ``is_remote`` (any remote) and
-``is_fully_remote`` (global, no region restrictions). Does NOT write back
-to D1 — this is a read-only classification pass.
+Reads opportunities from the edge-worker D1 list endpoint, runs the pure
+rule-based remote detectors from :mod:`ai_role_taxonomy`, and (when
+classifying a freshly-imported batch) writes back ``archived=1`` for any
+row that is **not** fully remote so it drops out of the /opportunities UI.
 
-    fetch_d1  →  classify  →  report  →  END
+    fetch_d1  →  classify  →  writeback  →  report  →  END
+
+Two invocation modes:
+
+* **Bulk pass** (cron, every 4h): no ``ids`` input — reads up to ``limit``
+  open/unarchived rows and reports counts. The writeback node is a no-op
+  in this mode (cron runs read-only to avoid clobbering manual triage).
+* **Per-batch** (chrome extension, after each /api/jobs/d1/import):
+  ``ids`` lists the just-inserted opportunity ids. The fetch is filtered
+  to exactly those rows (open + archived rows alike) and writeback
+  archives any that classify as not fully remote.
 
 State is a ``TypedDict``; **every** field a node returns must be declared
 (memory: ``feedback_langgraph_typeddict_drops_fields``).
@@ -33,6 +42,7 @@ class RemoteClassifyState(TypedDict, total=False):
     # ── Input ──────────────────────────────────────────────────────────
     limit: int                # max D1 rows to fetch (1–2000, default 500)
     company_key: str | None   # optional filter by D1 company key
+    ids: list[str]            # if set, fetch ONLY these ids (per-batch mode)
 
     # ── Working ────────────────────────────────────────────────────────
     opportunities: list[dict[str, Any]]       # raw D1 rows
@@ -45,6 +55,8 @@ class RemoteClassifyState(TypedDict, total=False):
     fully_remote: int         # truly global remote
     ai_fully_remote: int      # fully_remote AND AI role
     ai_any_remote: int        # any_remote AND AI role
+    archived_ids: list[str]   # ids the writeback node archived (per-batch only)
+    archived_count: int
     sample_remote: list[dict[str, Any]]       # first 10 fully_remote
     sample_not_remote: list[dict[str, Any]]   # first 10 not fully_remote
 
@@ -56,19 +68,33 @@ class RemoteClassifyState(TypedDict, total=False):
 
 
 async def fetch_d1(state: RemoteClassifyState) -> dict[str, Any]:
-    """GET open opportunities from the D1 edge worker."""
+    """GET opportunities from the D1 edge worker.
+
+    When ``ids`` is provided we fetch exactly those rows (bypassing the
+    open/non-archived filter so a freshly-imported batch is visible even if
+    a previous run already archived some). Otherwise we do the bulk read
+    used by the cron sweep.
+    """
     edge_url = os.environ.get("LEAD_GEN_EDGE_URL", "").rstrip("/")
     token = os.environ.get("JOBS_D1_TOKEN", "").strip()
     if not edge_url or not token:
         return {"_error": "LEAD_GEN_EDGE_URL / JOBS_D1_TOKEN not set"}
 
-    limit = min(max(state.get("limit") or _DEFAULT_LIMIT, 1), 2000)
+    ids = [s for s in (state.get("ids") or []) if isinstance(s, str) and s]
+    params: dict[str, Any]
+    if ids:
+        # Edge handler caps to 500 ids per request; if the caller ever sends
+        # more we just truncate — per-import batches are ≤ 25 in practice.
+        params = {"ids": ",".join(ids[:500])}
+    else:
+        limit = min(max(state.get("limit") or _DEFAULT_LIMIT, 1), 2000)
+        params = {"limit": limit}
 
     try:
         async with httpx.AsyncClient(timeout=_EDGE_TIMEOUT_S) as client:
             resp = await client.get(
                 f"{edge_url}/api/jobs/d1/opportunities",
-                params={"limit": limit},
+                params=params,
                 headers={"Authorization": f"Bearer {token}"},
             )
             resp.raise_for_status()
@@ -176,7 +202,67 @@ async def classify(state: RemoteClassifyState) -> dict[str, Any]:
     }
 
 
-# ── Node 3: report ──────────────────────────────────────────────────────────
+# ── Node 3: writeback ───────────────────────────────────────────────────────
+
+
+async def writeback(state: RemoteClassifyState) -> dict[str, Any]:
+    """Archive non-fully-remote rows in D1.
+
+    Only runs when the caller scoped the run with ``ids`` (per-batch mode);
+    the bulk cron sweep is read-only so it doesn't clobber manual triage.
+    """
+    if state.get("_error"):
+        return {"archived_ids": [], "archived_count": 0}
+
+    ids_input = [s for s in (state.get("ids") or []) if isinstance(s, str) and s]
+    if not ids_input:
+        # Bulk mode — skip writeback entirely.
+        return {"archived_ids": [], "archived_count": 0}
+
+    classifications = state.get("classifications") or []
+    to_archive = [
+        c["id"]
+        for c in classifications
+        if c.get("id") and not c.get("is_fully_remote")
+    ]
+    if not to_archive:
+        return {"archived_ids": [], "archived_count": 0}
+
+    edge_url = os.environ.get("LEAD_GEN_EDGE_URL", "").rstrip("/")
+    token = os.environ.get("JOBS_D1_TOKEN", "").strip()
+    if not edge_url or not token:
+        return {
+            "archived_ids": [],
+            "archived_count": 0,
+            "_error": "writeback: LEAD_GEN_EDGE_URL / JOBS_D1_TOKEN not set",
+        }
+
+    try:
+        async with httpx.AsyncClient(timeout=_EDGE_TIMEOUT_S) as client:
+            resp = await client.post(
+                f"{edge_url}/api/jobs/d1/opportunities/archive-bulk",
+                headers={"Authorization": f"Bearer {token}"},
+                json={"ids": to_archive},
+            )
+            resp.raise_for_status()
+            body = resp.json()
+    except httpx.HTTPError as exc:
+        log.warning("writeback: %s", exc)
+        return {
+            "archived_ids": [],
+            "archived_count": 0,
+            "_error": f"writeback: {exc}",
+        }
+
+    archived_count = int(body.get("archived") or 0)
+    log.info(
+        "remote_classify writeback: archived=%d / requested=%d",
+        archived_count, len(to_archive),
+    )
+    return {"archived_ids": to_archive, "archived_count": archived_count}
+
+
+# ── Node 4: report ──────────────────────────────────────────────────────────
 
 
 async def report(state: RemoteClassifyState) -> dict[str, Any]:
@@ -190,15 +276,20 @@ async def report(state: RemoteClassifyState) -> dict[str, Any]:
     fully_remote = state.get("fully_remote") or 0
     ai_any = state.get("ai_any_remote") or 0
     ai_fully = state.get("ai_fully_remote") or 0
+    archived_count = state.get("archived_count") or 0
 
     pct_any = round(any_remote / total * 100, 1) if total else 0
     pct_fully = round(fully_remote / total * 100, 1) if total else 0
+    archived_suffix = (
+        f" Archived {archived_count} non-fully-remote." if archived_count else ""
+    )
     summary = (
         f"{total} scanned. "
         f"{any_remote} any remote ({pct_any}%), "
         f"{fully_remote} global remote ({pct_fully}%), "
         f"{any_not_remote} not remote. "
         f"AI roles: {ai_any} any-remote, {ai_fully} global-remote."
+        f"{archived_suffix}"
     )
 
     return {
@@ -210,6 +301,7 @@ async def report(state: RemoteClassifyState) -> dict[str, Any]:
             "fully_remote": fully_remote,
             "ai_any_remote": ai_any,
             "ai_fully_remote": ai_fully,
+            "archived_count": archived_count,
             "pct_any_remote": pct_any,
             "pct_fully_remote": pct_fully,
         },
@@ -223,10 +315,12 @@ def build_graph(checkpointer: Any = None) -> Any:
     g = StateGraph(RemoteClassifyState)
     g.add_node("fetch_d1", fetch_d1)
     g.add_node("classify", classify)
+    g.add_node("writeback", writeback)
     g.add_node("report", report)
     g.add_edge(START, "fetch_d1")
     g.add_edge("fetch_d1", "classify")
-    g.add_edge("classify", "report")
+    g.add_edge("classify", "writeback")
+    g.add_edge("writeback", "report")
     g.add_edge("report", END)
     return g.compile(checkpointer=checkpointer)
 

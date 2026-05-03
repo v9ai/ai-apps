@@ -40,6 +40,7 @@ export interface ImportJobsToD1Response {
   inserted: number;
   skipped: number;
   total: number;
+  insertedIds: string[];
   status?: number;
   requestId: string;
   attempts: number;
@@ -59,7 +60,13 @@ async function postOnce(
 ): Promise<{
   ok: boolean;
   status?: number;
-  data?: { inserted?: number; skipped?: number; total?: number; error?: string };
+  data?: {
+    inserted?: number;
+    skipped?: number;
+    total?: number;
+    insertedIds?: unknown;
+    error?: string;
+  };
   error?: string;
 }> {
   try {
@@ -86,6 +93,7 @@ async function postOnce(
       inserted?: number;
       skipped?: number;
       total?: number;
+      insertedIds?: unknown;
       error?: string;
     };
     return { ok: !data.error, status: res.status, data, error: data.error };
@@ -107,13 +115,14 @@ export async function importJobsToD1(
       inserted: 0,
       skipped: 0,
       total: jobs.length,
+      insertedIds: [],
       requestId,
       attempts: 0,
       error: "VITE_JOBS_D1_TOKEN is not set in the extension build.",
     };
   }
   if (jobs.length === 0) {
-    return { ok: true, inserted: 0, skipped: 0, total: 0, requestId, attempts: 0 };
+    return { ok: true, inserted: 0, skipped: 0, total: 0, insertedIds: [], requestId, attempts: 0 };
   }
 
   let attempts = 0;
@@ -141,6 +150,7 @@ export async function importJobsToD1(
       inserted: 0,
       skipped: 0,
       total: jobs.length,
+      insertedIds: [],
       status: last.status,
       requestId,
       attempts,
@@ -148,11 +158,17 @@ export async function importJobsToD1(
     };
   }
 
+  const rawIds = last.data?.insertedIds;
+  const insertedIds = Array.isArray(rawIds)
+    ? rawIds.filter((v): v is string => typeof v === "string" && v.length > 0)
+    : [];
+
   return {
     ok: true,
     inserted: last.data?.inserted ?? 0,
     skipped: last.data?.skipped ?? 0,
     total: last.data?.total ?? jobs.length,
+    insertedIds,
     status: last.status,
     requestId,
     attempts,

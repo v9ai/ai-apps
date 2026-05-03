@@ -135,11 +135,17 @@ function installProgressListener() {
       const voyEnriched = msg.totals?.voyagerEnriched ?? 0;
       const voyFailed = msg.totals?.voyagerFailed ?? 0;
       const voyTotal = voyEnriched + voyFailed;
-      const voySuffix = voyTotal > 0 ? `, Voyager ${voyEnriched}/${voyTotal}` : "";
+      const voySuffix = voyTotal > 0 ? `, Voy ${voyEnriched}/${voyTotal}` : "";
+      const fullyRemote = msg.totals?.fullyRemote ?? 0;
+      const archivedNonRemote = msg.totals?.archivedNonRemote ?? 0;
+      const remoteSuffix =
+        fullyRemote > 0 || archivedNonRemote > 0
+          ? `, Remote ${fullyRemote} (${archivedNonRemote} archived)`
+          : "";
       const summary =
         errs > 0 || pagesFailed > 0
-          ? `Pages ${pagesScraped}/${pagesTotal} (${pagesFailed} failed) — Inserted ${inserted}, Skipped ${skipped}${voySuffix}, Errors ${errs}`
-          : `✓ Pages ${pagesScraped}/${pagesTotal} — Inserted ${inserted}, Skipped ${skipped}${voySuffix}`;
+          ? `Pages ${pagesScraped}/${pagesTotal} (${pagesFailed} failed) — Ins ${inserted}, Skp ${skipped}${voySuffix}${remoteSuffix}, Err ${errs}`
+          : `✓ Pages ${pagesScraped}/${pagesTotal} — Ins ${inserted}, Skp ${skipped}${voySuffix}${remoteSuffix}`;
       btn.textContent = summary.slice(0, 80);
       btn.style.backgroundColor = errs > 0 || pagesFailed > 0 ? COLOR_ERROR : COLOR_DONE;
       btn.disabled = false;

@@ -496,6 +496,13 @@ async function handleJobsD1Import(req: Request, env: Env): Promise<Response> {
     }
   }
 
+  // Pre-generate ids so we can map batch results back to the rows they
+  // touched. INSERT OR IGNORE silently no-ops on URL collisions, so the only
+  // reliable way to learn which rows actually landed is to pair each
+  // statement's `meta.changes` with the id we bound into it. We surface the
+  // resulting `insertedIds` so the chrome extension's post-insert classifier
+  // (remote_classify graph) can scope its work to just-imported rows.
+  const generatedIds = kept.map(() => newOpportunityId());
   const oppStatements = kept.map((j, i) =>
     env.DB.prepare(
       `INSERT OR IGNORE INTO opportunities
@@ -505,7 +512,7 @@ async function handleJobsD1Import(req: Request, env: Env): Promise<Response> {
          applicant_count, external_apply_url)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     ).bind(
-      newOpportunityId(),
+      generatedIds[i],
       j.title,
       j.url,
       j.source,
@@ -530,12 +537,16 @@ async function handleJobsD1Import(req: Request, env: Env): Promise<Response> {
   );
 
   let inserted = 0;
+  const insertedIds: string[] = [];
   if (oppStatements.length > 0) {
     try {
       const results = await env.DB.batch(oppStatements);
-      for (const r of results) {
-        const meta = (r as { meta?: { changes?: number } }).meta;
-        if (meta?.changes) inserted += meta.changes;
+      for (let i = 0; i < results.length; i++) {
+        const meta = (results[i] as { meta?: { changes?: number } }).meta;
+        if (meta?.changes) {
+          inserted += meta.changes;
+          insertedIds.push(generatedIds[i]);
+        }
       }
     } catch (e) {
       console.log(
@@ -588,6 +599,7 @@ async function handleJobsD1Import(req: Request, env: Env): Promise<Response> {
       inserted,
       skipped,
       total: kept.length + skippedInvalid + skippedDuplicate + skippedBlocked,
+      insertedIds,
       detail: {
         skippedInvalid,
         skippedDuplicate,
@@ -636,6 +648,10 @@ async function handleKnownAshbySlugs(req: Request, env: Env): Promise<Response> 
 // ── D1 read: Next.js server lists D1 opportunities for /opportunities page ──
 //
 // GET /api/jobs/d1/opportunities?limit=500
+//        &ids=id1,id2,...   (optional — when set, returns only the named ids
+//                            and ignores the archived/status filter so a
+//                            post-insert classifier can see freshly-imported
+//                            rows that may already be in any state)
 //   headers: Authorization: Bearer <JOBS_D1_TOKEN>
 //   reply:   { rows: D1OpportunityRow[] }
 
@@ -676,6 +692,31 @@ async function handleJobsD1List(req: Request, env: Env): Promise<Response> {
   const limit = Number.isFinite(limitRaw)
     ? Math.min(2000, Math.max(1, Math.floor(limitRaw)))
     : 500;
+
+  // Optional id filter: comma-separated list. When present we bypass the
+  // open/non-archived filter so callers can read freshly-inserted rows that
+  // may already have been moved out of `status='open'`.
+  const idsRaw = (url.searchParams.get("ids") ?? "").trim();
+  const ids = idsRaw
+    ? idsRaw.split(",").map((s) => s.trim()).filter(Boolean).slice(0, 500)
+    : [];
+
+  if (ids.length > 0) {
+    const placeholders = ids.map(() => "?").join(",");
+    const res = await env.DB.prepare(
+      `SELECT o.id, o.title, o.url, o.source, o.status, o.tags,
+              o.location, o.salary, o.archived, o.created_at, o.updated_at,
+              o.workplace_type, o.employment_type,
+              c.name AS company_name, c.key AS company_key
+         FROM opportunities o
+         LEFT JOIN companies c ON c.id = o.company_id
+        WHERE o.id IN (${placeholders})
+        ORDER BY o.created_at DESC`,
+    )
+      .bind(...ids)
+      .all<D1OpportunityListRow>();
+    return json(req, { rows: res.results ?? [] });
+  }
 
   const res = await env.DB.prepare(
     `SELECT o.id, o.title, o.url, o.source, o.status, o.tags,
@@ -736,6 +777,59 @@ async function handleJobsD1Archive(req: Request, env: Env): Promise<Response> {
   if (changes === 0) return json(req, { error: "Not found" }, 404);
 
   return json(req, { archived: true });
+}
+
+// ── D1 archive (bulk): hide many D1 opportunities in one round-trip ──
+//
+// POST /api/jobs/d1/opportunities/archive-bulk
+//   headers: Authorization: Bearer <JOBS_D1_TOKEN>
+//   body:    { ids: string[] }
+//   reply:   { archived: number }
+//
+// Used by the remote_classify graph's writeback node after each chrome-
+// extension import batch — non-fully-remote rows are archived so they drop
+// out of the /opportunities list.
+
+async function handleJobsD1ArchiveBulk(req: Request, env: Env): Promise<Response> {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: corsHeaders(req) });
+  }
+  if (req.method !== "POST") {
+    return json(req, { error: "Method not allowed" }, 405);
+  }
+
+  const auth = req.headers.get("authorization") ?? "";
+  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+  if (!env.JOBS_D1_TOKEN || !token || !constantTimeEq(token, env.JOBS_D1_TOKEN)) {
+    return json(req, { error: "Unauthorized" }, 401);
+  }
+
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return json(req, { error: "Invalid JSON" }, 400);
+  }
+
+  const rawIds = (body as { ids?: unknown })?.ids;
+  if (!Array.isArray(rawIds)) return json(req, { error: "Missing ids[]" }, 400);
+  const ids = rawIds
+    .map((v) => asString(v))
+    .filter((s): s is string => !!s)
+    .slice(0, 500);
+  if (ids.length === 0) return json(req, { archived: 0 });
+
+  const placeholders = ids.map(() => "?").join(",");
+  const res = await env.DB.prepare(
+    `UPDATE opportunities
+       SET archived = 1, updated_at = CURRENT_TIMESTAMP
+     WHERE id IN (${placeholders})`,
+  )
+    .bind(...ids)
+    .run();
+
+  const changes = (res as { meta?: { changes?: number } }).meta?.changes ?? 0;
+  return json(req, { archived: changes });
 }
 
 // ── D1 status update: change a D1 opportunity's status (e.g. open → applied) ──
@@ -1425,6 +1519,9 @@ export default {
     }
     if (url.pathname === "/api/jobs/d1/opportunities/archive") {
       return handleJobsD1Archive(req, env);
+    }
+    if (url.pathname === "/api/jobs/d1/opportunities/archive-bulk") {
+      return handleJobsD1ArchiveBulk(req, env);
     }
     if (url.pathname === "/api/jobs/d1/opportunities/status") {
       return handleJobsD1Status(req, env);

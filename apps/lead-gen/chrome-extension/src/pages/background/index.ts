@@ -3,6 +3,7 @@ import { browseContactPosts, scrapeAllPosts, cancelPostScraping, scrapeJobSearch
 import { gqlRequest } from "../../services/graphql";
 import { fetchRecentVisitsMap } from "../../services/visit-tracker";
 import { importJobsToD1, type D1JobInput } from "../../services/jobs-d1-importer";
+import { classifyRemoteForBatch } from "../../services/classify-remote";
 import { startKeepAlive, stopKeepAlive, waitForTabLoad, clickSeeMore, randomDelay } from "./tab-utils";
 import { browseProfiles, setBrowseCancelled, extractFullProfileData, parseName, parseHeadline } from "./profile-browsing";
 import { traverseAllSearchPages } from "./people-search-traversal";
@@ -1341,6 +1342,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     let totalDescriptions = 0;
     let totalVoyagerEnriched = 0;
     let totalVoyagerFailed = 0;
+    let totalFullyRemote = 0;
+    let totalArchivedNonRemote = 0;
+    let totalClassified = 0;
     let pagesSaved = 0;
     const errors: ImportError[] = [];
     const pageStats: PageStat[] = [];
@@ -1481,13 +1485,38 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           totalSkipped += result.skipped;
           pagesSaved++;
           console.log(
-            `[BG] page ${pageNumber}/${totalPages} ok requestId=${result.requestId} inserted=${result.inserted} skipped=${result.skipped} valid=${payload.length} extracted=${extracted}`,
+            `[BG] page ${pageNumber}/${totalPages} ok requestId=${result.requestId} inserted=${result.inserted} skipped=${result.skipped} valid=${payload.length} extracted=${extracted} insertedIds=${result.insertedIds.length}`,
           );
           await notifyTab({
             status: `Page ${pageNumber}/${totalPages} — ${totalInserted} imported / ${totalSkipped} skipped`,
             currentPage: pageNumber,
             totalPages,
           });
+          // Post-insert: hand the just-inserted ids to the remote_classify
+          // graph on the CF Python backend. It re-fetches each row from D1,
+          // applies the rule-based fully-remote check, and archives any row
+          // whose location string isn't fully remote. Non-fatal — failures
+          // log and the batch chain continues.
+          if (result.insertedIds.length > 0) {
+            try {
+              const verdict = await classifyRemoteForBatch(result.insertedIds);
+              if (verdict) {
+                totalClassified += verdict.total;
+                totalFullyRemote += verdict.fullyRemote;
+                totalArchivedNonRemote += verdict.archivedCount;
+                await notifyTab({
+                  status: `Page ${pageNumber}/${totalPages} — ${totalInserted} imported, ${totalFullyRemote} fully-remote, ${totalArchivedNonRemote} archived`,
+                  currentPage: pageNumber,
+                  totalPages,
+                });
+              }
+            } catch (err) {
+              console.warn(
+                `[BG] page ${pageNumber} classifyRemote threw:`,
+                err,
+              );
+            }
+          }
         } else {
           const stage: ImportError["stage"] =
             result.status && result.status >= 500 ? "d1"
@@ -1582,6 +1611,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
               descriptionsCaptured: totalDescriptions,
               voyagerEnriched: totalVoyagerEnriched,
               voyagerFailed: totalVoyagerFailed,
+              classified: totalClassified,
+              fullyRemote: totalFullyRemote,
+              archivedNonRemote: totalArchivedNonRemote,
             },
             pageStats,
             errors,
@@ -1591,7 +1623,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             status:
               errors.length > 0
                 ? `Pages ${pagesScraped}/${totalPages} (${pagesFailed} failed) — Inserted ${totalInserted}, Skipped ${totalSkipped}, Errors ${errors.length}`
-                : `Imported ${totalInserted} / skipped ${totalSkipped} (${pagesScraped} pages)`,
+                : `Imported ${totalInserted} / skipped ${totalSkipped} (${pagesScraped} pages, ${totalFullyRemote} fully-remote, ${totalArchivedNonRemote} archived)`,
           };
           console.log(
             `[BG] importAllOpportunities done`,
@@ -1685,6 +1717,25 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           return;
         }
 
+        // Post-insert classifier (single-page path) — same contract as the
+        // multi-page hook: hand insertedIds to remote_classify, archive any
+        // non-fully-remote rows. Failures are non-fatal and just log.
+        let singleFullyRemote = 0;
+        let singleArchivedNonRemote = 0;
+        let singleClassified = 0;
+        if (result.insertedIds.length > 0) {
+          try {
+            const verdict = await classifyRemoteForBatch(result.insertedIds);
+            if (verdict) {
+              singleClassified = verdict.total;
+              singleFullyRemote = verdict.fullyRemote;
+              singleArchivedNonRemote = verdict.archivedCount;
+            }
+          } catch (err) {
+            console.warn(`[BG] single-page classifyRemote threw:`, err);
+          }
+        }
+
         const finishedAt = Date.now();
         const donePayload = {
           done: true,
@@ -1700,6 +1751,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             inserted: result.inserted,
             skipped: result.skipped,
             descriptionsCaptured: 0,
+            classified: singleClassified,
+            fullyRemote: singleFullyRemote,
+            archivedNonRemote: singleArchivedNonRemote,
           },
           pageStats: [
             {
@@ -1718,7 +1772,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           startedAt,
           finishedAt,
           durationMs: finishedAt - startedAt,
-          status: `Imported ${result.inserted} / skipped ${result.skipped} (${scraped.pagesScraped} pages)`,
+          status: `Imported ${result.inserted} / skipped ${result.skipped} (${singleFullyRemote} fully-remote, ${singleArchivedNonRemote} archived)`,
         };
         console.log(
           `[BG] importAllOpportunities (single-page) done`,
