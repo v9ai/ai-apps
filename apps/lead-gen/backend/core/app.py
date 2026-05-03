@@ -158,6 +158,7 @@ def _build_optional_graphs(checkpointer: Any) -> dict[str, Any]:
             "build_graph",
         ),
         ("classify_ai_intent", "leadgen_agent.classify_ai_intent_graph", "build_graph"),
+        ("gh_ai_repos", "leadgen_agent.gh_ai_repos_graph", "build_graph"),
     ]
     for assistant_id, module_path, attr in optional_specs:
         try:

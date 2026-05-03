@@ -812,11 +812,20 @@ class GhAiReposState(TypedDict, total=False):
     max_repos: int                 # default 60 — overall cap after dedupe
     persist_companies: bool        # default False — set True to upsert into companies table
     require_readme: bool           # default False
+    # input — depth knobs (added in second pass)
+    framework_focus: str           # "langgraph"|"langchain"|"llamaindex"|"" — boosts repos tagged with this topic
+    freshness_days: int            # default 14 — drop repos already scanned within this window
+    classify_top_n: int            # default 20 — only run the deepseek-pro brief on this many
+    heuristic_floor: float         # default 0.30 — drop below this before LLM classification
     # working
     raw_repos: list[dict[str, Any]]      # after search (dedupe by full_name)
     active_repos: list[dict[str, Any]]   # after filter_active
-    enriched_repos: list[dict[str, Any]] # after enrich (readme, languages, contributors_count)
-    scored_repos: list[dict[str, Any]]   # after score, sorted desc by sell_score
+    enriched_repos: list[dict[str, Any]] # after enrich_repo
+    org_metadata: dict[str, Any]         # after enrich_orgs — keyed by owner_login
+    existing_keys: dict[str, Any]        # after dedupe_vs_db — keyed by canonical_domain or "gh:full_name"
+    scored_repos: list[dict[str, Any]]   # after score_heuristic, sorted desc
+    classifications: dict[str, Any]      # after classify_llm — keyed by full_name → RepoSellBrief
+    final_repos: list[dict[str, Any]]    # after persist — blended score + brief, sorted desc
     # output
     summary: dict[str, Any]
     inserted_company_ids: list[int]
