@@ -158,6 +158,8 @@ GRAPHS: tuple[GraphSpec, ...] = (
     GraphSpec("classify_country_web", "leadgen_agent.classify_country_web_graph"),
     # ── Bulk enrichment ──────────────────────────────────────────────────
     GraphSpec("enrich_sales_tech", "leadgen_agent.enrich_sales_tech_graph"),
+    # ── GitHub AI Python repo lead discovery ─────────────────────────────
+    GraphSpec("gh_ai_repos", "leadgen_agent.gh_ai_repos_graph"),
 )
 
 

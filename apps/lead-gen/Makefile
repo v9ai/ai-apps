@@ -30,7 +30,7 @@ hooks-status:
 
 # ── App ────────────────────────────────────────────────────────
 
-.PHONY: dev backend-dev backend-dev-ml backend-dev-research backend-dev-full deep-scrape build lint codegen deploy db-generate db-migrate db-studio icp-embed-serve gen-langgraph-json gen-langgraph-json-core gen-langgraph-json-ml gen-langgraph-json-research check-langgraph-json check-langgraph-json-core check-langgraph-json-ml check-langgraph-json-research
+.PHONY: dev backend-dev backend-dev-ml backend-dev-research backend-dev-full deep-scrape build lint codegen deploy db-generate db-migrate db-studio icp-embed-serve gen-langgraph-json gen-langgraph-json-core gen-langgraph-json-ml gen-langgraph-json-research check-langgraph-json check-langgraph-json-core check-langgraph-json-ml check-langgraph-json-research backend-deploy-core backend-deploy-all
 
 dev:
 	pnpm dev
@@ -113,6 +113,15 @@ codegen:
 
 deploy:
 	pnpm deploy
+
+# Deploy only the core CF Container (skips ml, research, dispatcher).
+# Use this when only graphs that live in core/ have changed.
+backend-deploy-core:
+	cd backend && bash scripts/deploy-cf.sh core
+
+# Deploy the full 3-container stack + dispatcher in correct order.
+backend-deploy-all:
+	cd backend && bash scripts/deploy-cf.sh all
 
 db-generate:
 	pnpm db:generate
