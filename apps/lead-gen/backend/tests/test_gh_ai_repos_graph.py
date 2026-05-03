@@ -16,12 +16,31 @@ from leadgen_agent.gh_ai_repos_graph import (
     BUYER_PERSONAS,
     COMMERCIAL_INTENTS,
     PAIN_POINTS,
+    PRODUCT_CATEGORIES,
     RepoSellBrief,
     _render_markdown_brief,
+    _scan_product_surface,
     _score_repo,
     _summarize_commit_activity,
     _summarize_releases,
 )
+
+
+# Default Pydantic-valid payload — every test that constructs a RepoSellBrief
+# can override individual fields without re-typing the boilerplate.
+def _brief_payload(**overrides: object) -> dict:
+    base = {
+        "commercial_intent": "open_core",
+        "product_category": "agent_framework",
+        "buyer_persona": "ml_team_lead",
+        "pain_points": [],
+        "pitch_angle": "",
+        "why_now": "",
+        "confidence": 0.5,
+        "llm_score": 0.5,
+    }
+    base.update(overrides)
+    return base
 
 
 # --------------------------------------------------------------------------- #
@@ -50,32 +69,54 @@ def test_commit_activity_handles_empty_or_missing() -> None:
 def test_release_summary_counts_90d_and_computes_median_gap() -> None:
     now = datetime.now(timezone.utc)
     releases = [
-        {"published_at": (now - timedelta(days=10)).isoformat()},
-        {"published_at": (now - timedelta(days=40)).isoformat()},
-        {"published_at": (now - timedelta(days=80)).isoformat()},
-        {"published_at": (now - timedelta(days=200)).isoformat()},  # outside 90d
+        {
+            "published_at": (now - timedelta(days=10)).isoformat(),
+            "tag_name": "v0.4.0",
+            "body": "Adds streaming + sponsors badge.",
+        },
+        {"published_at": (now - timedelta(days=40)).isoformat(), "tag_name": "v0.3.0"},
+        {"published_at": (now - timedelta(days=80)).isoformat(), "tag_name": "v0.2.0"},
+        {"published_at": (now - timedelta(days=200)).isoformat(), "tag_name": "v0.1.0"},  # outside 90d
     ]
-    recent, median_gap, latest = _summarize_releases(releases)
+    recent, median_gap, latest, latest_tag, latest_notes = _summarize_releases(releases)
     assert recent == 3
     assert median_gap is not None and 30 <= median_gap <= 40 + 1
     assert latest is not None  # ISO string
+    assert latest_tag == "v0.4.0"
+    assert latest_notes is not None and "streaming" in latest_notes
 
 
 def test_release_summary_handles_missing_dates_and_empty() -> None:
-    assert _summarize_releases([]) == (0, None, None)
-    assert _summarize_releases(None) == (0, None, None)
+    assert _summarize_releases([]) == (0, None, None, None, None)
+    assert _summarize_releases(None) == (0, None, None, None, None)
     # Releases with no date fields fall through.
-    assert _summarize_releases([{"name": "v1"}]) == (0, None, None)
+    assert _summarize_releases([{"name": "v1"}]) == (0, None, None, None, None)
 
 
 def test_release_summary_single_release_has_no_gap() -> None:
     now = datetime.now(timezone.utc)
-    recent, median_gap, latest = _summarize_releases(
-        [{"published_at": (now - timedelta(days=5)).isoformat()}]
+    recent, median_gap, latest, tag, notes = _summarize_releases(
+        [{
+            "published_at": (now - timedelta(days=5)).isoformat(),
+            "tag_name": "v1.0.0",
+            "body": "First stable release.",
+        }]
     )
     assert recent == 1
     assert median_gap is None
     assert latest is not None
+    assert tag == "v1.0.0"
+    assert notes == "First stable release."
+
+
+def test_release_summary_caps_notes_at_1500_chars() -> None:
+    now = datetime.now(timezone.utc)
+    huge = "x" * 5000
+    _, _, _, _, notes = _summarize_releases(
+        [{"published_at": now.isoformat(), "tag_name": "v9", "body": huge}]
+    )
+    assert notes is not None
+    assert len(notes) == 1500
 
 
 # --------------------------------------------------------------------------- #
@@ -267,20 +308,18 @@ def test_score_clamped_to_unit_interval() -> None:
 
 
 def test_brief_drops_pain_points_outside_canonical_list() -> None:
-    brief = RepoSellBrief.model_validate({
-        "commercial_intent": "open_core",
-        "buyer_persona": "ml_team_lead",
-        "pain_points": [
+    brief = RepoSellBrief.model_validate(_brief_payload(
+        pain_points=[
             "hosting_cost",      # canonical → kept
             "Scaling",           # casing → kept
             "fine-tuning",       # dash → kept (normalized)
             "world_peace",       # off-list → dropped
         ],
-        "pitch_angle": "x",
-        "why_now": "y",
-        "confidence": 0.8,
-        "llm_score": 0.7,
-    })
+        pitch_angle="x",
+        why_now="y",
+        confidence=0.8,
+        llm_score=0.7,
+    ))
     assert set(brief.pain_points) <= set(PAIN_POINTS)
     assert "world_peace" not in brief.pain_points
     assert "hosting_cost" in brief.pain_points
@@ -289,15 +328,9 @@ def test_brief_drops_pain_points_outside_canonical_list() -> None:
 
 
 def test_brief_caps_pain_points_at_4() -> None:
-    brief = RepoSellBrief.model_validate({
-        "commercial_intent": "open_core",
-        "buyer_persona": "ml_team_lead",
-        "pain_points": list(PAIN_POINTS),  # all 10
-        "pitch_angle": "x",
-        "why_now": "y",
-        "confidence": 0.5,
-        "llm_score": 0.5,
-    })
+    brief = RepoSellBrief.model_validate(_brief_payload(
+        pain_points=list(PAIN_POINTS),  # all 10
+    ))
     assert len(brief.pain_points) <= 4
 
 
@@ -319,15 +352,10 @@ def test_brief_caps_pain_points_at_4() -> None:
     ],
 )
 def test_brief_coerces_confidence_and_score(raw: object, expected: float) -> None:
-    brief = RepoSellBrief.model_validate({
-        "commercial_intent": "open_core",
-        "buyer_persona": "ml_team_lead",
-        "pain_points": [],
-        "pitch_angle": "",
-        "why_now": "",
-        "confidence": raw,
-        "llm_score": raw,
-    })
+    brief = RepoSellBrief.model_validate(_brief_payload(
+        confidence=raw,
+        llm_score=raw,
+    ))
     assert brief.confidence == pytest.approx(expected, abs=1e-6)
     assert brief.llm_score == pytest.approx(expected, abs=1e-6)
 
@@ -336,26 +364,19 @@ def test_brief_rejects_off_list_literals() -> None:
     from pydantic import ValidationError
 
     with pytest.raises(ValidationError):
-        RepoSellBrief.model_validate({
-            "commercial_intent": "freemium_with_extras",  # not in Literal
-            "buyer_persona": "ml_team_lead",
-            "pain_points": [],
-            "pitch_angle": "",
-            "why_now": "",
-            "confidence": 0.5,
-            "llm_score": 0.5,
-        })
+        RepoSellBrief.model_validate(_brief_payload(
+            commercial_intent="freemium_with_extras",  # not in Literal
+        ))
 
     with pytest.raises(ValidationError):
-        RepoSellBrief.model_validate({
-            "commercial_intent": "open_core",
-            "buyer_persona": "data_scientist",  # not in Literal
-            "pain_points": [],
-            "pitch_angle": "",
-            "why_now": "",
-            "confidence": 0.5,
-            "llm_score": 0.5,
-        })
+        RepoSellBrief.model_validate(_brief_payload(
+            buyer_persona="data_scientist",  # not in Literal
+        ))
+
+    with pytest.raises(ValidationError):
+        RepoSellBrief.model_validate(_brief_payload(
+            product_category="ai_dust_collector",  # not in Literal
+        ))
 
 
 def test_brief_constants_are_self_consistent() -> None:
@@ -365,6 +386,105 @@ def test_brief_constants_are_self_consistent() -> None:
     schema = RepoSellBrief.model_json_schema()
     assert set(schema["properties"]["commercial_intent"]["enum"]) == set(COMMERCIAL_INTENTS)
     assert set(schema["properties"]["buyer_persona"]["enum"]) == set(BUYER_PERSONAS)
+    assert set(schema["properties"]["product_category"]["enum"]) == set(PRODUCT_CATEGORIES)
+
+
+# --------------------------------------------------------------------------- #
+# _scan_product_surface — homepage HTML probe
+# --------------------------------------------------------------------------- #
+
+
+def test_scan_product_surface_detects_pricing_signup_enterprise() -> None:
+    html = (
+        '<html><body>'
+        '<a href="/pricing">Pricing</a>'
+        '<a href="/sign-up">Sign up</a>'
+        '<a href="/enterprise">Enterprise</a>'
+        '<a href="/contact-sales">Talk to sales</a>'
+        '<a href="/docs">Docs</a>'
+        '<a href="/jobs">We are hiring</a>'
+        '</body></html>'
+    )
+    flags = _scan_product_surface(html, "https://acme.ai")
+    assert flags["has_pricing"] is True
+    assert flags["has_signup"] is True
+    assert flags["has_enterprise"] is True
+    assert flags["has_demo"] is True       # /contact-sales is a demo signal
+    assert flags["has_docs"] is True
+    assert flags["has_careers"] is True
+    assert flags["has_changelog"] is False
+    assert flags["homepage"] == "https://acme.ai"
+    # All five hits should appear in the dedup'd hits list.
+    assert "/pricing" in flags["hits"]
+    assert "/sign-up" in flags["hits"]
+
+
+def test_scan_product_surface_empty_html_yields_all_false() -> None:
+    flags = _scan_product_surface("", "https://example.com")
+    for key in (
+        "has_pricing", "has_signup", "has_login", "has_enterprise",
+        "has_demo", "has_docs", "has_changelog", "has_careers",
+    ):
+        assert flags[key] is False
+    assert flags["hits"] == []
+
+
+def test_scan_product_surface_case_insensitive() -> None:
+    # Substring match runs on lowercased haystack — uppercase still hits.
+    flags = _scan_product_surface("/PRICING", "https://x")
+    assert flags["has_pricing"] is True
+
+
+# --------------------------------------------------------------------------- #
+# _score_repo — product_surface + sponsors signals
+# --------------------------------------------------------------------------- #
+
+
+def test_product_surface_signals_boost_score() -> None:
+    base, _ = _score_repo(
+        _base_repo(),
+        org=None,
+        framework_focus=None,
+        last_seen_days_ago=None,
+    )
+    boosted, reasons = _score_repo(
+        {
+            **_base_repo(),
+            "product_surface": {
+                "has_pricing": True,    # +0.08
+                "has_signup": True,     # +0.05
+                "has_enterprise": True, # +0.05
+                "has_demo": True,       # +0.03
+                "has_careers": True,    # +0.02
+            },
+        },
+        org=None,
+        framework_focus=None,
+        last_seen_days_ago=None,
+    )
+    # +0.23 total
+    assert boosted >= base + 0.23 - 1e-6
+    assert any("/pricing" in r for r in reasons)
+    assert any("/enterprise" in r for r in reasons)
+
+
+def test_sponsors_enabled_boosts_score() -> None:
+    plain, _ = _score_repo(
+        _base_repo(owner_type="Organization"),
+        org={"public_members": 0, "blog": "", "twitter_username": "", "ai_repo_count": 0,
+             "sponsors_enabled": False},
+        framework_focus=None,
+        last_seen_days_ago=None,
+    )
+    sponsored, reasons = _score_repo(
+        _base_repo(owner_type="Organization"),
+        org={"public_members": 0, "blog": "", "twitter_username": "", "ai_repo_count": 0,
+             "sponsors_enabled": True},
+        framework_focus=None,
+        last_seen_days_ago=None,
+    )
+    assert sponsored >= plain + 0.03 - 1e-6
+    assert any("Sponsors" in r for r in reasons)
 
 
 # --------------------------------------------------------------------------- #
@@ -380,6 +500,7 @@ def test_markdown_brief_with_full_llm_output() -> None:
         "contributors_count": 18,
         "commits_4w": 33,
         "releases_90d": 2,
+        "latest_release_tag": "v0.4.0",
         "license": "Apache-2.0",
         "homepage": "https://acme.ai",
         "final_score": 0.78,
@@ -389,6 +510,7 @@ def test_markdown_brief_with_full_llm_output() -> None:
             "why_now": "Just shipped v0.4.",
             "buyer_persona": "platform_eng",
             "commercial_intent": "open_core",
+            "product_category": "agent_framework",
             "pain_points": ["eval_observability", "scaling"],
         },
         "org": {
@@ -397,16 +519,62 @@ def test_markdown_brief_with_full_llm_output() -> None:
             "twitter_username": "acmeai",
             "public_members": 12,
             "ai_repo_count": 5,
+            "sponsors_enabled": True,
         },
+        "product_surface": {
+            "has_pricing": True,
+            "has_signup": True,
+            "has_enterprise": True,
+            "has_demo": False,
+            "has_careers": True,
+        },
+        "maintainers": [
+            {
+                "login": "alice",
+                "name": "Alice Maintainer",
+                "company": "Acme AI",
+                "email": "alice@acme.ai",
+                "is_hireable": False,
+            },
+            {
+                "login": "bob",
+                "company": "Acme AI",
+                "twitter": "bobcodes",
+            },
+        ],
     })
     assert "Concrete pitch sentence" in md
     assert "Just shipped v0.4" in md
     assert "platform_eng" in md
     assert "open_core" in md
+    assert "agent_framework" in md
     assert "eval_observability" in md
     assert "Acme AI" in md
     assert "@acmeai" in md
     assert "33 commits" in md
+    # New product-surface block + maintainer block + sponsors line
+    assert "/pricing" in md
+    assert "/enterprise" in md
+    assert "GitHub Sponsors" in md
+    assert "@alice" in md and "alice@acme.ai" in md
+    assert "@bob" in md and "bobcodes on Twitter" in md
+
+
+def test_markdown_brief_uses_release_tag_for_why_now_when_llm_silent() -> None:
+    # No brief → why_now falls back. With latest_release_tag set, prefer it
+    # over commit count.
+    md = _render_markdown_brief({
+        "full_name": "acme/agent",
+        "html_url": "https://github.com/acme/agent",
+        "stars": 1500,
+        "contributors_count": 6,
+        "commits_4w": 12,
+        "releases_90d": 1,
+        "latest_release_tag": "v2.1.0",
+        "final_score": 0.45,
+        "score_reasons": ["x"],
+    })
+    assert "Just shipped v2.1.0" in md
 
 
 def test_markdown_brief_falls_back_when_no_llm_brief() -> None:

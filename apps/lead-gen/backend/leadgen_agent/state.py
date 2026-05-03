@@ -822,8 +822,10 @@ class GhAiReposState(TypedDict, total=False):
     active_repos: list[dict[str, Any]]   # after filter_active
     enriched_repos: list[dict[str, Any]] # after enrich_repo
     org_metadata: dict[str, Any]         # after enrich_orgs — keyed by owner_login
+    product_surfaces: dict[str, Any]     # after enrich_homepage — full_name → {has_pricing,…}
     existing_keys: dict[str, Any]        # after dedupe_vs_db — keyed by canonical_domain or "gh:full_name"
     scored_repos: list[dict[str, Any]]   # after score_heuristic, sorted desc
+    maintainers: dict[str, Any]          # after enrich_maintainers — full_name → list[contact]
     classifications: dict[str, Any]      # after classify_llm — keyed by full_name → RepoSellBrief
     final_repos: list[dict[str, Any]]    # after persist — blended score + brief, sorted desc
     # output
