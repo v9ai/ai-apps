@@ -16,12 +16,38 @@ import { ArrowLeftIcon } from "@radix-ui/react-icons";
 import NextLink from "next/link";
 import { useParams } from "next/navigation";
 
-const wm = (filename: string, width = 800) => {
-  if (!/\.(jpe?g|png)$/i.test(filename)) {
-    throw new Error(`Only JPG/PNG sources allowed, got: ${filename}`);
-  }
-  return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(filename)}?width=${width}`;
-};
+// Direct upload.wikimedia.org URLs (NOT Special:FilePath) so the CORS chain
+// stays clean — Special:FilePath returns 302 without Access-Control-Allow-Origin,
+// which causes browsers to reject crossorigin <img> loads needed for canvas export.
+// URLs were resolved once via `Special:FilePath?width=1200` and baked here.
+// "thumb" path = scaled rendition; non-"thumb" = original (used when source is
+// already ≤ requested width).
+const WM_URLS = {
+  flag:
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/Flag_of_Slovenia.svg/960px-Flag_of_Slovenia.svg.png",
+  coat:
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/Coat_of_arms_of_Slovenia.svg/960px-Coat_of_arms_of_Slovenia.svg.png",
+  dragon:
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/6/61/Dragon_on_Dragon_Bridge_%28cropped%29.jpg/1280px-Dragon_on_Dragon_Bridge_%28cropped%29.jpg",
+  triglav:
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Triglav.jpg/1280px-Triglav.jpg",
+  bled:
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7f/Bled_island.jpg/1280px-Bled_island.jpg",
+  predjama:
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/H%C3%B6hlenburg_Predjama_in_Slovenien.jpg/1280px-H%C3%B6hlenburg_Predjama_in_Slovenien.jpg",
+  licitar:
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Licitars2.jpg/1280px-Licitars2.jpg",
+  bee:
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/Apis_mellifera_carnica_worker_hive_entrance_3.jpg/1280px-Apis_mellifera_carnica_worker_hive_entrance_3.jpg",
+  lipizzan:
+    "https://upload.wikimedia.org/wikipedia/commons/b/bb/Lipica.jpg",
+  olm:
+    "https://upload.wikimedia.org/wikipedia/commons/f/f0/Proteus_anguinus_Postojnska_Jama_Slovenija.jpg",
+  flute:
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Divje_Babe_flute_%28Late_Pleistocene_flute%29.jpg/1280px-Divje_Babe_flute_%28Late_Pleistocene_flute%29.jpg",
+  freising:
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Freising_manuscript.jpg/1280px-Freising_manuscript.jpg",
+} as const;
 
 type ImgItem = {
   src: string;
@@ -33,7 +59,7 @@ type ImgItem = {
 
 const FLAG_IMAGES: ImgItem[] = [
   {
-    src: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/Flag_of_Slovenia.svg/960px-Flag_of_Slovenia.svg.png",
+    src: WM_URLS.flag,
     title: "Steagul Sloveniei",
     caption:
       "Trei dungi orizontale: alb, albastru, roșu. Pe partea stângă-sus apare stema cu Triglav, două linii ondulate (râurile/marea) și 3 stele aurii.",
@@ -41,7 +67,7 @@ const FLAG_IMAGES: ImgItem[] = [
     bg: "#ffffff",
   },
   {
-    src: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/Coat_of_arms_of_Slovenia.svg/960px-Coat_of_arms_of_Slovenia.svg.png",
+    src: WM_URLS.coat,
     title: "Stema Sloveniei",
     caption:
       "Vârful Triglav (alb) pe fond albastru, două linii ondulate (Marea Adriatică / râurile) și 3 stele aurii (preluate de la conții de Celje).",
@@ -52,55 +78,55 @@ const FLAG_IMAGES: ImgItem[] = [
 
 const SYMBOLS: ImgItem[] = [
   {
-    src: wm("Dragon_on_Dragon_Bridge_(cropped).jpg", 1200),
+    src: WM_URLS.dragon,
     title: "Dragonul Ljubljanei",
     caption:
       "Statuile de pe Podul Dragonilor (Zmajski most). Dragonul este simbolul orașului Ljubljana — apare pe stemă și pe steagul orașului.",
   },
   {
-    src: wm("Triglav.jpg", 1200),
+    src: WM_URLS.triglav,
     title: "Muntele Triglav (2.864 m)",
     caption:
       "Cel mai înalt munte din Slovenia, cu 3 vârfuri caracteristice. Apare pe stemă, pe bancnote, pe moneda de 50 cenți și pe tricoul echipei naționale de fotbal.",
   },
   {
-    src: wm("Bled_island.jpg", 1200),
+    src: WM_URLS.bled,
     title: "Lacul Bled",
     caption:
       "Insula cu bisericuța (Cerkev Marijinega vnebovzetja) în mijlocul lacului — cea mai fotografiată imagine a Sloveniei.",
   },
   {
-    src: wm("Höhlenburg_Predjama_in_Slovenien.jpg", 1200),
+    src: WM_URLS.predjama,
     title: "Castelul Predjama",
     caption:
       "Castel construit într-o peșteră, sub o stâncă de 123 m. Cel mai mare castel-peșteră din lume (Cartea Recordurilor).",
   },
   {
-    src: wm("Licitars2.jpg", 1200),
+    src: WM_URLS.licitar,
     title: "Licitarsko srce",
     caption:
       "Inima roșie din turtă dulce decorată — simbol tradițional sloven și croat, oferită ca semn de prietenie sau dragoste.",
   },
   {
-    src: wm("Apis_mellifera_carnica_worker_hive_entrance_3.jpg", 1200),
+    src: WM_URLS.bee,
     title: "Albina carniolică",
     caption:
       "Apis mellifera carnica — rasa autohtonă de albine. Slovenia a propus, în 2018, instituirea Zilei Mondiale a Albinelor (20 mai).",
   },
   {
-    src: wm("Lipica.jpg", 1200),
+    src: WM_URLS.lipizzan,
     title: "Calul Lipițan",
     caption:
       "Rasă cabalină originară din Lipica (Slovenia), crescută din 1580. Caii albi sunt celebri pentru spectacolele Școlii Spaniole de Călărie din Viena.",
   },
   {
-    src: wm("Proteus_anguinus_Postojnska_Jama_Slovenija.jpg", 1200),
+    src: WM_URLS.olm,
     title: "Proteul (olm) — „pestișorul-dragon”",
     caption:
       "Proteus anguinus — amfibian orb care trăiește exclusiv în peșterile carstice (ex. Postojna). Trăiește peste 100 de ani și poate sta nemâncat 10 ani.",
   },
   {
-    src: wm("Divje_Babe_flute_(Late_Pleistocene_flute).jpg", 1200),
+    src: WM_URLS.flute,
     title: "Flautul de la Divje Babe",
     caption:
       "Os de urs cu găuri, vechi de ~60.000 de ani — considerat cel mai vechi instrument muzical din lume. Descoperit într-o peșteră din vestul Sloveniei.",
@@ -108,7 +134,7 @@ const SYMBOLS: ImgItem[] = [
 ];
 
 const FREISING: ImgItem = {
-  src: wm("Freising_manuscript.jpg", 1200),
+  src: WM_URLS.freising,
   title: "Manuscrisele de la Freising (sec. X–XI)",
   caption:
     "Cel mai vechi text scris în limba slovenă (și unul dintre cele mai vechi texte slave cu litere latine). Păstrat în biblioteca din München.",
