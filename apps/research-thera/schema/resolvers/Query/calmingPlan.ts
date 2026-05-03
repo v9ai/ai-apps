@@ -1,5 +1,6 @@
 import type { QueryResolvers } from "./../../types.generated";
 import { sql } from "@/src/db/neon";
+import { hasFamilyMemberAccess } from "@/src/db";
 
 export const calmingPlan: NonNullable<QueryResolvers['calmingPlan']> = async (
   _parent,
@@ -13,11 +14,13 @@ export const calmingPlan: NonNullable<QueryResolvers['calmingPlan']> = async (
     SELECT id, family_member_id, language, plan_json, plan_markdown,
            sources_json, safety_notes, generated_at
     FROM calming_plans
-    WHERE id = ${args.id} AND user_id = ${userEmail}
+    WHERE id = ${args.id}
     LIMIT 1
   `;
   if (rows.length === 0) return null;
   const r: any = rows[0];
+  const allowed = await hasFamilyMemberAccess(r.family_member_id as number, userEmail);
+  if (!allowed) return null;
 
   return {
     id: r.id as number,

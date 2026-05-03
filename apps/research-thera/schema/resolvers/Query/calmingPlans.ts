@@ -1,6 +1,6 @@
 import type { QueryResolvers } from "./../../types.generated";
 import { sql } from "@/src/db/neon";
-import { getFamilyMember } from "@/src/db";
+import { getFamilyMember, hasFamilyMemberAccess } from "@/src/db";
 
 export const calmingPlans: NonNullable<QueryResolvers['calmingPlans']> = async (
   _parent,
@@ -11,13 +11,15 @@ export const calmingPlans: NonNullable<QueryResolvers['calmingPlans']> = async (
   if (!userEmail) throw new Error("Authentication required");
 
   const member = await getFamilyMember(args.familyMemberId);
-  if (!member || member.userId !== userEmail) return [];
+  if (!member) return [];
+  const allowed = await hasFamilyMemberAccess(args.familyMemberId, userEmail);
+  if (!allowed) return [];
 
   const rows = await sql`
     SELECT id, family_member_id, language, plan_json, plan_markdown,
            sources_json, safety_notes, generated_at
     FROM calming_plans
-    WHERE family_member_id = ${args.familyMemberId} AND user_id = ${userEmail}
+    WHERE family_member_id = ${args.familyMemberId} AND user_id = ${member.userId}
     ORDER BY generated_at DESC
   `;
 

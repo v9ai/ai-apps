@@ -71,10 +71,18 @@ _PEDIGREE_BIO_RE = re.compile(
     r"\b("
     r"apache\s+(parquet|impala|spark|kafka|airflow|arrow|iceberg|hudi|flink|cassandra|hbase)|"
     r"founder\s+of\s+apache|"
-    r"(former|ex-)\s*(google|apple|meta|microsoft|nvidia|amazon|openai|anthropic|databricks|snowflake)|"
+    # Tense-flexible: "former", "formerly", "ex-" → followed by a Big Tech / acq target.
+    r"former(?:ly)?\s*(?:at\s+)?(google|apple|meta|microsoft|nvidia|amazon|aws|openai|anthropic|databricks|snowflake|facebook|netflix|stripe|uber)|"
+    r"ex[- ](google|apple|meta|microsoft|nvidia|amazon|aws|openai|anthropic|databricks|snowflake|facebook)|"
+    # Past-exit signals — strongly correlates with sophisticated founder.
+    r"ex[- ]founder|"
+    r"acq(?:uired)?\s+by\s+@?\w+|"          # "acq by @confluentinc"
+    r"acquisition\s+by\s+@?\w+|"
+    # Research labs.
     r"(deepmind|fair|google\s+brain|brain\s+team)|"
+    # Accelerators / VC EIR labels.
     r"yc\s+[sw]\d{2}\b|"
-    r"sutter\s+hill|sequoia|a16z|founders\s+fund"
+    r"sutter\s+hill|sequoia|a16z|founders\s+fund|coatue\s+|kleiner\s+perkins"
     r")",
     re.IGNORECASE,
 )
@@ -108,6 +116,7 @@ class LeadResearchBrief(BaseModel):
     recent_fundraise: str = Field(default="", max_length=400)
     recent_launch: str = Field(default="", max_length=400)
     team_size_signal: str = Field(default="", max_length=200)
+    pedigree_signal: str = Field(default="", max_length=400)
     icp_fit_summary: str = Field(default="", max_length=800)
     pitch_one_liner: str = Field(default="", max_length=320)
     decision_makers: list[DecisionMaker] = Field(default_factory=list, max_length=5)
@@ -522,6 +531,7 @@ _SYNTHESIZE_SYSTEM = (
     '  "recent_fundraise": "1 sentence — which round, $ amount, lead investor, date. Empty string if no evidence.",\n'
     '  "recent_launch":    "1 sentence — most recent product/version launch with date. Empty if none found.",\n'
     '  "team_size_signal": "1 sentence — what the careers/about pages reveal about team size + roles being hired. Empty if no data.",\n'
+    '  "pedigree_signal":  "1-2 sentences — explicit founder pedigree signals: famous OSS projects they created (Apache X, etc.), past Big-Tech roles, prior exits, VC EIR positions, accelerator (YC) batches. Pull from contributor bios AND Brave snippets. Empty if no notable pedigree found.",\n'
     '  "icp_fit_summary":  "2-3 sentences — why this org is a credible B2B sales lead given the user sells AI-infra/observability/hosting tools.",\n'
     '  "pitch_one_liner":  "≤ 240 chars — paste-ready first sentence of a cold email. Reference one specific thing from the evidence.",\n'
     '  "decision_makers": [\n'
@@ -631,17 +641,22 @@ def _evaluate_icp(
 ) -> str | None:
     """Return a short disqualifier reason or None.
 
-    Three layered checks on what the deep pass already gathered:
+    Four layered checks on what the deep pass already gathered:
     - LLM extracted a recent_fundraise → disqualified (funded orgs have
       sophisticated vendor selection)
+    - LLM extracted a pedigree_signal → disqualified (founder is too senior)
     - Top-3 contributor bios mention famous-OSS-project / FAANG / known VC
-      → too pedigreed
+      via regex (cheap secondary catch when LLM missed it)
     - >=2 partnership/integration mentions in Brave hits → already in
       visible BD/PR motion
     """
     fundraise = (brief.get("recent_fundraise") or "").strip()
     if fundraise:
         return f"funded: {fundraise[:160]}"
+
+    pedigree_llm = (brief.get("pedigree_signal") or "").strip()
+    if pedigree_llm:
+        return f"pedigree: {pedigree_llm[:160]}"
 
     for c in contributors[:3]:
         bio = ((c.get("bio") or "") + " " + (c.get("company") or "")).strip()

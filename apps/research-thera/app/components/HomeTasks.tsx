@@ -8,8 +8,8 @@ import {
   useGetUserPreferencesQuery,
   TaskStatus,
 } from "@/app/__generated__/hooks";
-import { TaskList } from "../tasks/components/TaskList";
-import type { Task } from "../tasks/components/types";
+import { TaskList } from "@/app/(constrained)/tasks/components/TaskList";
+import type { Task } from "@/app/(constrained)/tasks/components/types";
 
 export function HomeTasks() {
   const { data: prefsData } = useGetUserPreferencesQuery();

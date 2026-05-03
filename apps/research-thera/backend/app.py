@@ -216,7 +216,12 @@ async def lifespan(app: FastAPI):
     url = os.environ.get("NEON_DATABASE_URL")
     if url:
         neon.POOL = AsyncConnectionPool(
-            conninfo=url, min_size=2, max_size=10, timeout=30, open=False
+            conninfo=url,
+            min_size=2,
+            max_size=10,
+            timeout=30,
+            check=AsyncConnectionPool.check_connection,
+            open=False,
         )
         await neon.POOL.open()
     try:

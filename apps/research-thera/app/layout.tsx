@@ -1,7 +1,7 @@
 import "@radix-ui/themes/styles.css";
-import "./tasks/tasks.css";
+import "./(constrained)/tasks/tasks.css";
 import type { Metadata } from "next";
-import { Box, Container, Theme } from "@radix-ui/themes";
+import { Box, Theme } from "@radix-ui/themes";
 import { ApolloProvider } from "./providers/ApolloProvider";
 import { Header } from "./components/Header";
 import { SIDEBAR_WIDTH } from "./components/sidebar-constants";
@@ -41,9 +41,7 @@ export default function RootLayout({
               }}
               pt={{ initial: "0", md: "5" }}
             >
-              <Container size="3" pb="6" px={{ initial: "3", md: "5" }}>
-                {children}
-              </Container>
+              {children}
             </Box>
             <style>{`
               @media (min-width: 768px) {
