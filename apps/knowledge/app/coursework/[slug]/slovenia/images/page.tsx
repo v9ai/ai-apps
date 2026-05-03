@@ -31,7 +31,7 @@ type ImgItem = {
 
 const FLAG_IMAGES: ImgItem[] = [
   {
-    src: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/Flag_of_Slovenia.svg/1200px-Flag_of_Slovenia.svg.png",
+    src: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/Flag_of_Slovenia.svg/960px-Flag_of_Slovenia.svg.png",
     title: "Steagul Sloveniei",
     caption:
       "Trei dungi orizontale: alb, albastru, roșu. Pe partea stângă-sus apare stema cu Triglav, două linii ondulate (râurile/marea) și 3 stele aurii.",
@@ -39,7 +39,7 @@ const FLAG_IMAGES: ImgItem[] = [
     bg: "#ffffff",
   },
   {
-    src: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/Coat_of_arms_of_Slovenia.svg/800px-Coat_of_arms_of_Slovenia.svg.png",
+    src: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/Coat_of_arms_of_Slovenia.svg/960px-Coat_of_arms_of_Slovenia.svg.png",
     title: "Stema Sloveniei",
     caption:
       "Vârful Triglav (alb) pe fond albastru, două linii ondulate (Marea Adriatică / râurile) și 3 stele aurii (preluate de la conții de Celje).",
