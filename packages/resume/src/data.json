@@ -187,7 +187,7 @@
       {
         "id": "1",
         "name": "Agentic Lead Gen",
-        "description": "Autonomous B2B lead generation platform with a 5-stage agentic pipeline (Discovery → Enrichment → Contact Hunter + QA Auditor → Outreach Composer), type-safe GraphQL API on Neon Postgres, 51 LangGraph graphs running on Cloudflare Workers Containers with AsyncPostgresSaver checkpointing, Candle/Metal BGE-M3 embeddings on the local hot path (zero outbound calls), and a 7-rule strategy enforcer that gates every prompt/model change.",
+        "description": "Autonomous B2B lead generation platform with a 5-stage agentic pipeline (Discovery → Enrichment → Contact Hunter + QA Auditor → Outreach Composer), type-safe GraphQL API on Neon Postgres, 51 LangGraph graphs running on Cloudflare Workers Containers with AsyncPostgresSaver checkpointing, local Candle/Metal embeddings on the hot path (zero outbound calls), and a 7-rule strategy enforcer that gates every prompt/model change.",
         "githubUrl": "https://github.com/v9ai/agentic-lead-gen",
         "websiteUrl": "https://agenticleadgen.xyz/",
         "highlights": [
@@ -195,12 +195,11 @@
           "Apollo Server 5 GraphQL: 23 resolvers, 18 DataLoaders (2 ms batch), Drizzle ORM + Neon Postgres, per-mutation admin guards.",
           "51 LangGraph graphs (5 core + 46 specialized): same Python in dev (in-memory) and on Cloudflare Workers Containers (FastAPI + AsyncPostgresSaver on Neon).",
           "DeepSeek cheap-first routing: v4-flash for summary nodes, v4-pro reasoner (thinking + reasoning_effort=high) for value-metric / pricing / GTM nodes; per-node cost telemetry.",
-          "Candle/Metal BGE-M3 (1024-dim) embeddings via a Rust crate, stored as pgvector with HNSW; product × company top-K via a single SQL JOIN.",
+          "Local Candle/Metal embeddings (all-MiniLM-L6-v2, 384-dim) via a Rust crate, stored as pgvector with HNSW cosine — zero outbound embedding calls on the hot path.",
           "Contact-tier LoRA: Qwen2.5-1.5B-Instruct + custom adapter, Q4_K_M GGUF on llama-cpp on a free HuggingFace Space, gated by an authority_score ≥ 0.5 prefilter (~10× compute cut).",
           "Aho-Corasick company classifier (O(n+m+z) single linear pass) replaces O(n × k) substring scans and removes an LLM call from the hot path; DeepSeek v4-flash JSON-mode fallback.",
           "Hand-tuned ML: 12-feature gradient-boosted stumps (sub-ms); Hawkes lead temperature with O(n) recursive form + 1024-entry exp-decay LUT; Thompson-sampling send-time over 168 Beta posteriors; Kaplan-Meier follow-up cadence.",
           "Bidirectional email model: separate outbound (Resend with In-Reply-To + References) and inbound (HMAC-SHA256-verified Svix webhook, no SDK) logs; CPN forwarding alias on one MX catch-all — zero per-contact DNS.",
-          "6-channel GitHub recruitment crawler in Rust (15-pass bio search, stargazers, contributors, org members, follower graph, seed domains); 50+ fields per candidate in one GraphQL query; 9-component rising-score.",
           "7-rule strategy enforcer (eval ≥80%, grounding BLOCKING on un-schemaed LLM calls, taxonomy, multi-model, spec, observability, HITL); session-end hook scores Claude Code transcripts and queues low scorers for self-improvement."
         ]
       },

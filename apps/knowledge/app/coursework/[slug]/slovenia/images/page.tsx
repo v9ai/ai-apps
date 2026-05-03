@@ -445,29 +445,23 @@ function GalleryCard({ item }: { item: ImgItem }) {
   return (
     <Card>
       <Flex direction="column" gap="2">
-        <Box style={{ position: "relative" }}>
-          <GalleryImage item={item} />
-          <Box style={{ position: "absolute", top: 8, right: 8 }}>
-            <IconButton
-              size="2"
-              variant="solid"
-              color="gray"
-              highContrast
-              onClick={onDownload}
-              disabled={busy}
-              aria-label={`Descarcă „${item.title}” ca JPG`}
-              title="Descarcă ca JPG (imagine + text)"
-            >
-              <DownloadIcon size={16} />
-            </IconButton>
-          </Box>
-        </Box>
+        <GalleryImage item={item} />
         <Text size="3" weight="bold" as="div">
           {item.title}
         </Text>
         <Text size="2" color="gray" as="p">
           {item.caption}
         </Text>
+        <Button
+          variant="soft"
+          color="teal"
+          onClick={onDownload}
+          disabled={busy}
+          mt="1"
+        >
+          <DownloadIcon size={14} />
+          {busy ? "Se generează…" : "Descarcă JPG (imagine + text)"}
+        </Button>
         {err && (
           <Text size="1" color="red">
             {err}
@@ -480,10 +474,14 @@ function GalleryCard({ item }: { item: ImgItem }) {
 
 function PhrasesCard() {
   const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
   const onDownload = async () => {
     setBusy(true);
+    setErr(null);
     try {
       await downloadPhrasesAsJpg();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Descărcare eșuată");
     } finally {
       setBusy(false);
     }
@@ -491,25 +489,13 @@ function PhrasesCard() {
 
   return (
     <Card>
-      <Flex justify="between" align="start" gap="2" mb="2">
-        <Heading size="4">Cuvinte de bază</Heading>
-        <IconButton
-          size="2"
-          variant="solid"
-          color="gray"
-          highContrast
-          onClick={onDownload}
-          disabled={busy}
-          aria-label="Descarcă „Cuvinte de bază” ca JPG"
-          title="Descarcă ca JPG"
-        >
-          <DownloadIcon size={16} />
-        </IconButton>
-      </Flex>
+      <Heading size="4" mb="2">
+        Cuvinte de bază
+      </Heading>
       <Text size="1" color="gray" mb="3" as="p">
         De memorat pentru prezentare — repetați cu pronunția:
       </Text>
-      <Flex direction="column" gap="2">
+      <Flex direction="column" gap="2" mb="3">
         {PHRASES.map((p) => (
           <Flex key={p.sl} align="baseline" gap="2" wrap="wrap">
             <Text size="3" weight="bold" style={{ minWidth: 140 }}>
@@ -526,13 +512,45 @@ function PhrasesCard() {
           </Flex>
         ))}
       </Flex>
+      <Button variant="soft" color="teal" onClick={onDownload} disabled={busy}>
+        <DownloadIcon size={14} />
+        {busy ? "Se generează…" : "Descarcă JPG"}
+      </Button>
+      {err && (
+        <Text size="1" color="red" mt="1" as="div">
+          {err}
+        </Text>
+      )}
     </Card>
   );
 }
 
+const ALL_IMAGE_ITEMS: ImgItem[] = [...FLAG_IMAGES, ...SYMBOLS, FREISING];
+
 export default function SloveniaImagesPage() {
   const params = useParams<{ slug: string }>();
   const slug = params?.slug ?? "bogdan";
+
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState(0);
+
+  const downloadAll = async () => {
+    setBulkBusy(true);
+    setBulkProgress(0);
+    try {
+      for (let i = 0; i < ALL_IMAGE_ITEMS.length; i++) {
+        await downloadCardAsJpg(ALL_IMAGE_ITEMS[i]!);
+        setBulkProgress(i + 1);
+        await new Promise((r) => setTimeout(r, 250));
+      }
+      await downloadPhrasesAsJpg();
+      setBulkProgress(ALL_IMAGE_ITEMS.length + 1);
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
+  const totalCount = ALL_IMAGE_ITEMS.length + 1;
 
   return (
     <Container size="3" py="8" className="cw-container">
@@ -555,11 +573,29 @@ export default function SloveniaImagesPage() {
         Imagini de referință de înaltă calitate pentru standul Slovenia: steag,
         simboluri și limbă.
       </Text>
-      <Text color="gray" size="2" mb="6" as="p">
-        Apăsați butonul ⬇ de pe fiecare card pentru a descărca un singur fișier
-        JPG (format A4, ~1240×1754 px) care conține atât imaginea, cât și textul
-        cu titlul și descrierea — gata de tipărit.
+      <Text color="gray" size="2" mb="4" as="p">
+        Apăsați butonul „Descarcă JPG” de pe fiecare card pentru a obține un
+        singur fișier JPG (format A4, ~1240×1754 px) care conține atât imaginea,
+        cât și textul cu titlul și descrierea — gata de tipărit.
       </Text>
+
+      <Flex gap="3" align="center" mb="6" wrap="wrap">
+        <Button
+          variant="solid"
+          color="teal"
+          size="3"
+          onClick={downloadAll}
+          disabled={bulkBusy}
+        >
+          <DownloadIcon size={16} />
+          {bulkBusy
+            ? `Se generează… (${bulkProgress}/${totalCount})`
+            : `Descarcă toate cardurile (${totalCount} JPG-uri)`}
+        </Button>
+        <Text size="1" color="gray">
+          Browser-ul va cere o singură dată permisiunea pentru descărcări multiple — acceptați.
+        </Text>
+      </Flex>
 
       {/* Steag și stemă */}
       <Heading size="5" mb="3" mt="2">
