@@ -232,15 +232,73 @@ function triggerDownload(canvas: HTMLCanvasElement, filename: string) {
   );
 }
 
-// Composes a single A4-portrait canvas: image on top, white panel with title + caption below.
+// Draws a closed cloud-like (scalloped) outline around the rectangle (x, y, w, h).
+// The bumps face outward, so the rectangle is fully inside the cloud silhouette.
+// Renders as a dashed gray "cut here" line.
+function drawCloudBorder(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+) {
+  const targetLobe = 60; // approximate lobe width
+  const lobesH = Math.max(4, Math.round(w / targetLobe));
+  const lobesV = Math.max(4, Math.round(h / targetLobe));
+  const stepX = w / lobesH;
+  const stepY = h / lobesV;
+  const rx = stepX / 2;
+  const ry = stepY / 2;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+
+  // Top edge (left → right), bumps facing up
+  for (let i = 0; i < lobesH; i++) {
+    const cx = x + rx + i * stepX;
+    ctx.arc(cx, y, rx, Math.PI, 0, true);
+  }
+  // Right edge (top → bottom), bumps facing right
+  for (let i = 0; i < lobesV; i++) {
+    const cy = y + ry + i * stepY;
+    ctx.arc(x + w, cy, ry, -Math.PI / 2, Math.PI / 2, false);
+  }
+  // Bottom edge (right → left), bumps facing down
+  for (let i = lobesH - 1; i >= 0; i--) {
+    const cx = x + rx + i * stepX;
+    ctx.arc(cx, y + h, rx, 0, Math.PI, false);
+  }
+  // Left edge (bottom → top), bumps facing left
+  for (let i = lobesV - 1; i >= 0; i--) {
+    const cy = y + ry + i * stepY;
+    ctx.arc(x, cy, ry, Math.PI / 2, -Math.PI / 2, false);
+  }
+
+  ctx.closePath();
+  ctx.setLineDash([12, 8]);
+  ctx.lineWidth = 2.5;
+  ctx.strokeStyle = "#94a3b8";
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+}
+
+// Composes a single A4-portrait canvas: image + title + caption inside a
+// dashed cloud-shaped cut-out border (so kids can scissor it out of the page).
 async function composeCardCanvas(item: ImgItem): Promise<HTMLCanvasElement> {
   const img = await loadImg(item.src);
 
   // A4 @ ~150dpi → 1240×1754
   const W = 1240;
   const H = 1754;
-  const PAD = 70;
-  const IMG_AREA_H = 1100;
+  const FRAME = 90; // distance from canvas edge to the cloud-border path
+  const INNER_PAD = 35; // padding from cloud border to content
+  const CONTENT_X = FRAME + INNER_PAD;
+  const CONTENT_Y = FRAME + INNER_PAD;
+  const CONTENT_W = W - 2 * (FRAME + INNER_PAD);
+  const CONTENT_H = H - 2 * (FRAME + INNER_PAD);
+  const IMG_AREA_H = 900;
   const IMG_BG = item.bg ?? "#f3f3f3";
 
   const canvas = document.createElement("canvas");
@@ -248,62 +306,73 @@ async function composeCardCanvas(item: ImgItem): Promise<HTMLCanvasElement> {
   canvas.height = H;
   const ctx = canvas.getContext("2d")!;
 
-  // Background
+  // White background everywhere
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, W, H);
 
-  // Image area background (for letterbox edges)
+  // Image area background (letterbox color)
   ctx.fillStyle = IMG_BG;
-  ctx.fillRect(0, 0, W, IMG_AREA_H);
+  ctx.fillRect(CONTENT_X, CONTENT_Y, CONTENT_W, IMG_AREA_H);
 
-  // Letterbox-fit the photo
+  // Letterbox-fit the photo into the image area
   const fit = item.fit ?? "cover";
   const sw = img.naturalWidth;
   const sh = img.naturalHeight;
   let dw: number, dh: number, dx: number, dy: number;
   if (fit === "cover") {
-    const ratio = Math.max(W / sw, IMG_AREA_H / sh);
+    const ratio = Math.max(CONTENT_W / sw, IMG_AREA_H / sh);
     dw = sw * ratio;
     dh = sh * ratio;
-    dx = (W - dw) / 2;
-    dy = (IMG_AREA_H - dh) / 2;
+    dx = CONTENT_X + (CONTENT_W - dw) / 2;
+    dy = CONTENT_Y + (IMG_AREA_H - dh) / 2;
     ctx.save();
     ctx.beginPath();
-    ctx.rect(0, 0, W, IMG_AREA_H);
+    ctx.rect(CONTENT_X, CONTENT_Y, CONTENT_W, IMG_AREA_H);
     ctx.clip();
     ctx.drawImage(img, dx, dy, dw, dh);
     ctx.restore();
   } else {
-    const ratio = Math.min(W / sw, IMG_AREA_H / sh);
+    const ratio = Math.min(CONTENT_W / sw, IMG_AREA_H / sh);
     dw = sw * ratio;
     dh = sh * ratio;
-    dx = (W - dw) / 2;
-    dy = (IMG_AREA_H - dh) / 2;
+    dx = CONTENT_X + (CONTENT_W - dw) / 2;
+    dy = CONTENT_Y + (IMG_AREA_H - dh) / 2;
     ctx.drawImage(img, dx, dy, dw, dh);
   }
 
-  // Divider line
+  // Divider line under photo
   ctx.strokeStyle = "#d4d4d4";
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(PAD, IMG_AREA_H);
-  ctx.lineTo(W - PAD, IMG_AREA_H);
+  ctx.moveTo(CONTENT_X, CONTENT_Y + IMG_AREA_H);
+  ctx.lineTo(CONTENT_X + CONTENT_W, CONTENT_Y + IMG_AREA_H);
   ctx.stroke();
 
   // Title
   ctx.fillStyle = "#0f172a";
   ctx.textBaseline = "top";
   ctx.font = "bold 56px -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif";
-  const titleLines = wrapLines(ctx, item.title, W - 2 * PAD);
-  let y = IMG_AREA_H + 60;
-  y = drawLines(ctx, titleLines, PAD, y, 68);
+  const titleLines = wrapLines(ctx, item.title, CONTENT_W);
+  let y = CONTENT_Y + IMG_AREA_H + 50;
+  y = drawLines(ctx, titleLines, CONTENT_X, y, 68);
 
   // Caption
   y += 22;
   ctx.fillStyle = "#334155";
   ctx.font = "34px -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif";
-  const captionLines = wrapLines(ctx, item.caption, W - 2 * PAD);
-  drawLines(ctx, captionLines, PAD, y, 46);
+  const captionLines = wrapLines(ctx, item.caption, CONTENT_W);
+  drawLines(ctx, captionLines, CONTENT_X, y, 46);
+
+  // Cloud-shaped cut border, drawn LAST so it sits on top of all content
+  drawCloudBorder(ctx, FRAME, FRAME, W - 2 * FRAME, H - 2 * FRAME);
+
+  // Tiny "✂ decupați" hint above the top-left corner of the border
+  ctx.fillStyle = "#94a3b8";
+  ctx.font = "italic 22px -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif";
+  ctx.fillText("✂  decupați pe linia punctată", FRAME, FRAME - 50);
+
+  // Suppress unused-var warning for CONTENT_H
+  void CONTENT_H;
 
   return canvas;
 }
@@ -313,11 +382,14 @@ async function downloadCardAsJpg(item: ImgItem) {
   triggerDownload(canvas, `slovenia-${SLUG(item.title)}.jpg`);
 }
 
-// Composes the "Cuvinte de bază" phrases canvas: just typography, no photo.
+// Composes the "Cuvinte de bază" phrases canvas: just typography, no photo,
+// with the same dashed cloud-shaped cut-out border as the photo cards.
 function composePhrasesCanvas(): HTMLCanvasElement {
   const W = 1240;
   const H = 1754;
-  const PAD = 90;
+  const FRAME = 90;
+  const INNER_PAD = 35;
+  const PAD = FRAME + INNER_PAD; // 125
 
   const canvas = document.createElement("canvas");
   canvas.width = W;
@@ -327,43 +399,54 @@ function composePhrasesCanvas(): HTMLCanvasElement {
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, W, H);
 
-  // Slovenian flag stripe down the left edge as decor
-  const stripeW = 36;
+  // Slovenian flag stripe down the left edge of the content area
+  const stripeX = PAD - 25;
+  const stripeW = 18;
+  const stripeTop = PAD;
+  const stripeH = H - 2 * PAD;
   ctx.fillStyle = "#ffffff";
-  ctx.fillRect(0, 0, stripeW, H / 3);
+  ctx.fillRect(stripeX, stripeTop, stripeW, stripeH / 3);
   ctx.fillStyle = "#0b4ea2";
-  ctx.fillRect(0, H / 3, stripeW, H / 3);
+  ctx.fillRect(stripeX, stripeTop + stripeH / 3, stripeW, stripeH / 3);
   ctx.fillStyle = "#c8102e";
-  ctx.fillRect(0, (2 * H) / 3, stripeW, H / 3);
+  ctx.fillRect(stripeX, stripeTop + (2 * stripeH) / 3, stripeW, stripeH / 3);
 
   // Title
   ctx.fillStyle = "#0f172a";
   ctx.textBaseline = "top";
   ctx.font = "bold 64px -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif";
-  ctx.fillText("Cuvinte de bază în slovenă", PAD, 110);
+  ctx.fillText("Cuvinte de bază în slovenă", PAD + 30, PAD + 20);
 
   ctx.fillStyle = "#475569";
   ctx.font = "italic 28px -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif";
-  ctx.fillText("De memorat pentru prezentare — repetați cu pronunția", PAD, 200);
+  ctx.fillText("De memorat pentru prezentare — repetați cu pronunția", PAD + 30, PAD + 110);
 
   // Phrases
-  let y = 290;
+  let y = PAD + 200;
   for (const p of PHRASES) {
     ctx.fillStyle = "#0b4ea2";
     ctx.font = "bold 44px -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif";
-    ctx.fillText(p.sl, PAD, y);
+    ctx.fillText(p.sl, PAD + 30, y);
 
     ctx.fillStyle = "#0f172a";
     ctx.font = "32px -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif";
-    ctx.fillText(`→  ${p.ro}`, PAD + 360, y + 8);
+    ctx.fillText(`→  ${p.ro}`, PAD + 30 + 360, y + 8);
 
     if (p.ipa) {
       ctx.fillStyle = "#94a3b8";
       ctx.font = "italic 26px -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif";
-      ctx.fillText(p.ipa, PAD + 760, y + 12);
+      ctx.fillText(p.ipa, PAD + 30 + 760, y + 12);
     }
     y += 80;
   }
+
+  // Cloud-shaped cut border on top of content
+  drawCloudBorder(ctx, FRAME, FRAME, W - 2 * FRAME, H - 2 * FRAME);
+
+  // Cut hint
+  ctx.fillStyle = "#94a3b8";
+  ctx.font = "italic 22px -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif";
+  ctx.fillText("✂  decupați pe linia punctată", FRAME, FRAME - 50);
 
   return canvas;
 }
