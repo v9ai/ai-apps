@@ -80,13 +80,18 @@ DEFAULT_TOPICS: tuple[str, ...] = (
     "multimodal",
 )
 
-DEFAULT_MIN_STARS = 1000
+DEFAULT_MIN_STARS = 200             # broaden floor; size caps do the filtering
+DEFAULT_MAX_STARS = 10000           # drop megaprojects (mature sales motion)
 DEFAULT_ACTIVE_WITHIN_DAYS = 30
 DEFAULT_PER_TOPIC_LIMIT = 25
 DEFAULT_MAX_REPOS = 60
 DEFAULT_FRESHNESS_DAYS = 14
 DEFAULT_CLASSIFY_TOP_N = 20
 DEFAULT_HEURISTIC_FLOOR = 0.30
+# Pre-sales-team filters: targets indie/early-stage orgs.
+DEFAULT_MAX_ORG_MEMBERS = 15
+DEFAULT_MAX_ORG_PUBLIC_REPOS = 50
+DEFAULT_MAX_ORG_TOTAL_STARS = 30000
 
 # Concurrency for the deep deepseek-pro classification fan-out. Matches
 # lead_papers_graph's LEADMATCH_CONCURRENCY default — slow enough to stay
@@ -138,13 +143,6 @@ _AWESOME_NAME_RE = re.compile(
 )
 
 _SLUG_RE = re.compile(r"[^a-z0-9]+")
-
-COMMERCIAL_HINTS: tuple[str, ...] = (
-    "pricing", "enterprise", "saas", "cloud", "managed", "hosted", "platform",
-    "api key", "billing", "sign up", "signup", "free tier", "subscription",
-    "support@", "sales@", "contact us", "demo", "book a call", "schedule a demo",
-    "we're hiring", "we are hiring", "careers",
-)
 
 PERSONAL_PROJECT_HINTS: tuple[str, ...] = (
     "personal project", "side project", "for fun", "weekend project", "hobby",
@@ -335,13 +333,18 @@ async def filter_active(state: GhAiReposState) -> dict:
 
     active_within = max(1, int(state.get("active_within_days") or DEFAULT_ACTIVE_WITHIN_DAYS))
     cutoff = datetime.now(timezone.utc) - timedelta(days=active_within)
+    max_stars = int(state.get("max_stars") or DEFAULT_MAX_STARS)
 
     active: list[dict[str, Any]] = []
+    dropped_too_big_stars = 0
     for r in raw:
         pushed = _parse_iso(r.get("pushed_at"))
         if pushed is None or pushed < cutoff:
             continue
         if r.get("archived") or r.get("disabled"):
+            continue
+        if int(r.get("stargazers_count") or 0) > max_stars:
+            dropped_too_big_stars += 1
             continue
         active.append(r)
 
@@ -365,6 +368,8 @@ async def filter_active(state: GhAiReposState) -> dict:
                     "input": len(raw),
                     "kept": len(active),
                     "active_within_days": active_within,
+                    "max_stars": max_stars,
+                    "dropped_too_big_stars": dropped_too_big_stars,
                 }
             }
         },
@@ -727,14 +732,18 @@ def _score_repo(
     score = 0.0
 
     stars = r.get("stars") or 0
-    if stars >= 5000:
-        score += 0.20
-        reasons.append(f"{stars:,} stars (≥5k)")
-    elif stars >= 2500:
-        score += 0.14
-        reasons.append(f"{stars:,} stars (≥2.5k)")
-    else:
+    # Sweet-spot 1k-5k: serious-but-still-pre-sales-team. Above 10k is filtered
+    # earlier by max_stars, but we keep a soft taper for the 5k-10k band.
+    if 1000 <= stars <= 5000:
+        score += 0.18
+        reasons.append(f"{stars:,} stars (sweet-spot 1k-5k)")
+    elif 5000 < stars <= 10000:
+        score += 0.10
+        reasons.append(f"{stars:,} stars")
+    elif 200 <= stars < 1000:
         score += 0.08
+        reasons.append(f"{stars:,} stars")
+    else:
         reasons.append(f"{stars:,} stars")
 
     contribs = r.get("contributors_count") or 0
@@ -790,13 +799,10 @@ def _score_repo(
     desc = (r.get("description") or "").lower()
     haystack = " ".join((readme, homepage, desc))
 
-    commercial_hits = [h for h in COMMERCIAL_HINTS if h in haystack]
-    if commercial_hits:
-        score += min(0.18, 0.04 * len(commercial_hits))
-        reasons.append(
-            "commercial signals: "
-            + ", ".join(sorted(set(commercial_hits))[:4])
-        )
+    # COMMERCIAL_HINTS scoring removed — for the pre-sales-team intent, hints
+    # like "sales@", "pricing", "book a demo" indicate the org *already* has a
+    # sales motion. We rely on the org-size caps in score_heuristic + the
+    # max_stars cap in filter_active to filter those out.
 
     personal_hits = [h for h in PERSONAL_PROJECT_HINTS if h in haystack]
     if personal_hits:
@@ -808,13 +814,24 @@ def _score_repo(
         reasons.append(f"{int(r['python_share'] * 100)}% Python")
 
     # Org-level enrichment — only set when the owner is an Organization.
+    # Smallness bonuses: tiny team, small footprint, focused repo set all
+    # signal "no established sales org yet" → easier to pitch to founder/CTO.
     if org:
-        if int(org.get("public_members") or 0) >= 5:
+        members = int(org.get("public_members") or 0)
+        org_total_stars = int(org.get("total_org_stars") or 0)
+        org_repos = int(org.get("public_repos") or 0)
+        if 0 < members <= 5:
+            score += 0.10
+            reasons.append(f"tiny team ({members} public members)")
+        if 0 < org_total_stars <= 10000:
+            score += 0.06
+            reasons.append(f"small org footprint ({org_total_stars:,} total stars)")
+        if 0 < org_repos <= 20:
             score += 0.04
-            reasons.append(f"{org['public_members']} public org members")
+            reasons.append(f"focused org ({org_repos} public repos)")
         if org.get("blog") or org.get("twitter_username"):
             score += 0.03
-            reasons.append("org has blog/twitter — commercial presence")
+            reasons.append("org has blog/twitter — reachable")
         if int(org.get("ai_repo_count") or 0) >= 3:
             score += 0.04
             reasons.append(f"org maintains {org['ai_repo_count']} AI repos — focused")
@@ -854,14 +871,29 @@ async def score_heuristic(state: GhAiReposState) -> dict:
     framework_focus = (state.get("framework_focus") or "").strip() or None
     floor = float(state.get("heuristic_floor") or DEFAULT_HEURISTIC_FLOOR)
     freshness_days = int(state.get("freshness_days") or DEFAULT_FRESHNESS_DAYS)
+    max_org_members = int(state.get("max_org_members") or DEFAULT_MAX_ORG_MEMBERS)
+    max_org_public_repos = int(state.get("max_org_public_repos") or DEFAULT_MAX_ORG_PUBLIC_REPOS)
+    max_org_total_stars = int(state.get("max_org_total_stars") or DEFAULT_MAX_ORG_TOTAL_STARS)
 
     scored: list[dict[str, Any]] = []
     dropped_floor = 0
+    dropped_too_big = 0
     skipped_fresh = 0
     for r in repos:
         existing = existing_keys.get(f"gh:{r['full_name']}") or {}
         last_seen = existing.get("last_seen_days_ago") if existing else None
         org = org_metadata.get(r.get("owner_login") or "")
+
+        # Pre-sales-team gate: drop repos whose org exceeds any size cap.
+        # Saves classify_llm cost and prevents BigCo orgs from sneaking past
+        # the heuristic floor on raw star count alone.
+        if org and (
+            int(org.get("public_members") or 0) > max_org_members
+            or int(org.get("public_repos") or 0) > max_org_public_repos
+            or int(org.get("total_org_stars") or 0) > max_org_total_stars
+        ):
+            dropped_too_big += 1
+            continue
 
         sell_score, reasons = _score_repo(
             r,
@@ -900,8 +932,12 @@ async def score_heuristic(state: GhAiReposState) -> dict:
                     "input": len(repos),
                     "kept": len(scored),
                     "dropped_below_floor": dropped_floor,
+                    "dropped_too_big_org": dropped_too_big,
                     "skipped_fresh": skipped_fresh,
                     "floor": floor,
+                    "max_org_members": max_org_members,
+                    "max_org_public_repos": max_org_public_repos,
+                    "max_org_total_stars": max_org_total_stars,
                 }
             }
         },

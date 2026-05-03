@@ -854,12 +854,17 @@ class GhAiReposState(TypedDict, total=False):
 
     # input — all optional with sensible defaults
     topics: list[str]              # GH topics to search; defaults to a curated AI list
-    min_stars: int                 # default 1000
+    min_stars: int                 # default 200 — broaden floor; size caps do the filtering
+    max_stars: int                 # default 10000 — drop megaprojects (existing sales motion)
     active_within_days: int        # default 30 — push date must be within this
     per_topic_limit: int           # default 25
     max_repos: int                 # default 60 — overall cap after dedupe
     persist_companies: bool        # default False — set True to upsert into companies table
     require_readme: bool           # default False
+    # input — pre-sales-team filters (added 2026-05-03)
+    max_org_members: int           # default 15 — public_members ceiling (proxies team size)
+    max_org_public_repos: int      # default 50 — total org repos ceiling (proxies maturity)
+    max_org_total_stars: int       # default 30000 — sum of stars across all org repos
     # input — depth knobs (added in second pass)
     framework_focus: str           # "langgraph"|"langchain"|"llamaindex"|"" — boosts repos tagged with this topic
     freshness_days: int            # default 14 — drop repos already scanned within this window

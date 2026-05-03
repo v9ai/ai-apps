@@ -21,7 +21,7 @@ log = logging.getLogger(__name__)
 
 _API_BASE = "https://api.cloudflare.com/client/v4"
 _DEFAULT_TIMEOUT = httpx.Timeout(30.0, connect=10.0)
-_MODULE_VERSION = "2"  # bump to force a container image rebuild
+_MODULE_VERSION = "3"  # bump to force a container image rebuild
 
 
 class D1Error(RuntimeError):
