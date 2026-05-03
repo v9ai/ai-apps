@@ -207,20 +207,20 @@
       {
         "id": "0",
         "name": "ResearchThera.com",
-        "description": "Therapeutic and clinical-intelligence platform for families: a 5-stage LlamaIndex blood-marker chat pipeline runs triage → re-triage → route → ContextChatEngine → safety guard over 9 clinical intents and 8 pgvector indices, while 24 specialized LangGraph workflows handle medication deep-research, regimen interaction screens, iatrogenic-first psych screening, deep issue analysis, and academic therapy-paper retrieval. ~90-table Drizzle/Postgres schema; FastEmbed bge-large-en-v1.5 (1024-dim ONNX) on the local hot path; DeepSeek chat + reasoner for synthesis.",
+        "description": "Therapeutic-intelligence platform for families: a 5-stage LlamaIndex chat (triage → re-triage → route → ContextChatEngine → safety guard) answers blood-marker questions across 9 clinical intents and 8 pgvector indices, while 23 LangGraph workflows handle medication deep-research, regimen interaction screens, iatrogenic-first psych screening, and academic therapy-paper retrieval over a ~90-table Neon/Drizzle schema. DeepSeek for synthesis.",
         "githubUrl": "https://github.com/v9ai/research-thera",
         "websiteUrl": "https://researchthera.com",
         "highlights": [
-          "5-stage LlamaIndex clinical chat (no LangGraph): triage → re-triage at confidence < 0.7 (max 2) → route → ContextChatEngine with similarity + clinical-relevance reranker → safety auditor with one resynthesis retry.",
-          "9 clinical intents (markers, ratios, trajectory, conditions, medications, symptoms, appointments, general health, safety refusal); multi-intent queries fan out across CompositeRetriever with confidence-scaled k (≥0.8 base, ≥0.6 ×1.5, else ×2).",
-          "Computes 7 peer-reviewed ratios per blood test — TG/HDL (McLaughlin), TC/HDL (Castelli), HDL/LDL (Millán), NLR (Fest), De Ritis AST/ALT, BUN/Creatinine (Hosten), TyG (Simental-Mendía) — each tagged optimal/borderline/elevated against authored thresholds.",
-          "3-tier Romanian-aware lab-PDF parser (HTML tables → FormKeysValues → free-text) feeds a LlamaIndex IngestionPipeline that emits per-test, per-marker, and health-state nodes with embedded derived metrics.",
-          "Hybrid FTS-plus-1024-dim-vector retriever on the blood-marker index, plus seven additional vector retrievers covering tests, health states, conditions, medications, symptoms, appointments, and allergies — each pluggable as a LlamaIndex BaseRetriever.",
-          "Medication deep-research graph fans out DailyMed SPL + openFDA labels + RxNav interactions, extracts indications / dosing / pharmacology / adverse events / interactions via DeepSeek JSON, and upserts into 6 pharmacology tables with a 30-day drug-slug cache.",
-          "Regimen interaction screen detects pairwise drug interactions and ATC-level-3 duplicate-therapy clusters across the active regimen, then synthesizes a clinician-readable severity report (none / low / moderate / high) with flagged combinations.",
-          "Therapy-research graph (loadContext → normalizeGoal → planQuery → search → enrichAbstracts → extractAll → persist) pulls ~2,350 candidates from OpenAlex, Crossref, and Semantic Scholar, gates at relevance ≥ 0.75 + confidence ≥ 0.55 + blended ≥ 0.72, persists top 20 as 1024-dim pgvectors.",
-          "Iatrogenic-first psychologist-screening graph spans 9 clinical tables, applies a Singulair washout-window classifier (acute / subacute / resolution / persistent), and runs a critique-and-refine loop that rewrites any axis scoring < 7/10.",
-          "Apollo Server 5 over Neon Postgres exposes 217 type resolvers; 2 Vercel-AI-SDK agents (storyTeller for 3-part CYOA, therapeutic for CBT/ACT/DBT/MBSR) emit Zod-validated objects and stream finished audio to Cloudflare R2."
+          "5-stage LlamaIndex clinical chat: triage, re-triage when confidence < 0.7 (max 2), route, ContextChatEngine with similarity + clinical-relevance reranker, safety auditor with one resynthesis retry.",
+          "Nine clinical intents fan out across CompositeRetriever for multi-intent queries; k scales by triage confidence (≥0.8 base, ≥0.6 ×1.5, else ×2).",
+          "Computes 7 peer-reviewed ratios per blood test — TG/HDL, TC/HDL, HDL/LDL, NLR, De Ritis, BUN/Creatinine, TyG — each tagged optimal/borderline/elevated against authored thresholds.",
+          "Romanian-aware 3-tier lab-PDF parser (HTML tables → form key-values → free text) feeds a LlamaIndex IngestionPipeline emitting per-test, per-marker, and health-state nodes.",
+          "Hybrid FTS + 1024-dim vector retriever powers the blood-marker index; seven sibling retrievers (tests, health states, conditions, medications, symptoms, appointments, allergies) plug in as LlamaIndex BaseRetrievers.",
+          "Medication deep-research graph fans out to DailyMed SPL, openFDA, and RxNav, extracts dosing / pharmacology / AEs / interactions via DeepSeek JSON, and upserts six pharmacology tables behind a 30-day cache.",
+          "Regimen interaction screen detects pairwise drug conflicts and ATC-level-3 duplicate-therapy clusters, then synthesizes a clinician-readable severity report (none / low / moderate / high) with flagged combinations.",
+          "Therapy-research graph queries OpenAlex, Crossref, and Semantic Scholar, cross-encoder reranks ~2,350 candidates against a clinical restatement, and gates persistence at relevance ≥ 0.75, confidence ≥ 0.55, blended ≥ 0.72 (top 20 kept).",
+          "Iatrogenic-first psychologist-screening graph spans nine clinical tables, classifies a Singulair washout window (acute / subacute / resolution / persistent), then runs a critique-and-refine loop that rewrites any axis scoring < 7/10.",
+          "Apollo Server 5 over Neon Postgres exposes 217 type resolvers; two Vercel-AI-SDK agents (storyTeller for 3-part CYOA, therapeutic for CBT/ACT/DBT/MBSR) emit Zod-validated objects and stream audio to Cloudflare R2."
         ]
       }
     ]
