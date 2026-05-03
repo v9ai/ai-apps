@@ -34,6 +34,7 @@ from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
 from ._d1 import D1Client, D1Error
+from .gh_patterns_graph import GhClient
 from .llm import (
     ainvoke_json_with_telemetry,
     compute_totals,
@@ -58,6 +59,10 @@ _PAGE_EXCERPT_CHARS = 4000
 _BRAVE_API_URL = "https://api.search.brave.com/res/v1/web/search"
 _BRAVE_TIMEOUT = httpx.Timeout(10.0, connect=5.0)
 _BRAVE_COUNT = 5
+
+# Top-N GitHub contributors hydrated with /users/{login}. Founders of small
+# orgs almost always show up in this list with a populated name/blog/twitter.
+_TOP_CONTRIBUTORS = 5
 
 EvidenceConfidence = Literal["low", "medium", "high"]
 
@@ -336,6 +341,102 @@ async def fetch_pages(state: GhLeadResearchState) -> dict:
     }
 
 
+async def fetch_contributors(state: GhLeadResearchState) -> dict:
+    """Fetch top GitHub contributors + hydrate each via /users/{login}.
+
+    Founders of small orgs almost always sit at the top of the contributors
+    list with a populated name/blog/twitter. This is the highest-signal
+    deterministic source for decision-maker discovery — strictly better
+    than relying on the LLM to extract names from Brave snippets alone.
+    """
+    if state.get("_error"):
+        return {}
+    t0 = time.perf_counter()
+
+    repo = state.get("repo") or {}
+    full_name = (repo.get("full_name") or "").strip()
+    if "/" not in full_name:
+        return {"contributors": []}
+    owner, repo_name = full_name.split("/", 1)
+
+    try:
+        gh = GhClient()
+    except Exception as e:  # noqa: BLE001
+        log.warning("fetch_contributors: GhClient init failed: %s", e)
+        return {"contributors": []}
+
+    try:
+        contribs = await gh.repo_contributors(owner, repo_name)
+    finally:
+        # GhClient holds an httpx.AsyncClient; close it if a context manager
+        # is exposed. Many implementations are no-op safe.
+        close = getattr(gh, "aclose", None)
+        if close is not None:
+            try:
+                await close()
+            except Exception:  # noqa: BLE001
+                pass
+
+    # Top N by contributions; skip bots (login ends with [bot] or contains 'bot')
+    def _is_bot(c: dict[str, Any]) -> bool:
+        login = (c.get("login") or "").lower()
+        return login.endswith("[bot]") or login.endswith("-bot") or login == "dependabot"
+
+    top = [c for c in (contribs or []) if not _is_bot(c)][:_TOP_CONTRIBUTORS]
+
+    # Hydrate each via /users/{login} — runs concurrent; tolerate failures.
+    try:
+        gh2 = GhClient()
+    except Exception:  # noqa: BLE001
+        return {"contributors": [{"login": c.get("login"), "contributions": c.get("contributions")} for c in top]}
+
+    try:
+        users = await asyncio.gather(
+            *(gh2.get_user(c["login"]) for c in top if c.get("login")),
+            return_exceptions=True,
+        )
+    finally:
+        close = getattr(gh2, "aclose", None)
+        if close is not None:
+            try:
+                await close()
+            except Exception:  # noqa: BLE001
+                pass
+
+    out: list[dict[str, Any]] = []
+    for c, u in zip(top, users, strict=False):
+        login = c.get("login")
+        if not login:
+            continue
+        ud = u if isinstance(u, dict) else {}
+        out.append({
+            "login": login,
+            "contributions": int(c.get("contributions") or 0),
+            "name": ud.get("name") or "",
+            "blog": ud.get("blog") or "",
+            "twitter_username": ud.get("twitter_username") or "",
+            "email": ud.get("email") or "",
+            "bio": (ud.get("bio") or "")[:300],
+            "company": ud.get("company") or "",
+            "location": ud.get("location") or "",
+            "html_url": ud.get("html_url") or f"https://github.com/{login}",
+        })
+
+    return {
+        "contributors": out,
+        "agent_timings": {"fetch_contributors": round(time.perf_counter() - t0, 3)},
+        "graph_meta": {
+            "telemetry": {
+                "fetch_contributors": {
+                    "raw": len(contribs or []),
+                    "kept": len(out),
+                    "with_name": sum(1 for x in out if x.get("name")),
+                }
+            }
+        },
+    }
+
+
 async def web_search(state: GhLeadResearchState) -> dict:
     """Brave search for fundraise/founder/team signals. Optional — empty
     list when BRAVE_SEARCH_API_KEY is unset, no error."""
@@ -352,6 +453,9 @@ async def web_search(state: GhLeadResearchState) -> dict:
         f'"{org_name}" funding OR raised OR seed OR series',
         f'"{org_name}" founder OR CEO OR CTO',
         f'"{org_name}" team OR about',
+        # Targets LinkedIn profile pages so the snippet exposes
+        # name + role + headline even though Brave can't render the JS-only page.
+        f'site:linkedin.com/in "{org_name}" (founder OR CEO OR CTO OR cofounder)',
     ]
 
     async with httpx.AsyncClient(timeout=_BRAVE_TIMEOUT) as client:
@@ -390,7 +494,10 @@ _SYNTHESIZE_SYSTEM = (
     "Inputs you receive (JSON):\n"
     "- The repo + org metadata (stars, homepage, monetization_stage, etc.)\n"
     "- Excerpts from the org's homepage / /pricing / /careers / /about pages\n"
-    "- Up to 15 Brave web-search hits (title + url + description)\n\n"
+    "- Up to 20 Brave web-search hits (title + url + description), including LinkedIn snippets\n"
+    "- Top GitHub contributors (login, name, blog, twitter, email, bio, company, location).\n"
+    "  These are HIGH-SIGNAL: for small-org repos the top 1-3 contributors are\n"
+    "  almost always founders / early team. Treat them as primary decision-maker candidates.\n\n"
     "Return STRICT JSON with this exact shape, no prose:\n"
     "{\n"
     '  "recent_fundraise": "1 sentence — which round, $ amount, lead investor, date. Empty string if no evidence.",\n'
@@ -406,7 +513,7 @@ _SYNTHESIZE_SYSTEM = (
     "}\n\n"
     "Rules:\n"
     "- Cite ONLY claims supported by the inputs. If /careers excerpt doesn't mention hiring, leave team_size_signal empty.\n"
-    "- decision_makers: max 5. Prefer founders/CEOs/CTOs. Only include if their name appears in the evidence.\n"
+    "- decision_makers (max 5): START with the top GitHub contributors. For each contributor whose `name` is populated, include them with their html_url as `linkedin` (or use the actual linkedin URL if a Brave snippet exposed it). Title = derive from bio/company (e.g. 'Founder & CTO' if bio says so) — fall back to 'Maintainer'. Source = 'github'. Then layer in any *additional* people named in Brave snippets with explicit titles like 'Founder', 'CEO', 'CTO' at the org. Even a 1-line LinkedIn snippet ('Founder of X') is sufficient evidence.\n"
     "- evidence_urls: include the actual URLs you used to ground each non-empty field above.\n"
     "- pitch_one_liner: must reference *something concrete* from the evidence — a recent launch, fundraise, hiring spree, README quote — not generic praise.\n"
     "- If the evidence is thin, set confidence < 0.4 and return mostly empty fields. Do NOT invent."
@@ -417,8 +524,10 @@ def _synthesize_payload(state: GhLeadResearchState) -> dict[str, Any]:
     repo = state.get("repo") or {}
     pages = state.get("pages") or {}
     web_results = state.get("web_results") or []
+    contributors = state.get("contributors") or []
 
     return {
+        "contributors": contributors,
         "repo": {
             "full_name": repo.get("full_name"),
             "stars": repo.get("stars"),
@@ -522,10 +631,11 @@ async def persist(state: GhLeadResearchState) -> dict:
             " pricing_url, pricing_status, pricing_excerpt, "
             " careers_url, careers_status, careers_excerpt, "
             " about_url, about_status, about_excerpt, "
-            " web_search_results_json, recent_fundraise, recent_launch, "
+            " web_search_results_json, contributors_json, "
+            " recent_fundraise, recent_launch, "
             " team_size_signal, icp_fit_summary, pitch_one_liner, "
             " decision_makers_json, evidence_urls_json, llm_confidence, researched_at) "
-            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, CURRENT_TIMESTAMP) "
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, CURRENT_TIMESTAMP) "
             "ON CONFLICT(repo_id) DO UPDATE SET "
             "  org_id = excluded.org_id, "
             "  homepage_url = excluded.homepage_url, "
@@ -540,6 +650,7 @@ async def persist(state: GhLeadResearchState) -> dict:
             "  about_status = excluded.about_status, "
             "  about_excerpt = excluded.about_excerpt, "
             "  web_search_results_json = excluded.web_search_results_json, "
+            "  contributors_json = excluded.contributors_json, "
             "  recent_fundraise = excluded.recent_fundraise, "
             "  recent_launch = excluded.recent_launch, "
             "  team_size_signal = excluded.team_size_signal, "
@@ -565,6 +676,7 @@ async def persist(state: GhLeadResearchState) -> dict:
                 _page("about", "status"),
                 _page("about", "excerpt"),
                 json.dumps(web_results) if web_results else None,
+                json.dumps(state.get("contributors") or []) if state.get("contributors") else None,
                 brief.get("recent_fundraise") or None,
                 brief.get("recent_launch") or None,
                 brief.get("team_size_signal") or None,
@@ -614,17 +726,20 @@ def build_graph(checkpointer: Any = None) -> Any:
     builder = StateGraph(GhLeadResearchState)
     builder.add_node("load_repo", load_repo)
     builder.add_node("fetch_pages", fetch_pages)
+    builder.add_node("fetch_contributors", fetch_contributors)
     builder.add_node("web_search", web_search)
     builder.add_node("synthesize", synthesize)
     builder.add_node("persist", persist)
 
     builder.add_edge(START, "load_repo")
-    # Fan out: page fetch + web search run in parallel after load_repo.
-    # Disjoint state keys (pages vs web_results) so the merge into
-    # synthesize is conflict-free.
+    # Fan out: page fetch, GitHub contributors, and Brave web search run in
+    # parallel after load_repo. Disjoint state keys (pages / contributors /
+    # web_results) so the merge into synthesize is conflict-free.
     builder.add_edge("load_repo", "fetch_pages")
+    builder.add_edge("load_repo", "fetch_contributors")
     builder.add_edge("load_repo", "web_search")
     builder.add_edge("fetch_pages", "synthesize")
+    builder.add_edge("fetch_contributors", "synthesize")
     builder.add_edge("web_search", "synthesize")
     builder.add_edge("synthesize", "persist")
     builder.add_edge("persist", END)

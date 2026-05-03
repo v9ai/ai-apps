@@ -903,6 +903,7 @@ class GhLeadResearchState(TypedDict, total=False):
     repo: dict[str, Any]                   # joined gh_repos + gh_orgs row
     homepages: list[str]                   # ordered candidate roots (repo.homepage, org.blog, peeled apexes)
     pages: dict[str, dict[str, Any]]       # {homepage|pricing|careers|about: {url,status,excerpt}}
+    contributors: list[dict[str, Any]]     # top GH contributors hydrated via /users/{login}
     web_results: list[dict[str, Any]]      # Brave hits {title,url,description}
     brief: dict[str, Any]                  # LeadResearchBrief.model_dump()
     # output
