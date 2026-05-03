@@ -261,8 +261,10 @@ async function composeCardCanvas(item: ImgItem): Promise<HTMLCanvasElement> {
   ctx.fillStyle = IMG_BG;
   ctx.fillRect(CONTENT_X, CONTENT_Y, CONTENT_W, IMG_AREA_H);
 
-  // Letterbox-fit the photo into the image area
-  const fit = item.fit ?? "cover";
+  // Always letterbox in the JPG — "cover" can crop the subject (e.g. the
+  // Dragon Bridge dragon's head) when the source aspect doesn't match the
+  // 990×900 image area. Per-item overrides still win if explicitly set.
+  const fit = item.fit ?? "contain";
   const sw = img.naturalWidth;
   const sh = img.naturalHeight;
   let dw: number, dh: number, dx: number, dy: number;
