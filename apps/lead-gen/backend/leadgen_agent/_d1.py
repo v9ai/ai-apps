@@ -10,6 +10,7 @@ Used by graphs that keep their primary store in D1 rather than Neon
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
 from typing import Any
@@ -20,6 +21,7 @@ log = logging.getLogger(__name__)
 
 _API_BASE = "https://api.cloudflare.com/client/v4"
 _DEFAULT_TIMEOUT = httpx.Timeout(30.0, connect=10.0)
+_MODULE_VERSION = "2"  # bump to force a container image rebuild
 
 
 class D1Error(RuntimeError):
@@ -73,19 +75,32 @@ class D1Client:
         return _unwrap_single(resp)
 
     async def batch(
-        self, statements: list[dict[str, Any]]
+        self, statements: list[dict[str, Any]], *, concurrency: int = 8
     ) -> list[list[dict[str, Any]]]:
-        """Run multiple statements atomically. Returns rows per statement.
+        """Run multiple statements concurrently (up to ``concurrency`` in
+        flight). Returns rows per statement, in input order.
 
         Each item in ``statements`` is ``{"sql": ..., "params": [...]}``.
+
+        Note: the D1 REST API has no atomic batch endpoint, so this is
+        per-statement-best-effort. Caller must use idempotent upserts so a
+        partial failure can be re-run safely.
         """
         if not statements:
             return []
+        sem = asyncio.Semaphore(concurrency)
+
+        async def _one(client: httpx.AsyncClient, stmt: dict[str, Any]) -> list[dict[str, Any]]:
+            async with sem:
+                body: dict[str, Any] = {"sql": stmt["sql"]}
+                params = stmt.get("params")
+                if params:
+                    body["params"] = params
+                resp = await client.post(self._url, headers=self._headers, json=body)
+                return _unwrap_single(resp)
+
         async with httpx.AsyncClient(timeout=_DEFAULT_TIMEOUT) as client:
-            resp = await client.post(
-                self._url, headers=self._headers, json=statements
-            )
-        return _unwrap_batch(resp, len(statements))
+            return await asyncio.gather(*(_one(client, s) for s in statements))
 
 
 def _unwrap_single(resp: httpx.Response) -> list[dict[str, Any]]:
@@ -97,21 +112,6 @@ def _unwrap_single(resp: httpx.Response) -> list[dict[str, Any]]:
     if not first.get("success", True):
         raise D1Error(f"D1 statement failed: {first}")
     return list(first.get("results") or [])
-
-
-def _unwrap_batch(resp: httpx.Response, n: int) -> list[list[dict[str, Any]]]:
-    payload = _parse(resp)
-    results = payload.get("result") or []
-    if len(results) != n:
-        raise D1Error(
-            f"D1 batch returned {len(results)} results, expected {n}: {payload}"
-        )
-    out: list[list[dict[str, Any]]] = []
-    for i, r in enumerate(results):
-        if not r.get("success", True):
-            raise D1Error(f"D1 batch statement {i} failed: {r}")
-        out.append(list(r.get("results") or []))
-    return out
 
 
 def _parse(resp: httpx.Response) -> dict[str, Any]:

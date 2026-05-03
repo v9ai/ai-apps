@@ -53,6 +53,12 @@ export class CoreContainer extends Container {
 
       // Brave Search powers ashby_discovery's slug harvesting.
       BRAVE_SEARCH_API_KEY: env.BRAVE_SEARCH_API_KEY ?? "",
+
+      // Cloudflare D1 REST API — gh_ai_repos persists to the lead-gen-jobs
+      // D1 (gh_orgs / gh_repos) via the HTTP API since Python can't bind D1.
+      CLOUDFLARE_ACCOUNT_ID: env.CLOUDFLARE_ACCOUNT_ID ?? "",
+      CLOUDFLARE_API_TOKEN: env.CLOUDFLARE_API_TOKEN ?? "",
+      CLOUDFLARE_D1_LEADGEN_JOBS_ID: env.CLOUDFLARE_D1_LEADGEN_JOBS_ID ?? "",
     };
   }
 }
