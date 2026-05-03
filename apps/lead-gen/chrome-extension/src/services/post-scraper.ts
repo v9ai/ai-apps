@@ -16,14 +16,15 @@ import { fetchAllConnections, type ScrapedConnection } from "./connection-scrape
 import { gqlRequest, GRAPHQL_URL } from "./graphql";
 import { parseJobFields, isJobRelatedPost } from "../lib/job-field-parser";
 
-// LinkedIn posts API base URL. Historically a Rust server on :9876; now a
-// Python FastAPI router mounted at /linkedin/* on the CF dispatcher Worker.
+// LinkedIn posts API base URL. The /linkedin/* router lives in
+// backend/core/linkedin_api.py and is mounted by core/app.py — served locally
+// by `pnpm backend-dev` on :8002, and in prod by the CF dispatcher Worker.
 // VITE_RUST_SERVER_URL is kept as a fallback env-var name for back-compat
 // with existing dev setups.
 const LINKEDIN_API =
   import.meta.env.VITE_LINKEDIN_API_URL ||
   import.meta.env.VITE_RUST_SERVER_URL ||
-  "http://localhost:9876";
+  "http://localhost:8002/linkedin";
 
 console.log(
   `[D1Posts] LINKEDIN_API base resolved to: ${LINKEDIN_API}` +
