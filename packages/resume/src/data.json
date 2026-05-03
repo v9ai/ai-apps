@@ -187,31 +187,31 @@
       {
         "id": "1",
         "name": "Agentic Lead Gen",
-        "description": "Autonomous B2B lead-gen platform: a 5-stage agentic pipeline driving 67 LangGraph graphs on Cloudflare Workers Containers, checkpointed to Neon.",
+        "description": "Autonomous B2B lead-gen platform that finds, qualifies, and emails prospects through a 5-stage agentic pipeline of 67 LangGraph graphs running on Cloudflare Workers Containers and checkpointed to Neon Postgres.",
         "githubUrl": "https://github.com/v9ai/agentic-lead-gen",
         "websiteUrl": "https://agenticleadgen.xyz/",
         "highlights": [
-          "67 LangGraph graphs (58 core, 7 research, 2 ML) on Cloudflare Workers Containers.",
-          "Apollo Server 5 + Drizzle/Neon with 18 DataLoaders; DeepSeek cheap-first router across TS+Python hubs.",
-          "12-feature gradient-boosted stumps score engagement sub-millisecond on the hot path.",
-          "Aho-Corasick single-pass classifier retires an LLM call from company tagging.",
-          "Qwen2.5-1.5B contact-tier LoRA on HF Space; gates at authority score >= 0.5, ~10x compute cut.",
-          "Bidirectional email: Resend In-Reply-To threading, HMAC-SHA256 webhooks, MX catch-all alias."
+          "Runs 67 LangGraph graphs (58 core, 7 research, 2 ML) on Cloudflare Workers Containers, checkpointed to Neon Postgres.",
+          "Apollo Server 5 with Drizzle ORM on Neon and 18 DataLoaders; a DeepSeek router picks v4-flash first, escalating to v4-pro.",
+          "Scores prospect engagement in sub-millisecond time on the hot path using a 12-feature gradient-boosted stump ensemble.",
+          "Tags companies with a single-pass Aho-Corasick classifier that pattern-matches the taxonomy and retires an LLM call.",
+          "A Qwen2.5-1.5B LoRA on a free Hugging Face Space scores contact tiers, gated above authority 0.5 to cut compute roughly 10x.",
+          "Closes the loop on email: Resend handles outbound threading via In-Reply-To, HMAC-SHA256 verifies inbound webhooks, and a catch-all MX alias captures every reply."
         ]
       },
       {
         "id": "0",
         "name": "ResearchThera.com",
-        "description": "Therapeutic-intelligence platform for families: iatrogenic-first psych screening with Singulair washout classifier, 5-stage LlamaIndex clinical chat, and 23 LangGraph workflows across medication, regimen-safety, and academic retrieval.",
+        "description": "Therapeutic-intelligence platform for families: a clinical chat that screens first for drug-induced symptoms, flags Singulair washout cases, and orchestrates 23 LangGraph workflows across medication safety and academic retrieval.",
         "githubUrl": "https://github.com/v9ai/research-thera",
         "websiteUrl": "https://researchthera.com",
         "highlights": [
-          "5-stage LlamaIndex clinical chat, reranker plus safety auditor; 9 intents via confidence-scaled CompositeRetriever.",
-          "7 peer-reviewed blood-test ratios: TG/HDL, TC/HDL, HDL/LDL, NLR, De Ritis, BUN/Creatinine, TyG.",
-          "Romanian 3-tier lab-PDF parser feeds LlamaIndex; 8 pgvector indices with hybrid FTS retrieval.",
-          "Pharmacology + therapy-research graphs hit DailyMed, openFDA, RxNav, OpenAlex, Crossref, Semantic Scholar; cross-encoder reranks.",
-          "Critique-refine psych-screening loop rewrites any axis scoring below 7/10 before persisting.",
-          "Apollo Server 5 exposes 217 resolvers; two Vercel-AI agents emit Zod-validated CYOA + CBT/ACT/DBT."
+          "Clinical chat runs a 5-stage LlamaIndex pipeline with reranker and safety auditor, routing 9 intents via a confidence-scaled retriever.",
+          "Computes 7 peer-reviewed cardio-metabolic ratios from lab panels (TG/HDL, TC/HDL, HDL/LDL, NLR, De Ritis, BUN/Creatinine, TyG) for risk flagging.",
+          "Romanian 3-tier lab-PDF parser feeds hybrid full-text and vector search across 8 pgvector indices for grounded retrieval.",
+          "Pharmacology and therapy-research graphs query medication sources (DailyMed, openFDA, RxNav) and academic sources (OpenAlex, Crossref, Semantic Scholar), then cross-encoder rerank.",
+          "Psych-screening uses a critique-refine loop that rewrites any axis scoring below 7 out of 10 before persisting.",
+          "Apollo Server 5 fronts 217 GraphQL resolvers; one Vercel-AI agent generates choose-your-own-adventure stories, another delivers schema-validated CBT, ACT, and DBT guidance."
         ]
       }
     ]
