@@ -360,7 +360,7 @@ async def fetch_contributors(state: GhLeadResearchState) -> dict:
     owner, repo_name = full_name.split("/", 1)
 
     try:
-        gh = GhClient()
+        gh = GhClient.from_env()
     except Exception as e:  # noqa: BLE001
         log.warning("fetch_contributors: GhClient init failed: %s", e)
         return {"contributors": []}
@@ -386,7 +386,7 @@ async def fetch_contributors(state: GhLeadResearchState) -> dict:
 
     # Hydrate each via /users/{login} — runs concurrent; tolerate failures.
     try:
-        gh2 = GhClient()
+        gh2 = GhClient.from_env()
     except Exception:  # noqa: BLE001
         return {"contributors": [{"login": c.get("login"), "contributions": c.get("contributions")} for c in top]}
 
