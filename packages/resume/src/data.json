@@ -197,7 +197,7 @@
           "12-feature gradient-boosted stumps score engagement sub-millisecond on the hot path.",
           "Aho-Corasick single-pass classifier retires an LLM call from company tagging.",
           "Candle/Metal embed-server (BGE-small-en-v1.5, 384-dim) into pgvector HNSW; zero outbound embedding calls.",
-          "Qwen2.5-1.5B contact-tier LoRA on HF Space; gates at authority_score >= 0.5, ~10x compute cut.",
+          "Qwen2.5-1.5B contact-tier LoRA on HF Space; gates at authority score >= 0.5, ~10x compute cut.",
           "Bidirectional email: Resend In-Reply-To threading, HMAC-SHA256 webhooks, MX catch-all alias."
         ]
       },
