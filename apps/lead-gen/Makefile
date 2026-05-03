@@ -30,7 +30,7 @@ hooks-status:
 
 # ── App ────────────────────────────────────────────────────────
 
-.PHONY: dev backend-dev backend-dev-ml backend-dev-research backend-dev-full deep-scrape build lint codegen deploy db-generate db-migrate db-studio icp-embed-serve backend-deploy-core backend-deploy-all
+.PHONY: dev backend-dev backend-dev-ml backend-dev-research backend-dev-full deep-scrape build lint codegen deploy db-generate db-migrate db-studio icp-embed-serve backend-deploy-core backend-deploy-all gh-ai-repos
 
 dev:
 	pnpm dev
@@ -155,6 +155,18 @@ start-status: ## Show pipeline status and phase detection
 
 start-top: ## Show top leads (pass N=50 for count)
 	$(LEADGEN_CLI) top $(or $(N),20)
+
+# Scrape sellable Python AI repos from GitHub. Common knobs:
+#   FOCUS=langgraph     filter & boost repos tagged with this topic
+#   N=20                how many briefs to print (default: 10)
+#   MIN_STARS=2000      raise the floor (default: 1000)
+#   PERSIST=1           upsert org-owned leads to companies table
+gh-ai-repos: ## Scrape GitHub for sellable Python AI repos (>=1000 stars, active)
+	$(LEADGEN_CLI) gh-ai-repos \
+	  $(if $(FOCUS),--framework-focus $(FOCUS),) \
+	  $(if $(MIN_STARS),--min-stars $(MIN_STARS),) \
+	  $(if $(N),--show $(N),) \
+	  $(if $(PERSIST),--persist,)
 
 # ── Per-Module Tests (Python) ──────────────────────────────────
 # Formerly Rust cargo tests. The ported Python modules don't ship with

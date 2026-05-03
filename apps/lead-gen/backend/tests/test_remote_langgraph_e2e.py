@@ -231,6 +231,57 @@ async def test_text_to_sql_runs_wait_returns_select(
     )
 
 
+@pytest.mark.live
+async def test_gh_ai_repos_runs_wait_returns_briefs(
+    client: httpx.AsyncClient,
+) -> None:
+    """End-to-end: dispatcher → core → gh_ai_repos graph → GitHub REST →
+    DeepSeek classify → 200 with ranked sellable-lead briefs.
+
+    Tiny knobs (max_repos=8, classify_top_n=3) keep the run under the 240s
+    read timeout even on a cold container. ``persist_companies=False`` so
+    the test never writes to ``companies``. Asserts shape, not LLM content
+    quality — a missing top_repos / pitch_angle signals a regression in the
+    graph wiring or DeepSeek prompt.
+    """
+    r = await client.post(
+        "/runs/wait",
+        json={
+            "assistant_id": "gh_ai_repos",
+            "input": {
+                "topics": ["langgraph", "ai-agents"],
+                "min_stars": 1500,
+                "active_within_days": 30,
+                "max_repos": 8,
+                "classify_top_n": 3,
+                "framework_focus": "langgraph",
+                "persist_companies": False,
+            },
+        },
+    )
+    assert r.status_code == 200, f"{r.status_code}: {r.text[:500]}"
+    body = r.json()
+    summary = body.get("summary") or {}
+    assert summary, f"no summary in response: {body!r}"
+    top = summary.get("top_repos") or []
+    assert top, f"no top_repos: keys={list(summary)}"
+
+    # Shape gates — every item should carry at least the heuristic fields and
+    # a markdown brief, even if the LLM bailed for some.
+    sample = top[0]
+    for key in ("full_name", "html_url", "stars", "final_score", "markdown_brief"):
+        assert key in sample, f"missing {key} in top repo: {list(sample)}"
+
+    # At least one item in the requested top-N must have a structured brief
+    # (otherwise classify_llm silently failed for the whole run).
+    assert any(
+        isinstance(r.get("brief"), dict)
+        and r["brief"].get("buyer_persona")
+        and r["brief"].get("commercial_intent")
+        for r in top
+    ), f"no structured brief in any top repo: {[r.get('brief') for r in top]}"
+
+
 # ── Band 4: async thread lifecycle ──────────────────────────────────────
 
 

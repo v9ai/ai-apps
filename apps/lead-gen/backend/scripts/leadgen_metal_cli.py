@@ -17,6 +17,8 @@ Usage (from backend/):
     uv run python scripts/leadgen_metal_cli.py ml-datagen --output data/labels.jsonl
     uv run python scripts/leadgen_metal_cli.py ml-eval --labels data/labels.jsonl --report-dir data/reports
     uv run python scripts/leadgen_metal_cli.py ml-optimize --labels data/labels.jsonl --output data/models
+    uv run python scripts/leadgen_metal_cli.py gh-ai-repos --max-repos 30 --classify-top-n 10
+    uv run python scripts/leadgen_metal_cli.py gh-ai-repos --framework-focus langgraph --persist
 
 Requires: numpy
 """
@@ -227,6 +229,70 @@ def cmd_block(args: argparse.Namespace) -> int:
     return 2
 
 
+# ── Commands: gh-ai-repos ────────────────────────────────────────────────
+
+
+async def cmd_gh_ai_repos(args: argparse.Namespace) -> int:
+    """Run the gh_ai_repos LangGraph and print the top briefs.
+
+    Invokes the compiled graph in-process — no langgraph dev server or CF
+    deploy required. Uses the same code path the CF Container exposes at
+    ``POST /runs/wait`` with ``assistant_id="gh_ai_repos"``.
+    """
+    # Lazy import — pulls langgraph + httpx + numpy. Keep startup fast for
+    # other subcommands.
+    from leadgen_agent.gh_ai_repos_graph import build_graph as build_gh_ai_repos
+
+    topics = (
+        [t.strip() for t in args.topics.split(",") if t.strip()]
+        if args.topics
+        else None
+    )
+    inp: dict = {
+        "min_stars": args.min_stars,
+        "active_within_days": args.active_within_days,
+        "max_repos": args.max_repos,
+        "classify_top_n": args.classify_top_n,
+        "persist_companies": bool(args.persist),
+    }
+    if topics:
+        inp["topics"] = topics
+    if args.framework_focus:
+        inp["framework_focus"] = args.framework_focus
+    if args.freshness_days is not None:
+        inp["freshness_days"] = args.freshness_days
+
+    print(f"  ▶ gh_ai_repos run | min_stars={args.min_stars} "
+          f"max_repos={args.max_repos} classify_top_n={args.classify_top_n} "
+          f"framework_focus={args.framework_focus or '-'} "
+          f"persist={'yes' if args.persist else 'no'}")
+    graph = build_gh_ai_repos()
+    final = await graph.ainvoke(inp)
+
+    summary = final.get("summary") or {}
+    top = summary.get("top_repos") or []
+    n = max(1, args.show)
+    print(
+        f"  ✓ raw={summary.get('raw_count')} active={summary.get('active_count')} "
+        f"enriched={summary.get('enriched_count')} scored={summary.get('scored_count')} "
+        f"classified={summary.get('classified_count')} "
+        f"inserted={len(summary.get('inserted_company_ids') or [])}"
+    )
+    if args.json:
+        print(json.dumps(summary, indent=2, ensure_ascii=False, default=str))
+        return 0
+    if not top:
+        print("  No repos passed the threshold.")
+        return 0
+    print(f"\n  Top {min(n, len(top))} sellable AI repos:\n")
+    for i, r in enumerate(top[:n], 1):
+        # markdown_brief is paste-ready; prefix with rank for terminal scan.
+        print(f"───── #{i} ─────")
+        print(r.get("markdown_brief") or r.get("html_url"))
+        print()
+    return 0
+
+
 # ── Commands: intent-detect ─────────────────────────────────────────────
 
 
@@ -376,6 +442,72 @@ def _build_parser() -> argparse.ArgumentParser:
     pmo.add_argument("--labels", type=Path, required=True)
     pmo.add_argument("--output", type=Path, required=True)
 
+    # gh-ai-repos
+    pgh = sub.add_parser(
+        "gh-ai-repos",
+        help="Scrape GitHub for sellable Python AI repos (>=1000 stars, active)",
+    )
+    pgh.add_argument(
+        "--topics",
+        help="Comma-separated GH topics (default: curated AI list)",
+    )
+    pgh.add_argument(
+        "--min-stars",
+        dest="min_stars",
+        type=int,
+        default=1000,
+        help="Minimum star count (default: 1000)",
+    )
+    pgh.add_argument(
+        "--active-within-days",
+        dest="active_within_days",
+        type=int,
+        default=30,
+        help="Repo must have been pushed within this window (default: 30)",
+    )
+    pgh.add_argument(
+        "--max-repos",
+        dest="max_repos",
+        type=int,
+        default=60,
+        help="Cap after dedupe (default: 60)",
+    )
+    pgh.add_argument(
+        "--classify-top-n",
+        dest="classify_top_n",
+        type=int,
+        default=20,
+        help="LLM classifies the top N heuristic-scored repos (default: 20)",
+    )
+    pgh.add_argument(
+        "--framework-focus",
+        dest="framework_focus",
+        help="Boost repos tagged with this topic (e.g. 'langgraph')",
+    )
+    pgh.add_argument(
+        "--freshness-days",
+        dest="freshness_days",
+        type=int,
+        default=None,
+        help="Skip repos already in DB within this many days (default: 14)",
+    )
+    pgh.add_argument(
+        "--persist",
+        action="store_true",
+        help="Upsert org-owned leads into companies table",
+    )
+    pgh.add_argument(
+        "--show",
+        type=int,
+        default=10,
+        help="How many briefs to print (default: 10)",
+    )
+    pgh.add_argument(
+        "--json",
+        action="store_true",
+        help="Dump full summary as JSON instead of pretty-printing briefs",
+    )
+
     return p
 
 
@@ -407,6 +539,8 @@ def main() -> int:
             return cmd_ml_eval(args)
         if cmd == "ml-optimize":
             return cmd_ml_optimize(args)
+        if cmd == "gh-ai-repos":
+            return asyncio.run(cmd_gh_ai_repos(args))
     except KeyboardInterrupt:
         print("\n  Interrupted.", file=sys.stderr)
         return 130

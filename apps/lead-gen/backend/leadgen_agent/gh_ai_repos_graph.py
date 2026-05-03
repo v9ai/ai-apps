@@ -913,6 +913,7 @@ async def score_heuristic(state: GhAiReposState) -> dict:
 
 # ── LLM classification ───────────────────────────────────────────────────────
 
+
 _CLASSIFY_SYSTEM = (
     "You are a B2B sell-fit analyst for AI infrastructure tools. Given a "
     "Python open-source AI repo (its README excerpt, topics, languages, "
@@ -945,6 +946,76 @@ _CLASSIFY_SYSTEM = (
     'commercial_intent to "research_demo" or "awareness" and llm_score ≤ 0.3.\n'
     "- If you can't tell, set confidence < 0.4 — do not guess."
 )
+
+
+def _render_markdown_brief(r: dict[str, Any]) -> str:
+    """Compose a paste-ready markdown brief for a scored repo.
+
+    The output is what a human picks up after the run: subject + 2-line
+    elevator + activity bullets + maintainer link. Falls back gracefully when
+    the LLM brief is missing (heuristic-only repos still get a usable brief).
+    """
+    brief = r.get("brief") or {}
+    org = r.get("org") or {}
+    full = r["full_name"]
+    stars = int(r.get("stars") or 0)
+    contribs = r.get("contributors_count") or 0
+    commits_4w = r.get("commits_4w") or 0
+    releases_90d = r.get("releases_90d") or 0
+    license_id = r.get("license") or "no license"
+    homepage = r.get("homepage") or f"https://github.com/{full}"
+
+    # Prefer the LLM pitch_angle when we have a confident brief; otherwise
+    # synthesize from heuristic reasons.
+    pitch = brief.get("pitch_angle") or "; ".join((r.get("score_reasons") or [])[:3])
+    why_now = brief.get("why_now") or (
+        f"{commits_4w} commits in the last 4 weeks"
+        + (f", {releases_90d} release(s) in 90 days" if releases_90d else "")
+    )
+    persona = brief.get("buyer_persona") or "ml_team_lead"
+    intent = brief.get("commercial_intent") or "oss_only"
+    pain_points = brief.get("pain_points") or []
+
+    activity_bits = [
+        f"⭐ {stars:,} stars",
+        f"👥 {contribs} contributors",
+    ]
+    if commits_4w:
+        activity_bits.append(f"🔨 {commits_4w} commits / 4w")
+    if releases_90d:
+        activity_bits.append(f"📦 {releases_90d} releases / 90d")
+    if license_id:
+        activity_bits.append(f"📜 {license_id}")
+
+    org_lines: list[str] = []
+    if org:
+        org_lines.append(f"- **Org:** {org.get('name') or org.get('login')}")
+        if org.get("blog"):
+            org_lines.append(f"- **Blog:** {org['blog']}")
+        if org.get("twitter_username"):
+            org_lines.append(f"- **Twitter:** @{org['twitter_username']}")
+        if org.get("email"):
+            org_lines.append(f"- **Public email:** {org['email']}")
+        if org.get("public_members"):
+            org_lines.append(f"- **Public members:** {org['public_members']}")
+        if org.get("ai_repo_count"):
+            org_lines.append(f"- **AI repos in org:** {org['ai_repo_count']}")
+
+    pain_block = (
+        "- **Pain points:** " + ", ".join(pain_points) if pain_points else ""
+    )
+
+    return (
+        f"# {full} ({r.get('final_score', 0):.2f})\n\n"
+        f"**Pitch:** {pitch}\n\n"
+        f"**Why now:** {why_now}\n\n"
+        f"- **Persona:** {persona}\n"
+        f"- **Commercial intent:** {intent}\n"
+        + (pain_block + "\n" if pain_block else "")
+        + f"- **Activity:** {' · '.join(activity_bits)}\n"
+        + ("\n".join(org_lines) + "\n" if org_lines else "")
+        + f"\n**Repo:** {homepage}"
+    )
 
 
 def _classify_payload(r: dict[str, Any]) -> dict[str, Any]:
@@ -1287,6 +1358,7 @@ async def persist(state: GhAiReposState) -> dict:
                 else None
             ),
             "brief": r.get("brief"),
+            "markdown_brief": _render_markdown_brief(r),
         }
 
     slim = [_slim(r) for r in final]
