@@ -100,3 +100,7 @@ data/*.db-shm
 
 # PandaCSS generated output
 /styled-system/
+
+# deploy-cf.sh staging artifacts (rsync'd from backend/leadgen_agent/, removed on EXIT)
+backend/core/leadgen_agent/
+backend/core/vendor/
