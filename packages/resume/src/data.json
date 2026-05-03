@@ -203,7 +203,7 @@
         "id": "0",
         "name": "ResearchThera.com",
         "description": "Therapeutic-intelligence platform for families: clinical chat screens first for drug-induced symptoms, flags Singulair washout cases, and orchestrates 23 LangGraph workflows across medication safety and academic retrieval.",
-        "githubUrl": "https://github.com/v9ai/research-thera",
+        "githubUrl": "",
         "websiteUrl": "https://researchthera.com",
         "highlights": [
           "The 5-stage LlamaIndex chat pipeline reranks, audits safety, and routes 9 intents by confidence.",
