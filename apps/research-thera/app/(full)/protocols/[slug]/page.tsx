@@ -11,14 +11,12 @@ import {
   Separator,
   Spinner,
   Button,
-  Select,
   AlertDialog,
 } from "@radix-ui/themes";
 import { ArrowLeft, Trash2 } from "lucide-react";
 import Link from "next/link";
 import {
   useProtocolQuery,
-  useUpdateProtocolStatusMutation,
   useDeleteSupplementMutation,
   ProtocolDocument,
 } from "@/app/__generated__/hooks";
@@ -26,8 +24,6 @@ import { AuthGate } from "@/app/components/AuthGate";
 import { AddSupplementForm } from "./add-supplement-form";
 import { CognitiveBaselineForm } from "./cognitive-baseline-form";
 import { CognitiveCheckInForm } from "./cognitive-check-in-form";
-
-const STATUSES = ["active", "paused", "completed"];
 
 export default function ProtocolDetailPage({
   params,
@@ -100,18 +96,15 @@ function ProtocolDetail({ detail }: { detail: Detail }) {
               </Text>
             </Flex>
           </Link>
-          <Flex justify="between" align="start" wrap="wrap" gap="3">
-            <Flex direction="column" gap="1">
-              <Heading size="7" weight="bold">
-                {protocol.name}
-              </Heading>
-              {protocol.startDate && (
-                <Text size="2" color="gray">
-                  Since {new Date(protocol.startDate).toLocaleDateString()}
-                </Text>
-              )}
-            </Flex>
-            <StatusSelector id={protocol.id} status={protocol.status} />
+          <Flex direction="column" gap="1">
+            <Heading size="7" weight="bold">
+              {protocol.name}
+            </Heading>
+            {protocol.startDate && (
+              <Text size="2" color="gray">
+                Since {new Date(protocol.startDate).toLocaleDateString()}
+              </Text>
+            )}
           </Flex>
           {protocol.targetAreas.length > 0 && (
             <Flex gap="1" wrap="wrap">
@@ -212,28 +205,6 @@ function ProtocolDetail({ detail }: { detail: Detail }) {
         </Flex>
       </Flex>
     </Box>
-  );
-}
-
-function StatusSelector({ id, status }: { id: string; status: string }) {
-  const [updateStatus, { loading }] = useUpdateProtocolStatusMutation();
-  return (
-    <Select.Root
-      value={status}
-      onValueChange={(value) =>
-        updateStatus({ variables: { id, status: value } })
-      }
-      disabled={loading}
-    >
-      <Select.Trigger />
-      <Select.Content>
-        {STATUSES.map((s) => (
-          <Select.Item key={s} value={s}>
-            {s}
-          </Select.Item>
-        ))}
-      </Select.Content>
-    </Select.Root>
   );
 }
 

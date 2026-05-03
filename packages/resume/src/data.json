@@ -187,36 +187,33 @@
       {
         "id": "1",
         "name": "Agentic Lead Gen",
-        "description": "Deterministic Rust/TypeScript ML displaces LLM calls on the hot path of an autonomous B2B lead-gen platform. A 5-stage agentic pipeline (Discovery → Enrichment → Contact Hunter ∥ QA Auditor → Outreach) drives 67 LangGraph graphs on Cloudflare Workers Containers, checkpointed to Neon.",
+        "description": "Deterministic Rust/TypeScript ML displaces LLM calls on the hot path of an autonomous B2B lead-gen platform — a 5-stage agentic pipeline driving 67 LangGraph graphs on Cloudflare Workers Containers, checkpointed to Neon.",
         "githubUrl": "https://github.com/v9ai/agentic-lead-gen",
         "websiteUrl": "https://agenticleadgen.xyz/",
         "highlights": [
-          "67 LangGraph graphs (58 core + 7 research + 2 ML) ship one Python codebase to dev and Cloudflare Workers Containers via AsyncPostgresSaver.",
-          "Apollo Server 5 + Drizzle over Neon with 18 DataLoaders; DeepSeek v4-flash/v4-pro cheap-first router across TS and Python hubs.",
-          "Hawkes self-exciting lead temperature: nightly recompute dropped O(n²) → O(n), emits heating/cooling/hot/cold trend labels.",
-          "Send-time Thompson sampler over 168 Beta posteriors (DOW × hour); 10k recipients share one sample sweep.",
-          "12-feature gradient-boosted stumps score engagement sub-millisecond; Kaplan-Meier gates next follow-up in [2,14] once hazard beats annoyance.",
-          "Aho-Corasick single-pass classifier retires an LLM call and O(n×k) substring scan from the company-tagging hot path.",
-          "Candle/Metal embed-server (BGE-small-en-v1.5, 384-dim) persists to pgvector HNSW; zero outbound embedding calls.",
-          "Qwen2.5-1.5B contact-tier LoRA (Q4_K_M GGUF, llama-cpp on free HF Space) gates at authority_score ≥ 0.5, cutting compute ~10×.",
-          "Bidirectional email: Resend In-Reply-To threading, HMAC-SHA256 webhooks with constant-time compare, MX catch-all alias — zero per-contact DNS."
+          "67 LangGraph graphs (58 core, 7 research, 2 ML) on Cloudflare Workers Containers.",
+          "Apollo Server 5 + Drizzle/Neon with 18 DataLoaders; DeepSeek cheap-first router across TS+Python hubs.",
+          "Hand-rolled stats: Hawkes lead-temperature (O(n²)→O(n)), Thompson send-time sampler, Kaplan-Meier follow-up gating.",
+          "12-feature gradient-boosted stumps score engagement sub-millisecond on the hot path.",
+          "Aho-Corasick single-pass classifier retires an LLM call from company tagging.",
+          "Candle/Metal embed-server (BGE-small-en-v1.5, 384-dim) into pgvector HNSW; zero outbound embedding calls.",
+          "Qwen2.5-1.5B contact-tier LoRA on HF Space; gates at authority_score ≥ 0.5, ~10× compute cut.",
+          "Bidirectional email: Resend In-Reply-To threading, HMAC-SHA256 webhooks, MX catch-all alias."
         ]
       },
       {
         "id": "0",
         "name": "ResearchThera.com",
-        "description": "Therapeutic-intelligence platform for families with iatrogenic-first psych screening (Singulair washout classifier), a 5-stage LlamaIndex clinical chat over 9 intents, and 23 LangGraph workflows spanning medication research, regimen safety, and academic retrieval — backed by a ~90-table Neon/Drizzle schema.",
+        "description": "Therapeutic-intelligence platform for families: iatrogenic-first psych screening with Singulair washout classifier, 5-stage LlamaIndex clinical chat, and 23 LangGraph workflows across medication, regimen-safety, and academic retrieval.",
         "githubUrl": "https://github.com/v9ai/research-thera",
         "websiteUrl": "https://researchthera.com",
         "highlights": [
-          "5-stage LlamaIndex clinical chat — triage, re-triage, route, ContextChatEngine with clinical reranker, safety auditor with retry.",
-          "9 clinical intents fan out via CompositeRetriever with confidence-scaled k for multi-intent queries.",
-          "Computes 7 peer-reviewed blood-test ratios — TG/HDL, TC/HDL, HDL/LDL, NLR, De Ritis, BUN/Creatinine, TyG — tagged against thresholds.",
-          "Romanian 3-tier lab-PDF parser feeds LlamaIndex pipeline; 8 pgvector indices with hybrid FTS retrieval.",
-          "Medication deep-research graph fans to DailyMed, openFDA, RxNav; screens pairwise conflicts and ATC duplicate-therapy clusters with severity report.",
-          "Therapy-research graph queries OpenAlex, Crossref, Semantic Scholar; cross-encoder reranks ~2,350 candidates, gates persistence on blended relevance.",
-          "Iatrogenic-first psych screening classifies Singulair washout phase, then critique-refine loop rewrites any axis scoring <7/10.",
-          "Apollo Server 5 over Neon exposes 217 resolvers; two Vercel-AI agents stream Zod-validated CYOA + CBT/ACT/DBT audio to R2."
+          "5-stage LlamaIndex clinical chat, reranker plus safety auditor; 9 intents via confidence-scaled CompositeRetriever.",
+          "7 peer-reviewed blood-test ratios: TG/HDL, TC/HDL, HDL/LDL, NLR, De Ritis, BUN/Creatinine, TyG.",
+          "Romanian 3-tier lab-PDF parser feeds LlamaIndex; 8 pgvector indices with hybrid FTS retrieval.",
+          "Pharmacology + therapy-research graphs hit DailyMed, openFDA, RxNav, OpenAlex, Crossref, Semantic Scholar; cross-encoder reranks.",
+          "Critique-refine psych-screening loop rewrites any axis scoring below 7/10 before persisting.",
+          "Apollo Server 5 exposes 217 resolvers; two Vercel-AI agents emit Zod-validated CYOA + CBT/ACT/DBT."
         ]
       }
     ]

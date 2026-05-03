@@ -199,27 +199,48 @@ live_graph_required = pytest.mark.skipif(
 )
 
 
-def _run_live(full_name: str) -> dict[str, Any]:
-    resp = httpx.post(
-        _live_graph_url(),
-        headers={
-            "Authorization": f"Bearer {_live_token()}",
-            "Content-Type": "application/json",
-        },
-        json={"assistant_id": "gh_lead_research", "input": {"full_name": full_name}},
-        timeout=240.0,
-    )
-    resp.raise_for_status()
-    return resp.json()
+def _run_live(full_name: str, *, retries: int = 2) -> dict[str, Any]:
+    """POST to the deployed dispatcher. Retry once on transient
+    httpx.RemoteProtocolError / ReadTimeout — the CF Container can drop a
+    connection mid-response if its DO instance gets evicted between deploys.
+    """
+    last_exc: Exception | None = None
+    for attempt in range(retries + 1):
+        try:
+            resp = httpx.post(
+                _live_graph_url(),
+                headers={
+                    "Authorization": f"Bearer {_live_token()}",
+                    "Content-Type": "application/json",
+                },
+                json={"assistant_id": "gh_lead_research", "input": {"full_name": full_name}},
+                timeout=240.0,
+            )
+            resp.raise_for_status()
+            return resp.json()
+        except (httpx.RemoteProtocolError, httpx.ReadTimeout, httpx.ConnectError) as e:
+            last_exc = e
+            continue
+    raise RuntimeError(f"_run_live({full_name!r}) failed after {retries + 1} attempts: {last_exc!r}")
+
+
+@pytest.fixture(scope="session")
+def pixeltable_live_state() -> dict[str, Any]:
+    """Run gh_lead_research against pixeltable ONCE per pytest session and
+    share the result with both gated tests. Halves live cost and avoids the
+    back-to-back-request flake we hit when each test made its own call.
+    """
+    if not _eval_enabled() or not _live_token():
+        pytest.skip("set EVAL=1 + LANGGRAPH_AUTH_TOKEN to run live-graph evals")
+    return _run_live("pixeltable/pixeltable")
 
 
 @live_graph_required
-def test_live_pixeltable_disqualified() -> None:
+def test_live_pixeltable_disqualified(pixeltable_live_state: dict[str, Any]) -> None:
     """Pixeltable is the canonical bad lead: $5.5M Sutter-Hill seed,
     Apache-Parquet co-founder, multiple BD partnerships. The live graph
     MUST mark it disqualified across multiple axes."""
-    state = _run_live("pixeltable/pixeltable")
-    summary = state.get("summary") or {}
+    summary = pixeltable_live_state.get("summary") or {}
     disq = summary.get("icp_disqualifier")
     assert disq, (
         f"pixeltable should be disqualified, got None. summary={summary!r}"
@@ -280,20 +301,25 @@ def _make_deepeval_judge():
 
 
 @deepeval_required
-def test_pixeltable_recent_fundraise_is_faithful_to_evidence() -> None:
+def test_pixeltable_recent_fundraise_is_faithful_to_evidence(
+    pixeltable_live_state: dict[str, Any],
+) -> None:
     """Worst failure mode for outreach: hallucinating a fundraise.
 
     Run faithfulness against the deployed brief: the LLM-extracted
-    ``recent_fundraise`` must be grounded in the ``web_search_results_json``
-    evidence the graph actually fetched. If pixeltable's brief claims a
-    Series B that was never reported, this fails.
+    ``recent_fundraise`` must be grounded in the ``evidence_urls`` the
+    synthesize node cited. If pixeltable's brief claims a Series B that
+    was never reported, this fails.
+
+    Reuses ``pixeltable_live_state`` fixture so we don't make a second
+    back-to-back call to the dispatcher (which was flaking on the second
+    request — the CF Container DO would close the stream mid-response).
     """
     from deepeval import evaluate
     from deepeval.metrics import FaithfulnessMetric
     from deepeval.test_case import LLMTestCase
 
-    state = _run_live("pixeltable/pixeltable")
-    summary = state.get("summary") or {}
+    summary = pixeltable_live_state.get("summary") or {}
     brief = summary.get("brief") or {}
     fundraise = (brief.get("recent_fundraise") or "").strip()
 
