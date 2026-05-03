@@ -37,9 +37,9 @@ Nice — Building with the Claude API is the heaviest of the four (84 lessons, ~
 1. Introduction to Model Context Protocol — mostly conceptual, builds directly on what you just finished
 2. Claude Code in Action — hands-on with the CLI, MCP integration patterns
 
-That order is the natural flow. Two days is plenty.
+That order is the natural flow.
 
-Once you're done, just reply on this thread and I'll fold you into the next verification batch I submit to Anthropic for the Claude Certified Architect Foundations (CCAF) exam unlock.
+I was planning to submit the verification batch to Anthropic tomorrow morning, but I'll hold it for you — two days is fine. Just reply on this thread the moment you wrap the last one and I'll include you in that same submission for the Claude Certified Architect Foundations (CCAF) exam unlock.
 
 If anything's blocking — content, account access, anything — just shout.
 
