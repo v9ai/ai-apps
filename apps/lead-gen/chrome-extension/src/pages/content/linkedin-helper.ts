@@ -3609,7 +3609,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         );
 
         let consecutiveClickFailures = 0;
+        let consecutiveEmptyExtractions = 0;
         const MAX_CONSECUTIVE_CLICK_FAILURES = 3;
+        const MAX_CONSECUTIVE_EMPTY_EXTRACTIONS = 5;
+
+        // LinkedIn fingerprints automation by detecting constant timing.
+        // Mirror tab-utils.randomDelay (±30% jitter, 200ms floor) here since
+        // content scripts can't import background modules.
+        const jitteredDelay = (baseMs: number) => {
+          const jitter = baseMs * 0.3;
+          const ms = baseMs + Math.floor(Math.random() * jitter * 2 - jitter);
+          return new Promise((r) => setTimeout(r, Math.max(200, ms)));
+        };
 
         for (let page = startPage + 1; page <= totalPages; page++) {
           let click = await clickLinkedInPageNumber(page);
@@ -3617,12 +3628,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             console.warn(
               `[CS] clickLinkedInPageNumber(${page}) failed: ${click.reason}, retrying once`,
             );
-            await new Promise((r) => setTimeout(r, 1500));
+            await jitteredDelay(1500);
             click = await clickLinkedInPageNumber(page);
           }
           console.log(
             `[CS] page ${page} click: result=${click.ok ? "ok" : click.reason} ` +
               `consecutiveFailures=${click.ok ? 0 : consecutiveClickFailures + 1} ` +
+              `consecutiveEmpty=${consecutiveEmptyExtractions} ` +
               `totalPagesAnnounced=${totalPages}`,
           );
           if (!click.ok) {
@@ -3639,7 +3651,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           }
           consecutiveClickFailures = 0;
 
-          await new Promise((resolve) => setTimeout(resolve, 1000));
+          await jitteredDelay(2500);
 
           const pageResult = await extractWithRetry(page);
           const pageCompanies = extractCompaniesFromJobCards();
@@ -3650,8 +3662,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           });
 
           actualPagesScraped++;
+          let abortDueToSoftWall = false;
           if (pageResult.jobs.length === 0) {
             pageFailures.push({ page, reason: "empty-extraction" });
+            consecutiveEmptyExtractions++;
+            // 5 empty pages in a row = LinkedIn anti-bot soft-wall (results
+            // hidden behind a captcha or session-throttled). Stop instead of
+            // burning the whole announced totalPages on dead requests.
+            if (consecutiveEmptyExtractions >= MAX_CONSECUTIVE_EMPTY_EXTRACTIONS) {
+              console.warn(
+                `[CS] aborting: ${MAX_CONSECUTIVE_EMPTY_EXTRACTIONS} consecutive empty pages — likely anti-bot soft-wall`,
+              );
+              abortDueToSoftWall = true;
+            }
+          } else {
+            consecutiveEmptyExtractions = 0;
           }
           flushPage(
             page,
@@ -3660,6 +3685,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             pageResult.counters,
             pageResult.attempt,
           );
+          if (abortDueToSoftWall) break;
         }
 
         sendResponse({
